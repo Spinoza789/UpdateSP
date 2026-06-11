@@ -17,6 +17,7 @@
     "@workspace/shipping": "workspace:*",
     "@workspace/snp-database": "workspace:*",
     "bcryptjs": "^3.0.3",
+    "zod": "catalog:",
     "cookie-parser": "^1.4.7",
     "cors": "^2",
     "drizzle-orm": "catalog:",
