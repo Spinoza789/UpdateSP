@@ -15,7 +15,7 @@ import {
   type GroupBuy,
   type GbParcel,
 } from "@workspace/db";
-import { eq, and, desc, or, sql, inArray, isNull, count } from "drizzle-orm";
+import { eq, and, desc, or, sql, inArray, isNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAccount } from "../middleware/account-auth";
 import { refreshSingleGbParcel } from "../lib/tracking-auto-refresh";
@@ -385,32 +385,25 @@ router.get("/reshipper/gb/:gbId/orders", requireReshipper, async (req, res): Pro
       sql`lower(${gbCountryLegsTable.countryCode}) = lower(${assignment.country.trim()})`,
     ));
 
-  // Check if multiple reshippers share this leg — if so, only show this reshipper's claimed orders.
-  // Use the leg's canonical countryCode for the count so all co-reshippers are found regardless
-  // of how each one's country string was entered (e.g. "GB" vs "United Kingdom").
-  let isMultiReshipperLeg = false;
-  if (countryLeg) {
-    const [{ total }] = await db
-      .select({ total: count() })
-      .from(gbReshippersTable)
-      .where(and(
-        eq(gbReshippersTable.gbId, gbId),
-        sql`lower(trim(${gbReshippersTable.country})) = lower(${countryLeg.countryCode.trim()})`,
-        eq(gbReshippersTable.enabled, true),
-      ));
-    isMultiReshipperLeg = total > 1;
-  }
-
-  // Multi-reshipper leg: only show orders claimed by this reshipper (or force-assigned to them)
-  // Single-reshipper leg: show all orders for the leg, plus any force-assigned to this reshipper from other legs
-  // No leg: show by reshipper username
-  // In all cases, force-assigned orders (reshipperUsername = this reshipper) are always included
-  // Direct-to-home orders are never the reshipper's concern — excluded in all branches
+  // Build the where clause:
+  //  • Always include orders explicitly assigned to this reshipper (reshipperUsername = me).
+  //  • Also include unassigned orders (reshipperUsername IS NULL) in this reshipper's country leg
+  //    so they appear in the queue before they've been claimed/allocated.
+  //  • Once an order has ANY reshipperUsername set, it is only visible to that reshipper —
+  //    this correctly handles two reshippers sharing the same country without relying on
+  //    fragile "count how many reshippers are on this leg" detection.
+  //  • Direct-to-home orders are never the reshipper's concern — excluded in all branches.
   const notDirectShipping = sql`(${ordersTable.directShippingRequested} IS NOT TRUE)`;
   const whereClause = countryLeg
-    ? isMultiReshipperLeg
-      ? and(eq(ordersTable.groupBuyId, gbId), eq(ordersTable.reshipperUsername, assignment.reshipperUsername), isNull(ordersTable.deletedAt), notDirectShipping)
-      : and(eq(ordersTable.groupBuyId, gbId), or(eq(ordersTable.countryLegId, countryLeg.id), eq(ordersTable.reshipperUsername, assignment.reshipperUsername)), isNull(ordersTable.deletedAt), notDirectShipping)
+    ? and(
+        eq(ordersTable.groupBuyId, gbId),
+        or(
+          eq(ordersTable.reshipperUsername, assignment.reshipperUsername),
+          and(isNull(ordersTable.reshipperUsername), eq(ordersTable.countryLegId, countryLeg.id)),
+        ),
+        isNull(ordersTable.deletedAt),
+        notDirectShipping,
+      )
     : and(eq(ordersTable.groupBuyId, gbId), eq(ordersTable.reshipperUsername, assignment.reshipperUsername), isNull(ordersTable.deletedAt), notDirectShipping);
 
   const rows = await db
@@ -952,9 +945,18 @@ router.get("/reshipper/gb/:gbId/members", requireReshipper, async (req, res): Pr
     .from(gbCountryLegsTable)
     .where(and(eq(gbCountryLegsTable.gbId, gbId), eq(gbCountryLegsTable.countryCode, assignment.country)));
 
+  const notDirect2 = sql`(${ordersTable.directShippingRequested} IS NOT TRUE)`;
   const whereClause = countryLeg
-    ? and(eq(ordersTable.groupBuyId, gbId), eq(ordersTable.countryLegId, countryLeg.id), isNull(ordersTable.deletedAt), sql`(${ordersTable.directShippingRequested} IS NOT TRUE)`)
-    : and(eq(ordersTable.groupBuyId, gbId), eq(ordersTable.reshipperUsername, assignment.reshipperUsername), isNull(ordersTable.deletedAt), sql`(${ordersTable.directShippingRequested} IS NOT TRUE)`);
+    ? and(
+        eq(ordersTable.groupBuyId, gbId),
+        or(
+          eq(ordersTable.reshipperUsername, assignment.reshipperUsername),
+          and(isNull(ordersTable.reshipperUsername), eq(ordersTable.countryLegId, countryLeg.id)),
+        ),
+        isNull(ordersTable.deletedAt),
+        notDirect2,
+      )
+    : and(eq(ordersTable.groupBuyId, gbId), eq(ordersTable.reshipperUsername, assignment.reshipperUsername), isNull(ordersTable.deletedAt), notDirect2);
 
   const orderRows = await db
     .select({ telegramUsername: ordersTable.telegramUsername })
@@ -1089,12 +1091,15 @@ async function resolveParcelRecipients(
     .from(gbCountryLegsTable)
     .where(and(eq(gbCountryLegsTable.gbId, gbId), eq(gbCountryLegsTable.countryCode, reshipperCountry)));
 
-  // Orders must be: in this GB, either in the country leg OR force-assigned to this reshipper.
+  // Orders must be: assigned to this reshipper, OR unassigned and in this reshipper's leg.
   // Mirrors the same logic used by the /reshipper/gb/:gbId/orders endpoint.
   const orderWhereClause = countryLeg
     ? and(
         eq(ordersTable.groupBuyId, gbId),
-        or(eq(ordersTable.countryLegId, countryLeg.id), eq(ordersTable.reshipperUsername, reshipperUsername)),
+        or(
+          eq(ordersTable.reshipperUsername, reshipperUsername),
+          and(isNull(ordersTable.reshipperUsername), eq(ordersTable.countryLegId, countryLeg.id)),
+        ),
         isNull(ordersTable.deletedAt),
       )
     : and(
@@ -1366,20 +1371,17 @@ router.get("/reshipper/gb/:gbId/all-orders-qr", requireReshipper, async (req, re
     .from(gbCountryLegsTable)
     .where(and(eq(gbCountryLegsTable.gbId, gbId), eq(gbCountryLegsTable.countryCode, assignment.country)));
 
-  let isMultiReshipperLeg = false;
-  if (countryLeg) {
-    const [{ total }] = await db
-      .select({ total: count() })
-      .from(gbReshippersTable)
-      .where(and(eq(gbReshippersTable.gbId, gbId), eq(gbReshippersTable.country, assignment.country), eq(gbReshippersTable.enabled, true)));
-    isMultiReshipperLeg = total > 1;
-  }
-
   const notDirect = sql`(${ordersTable.directShippingRequested} IS NOT TRUE)`;
   const whereClause = countryLeg
-    ? isMultiReshipperLeg
-      ? and(eq(ordersTable.groupBuyId, gbId), eq(ordersTable.reshipperUsername, assignment.reshipperUsername), isNull(ordersTable.deletedAt), notDirect)
-      : and(eq(ordersTable.groupBuyId, gbId), or(eq(ordersTable.countryLegId, countryLeg.id), eq(ordersTable.reshipperUsername, assignment.reshipperUsername)), isNull(ordersTable.deletedAt), notDirect)
+    ? and(
+        eq(ordersTable.groupBuyId, gbId),
+        or(
+          eq(ordersTable.reshipperUsername, assignment.reshipperUsername),
+          and(isNull(ordersTable.reshipperUsername), eq(ordersTable.countryLegId, countryLeg.id)),
+        ),
+        isNull(ordersTable.deletedAt),
+        notDirect,
+      )
     : and(eq(ordersTable.groupBuyId, gbId), eq(ordersTable.reshipperUsername, assignment.reshipperUsername), isNull(ordersTable.deletedAt), notDirect);
 
   const rows = await db
