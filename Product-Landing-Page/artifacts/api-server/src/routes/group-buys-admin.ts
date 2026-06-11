@@ -2119,6 +2119,50 @@ router.post("/admin/group-buys/:gbId/backfill-country-legs", async (req, res): P
   });
 });
 
+// ── POST /admin/group-buys/:gbId/backfill-admin-fee ─────────────────────────
+// Applies the GB's configured admin fee to all non-deleted, non-direct-to-home
+// orders that don't yet have it. Mirrors the organiser-side backfill but uses
+// admin auth so it's accessible from the admin Orders tab.
+router.post("/admin/group-buys/:gbId/backfill-admin-fee", async (req, res): Promise<void> => {
+  if (!requireAdmin(req, res)) return;
+  const { gbId } = req.params;
+
+  const [gb] = await db
+    .select({
+      id: groupBuysTable.id,
+      adminFeeEnabled: groupBuysTable.adminFeeEnabled,
+      adminFeeAmount: groupBuysTable.adminFeeAmount,
+      adminFeeLabel: groupBuysTable.adminFeeLabel,
+    })
+    .from(groupBuysTable)
+    .where(eq(groupBuysTable.id, gbId));
+
+  if (!gb) { res.status(404).json({ error: "Group buy not found" }); return; }
+  if (!gb.adminFeeEnabled || gb.adminFeeAmount == null) {
+    res.status(400).json({ error: "Admin fee is not enabled or amount not set for this group buy" });
+    return;
+  }
+
+  const feeAmount = parseFloat(String(gb.adminFeeAmount));
+  if (feeAmount <= 0) { res.status(400).json({ error: "Admin fee amount must be greater than 0" }); return; }
+
+  const result = await db.execute(sql`
+    UPDATE orders
+    SET
+      admin_fee       = ${feeAmount}::numeric,
+      admin_fee_label = ${gb.adminFeeLabel ?? null},
+      grand_total     = grand_total + ${feeAmount}::numeric
+    WHERE
+      group_buy_id = ${gbId}
+      AND deleted_at IS NULL
+      AND (admin_fee IS NULL OR admin_fee = 0)
+      AND (direct_shipping_requested IS NOT TRUE)
+  `);
+
+  const updated = (result as { rowCount?: number }).rowCount ?? 0;
+  res.json({ ok: true, updated });
+});
+
 // ── GET /admin/group-buys/:gbId/fulfilment — fulfilment routing view ──────────
 router.get("/admin/group-buys/:gbId/fulfilment", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;

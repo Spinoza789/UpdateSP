@@ -6372,6 +6372,32 @@ function OrdersSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
             Assign Legs
           </button>
         )}
+        {gb.adminFeeEnabled && gb.adminFeeAmount != null && Number(gb.adminFeeAmount) > 0 && (
+          <button
+            onClick={async () => {
+              setBackfilling(true); setBackfillMsg("");
+              try {
+                const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/backfill-admin-fee`), {
+                  method: "POST", headers: { "x-admin-secret": secret },
+                });
+                const d = await r.json().catch(() => ({}));
+                if (r.ok) {
+                  setBackfillMsg(d.updated > 0 ? `✓ Fee applied to ${d.updated} order${d.updated !== 1 ? "s" : ""}` : "All orders already have the fee");
+                  loadOrders();
+                } else {
+                  setBackfillMsg(d.error ?? "Backfill failed");
+                }
+              } catch { setBackfillMsg("Request failed"); }
+              finally { setBackfilling(false); }
+            }}
+            disabled={backfilling}
+            className="h-8 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-colors hover:bg-amber-50 disabled:opacity-60"
+            style={{ color: "#B45309", borderColor: "#FCD34D" }}
+          >
+            {backfilling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span className="text-sm leading-none">💰</span>}
+            Backfill Fee
+          </button>
+        )}
       </div>
       {importMsg && (
         <p className="text-xs font-medium" style={{ color: importMsg.includes("failed") || importMsg.includes("Failed") ? "#dc2626" : "#16a34a" }}>{importMsg}</p>
