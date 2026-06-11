@@ -1229,12 +1229,24 @@ router.post("/orders/:id/init-anonpay", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Payment already confirmed" }); return;
   }
 
-  // If already submitted (pending_confirmation) with an existing AnonPay session,
-  // return the existing session rather than creating a new Trocador swap.
+  // If the order already has an AnonPay session stored, return it rather than creating
+  // a brand-new Trocador swap. This covers two cases:
+  //   1. status = "pending_confirmation" — customer already clicked "I've Sent Payment"
+  //   2. status = "unpaid" — customer refreshed mid-payment before confirming
+  // In case 2 we also upgrade the status so the auto-poll can track Trocador.
   const ANON_PAY_PREFIX = "anonpay:";
-  if (order.paymentStatus === "pending_confirmation" && order.paymentTxHash?.startsWith(ANON_PAY_PREFIX)) {
-    const existingId = order.paymentTxHash.slice(ANON_PAY_PREFIX.length);
+  if (order.paymentTxHash?.startsWith(ANON_PAY_PREFIX)) {
+    const existingRaw = order.paymentTxHash.slice(ANON_PAY_PREFIX.length);
+    // Strip any appended blockchain hash added at confirmation ("sessionId|txHash")
+    const existingId = existingRaw.includes("|") ? existingRaw.split("|")[0] : existingRaw;
     const existingIframeUrl = `https://trocador.app/en/anonpay/${encodeURIComponent(existingId)}?embed=1`;
+    // Upgrade status to pending_confirmation so the auto-poll activates immediately
+    if (order.paymentStatus !== "pending_confirmation" && order.paymentStatus !== "confirmed") {
+      await db.update(ordersTable)
+        .set({ paymentStatus: "pending_confirmation" })
+        .where(eq(ordersTable.id, req.params.id));
+      writeLog("payment", "info", "anonpay_session_restored", `Restored AnonPay session for order ${order.code} after page refresh`, { orderId: order.id, code: order.code, username: order.telegramUsername, paymentId: existingId }, req.ip).catch(() => {});
+    }
     res.json({ iframeUrl: existingIframeUrl, paymentId: existingId, existing: true }); return;
   }
 
@@ -1389,17 +1401,25 @@ router.get("/orders/:id/anonpay-status", async (req, res): Promise<void> => {
     res.json({ status: "confirmed", paymentStatus: "confirmed" }); return;
   }
 
-  // Only poll Trocador for orders that have already been submitted by the customer
-  if (order.paymentStatus !== "pending_confirmation") {
-    res.status(400).json({ error: "Order has not been submitted for AnonPay confirmation yet." }); return;
-  }
-
-  // Verify this order was actually originated via AnonPay (not a bank/crypto/PayPal payment
-  // that happens to be in pending_confirmation). The prefix "anonpay:" is written exclusively
-  // by /init-anonpay, so its presence is a reliable discriminator.
+  // The prefix "anonpay:" is written exclusively by /init-anonpay, making it a reliable
+  // discriminator from bank/crypto/PayPal payments.
   const ANON_PAY_PREFIX = "anonpay:";
   if (!order.paymentTxHash?.startsWith(ANON_PAY_PREFIX)) {
     res.status(409).json({ error: "This order was not initiated via AnonPay." }); return;
+  }
+
+  // Only poll Trocador once the customer has submitted the order. We also accept "unpaid"
+  // when there is already an AnonPay session stored — this covers the edge case where the
+  // page was refreshed after /init-anonpay wrote the ID but before /confirm-anonpay-initiation
+  // ran. In that case we upgrade the status here as a failsafe so polling keeps working.
+  if (order.paymentStatus !== "pending_confirmation") {
+    if (order.paymentStatus === "unpaid") {
+      await db.update(ordersTable)
+        .set({ paymentStatus: "pending_confirmation" })
+        .where(eq(ordersTable.id, req.params.id));
+    } else {
+      res.status(400).json({ error: "Order has not been submitted for AnonPay confirmation yet." }); return;
+    }
   }
 
   const paymentId = order.paymentTxHash.slice(ANON_PAY_PREFIX.length);

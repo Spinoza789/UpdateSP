@@ -361,12 +361,13 @@ export default function PaymentPanel({
   const [anonPayIframeUrl, setAnonPayIframeUrl] = useState<string | null>(null);
   const [anonPayInitializing, setAnonPayInitializing] = useState(false);
   const [anonPayError, setAnonPayError] = useState("");
-  // Start in initiated state only when this order has an AnonPay session (identified by
-  // the "anonpay:" prefix written exclusively by /init-anonpay). Guarding on both
-  // pending_confirmation AND the prefix prevents non-AnonPay orders (bank/crypto/PayPal)
-  // from triggering Trocador polling after a page refresh.
+  // Start in initiated state when this order already has an AnonPay session (identified by
+  // the "anonpay:" prefix written exclusively by /init-anonpay). We guard on the prefix
+  // to avoid triggering Trocador polling for non-AnonPay orders. We also accept "unpaid"
+  // status here because a page refresh before the user clicks "I've Sent Payment" leaves
+  // the order in that state — the session is still live and the backend will upgrade it.
   const [anonPayInitiated, setAnonPayInitiated] = useState(
-    initStatus === "pending_confirmation" && (initTxHash?.startsWith("anonpay:") ?? false)
+    (initStatus === "pending_confirmation" || initStatus === "unpaid") && (initTxHash?.startsWith("anonpay:") ?? false)
   );
   const [anonPayStatusChecking, setAnonPayStatusChecking] = useState(false);
   const [anonPayStatusMsg, setAnonPayStatusMsg] = useState("");
@@ -397,8 +398,10 @@ export default function PaymentPanel({
   const initialStep: Step =
     initStatus === "test_ready" ? "test" :
     initStatus === "test_confirmed" ? "pay" :
-    // Restore AnonPay panel after page refresh when session is still active
-    (initStatus === "pending_confirmation" && (initTxHash?.startsWith("anonpay:") ?? false)) ? "anonpay" :
+    // Restore AnonPay panel after page refresh — covers both "pending_confirmation" (user
+    // already clicked "I've Sent Payment") and "unpaid" (refreshed mid-payment before
+    // clicking). "confirmed" is handled above so we only reach here for live sessions.
+    (initTxHash?.startsWith("anonpay:") ?? false) ? "anonpay" :
     "loading";
 
   const [step, setStep] = useState<Step>(initialStep);
@@ -526,6 +529,14 @@ export default function PaymentPanel({
       .then(d => {
         if (d.iframeUrl) {
           setAnonPayIframeUrl(d.iframeUrl);
+          // existing: true means the server found an existing session (page refresh mid-payment).
+          // The backend has already upgraded status to pending_confirmation so we activate
+          // polling immediately without requiring the user to click "I've Sent Payment" again.
+          if (d.existing) {
+            setAnonPayInitiated(true);
+            setStatus("pending_confirmation");
+            onStatusChange?.("pending_confirmation");
+          }
         } else {
           setAnonPayError(d.error || "Failed to initialise AnonPay. Please try again.");
         }
