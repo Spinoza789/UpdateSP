@@ -137,8 +137,10 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
     return;
   }
 
-  // openMode: all orders in the GB qualify to vote (lab test included in price)
-  const openMode = !!(round.anyContribution) || !!(round.janoshikPaymentUrl as string | null);
+  // openMode: skip contribution check only when payment is tracked externally (Janoshik URL).
+  // anyContribution (late opt-in) still writes testingContribution on the order, so the
+  // contribution check remains in place for that mode.
+  const openMode = !!(round.janoshikPaymentUrl as string | null);
 
   // Pool total
   const [poolRow] = await db
@@ -403,9 +405,11 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
     : DEFAULT_TEST_OPTIONS;
   const validTests = cleanTests.filter(t => allowedTests.includes(t));
 
-  const openModeVote = !!(round.anyContribution) || !!(round.janoshikPaymentUrl as string | null);
+  // janoshikPaymentUrl = external payment not tracked on the order, so skip the contribution check.
+  // anyContribution = late opt-in that DOES write testingContribution on the order, so still require it.
+  const externalPaymentMode = !!(round.janoshikPaymentUrl as string | null);
 
-  const orderConditionsVote = openModeVote
+  const orderConditionsVote = externalPaymentMode
     ? and(
         eq(ordersTable.groupBuyId, gbId),
         sql`lower(${ordersTable.telegramUsername}) IN (lower(${tgBare}), lower(${tgAt}))`
