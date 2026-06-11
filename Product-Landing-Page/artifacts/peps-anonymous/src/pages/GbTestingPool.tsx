@@ -5,6 +5,7 @@ import {
   FlaskConical, CheckCircle2, Trophy, TestTube,
   ChevronDown, ExternalLink, Loader2, AlertCircle,
   RefreshCw, Lock, Unlock, LogIn, CheckSquare, Square,
+  Clock,
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { useAccount } from "@/hooks/use-account";
@@ -55,6 +56,26 @@ interface TestingData {
   existingVote: { peptideName: string; vialCount: number; testSelections: string[] } | null;
   isOptedIn: boolean;
   hasGbOrder: boolean;
+  paymentMethods: {
+    cryptoWalletAddress: string | null;
+    cryptoCurrency: string;
+    cryptoNetwork: string;
+    revolutHandle: string | null;
+    paypalHandle: string | null;
+    anonPayEnabled: boolean;
+    anonPayWallet: string | null;
+    anonPayTicker: string;
+    anonPayNetwork: string;
+    janoshikPaymentUrl: string | null;
+  } | null;
+  pendingContribution: {
+    id: string;
+    amount: number;
+    paymentMethod: string;
+    txHash: string | null;
+    status: string;
+    rejectionReason: string | null;
+  } | null;
   peptideOptions: string[];
   testOptions: string[];
   testVotes: Record<string, number>;
@@ -550,90 +571,323 @@ function VotePanel({
 
 // ── late contribution panel ───────────────────────────────────────────────────
 
-function LateContributePanel({ gbId, contributionAmount, anyContribution, onContributed }: {
+function ContributePaymentFlow({
+  gbId, contributionAmount, anyContribution, paymentMethods, pendingContribution, onContributed,
+}: {
   gbId: string;
   contributionAmount: number;
   anyContribution: boolean;
+  paymentMethods: TestingData["paymentMethods"];
+  pendingContribution: TestingData["pendingContribution"];
   onContributed: () => void;
 }) {
   const [amount, setAmount] = useState(String(contributionAmount || 15));
-  const [contributing, setContributing] = useState(false);
+  const [step, setStep] = useState<"method" | "details">("method");
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
-  async function contribute() {
-    setContributing(true); setError(null);
+  function copyText(text: string, field: string) {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  }
+
+  const parsedAmount = parseFloat(amount) || contributionAmount || 15;
+
+  if (!paymentMethods) return null;
+
+  const pm = paymentMethods;
+  const availableMethods: Array<{ id: string; label: string; sub?: string }> = [];
+  if (pm.cryptoWalletAddress) availableMethods.push({ id: "crypto", label: pm.cryptoCurrency, sub: pm.cryptoNetwork });
+  if (pm.anonPayEnabled && pm.anonPayWallet) availableMethods.push({ id: "anonpay", label: "AnonPay", sub: `${pm.anonPayTicker.toUpperCase()} · ${pm.anonPayNetwork}` });
+  if (pm.janoshikPaymentUrl) availableMethods.push({ id: "janoshik", label: "Janoshik" });
+  if (pm.revolutHandle) availableMethods.push({ id: "revolut", label: "Revolut", sub: `@${pm.revolutHandle}` });
+  if (pm.paypalHandle) availableMethods.push({ id: "paypal", label: "PayPal", sub: pm.paypalHandle });
+
+  if (availableMethods.length === 0) return null;
+
+  // Awaiting confirmation state
+  if (pendingContribution && pendingContribution.status === "pending" && !retrying) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        className="p-4 sm:p-5 space-y-3"
+        style={{ borderRadius: 8, background: "rgba(245,158,11,0.06)", border: "1.5px solid rgba(245,158,11,0.3)" }}>
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 shrink-0" style={{ color: "#B45309" }} />
+          <p className="text-sm font-bold" style={{ color: "#B45309" }}>Awaiting admin confirmation</p>
+        </div>
+        <p className="text-xs" style={{ color: "var(--t-muted)" }}>
+          Your {formatMoney(pendingContribution.amount)} contribution via <strong>{pendingContribution.paymentMethod}</strong> has been submitted and is pending confirmation. Once confirmed you'll be able to vote.
+        </p>
+        {pendingContribution.txHash && (
+          <p className="text-[10px] font-mono break-all px-2 py-1.5 rounded" style={{ background: "rgba(0,0,0,0.05)", color: "var(--t-muted)" }}>
+            Ref: {pendingContribution.txHash}
+          </p>
+        )}
+      </motion.div>
+    );
+  }
+
+  // Rejected state
+  if (pendingContribution && pendingContribution.status === "rejected" && !retrying) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        className="p-4 sm:p-5 space-y-3"
+        style={{ borderRadius: 8, background: "rgba(239,68,68,0.06)", border: "1.5px solid rgba(239,68,68,0.3)" }}>
+        <div className="flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#EF4444" }} />
+          <p className="text-sm font-bold" style={{ color: "#EF4444" }}>Contribution not confirmed</p>
+        </div>
+        {pendingContribution.rejectionReason && (
+          <p className="text-xs" style={{ color: "var(--t-muted)" }}>{pendingContribution.rejectionReason}</p>
+        )}
+        <button
+          onClick={() => { setRetrying(true); setError(null); setStep("method"); setTxHash(""); setSelectedMethod(null); }}
+          className="w-full h-10 font-semibold text-xs rounded-md"
+          style={{ background: "#EF4444", color: "#fff" }}
+        >
+          Try Again with a Different Method
+        </button>
+      </motion.div>
+    );
+  }
+
+  async function submit() {
+    setSubmitting(true); setError(null);
     try {
       const r = await fetch(`/api/group-buys/${gbId}/testing/contribute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({
+          amount: anyContribution ? parsedAmount : undefined,
+          paymentMethod: selectedMethod,
+          txHash: txHash.trim() || undefined,
+        }),
       });
       const d = await r.json();
-      if (!r.ok) { setError(d.error ?? "Failed to contribute"); return; }
-      setDone(true);
+      if (!r.ok) { setError(d.error ?? "Failed to submit"); return; }
       onContributed();
     } catch { setError("Network error. Please try again."); }
-    finally { setContributing(false); }
-  }
-
-  if (done) {
-    return (
-      <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-        className="p-5 text-center"
-        style={{ borderRadius: 8, background: "rgba(16,185,129,0.07)", border: `1.5px solid ${HIT_COLOR}` }}>
-        <CheckCircle2 className="w-8 h-8 mx-auto mb-3" style={{ color: HIT_COLOR }} />
-        <p className="font-semibold text-sm" style={{ color: "var(--t-text)" }}>Contribution recorded!</p>
-        <p className="text-xs mt-1" style={{ color: "var(--t-muted)" }}>You can now cast your vote below.</p>
-      </motion.div>
-    );
+    finally { setSubmitting(false); }
   }
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-      className="p-4 sm:p-5 space-y-3"
+      className="p-4 sm:p-5 space-y-4"
       style={{ borderRadius: 8, background: "rgba(245,158,11,0.06)", border: "1.5px solid rgba(245,158,11,0.3)" }}>
       <div>
         <p className="text-sm font-bold" style={{ color: "#B45309" }}>Missed the lab test opt-in?</p>
         <p className="text-xs mt-1" style={{ color: "var(--t-muted)" }}>
-          You have an order in this group buy but didn't opt into lab testing. Contribute to the pool to cast your vote.
+          Contribute to the pool to cast your vote. Your contribution will be confirmed by the organiser.
         </p>
       </div>
-      {anyContribution && (
+
+      {anyContribution ? (
         <div>
-          <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--t-muted)" }}>
-            Contribution amount ($)
-          </label>
+          <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--t-muted)" }}>Contribution amount ($)</label>
           <input
             type="number" min="1" step="0.01"
             value={amount}
             onChange={e => setAmount(e.target.value)}
-            className="w-full border px-3 h-12 text-base"
-            style={{ borderRadius: 6, background: "var(--t-surface)", border: "1.5px solid var(--t-border)", color: "var(--t-text)", fontSize: 16 }}
+            className="w-full border px-3 h-10 text-sm"
+            style={{ borderRadius: 6, background: "var(--t-surface)", border: "1.5px solid var(--t-border)", color: "var(--t-text)" }}
           />
         </div>
+      ) : (
+        <p className="text-xs font-semibold" style={{ color: "var(--t-text)" }}>Contribution: {formatMoney(contributionAmount)}</p>
       )}
-      {!anyContribution && (
-        <p className="text-xs font-semibold" style={{ color: "var(--t-text)" }}>
-          Contribution: {formatMoney(contributionAmount)}
-        </p>
-      )}
-      {error && (
-        <div className="flex items-center gap-2 px-3 py-2" style={{ borderRadius: 6, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)" }}>
-          <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#EF4444" }} />
-          <p className="text-xs" style={{ color: "#EF4444" }}>{error}</p>
+
+      {/* Method picker */}
+      {step === "method" && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold" style={{ color: "var(--t-muted)" }}>Choose payment method</p>
+          <div className="grid grid-cols-2 gap-2">
+            {availableMethods.map(m => (
+              <button
+                key={m.id}
+                onClick={() => { setSelectedMethod(m.id); setStep("details"); }}
+                className="flex flex-col items-start px-3 py-2.5 rounded-lg border text-left transition-colors hover:opacity-80"
+                style={{ borderColor: "rgba(245,158,11,0.4)", background: "var(--t-surface)" }}
+              >
+                <span className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>{m.label}</span>
+                {m.sub && <span className="text-[10px] mt-0.5" style={{ color: "var(--t-muted)" }}>{m.sub}</span>}
+              </button>
+            ))}
+          </div>
         </div>
       )}
-      <button
-        onClick={contribute}
-        disabled={contributing}
-        className="w-full h-12 font-semibold text-sm flex items-center justify-center gap-2 transition-opacity"
-        style={{ borderRadius: 6, background: "#F59E0B", color: "#fff", opacity: contributing ? 0.6 : 1 }}
-      >
-        {contributing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
-        {contributing ? "Contributing…" : `Contribute ${anyContribution && amount ? formatMoney(parseFloat(amount) || 0) : formatMoney(contributionAmount)}`}
-      </button>
+
+      {/* Payment details */}
+      {step === "details" && selectedMethod && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setStep("method")} className="text-xs font-semibold" style={{ color: "var(--t-blue)" }}>← Back</button>
+            <span className="text-xs font-bold" style={{ color: "var(--t-text)" }}>
+              {availableMethods.find(m => m.id === selectedMethod)?.label}
+            </span>
+          </div>
+
+          {selectedMethod === "crypto" && pm.cryptoWalletAddress && (
+            <div className="space-y-2">
+              <div className="rounded-lg p-3 space-y-2" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--t-muted)" }}>
+                  Send {formatMoney(parsedAmount)} {pm.cryptoCurrency} ({pm.cryptoNetwork})
+                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-mono text-xs break-all flex-1" style={{ color: "var(--t-text)" }}>{pm.cryptoWalletAddress}</p>
+                  <button
+                    onClick={() => copyText(pm.cryptoWalletAddress!, "wallet")}
+                    className="shrink-0 px-2 py-1 rounded text-[10px] font-semibold"
+                    style={{ background: copiedField === "wallet" ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.06)", color: copiedField === "wallet" ? "#059669" : "var(--t-muted)" }}
+                  >
+                    {copiedField === "wallet" ? "✓ Copied" : "Copy"}
+                  </button>
+                </div>
+              </div>
+              <input
+                type="text"
+                placeholder="Transaction hash (optional but recommended)"
+                value={txHash}
+                onChange={e => setTxHash(e.target.value)}
+                className="w-full border px-3 h-10 text-xs font-mono"
+                style={{ borderRadius: 6, background: "var(--t-surface)", border: "1.5px solid var(--t-border)", color: "var(--t-text)" }}
+              />
+            </div>
+          )}
+
+          {selectedMethod === "revolut" && pm.revolutHandle && (
+            <div className="space-y-2">
+              <div className="rounded-lg p-3 space-y-2" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--t-muted)" }}>
+                  Send {formatMoney(parsedAmount)} via Revolut
+                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-xs flex-1" style={{ color: "var(--t-text)" }}>@{pm.revolutHandle}</p>
+                  <button
+                    onClick={() => copyText(pm.revolutHandle!, "revolut")}
+                    className="shrink-0 px-2 py-1 rounded text-[10px] font-semibold"
+                    style={{ background: copiedField === "revolut" ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.06)", color: copiedField === "revolut" ? "#059669" : "var(--t-muted)" }}
+                  >
+                    {copiedField === "revolut" ? "✓ Copied" : "Copy"}
+                  </button>
+                </div>
+                <a
+                  href={`https://revolut.me/${pm.revolutHandle}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold"
+                  style={{ color: "var(--t-blue)" }}
+                >
+                  Open Revolut <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              <input
+                type="text"
+                placeholder="Payment reference (optional)"
+                value={txHash}
+                onChange={e => setTxHash(e.target.value)}
+                className="w-full border px-3 h-10 text-xs"
+                style={{ borderRadius: 6, background: "var(--t-surface)", border: "1.5px solid var(--t-border)", color: "var(--t-text)" }}
+              />
+            </div>
+          )}
+
+          {selectedMethod === "paypal" && pm.paypalHandle && (
+            <div className="space-y-2">
+              <div className="rounded-lg p-3 space-y-2" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--t-muted)" }}>
+                  Send {formatMoney(parsedAmount)} via PayPal (Friends &amp; Family)
+                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-xs flex-1" style={{ color: "var(--t-text)" }}>{pm.paypalHandle}</p>
+                  <button
+                    onClick={() => copyText(pm.paypalHandle!, "paypal")}
+                    className="shrink-0 px-2 py-1 rounded text-[10px] font-semibold"
+                    style={{ background: copiedField === "paypal" ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.06)", color: copiedField === "paypal" ? "#059669" : "var(--t-muted)" }}
+                  >
+                    {copiedField === "paypal" ? "✓ Copied" : "Copy"}
+                  </button>
+                </div>
+                <a
+                  href={`https://paypal.me/${pm.paypalHandle.replace("@","")}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold"
+                  style={{ color: "var(--t-blue)" }}
+                >
+                  Open PayPal.me <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              <input
+                type="text"
+                placeholder="Payment reference (optional)"
+                value={txHash}
+                onChange={e => setTxHash(e.target.value)}
+                className="w-full border px-3 h-10 text-xs"
+                style={{ borderRadius: 6, background: "var(--t-surface)", border: "1.5px solid var(--t-border)", color: "var(--t-text)" }}
+              />
+            </div>
+          )}
+
+          {selectedMethod === "anonpay" && pm.anonPayWallet && (
+            <div className="rounded-lg p-3 space-y-2" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--t-muted)" }}>
+                Send {formatMoney(parsedAmount)} {pm.anonPayTicker.toUpperCase()} via AnonPay
+              </p>
+              <p className="text-xs" style={{ color: "var(--t-muted)" }}>
+                Complete the payment on AnonPay's platform, then return and click "I've Sent Payment".
+              </p>
+              <a
+                href={`https://trocador.app/anonpay/?ticker_to=${pm.anonPayTicker}&network_to=${pm.anonPayNetwork}&address=${pm.anonPayWallet}&amount=${parsedAmount.toFixed(2)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded"
+                style={{ background: "rgba(0,0,0,0.07)", color: "var(--t-text)" }}
+              >
+                Open AnonPay <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
+
+          {selectedMethod === "janoshik" && pm.janoshikPaymentUrl && (
+            <div className="rounded-lg p-3 space-y-2" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--t-muted)" }}>
+                Pay via Janoshik
+              </p>
+              <p className="text-xs" style={{ color: "var(--t-muted)" }}>
+                Complete your payment on Janoshik's platform, then return and click "I've Sent Payment".
+              </p>
+              <a
+                href={pm.janoshikPaymentUrl}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded"
+                style={{ background: "rgba(0,0,0,0.07)", color: "var(--t-text)" }}
+              >
+                Open Janoshik Payment <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)" }}>
+              <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#EF4444" }} />
+              <p className="text-xs" style={{ color: "#EF4444" }}>{error}</p>
+            </div>
+          )}
+
+          <button
+            onClick={submit}
+            disabled={submitting}
+            className="w-full h-12 font-semibold text-sm flex items-center justify-center gap-2 transition-opacity rounded-md"
+            style={{ background: "#F59E0B", color: "#fff", opacity: submitting ? 0.6 : 1 }}
+          >
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
+            {submitting ? "Submitting…" : "I've Sent Payment"}
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -1005,10 +1259,12 @@ export default function GbTestingPool() {
             {/* Late contribution panel (desktop) */}
             {isLoggedIn && !isOptedIn && !isAdmin && hasGbOrder && round.status === "active" && (
               <div className="hidden lg:block">
-                <LateContributePanel
+                <ContributePaymentFlow
                   gbId={gbId}
                   contributionAmount={round.contributionAmount}
                   anyContribution={round.anyContribution}
+                  paymentMethods={data.paymentMethods ?? null}
+                  pendingContribution={data.pendingContribution ?? null}
                   onContributed={() => setRefreshKey(k => k + 1)}
                 />
               </div>
@@ -1172,10 +1428,12 @@ export default function GbTestingPool() {
             {/* Late contribution panel (mobile) */}
             {isLoggedIn && !isOptedIn && !isAdmin && hasGbOrder && round.status === "active" && (
               <div className="lg:hidden">
-                <LateContributePanel
+                <ContributePaymentFlow
                   gbId={gbId}
                   contributionAmount={round.contributionAmount}
                   anyContribution={round.anyContribution}
+                  paymentMethods={data.paymentMethods ?? null}
+                  pendingContribution={data.pendingContribution ?? null}
                   onContributed={() => setRefreshKey(k => k + 1)}
                 />
               </div>

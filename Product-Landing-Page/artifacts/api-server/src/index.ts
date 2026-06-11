@@ -699,6 +699,19 @@ async function runStartupMigrations(): Promise<void> {
     // orders — admin fee columns
     await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS admin_fee numeric(10,2) NOT NULL DEFAULT 0`);
     await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS admin_fee_label text`);
+    // gb_testing_contributions — tracks pending contribution payments before admin confirmation
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS gb_testing_contributions (
+      id text PRIMARY KEY,
+      round_id text NOT NULL,
+      order_id text NOT NULL,
+      gb_id text NOT NULL,
+      amount numeric(10,2) NOT NULL,
+      payment_method text NOT NULL DEFAULT 'crypto',
+      tx_hash text,
+      status text NOT NULL DEFAULT 'pending',
+      rejection_reason text,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
     // Backfill dispatched_by_reshipper from reshipper_username for previously-confirmed orders
     await db.execute(sql`
       UPDATE orders

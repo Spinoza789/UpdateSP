@@ -255,6 +255,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
 
   // hasGbOrder: user has an order in this GB but hasn't opted into testing
   let hasGbOrder = false;
+  let pendingContribution: { id: string; amount: number; paymentMethod: string; txHash: string | null; status: string; rejectionReason: string | null } | null = null;
   if (req.account && !isOptedIn) {
     const tg = req.account.telegramUsername;
     const tgBare = tg.startsWith("@") ? tg.slice(1) : tg;
@@ -267,8 +268,46 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
         sql`lower(${ordersTable.telegramUsername}) IN (lower(${tgBare}), lower(${tgAt}))`
       ))
       .limit(1);
-    if (gbOrder) hasGbOrder = true;
+    if (gbOrder) {
+      hasGbOrder = true;
+      const pcResult = await db.execute(sql`
+        SELECT id, amount::float AS amount, payment_method, tx_hash, status, rejection_reason
+        FROM gb_testing_contributions
+        WHERE round_id = ${round.id} AND order_id = ${gbOrder.id}
+        ORDER BY created_at DESC LIMIT 1
+      `);
+      const pcRow = ((pcResult as any).rows ?? [])[0];
+      if (pcRow) {
+        pendingContribution = {
+          id: pcRow.id,
+          amount: parseFloat(pcRow.amount),
+          paymentMethod: pcRow.payment_method,
+          txHash: pcRow.tx_hash,
+          status: pcRow.status,
+          rejectionReason: pcRow.rejection_reason,
+        };
+      }
+    }
   }
+
+  // payment methods configured on this GB (for contribution payment UI)
+  const [gbInfo] = await db
+    .select({ organiserPayments: groupBuysTable.organiserPayments })
+    .from(groupBuysTable)
+    .where(eq(groupBuysTable.id, gbId));
+  const op = (gbInfo?.organiserPayments as Record<string, unknown> | null) ?? {};
+  const paymentMethods = {
+    cryptoWalletAddress: (op["cryptoWalletAddress"] as string | null) || null,
+    cryptoCurrency: (op["cryptoCurrency"] as string | null) || "USDT",
+    cryptoNetwork: (op["cryptoNetwork"] as string | null) || "ERC-20",
+    revolutHandle: (op["revolutHandle"] as string | null) || null,
+    paypalHandle: (op["paypalHandle"] as string | null) || null,
+    anonPayEnabled: !!(op["anonPayEnabled"]),
+    anonPayWallet: (op["anonPayWallet"] as string | null) || null,
+    anonPayTicker: (op["anonPayTicker"] as string | null) || "usdt",
+    anonPayNetwork: (op["anonPayNetwork"] as string | null) || "ERC20",
+    janoshikPaymentUrl: (round.janoshikPaymentUrl as string | null) ?? null,
+  };
 
   // Fetch GB's linked products so all compounds in the GB appear in the ballot
   const gbProductRowsCustomer = await db
@@ -323,6 +362,8 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
     existingVote,
     isOptedIn,
     hasGbOrder,
+    pendingContribution,
+    paymentMethods,
     peptideOptions,
     peptideBatches: ((round as any).peptideBatches as Record<string, string> | null) ?? {},
     testOptions: configuredTestOptions,
@@ -465,7 +506,7 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
   res.json({ ok: true, updated: existing.length > 0 });
 });
 
-// ── POST /api/group-buys/:gbId/testing/contribute — late opt-in ──
+// ── POST /api/group-buys/:gbId/testing/contribute — late opt-in with payment ──
 router.post("/group-buys/:gbId/testing/contribute", async (req, res): Promise<void> => {
   loadOptionalAccount(req);
   if (!req.account) {
@@ -473,6 +514,11 @@ router.post("/group-buys/:gbId/testing/contribute", async (req, res): Promise<vo
     return;
   }
   const { gbId } = req.params;
+  const { paymentMethod, txHash, amount: amountInput } = req.body as {
+    paymentMethod?: string;
+    txHash?: string;
+    amount?: string | number;
+  };
   const tg = req.account.telegramUsername;
   const tgBare = tg.startsWith("@") ? tg.slice(1) : tg;
   const tgAt  = tg.startsWith("@") ? tg : `@${tg}`;
@@ -491,6 +537,13 @@ router.post("/group-buys/:gbId/testing/contribute", async (req, res): Promise<vo
     return;
   }
 
+  const validMethods = ["crypto", "revolut", "paypal", "anonpay", "janoshik"];
+  const method = String(paymentMethod || "crypto").toLowerCase();
+  if (!validMethods.includes(method)) {
+    res.status(400).json({ error: "Invalid payment method" });
+    return;
+  }
+
   const [order] = await db
     .select({ id: ordersTable.id, testingContribution: ordersTable.testingContribution })
     .from(ordersTable)
@@ -502,19 +555,35 @@ router.post("/group-buys/:gbId/testing/contribute", async (req, res): Promise<vo
 
   if (!order) { res.status(403).json({ error: "No order found in this group buy" }); return; }
 
-  const existing = parseFloat(String(order.testingContribution ?? "0")) || 0;
-  if (existing > 0) { res.status(400).json({ error: "You have already contributed to this round" }); return; }
+  const existingConfirmed = parseFloat(String(order.testingContribution ?? "0")) || 0;
+  if (existingConfirmed > 0) { res.status(400).json({ error: "You have already contributed to this round" }); return; }
+
+  // Check for existing pending contribution
+  const existingPendingResult = await db.execute(sql`
+    SELECT id FROM gb_testing_contributions
+    WHERE round_id = ${round.id} AND order_id = ${order.id} AND status = 'pending'
+    LIMIT 1
+  `);
+  const existingPending = ((existingPendingResult as any).rows ?? [])[0];
+  if (existingPending) {
+    res.status(400).json({ error: "You already have a pending contribution awaiting confirmation" });
+    return;
+  }
 
   const amount = round.anyContribution
-    ? parseFloat(String((req.body as { amount?: string }).amount || "0")) || 15
+    ? parseFloat(String(amountInput || "0")) || 15
     : parseFloat(String(round.contributionAmount));
 
-  await db
-    .update(ordersTable)
-    .set({ testingContribution: String(amount.toFixed(2)) })
-    .where(eq(ordersTable.id, order.id));
+  if (amount <= 0) { res.status(400).json({ error: "Contribution amount must be greater than 0" }); return; }
 
-  res.json({ ok: true, amount });
+  const cleanTxHash = txHash ? String(txHash).trim() || null : null;
+  const contribId = nanoid();
+  await db.execute(sql`
+    INSERT INTO gb_testing_contributions (id, round_id, order_id, gb_id, amount, payment_method, tx_hash, status)
+    VALUES (${contribId}, ${round.id}, ${order.id}, ${gbId}, ${amount.toFixed(2)}::numeric, ${method}, ${cleanTxHash}, 'pending')
+  `);
+
+  res.json({ ok: true, status: "pending", id: contribId });
 });
 
 // ── Admin: GET /api/admin/group-buys/:gbId/testing ────────────
@@ -804,6 +873,70 @@ router.patch("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> 
     .returning();
 
   res.json({ round: updated });
+});
+
+// ── Admin: GET /api/admin/group-buys/:gbId/testing/contributions ──
+router.get("/admin/group-buys/:gbId/testing/contributions", async (req, res): Promise<void> => {
+  if (!requireAdmin(req, res)) return;
+  const { gbId } = req.params;
+
+  const [round] = await db
+    .select({ id: gbTestingRoundsTable.id })
+    .from(gbTestingRoundsTable)
+    .where(eq(gbTestingRoundsTable.groupBuyId, gbId))
+    .orderBy(sql`${gbTestingRoundsTable.createdAt} DESC`)
+    .limit(1);
+
+  if (!round) { res.json({ contributions: [] }); return; }
+
+  const result = await db.execute(sql`
+    SELECT c.id, c.order_id, c.amount::float AS amount, c.payment_method, c.tx_hash,
+           c.status, c.rejection_reason, c.created_at,
+           o.code, o.telegram_username
+    FROM gb_testing_contributions c
+    LEFT JOIN orders o ON o.id = c.order_id
+    WHERE c.round_id = ${round.id}
+    ORDER BY c.created_at DESC
+  `);
+
+  res.json({ contributions: (result as any).rows ?? [] });
+});
+
+// ── Admin: PATCH /api/admin/group-buys/:gbId/testing/contributions/:id ──
+router.patch("/admin/group-buys/:gbId/testing/contributions/:id", async (req, res): Promise<void> => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const { action, rejectionReason } = req.body as { action: "confirm" | "reject"; rejectionReason?: string };
+
+  if (!["confirm", "reject"].includes(action)) {
+    res.status(400).json({ error: "action must be 'confirm' or 'reject'" });
+    return;
+  }
+
+  const contribResult = await db.execute(sql`
+    SELECT id, order_id, amount::float AS amount FROM gb_testing_contributions
+    WHERE id = ${id} AND status = 'pending'
+    LIMIT 1
+  `);
+  const contrib = ((contribResult as any).rows ?? [])[0];
+  if (!contrib) { res.status(404).json({ error: "Pending contribution not found" }); return; }
+
+  if (action === "confirm") {
+    await db.execute(sql`
+      UPDATE orders SET testing_contribution = ${parseFloat(contrib.amount).toFixed(2)}::numeric
+      WHERE id = ${contrib.order_id}
+    `);
+    await db.execute(sql`
+      UPDATE gb_testing_contributions SET status = 'confirmed' WHERE id = ${id}
+    `);
+    res.json({ ok: true, status: "confirmed" });
+  } else {
+    await db.execute(sql`
+      UPDATE gb_testing_contributions SET status = 'rejected', rejection_reason = ${rejectionReason ?? null}
+      WHERE id = ${id}
+    `);
+    res.json({ ok: true, status: "rejected" });
+  }
 });
 
 // ── GET /api/account/testing/active-pools — GBs where the signed-in member is already opted in ──

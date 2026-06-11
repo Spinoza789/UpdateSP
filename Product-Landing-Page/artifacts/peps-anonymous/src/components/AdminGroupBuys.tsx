@@ -7581,6 +7581,19 @@ interface TestingContributor {
   vote: { peptideName: string; vialCount: number; testSelections: string[] } | null;
 }
 
+interface PendingTestingContribution {
+  id: string;
+  order_id: string;
+  amount: number;
+  payment_method: string;
+  tx_hash: string | null;
+  status: string;
+  rejection_reason: string | null;
+  created_at: string;
+  code: string | null;
+  telegram_username: string | null;
+}
+
 interface TestingAdminData {
   round: TestingRound | null;
   poolTotal: number;
@@ -7653,6 +7666,40 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
   const [testOptionsDirty, setTestOptionsDirty] = useState(false);
   const [savingTestOptions, setSavingTestOptions] = useState(false);
   const [testOptionsMsg, setTestOptionsMsg] = useState<string | null>(null);
+
+  // Pending contributions (late opt-in payments awaiting confirmation)
+  const [pendingContribs, setPendingContribs] = useState<PendingTestingContribution[]>([]);
+  const [contribsLoading, setContribsLoading] = useState(false);
+  const [contribActionMsg, setContribActionMsg] = useState<Record<string, string>>({});
+
+  const loadContribs = useCallback(async () => {
+    setContribsLoading(true);
+    try {
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing/contributions`), { headers: { "x-admin-secret": secret } });
+      if (r.ok) { const d = await r.json(); setPendingContribs(d.contributions ?? []); }
+    } finally { setContribsLoading(false); }
+  }, [secret, gb.id]);
+
+  useEffect(() => { loadContribs(); }, [loadContribs]);
+
+  async function handleContribAction(id: string, action: "confirm" | "reject", reason?: string) {
+    setContribActionMsg(prev => ({ ...prev, [id]: "…" }));
+    try {
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing/contributions/${id}`), {
+        method: "PATCH",
+        headers: { "x-admin-secret": secret, "Content-Type": "application/json" },
+        body: JSON.stringify({ action, rejectionReason: reason }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        setContribActionMsg(prev => ({ ...prev, [id]: action === "confirm" ? "Confirmed ✓" : "Rejected" }));
+        await Promise.all([loadContribs(), load()]);
+        setTimeout(() => setContribActionMsg(prev => { const n = { ...prev }; delete n[id]; return n; }), 3000);
+      } else {
+        setContribActionMsg(prev => ({ ...prev, [id]: d.error ?? "Error" }));
+      }
+    } catch { setContribActionMsg(prev => ({ ...prev, [id]: "Network error" })); }
+  }
 
   // Payment test mode
   type PaymentTestModeData = {
@@ -8461,6 +8508,84 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
           </div>
         )}
       </div>
+
+      {/* Pending Contributions (late opt-in payments awaiting confirmation) */}
+      {(pendingContribs.length > 0 || contribsLoading) && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+              Pending Contributions ({pendingContribs.filter(c => c.status === "pending").length})
+            </p>
+            {contribsLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+          </div>
+          {pendingContribs.filter(c => c.status === "pending").length === 0 ? (
+            <p className="text-xs text-muted-foreground">No pending contributions</p>
+          ) : (
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800 overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/20">
+                    <th className="text-left px-3 py-2 font-semibold text-muted-foreground">User</th>
+                    <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Method</th>
+                    <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Amount</th>
+                    <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Ref</th>
+                    <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingContribs.filter(c => c.status === "pending").map((c, i) => (
+                    <tr key={c.id} className={i % 2 === 0 ? "bg-background" : "bg-amber-50/30 dark:bg-amber-900/10"}>
+                      <td className="px-3 py-2 font-medium">
+                        {c.telegram_username ? `@${c.telegram_username}` : c.code ?? c.order_id.slice(0, 8)}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-muted text-muted-foreground">
+                          {c.payment_method}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums font-semibold">
+                        ${c.amount.toFixed(2)}
+                      </td>
+                      <td className="px-3 py-2 max-w-[120px]">
+                        {c.tx_hash ? (
+                          <span className="font-mono text-[10px] text-muted-foreground truncate block" title={c.tx_hash}>{c.tx_hash}</span>
+                        ) : (
+                          <span className="text-muted-foreground italic text-[10px]">none</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        {contribActionMsg[c.id] ? (
+                          <span className={`text-[10px] font-semibold ${contribActionMsg[c.id].includes("✓") ? "text-green-600" : "text-muted-foreground"}`}>
+                            {contribActionMsg[c.id]}
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => handleContribAction(c.id, "confirm")}
+                              className="px-2 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => {
+                                const reason = window.prompt("Rejection reason (optional):");
+                                if (reason !== null) handleContribAction(c.id, "reject", reason || undefined);
+                              }}
+                              className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Opted-in members */}
       <div>
