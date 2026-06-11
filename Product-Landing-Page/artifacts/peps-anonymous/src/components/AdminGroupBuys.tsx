@@ -5819,6 +5819,7 @@ interface GbOrder {
   balanceConfirmedAt?: string | null;
   shippingCountry: string | null;
   countryLegId: string | null;
+  reshipperUsername?: string | null;
   createdAt: string;
   paymentConfirmedAt?: string | null;
   directShippingRequested?: boolean;
@@ -9030,10 +9031,9 @@ function BroadcastSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
 
 // ─── Leg Shipping Calculator ───────────────────────────────────
 function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
-  const [legs, setLegs] = useState<AdminCLeg[]>([]);
   const [allOrders, setAllOrders] = useState<GbOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLegId, setSelectedLegId] = useState<string>("all");
+  const [selectedReshipper, setSelectedReshipper] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState("Submitted");
 
   // ── Split mode state ──────────────────────────────────────────
@@ -9053,34 +9053,31 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
   const [directResult, setDirectResult] = useState<{ message: string; breakdown: { orderId: string; username: string; vendorShipping: number }[] } | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch(apiUrl(`/admin/group-buys/${gb.id}/country-legs`), { headers: { "x-admin-secret": secret } }).then(r => r.ok ? r.json() : []),
-      fetch(apiUrl(`/admin/group-buys/${gb.id}/orders`), { headers: { "x-admin-secret": secret } }).then(r => r.ok ? r.json() : []),
-    ]).then(([legsData, ordersData]: [AdminCLeg[], GbOrder[]]) => {
-      setLegs(legsData);
-      setAllOrders(ordersData);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    fetch(apiUrl(`/admin/group-buys/${gb.id}/orders`), { headers: { "x-admin-secret": secret } })
+      .then(r => r.ok ? r.json() : [])
+      .then((ordersData: GbOrder[]) => {
+        setAllOrders(ordersData);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [gb.id, secret]);
 
-  // When leg changes in split mode — pre-fill cost from leg's vendorShippingCost
+  // Reset exclusions when reshipper filter or status changes
   useEffect(() => {
     setExcludedIds(new Set());
     setApplyResult(null);
     setDirectResult(null);
-    if (selectedLegId && selectedLegId !== "all") {
-      const leg = legs.find(l => l.id === selectedLegId);
-      if (leg?.vendorShippingCost != null && parseFloat(String(leg.vendorShippingCost)) > 0) {
-        setTotalCost(String(leg.vendorShippingCost));
-      } else {
-        setTotalCost("");
-      }
-    }
-  }, [selectedLegId, legs]);
+  }, [selectedReshipper, statusFilter]);
+
+  // Unique reshippers from orders (excluding direct-to-home)
+  const availableReshippers = Array.from(
+    new Set(allOrders.filter(o => o.reshipperUsername && !o.directShippingRequested).map(o => o.reshipperUsername!))
+  ).sort();
 
   const legOrders = allOrders.filter(o =>
-    (selectedLegId === "all" ? true : o.countryLegId === selectedLegId) &&
-    o.status === statusFilter
+    !o.directShippingRequested &&
+    o.status === statusFilter &&
+    (selectedReshipper === "all" ? true : o.reshipperUsername === selectedReshipper)
   );
 
   // Pre-fill direct amounts whenever the order set changes
@@ -9094,7 +9091,7 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
     });
     setDirectResult(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [legOrders.map(o => o.id).join(","), statusFilter, selectedLegId]);
+  }, [legOrders.map(o => o.id).join(","), statusFilter, selectedReshipper]);
 
   // ── Split mode helpers ────────────────────────────────────────
   const kitCount = (o: GbOrder) => Math.max(1, o.lineItems.reduce((s, li) => s + li.quantity, 0));
@@ -9160,17 +9157,17 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
   };
 
   const runBackfill = async () => {
-    const legLabel = selectedLegId === "all"
-      ? "all legs in this GB"
-      : (legs.find(l => l.id === selectedLegId)?.countryName ?? "the selected leg");
-    if (!confirm(`This will mark a balance owed (equal to their vendor shipping) on all paid orders in ${legLabel} where vendor shipping was added after payment. Continue?`)) return;
+    const reshipperLabel = selectedReshipper === "all"
+      ? "all orders in this GB"
+      : `orders reshipped by @${selectedReshipper}`;
+    if (!confirm(`This will mark a balance owed (equal to their vendor shipping) on all paid orders in ${reshipperLabel} where vendor shipping was added after payment. Continue?`)) return;
     setBackfilling(true);
     setBackfillResult(null);
     try {
       const res = await fetch(apiUrl(`/admin/group-buys/${gb.id}/backfill-balance-due`), {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-secret": secret },
-        body: JSON.stringify({ legId: selectedLegId === "all" ? undefined : selectedLegId }),
+        body: JSON.stringify({ reshipperUsername: selectedReshipper === "all" ? undefined : selectedReshipper }),
       });
       const data = await res.json();
       setBackfillResult({ updated: data.updated ?? 0, message: data.message ?? "Done" });
@@ -9212,26 +9209,17 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
         </button>
       </div>
 
-      {/* Leg + status selectors */}
+      {/* Reshipper + status selectors */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs font-semibold">Country Leg</Label>
-          <select value={selectedLegId}
-            onChange={e => setSelectedLegId(e.target.value)}
+          <Label className="text-xs font-semibold">Reshipper</Label>
+          <select value={selectedReshipper}
+            onChange={e => setSelectedReshipper(e.target.value)}
             className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring">
-            <option value="all">All legs (combined)</option>
-            {legs.map(l => <option key={l.id} value={l.id}>{l.countryName} ({l.countryCode})</option>)}
+            <option value="all">All reshippers</option>
+            {availableReshippers.map(r => <option key={r} value={r}>@{r}</option>)}
           </select>
-          {(() => {
-            const leg = legs.find(l => l.id === selectedLegId);
-            if (!leg?.reshipper?.reshipperUsername) return null;
-            return (
-              <div className="mt-1.5 flex items-center gap-1.5">
-                <Truck className="w-3 h-3 text-purple-500" />
-                <span className="text-[11px] text-purple-700 font-semibold">@{leg.reshipper.reshipperUsername}</span>
-              </div>
-            );
-          })()}
+          <p className="mt-1.5 text-[11px] text-muted-foreground">Direct-to-home orders excluded automatically</p>
         </div>
         <div>
           <Label className="text-xs font-semibold">Order Status</Label>
@@ -9383,7 +9371,7 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
             <Card className="p-6 text-center space-y-2">
               <Calculator className="w-7 h-7 text-muted-foreground mx-auto" />
               <p className="text-sm font-semibold">No orders found</p>
-              <p className="text-xs text-muted-foreground">Select a country leg and order status to see orders for calculation.</p>
+              <p className="text-xs text-muted-foreground">Select a reshipper and order status to see orders for calculation.</p>
             </Card>
           )}
 
@@ -9475,7 +9463,7 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
             <Card className="p-6 text-center space-y-2">
               <PenLine className="w-7 h-7 text-muted-foreground mx-auto" />
               <p className="text-sm font-semibold">No orders found</p>
-              <p className="text-xs text-muted-foreground">Select a country leg and order status to see orders.</p>
+              <p className="text-xs text-muted-foreground">Select a reshipper and order status to see orders.</p>
             </Card>
           )}
 
@@ -9503,7 +9491,7 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
           <p className="text-sm font-semibold text-orange-800">Fix previously paid orders</p>
           <p className="text-xs text-orange-700 mt-0.5">
             If vendor shipping was applied <em>after</em> customers already paid, their orders show as "Paid" but they still owe the shipping amount. This marks the balance owed on affected orders
-            {selectedLegId === "all" ? " across all legs" : ` in the selected leg (${legs.find(l => l.id === selectedLegId)?.countryName ?? selectedLegId})`}.
+            {selectedReshipper === "all" ? " across all reshippers" : ` reshipped by @${selectedReshipper}`}.
           </p>
         </div>
         <button
@@ -9513,7 +9501,7 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 transition-colors"
         >
           {backfilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
-          {backfilling ? "Running…" : selectedLegId === "all" ? "Mark balance owed — all legs" : `Mark balance owed — ${legs.find(l => l.id === selectedLegId)?.countryName ?? "selected leg"}`}
+          {backfilling ? "Running…" : selectedReshipper === "all" ? "Mark balance owed — all reshippers" : `Mark balance owed — @${selectedReshipper}`}
         </button>
         {backfillResult && (
           <p className={cn("text-xs font-medium", backfillResult.updated > 0 ? "text-orange-800" : "text-green-700")}>
