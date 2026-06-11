@@ -714,7 +714,8 @@ router.post("/organiser/group-buys/:id/backfill-admin-fee", requireOrganiser, as
   const feeAmount = parseFloat(String(gb.adminFeeAmount));
   if (feeAmount <= 0) { res.status(400).json({ error: "Admin fee amount must be greater than 0" }); return; }
 
-  // Update all non-deleted orders on this GB that don't already have the fee applied
+  // Update non-deleted, non-direct-to-home orders on this GB that don't already have the fee applied.
+  // Direct-to-home orders are excluded — the admin/reshipping fee doesn't apply to them.
   const result = await db.execute(sql`
     UPDATE orders
     SET
@@ -725,6 +726,7 @@ router.post("/organiser/group-buys/:id/backfill-admin-fee", requireOrganiser, as
       group_buy_id = ${id}
       AND deleted_at IS NULL
       AND (admin_fee IS NULL OR admin_fee = 0)
+      AND (direct_shipping_requested IS NOT TRUE)
   `);
 
   const updated = (result as { rowCount?: number }).rowCount ?? 0;

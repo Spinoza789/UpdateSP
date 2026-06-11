@@ -5826,6 +5826,8 @@ interface GbOrder {
   isWholesale?: boolean;
   inpostQrCode?: string | null;
   royalMailQrCode?: string | null;
+  adminFee?: number;
+  adminFeeLabel?: string | null;
   lineItems: { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number }[];
 }
 
@@ -6934,6 +6936,7 @@ function OrdersSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
                       <div className="flex justify-between"><span>Delivery ({o.deliveryMethod})</span><span>{gb.currency} {o.deliveryPrice.toFixed(2)}</span></div>
                       {(o.directShippingCost ?? 0) > 0 && <div className="flex justify-between font-medium text-indigo-700"><span>🏠 Direct Shipping Cost</span><span>{gb.currency} {o.directShippingCost!.toFixed(2)}</span></div>}
                       {o.vendorShipping > 0 && <div className="flex justify-between"><span>Vendor shipping</span><span>{gb.currency} {o.vendorShipping.toFixed(2)}</span></div>}
+                      {(o.adminFee ?? 0) > 0 && <div className="flex justify-between text-amber-700"><span>{o.adminFeeLabel ?? "Admin Fee"}</span><span>{gb.currency} {(o.adminFee!).toFixed(2)}</span></div>}
                       {o.tip > 0 && <div className="flex justify-between"><span>Tip</span><span>{gb.currency} {o.tip.toFixed(2)}</span></div>}
                       {(o.creditsApplied ?? 0) > 0 && <div className="flex justify-between text-emerald-600 font-medium"><span>Store Credits Applied</span><span>−${o.creditsApplied!.toFixed(2)} USD</span></div>}
                       <div className="flex justify-between font-semibold text-foreground pt-0.5"><span>Total</span><span>{gb.currency} {o.grandTotal.toFixed(2)}</span></div>
@@ -6952,6 +6955,38 @@ function OrdersSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
                         <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">Delivery Address</p>
                         {o.shippingName && <p className="text-xs font-semibold text-foreground">{o.shippingName}</p>}
                         {o.shippingAddress && <p className="text-xs text-muted-foreground whitespace-pre-line">{o.shippingAddress}</p>}
+                      </div>
+                    )}
+                    {/* Apply Admin Fee — shown only for orders missing the fee that are NOT direct-to-home */}
+                    {gb.adminFeeAmount != null && gb.adminFeeAmount > 0 && (o.adminFee ?? 0) === 0 && !o.directShippingRequested && (
+                      <div className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-amber-200 bg-amber-50/60">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm leading-none">💰</span>
+                          <p className="text-[11px] font-semibold text-amber-700">
+                            No {gb.adminFeeLabel ?? "admin fee"} — {gb.currency}{Number(gb.adminFeeAmount).toFixed(2)} not applied
+                          </p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const res = await fetch(apiUrl(`/admin/orders/${o.id}`), {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+                              body: JSON.stringify({ adminFee: gb.adminFeeAmount, adminFeeLabel: gb.adminFeeLabel ?? null }),
+                            });
+                            if (res.ok) {
+                              const data = await res.json();
+                              setOrders(prev => prev.map(ord => ord.id === o.id ? {
+                                ...ord,
+                                adminFee: data.adminFee ?? Number(gb.adminFeeAmount),
+                                adminFeeLabel: data.adminFeeLabel ?? (gb.adminFeeLabel ?? null),
+                                grandTotal: data.grandTotal ?? ord.grandTotal,
+                              } : ord));
+                            }
+                          }}
+                          className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-md bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors border border-amber-300"
+                        >
+                          + Add Fee
+                        </button>
                       </div>
                     )}
                     {/* Direct Shipping toggle */}

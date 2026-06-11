@@ -223,6 +223,8 @@ function fmtOrder(o: Record<string, any>, lineItems: Record<string, any>[] = [])
     ipAddress: o.ipAddress ?? null,
     directShippingRequested: o.directShippingRequested ?? false,
     directShippingCost: o.directShippingCost != null ? parseFloat(String(o.directShippingCost)) : null,
+    adminFee: o.adminFee != null ? parseFloat(String(o.adminFee)) : 0,
+    adminFeeLabel: o.adminFeeLabel ?? null,
     lineItems: lineItems.map((li) => ({
       id: li.id,
       productId: li.productId,
@@ -1026,7 +1028,7 @@ router.post("/admin/orders", async (req, res): Promise<void> => {
 router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
 
-  const { status, vendorShipping, trackingNumber, trackingNumbers, adminNotes, adminMessage, telegramUsername, paymentStatus, paymentTxHash, paymentTxHashes, paymentUsdAmount, pin, refundStatus, refundReason, clearBalance, shippingName, shippingAddress, directShippingRequested, deliveryMethod, deliveryPrice, amountDue } = req.body;
+  const { status, vendorShipping, trackingNumber, trackingNumbers, adminNotes, adminMessage, telegramUsername, paymentStatus, paymentTxHash, paymentTxHashes, paymentUsdAmount, pin, refundStatus, refundReason, clearBalance, shippingName, shippingAddress, directShippingRequested, deliveryMethod, deliveryPrice, amountDue, adminFee, adminFeeLabel } = req.body;
 
   const [existing] = await db
     .select()
@@ -1121,14 +1123,15 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
     const tipDs = parseFloat(String(existing.tip ?? "0"));
     const tcDs = parseFloat(String(existing.testingContribution ?? "0"));
     const couponDs = parseFloat(String(existing.couponDiscount ?? "0"));
+    const afDs = parseFloat(String(existing.adminFee ?? "0"));
     if (next) {
       // Turning ON: add the directShippingCost (already stored from customer's request), zero vendorShipping
       updates.vendorShipping = "0.00";
-      updates.grandTotal = Math.max(0, productSubtotalDs + deliveryPriceDs + storedDsc + tipDs + tcDs - couponDs).toFixed(2);
+      updates.grandTotal = Math.max(0, productSubtotalDs + deliveryPriceDs + storedDsc + tipDs + tcDs + afDs - couponDs).toFixed(2);
     } else {
       // Turning OFF: remove directShippingCost, clear it
       updates.directShippingCost = null;
-      updates.grandTotal = Math.max(0, productSubtotalDs + deliveryPriceDs + vsDs + tipDs + tcDs - couponDs).toFixed(2);
+      updates.grandTotal = Math.max(0, productSubtotalDs + deliveryPriceDs + vsDs + tipDs + tcDs + afDs - couponDs).toFixed(2);
     }
   }
   if (deliveryMethod !== undefined) {
@@ -1146,9 +1149,10 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
     const tipDp = parseFloat(String(existing.tip ?? "0"));
     const tcDp = parseFloat(String(existing.testingContribution ?? "0"));
     const couponDp = parseFloat(String(existing.couponDiscount ?? "0"));
+    const afDp = parseFloat(String(existing.adminFee ?? "0"));
     const dscDp = existing.directShippingRequested && existing.directShippingCost != null
       ? parseFloat(String(existing.directShippingCost)) : 0;
-    updates.grandTotal = Math.max(0, productSubtotalDp + dp + vsDp + dscDp + tipDp + tcDp - couponDp).toFixed(2);
+    updates.grandTotal = Math.max(0, productSubtotalDp + dp + vsDp + dscDp + tipDp + tcDp + afDp - couponDp).toFixed(2);
   }
 
   if (vendorShipping !== undefined) {
@@ -1164,7 +1168,8 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
     const tip = parseFloat(String(existing.tip ?? "0"));
     const testingContribution = parseFloat(String(existing.testingContribution ?? "0"));
     const couponDiscount = parseFloat(String(existing.couponDiscount ?? "0"));
-    updates.grandTotal = Math.max(0, productSubtotal + deliveryPrice + vs + tip + testingContribution - couponDiscount).toFixed(2);
+    const afVs = parseFloat(String(existing.adminFee ?? "0"));
+    updates.grandTotal = Math.max(0, productSubtotal + deliveryPrice + vs + tip + testingContribution + afVs - couponDiscount).toFixed(2);
     // If the order was already fully confirmed, the vendor shipping is an outstanding balance the
     // customer still needs to pay. Set amountDue so BalanceDueCard is shown to them.
     // NOTE: test_confirmed is NOT treated as fully paid — the customer is still completing
@@ -1182,6 +1187,25 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
       // If vendor shipping is being cleared, reset any pending balance payment state too
       if (vs === 0) updates.balancePaymentStatus = null;
     }
+  }
+
+  if (adminFee !== undefined) {
+    const fee = parseFloat(String(adminFee));
+    if (isNaN(fee) || fee < 0) {
+      res.status(400).json({ error: "adminFee must be a non-negative number" }); return;
+    }
+    updates.adminFee = fee.toFixed(2);
+    if (adminFeeLabel !== undefined) updates.adminFeeLabel = adminFeeLabel || null;
+    // Recalculate grand total with the new admin fee
+    const psAf = parseFloat(String(existing.productSubtotal ?? "0"));
+    const dpAf = parseFloat(String(existing.deliveryPrice ?? "0"));
+    const vsAf = parseFloat(String(existing.vendorShipping ?? "0"));
+    const tipAf = parseFloat(String(existing.tip ?? "0"));
+    const tcAf = parseFloat(String(existing.testingContribution ?? "0"));
+    const cdAf = parseFloat(String(existing.couponDiscount ?? "0"));
+    const dscAf = existing.directShippingRequested && existing.directShippingCost != null
+      ? parseFloat(String(existing.directShippingCost)) : 0;
+    updates.grandTotal = Math.max(0, psAf + dpAf + vsAf + dscAf + tipAf + tcAf + fee - cdAf).toFixed(2);
   }
 
   // Allow admin to manually clear an outstanding balance (e.g. when VS was set during
