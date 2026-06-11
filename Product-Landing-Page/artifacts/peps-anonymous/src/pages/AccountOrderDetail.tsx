@@ -1796,7 +1796,10 @@ export default function AccountOrderDetail() {
 
   const handleApplyCredits = async () => {
     if (!order || applyingCredits || accountCredits <= 0) return;
-    const toApply = Math.min(accountCredits, order.grandTotal - (order.creditsApplied ?? 0));
+    // Round up to the nearest whole dollar: credits are integers so covering a fractional
+    // order total (e.g. $30.99) requires 31 credits, not 30. Math.ceil ensures we deduct
+    // enough so the backend auto-confirm check passes.
+    const toApply = Math.min(accountCredits, Math.ceil(order.grandTotal - (order.creditsApplied ?? 0)));
     if (toApply <= 0) return;
     setApplyingCredits(true);
     setCreditsError(null);

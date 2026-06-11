@@ -683,9 +683,11 @@ router.post("/account/use-credits", requireAccount, async (req, res): Promise<vo
       await db.update(ordersTable)
         .set({ creditsApplied: deduct })
         .where(eq(ordersTable.id, orderId));
-      // If credits fully cover the order, mark it as confirmed
-      if (parseFloat(String(orderRow.grandTotal)) <= deduct && orderRow.paymentStatus !== "confirmed") {
-        await db.update(ordersTable).set({ paymentStatus: "confirmed" }).where(eq(ordersTable.id, orderId));
+      // If credits fully cover the order, mark it as confirmed.
+      // Credits are whole-dollar integers, so a $30.99 order needs ≥31 credits to be
+      // covered — compare against Math.ceil(grandTotal) rather than the raw float.
+      if (Math.ceil(parseFloat(String(orderRow.grandTotal))) <= deduct && orderRow.paymentStatus !== "confirmed") {
+        await db.update(ordersTable).set({ paymentStatus: "confirmed", paymentConfirmedAt: new Date(), amountDue: "0.00" }).where(eq(ordersTable.id, orderId));
       }
     }
   }
