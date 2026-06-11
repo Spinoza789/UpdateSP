@@ -2647,6 +2647,11 @@ function OrdersTab({ secret }: { secret: string }) {
                     <Globe className="w-2.5 h-2.5" />{normalizeCountry(order.shippingCountry || order.accountCountry || "")}
                   </span>
                 )}
+                {order.groupBuyId && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 hidden sm:inline-flex items-center ${(order.adminFee ?? 0) > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+                    AF
+                  </span>
+                )}
                 {order.reshipperUsername && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 bg-violet-100 text-violet-700 hidden sm:inline-flex items-center gap-1">
                     <Truck className="w-2.5 h-2.5" />{order.reshipperUsername}
