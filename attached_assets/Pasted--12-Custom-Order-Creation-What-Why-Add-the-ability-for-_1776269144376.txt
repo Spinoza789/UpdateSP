@@ -1,0 +1,23 @@
+#12 - Custom Order Creation
+What & Why
+Add the ability for the organiser and admin to manually create orders on behalf of customers, with full control over shipping costs.
+Two surfaces need this:
+* GB Organiser — Organiser should be able to create a custom order for a specific customer within a selected Group Buy (e.g. for customers who paid outside the platform or need a manual entry).
+* Admin panel — Admin should be able to create orders for any customer with a custom shipping amount they type in, rather than being forced to pick from the predefined delivery methods.
+Done looks like
+* In the GB Organiser, within the Orders tab for a selected Group Buy, there is a "Create Order" button that opens a form: customer Telegram username, product(s) with quantity, and shipping amount. Submitting it creates the order via the existing POST /api/admin/orders endpoint.
+* In the Admin panel's order creation form (or wherever orders are currently created), there is a "Custom shipping" input field that accepts a free-form £/$ amount, overriding the dropdown selection if filled in.
+* Both forms show a clear summary of the order total before submission.
+* Created orders appear immediately in the order list without a page reload.
+Out of scope
+* Customer-facing custom order creation.
+* Changing the pricing or product catalogue from within this form (products come from the existing GB/shop catalogue).
+* Email/Telegram notifications for manually created orders (those are handled by existing notification logic).
+Tasks
+1. Admin custom shipping field — Add an optional "Custom shipping amount" number input to the existing admin order-creation form. When filled, it sends vendorShipping in the request body to POST /api/admin/orders, overriding the selected delivery method's price.
+2. GB Organiser create-order form — Add a "Create Order" button in the Orders tab of GbOrganiser. The form collects: Telegram username, one or more product + quantity rows (from the GB's product list), and a shipping amount. On submit it calls POST /api/admin/orders with the groupBuyId pre-filled.
+3. API support for custom shipping on GB orders — Verify (and fix if needed) that POST /api/admin/orders correctly accepts and stores a free-form vendorShipping value when a groupBuyId is provided, so the total is calculated correctly.
+Relevant files
+* Product-Landing-Page/artifacts/peps-anonymous/src/pages/Admin.tsx
+* Product-Landing-Page/artifacts/peps-anonymous/src/pages/GbOrganiser.tsx
+* Product-Landing-Page/artifacts/api-server/src/routes/admin.ts:268-393

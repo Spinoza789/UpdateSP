@@ -1,0 +1,8 @@
+"key","value","updated_at"
+"group_buy_end_date","2026-10-28T23:59:59.000Z","""2026-03-19T20:45:03.388Z"""
+"homeSections","[{""id"":""order"",""label"":""Place an order"",""enabled"":true},{""id"":""manage"",""label"":""Manage your order"",""enabled"":true},{""id"":""lab"",""label"":""Lab Reports"",""enabled"":true},{""id"":""safety"",""label"":""Safety Calculator"",""enabled"":true},{""id"":""vial"",""label"":""The Lonely Vial"",""enabled"":true}]","""2026-03-22T20:35:06.270Z"""
+"paymentsEnabled","false","""2026-03-19T17:03:36.596Z"""
+"track17ApiKey","B1FBDCCBB51B3388D744CA5BDAC8E0BA","""2026-03-20T00:36:37.359Z"""
+"track17ChangeCodeHash","6c48ff497473865ca1f815d50b736d3d7823a873611e7437fcd333e799e0faec","""2026-03-20T00:33:32.454Z"""
+"walletAddress","0x3B5670Fe10369082297f29eB6dB950C2db7d3659","""2026-03-18T17:33:51.806Z"""
+"walletChangeCodeHash","41071ea6b4245c84275a8d3de474dda11ae560f5466a9fd407525753fe257e5d","""2026-03-18T17:34:11.004Z"""

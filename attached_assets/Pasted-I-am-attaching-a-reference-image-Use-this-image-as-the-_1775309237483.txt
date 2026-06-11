@@ -1,0 +1,86 @@
+I am attaching a reference image. Use this image as the only style reference for the website.
+
+I want a full visual redesign of my site based on this image. Do not blend this new style with the existing website theme. Do not preserve the current colors, fonts, spacing, shadows, borders, button styles, card styles, or layout patterns unless they clearly match the attached image. Replace the current design system completely. Replit’s app themes are meant to manage colors, fonts, and UI properties across the whole app, so I want this implemented as one consistent global theme, not a series of local edits.
+
+First, analyze the image and create a design brief before making code changes. From the image, identify:
+
+the main color palette,
+
+background colors and surface colors,
+
+primary and secondary text colors,
+
+accent color,
+
+heading font style,
+
+body font style,
+
+button style,
+
+card style,
+
+border radius style,
+
+shadow style,
+
+spacing density,
+
+overall layout feel,
+
+and any distinctive visual motifs. Replit’s Canvas supports exploring design directions first, and I want that design direction made explicit before implementation.
+
+Then implement the redesign across the entire website.
+
+Requirements:
+
+Create a single global theme system for the whole app.
+
+Define reusable theme variables or tokens for background, surface, text, muted text, border, primary, secondary, accent, success, and error colors.
+
+Define one heading font and one body font and apply them consistently across the site.
+
+Replace hard-coded colors and fonts with the new global theme values.
+
+Update all major UI elements so they match the image style: header, navigation, hero, sections, cards, buttons, forms, icons, footer, and all internal pages/components.
+
+Make the layout structure match the reference image as closely as practical, including spacing, alignment, content width, visual hierarchy, and section rhythm.
+
+Update component styling globally, not one section at a time.
+
+Remove leftover styling from the old theme.
+
+Audit the full app for mixed styling and fix any component that still looks like the previous theme. Replit’s theme tools are intended to keep styling consistent across the app, so I want that consistency enforced everywhere.
+
+Important constraints:
+
+Do not do an incremental restyle.
+
+Do not merge old and new aesthetics.
+
+Do not leave any section half-converted.
+
+Do not keep old gradients, old colors, old typography, old border radii, or old shadows unless they fit the new style exactly.
+
+If necessary, refactor shared CSS/components so the redesign is truly global.
+
+Prefer a clean shared design system over one-off overrides.
+
+If existing components are too tied to the old theme, rewrite their styling layer to match the new system.
+
+Workflow I want you to follow:
+
+Analyze the attached image and summarize the visual system.
+
+Show me the proposed palette, font pairings, spacing approach, and component style direction.
+
+Create or update the app theme/global styling layer.
+
+Apply the new design system to every page and component.
+
+Check the whole site for leftover old styles and remove them.
+
+Give me a final consistency pass so the entire website feels like it was designed from one source image. Replit recommends specific prompting for UI changes, including identifying the exact elements and desired effect, so I want this handled systematically rather than loosely.
+
+Final quality bar:
+The finished website should look like a cohesive redesign inspired by the attached image, not like two themes blended together. Every page should share the same visual language, typography, colors, spacing, and component rules. Use the image as the source of truth for style decisions.”

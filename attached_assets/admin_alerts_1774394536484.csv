@@ -1,0 +1,3 @@
+"id","type","priority","title","message","is_read","link_url","related_entity_id","created_at"
+"1","order","high","New Order","New order #7884 placed by @carpediem831 — $72.50","true","#orders:ef424a02-1925-4f55-949b-4b714f5c7cbc","ef424a02-1925-4f55-949b-4b714f5c7cbc","""2026-03-24T10:34:43.385Z"""
+"2","order","medium","Order Cancelled","Order #6130 was cancelled","true","#orders","074ac35a-81ad-4d06-8e43-c2cbd76a1ea5","""2026-03-24T12:11:20.841Z"""

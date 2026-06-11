@@ -1,0 +1,35 @@
+Design 3 alternative mobile‑first layouts for the Salt & Peps home screen, based on the attached screenshots of the current site. The goal is to improve hierarchy and usability on mobile while keeping the existing visual theme (colors, gradients, rounded cards, typography, and overall aesthetic) intact.
+
+Constraints and priorities:
+
+Preserve all existing content, labels, and actions; do not invent new sections or copy.
+
+The two primary actions are:
+
+“Group Buy Login” (Place an order / new customer).
+
+“The Lonely Vial” (buy individual vials).
+
+“Manage your order” and other utility actions are secondary. They can be visually de‑emphasised, moved lower on the page, or collapsed, as long as they remain accessible.
+
+Optimise for a clean, simple, mobile‑first experience: clear hierarchy, large tap targets, and minimal visual clutter.
+
+Generate 3 variations that only change layout and hierarchy, not content or overall styling:
+
+Explore different spatial organisations (vertical vs horizontal emphasis, density of cards, spacing, and alignment).
+
+Vary how components are grouped or nested (e.g., stacking, separating primary and secondary sections, or using subtle dividers).
+
+Adjust visual weight with size, position, and contrast so that “Group Buy Login” and “The Lonely Vial” clearly stand out as the main paths, while “Manage your order” reads as a useful but secondary option.
+
+For each of the 3 variations, describe:
+
+The order of sections from top to bottom.
+
+How each key card (Group Buy Login, The Lonely Vial, Manage your order, Lab Reports, Safety Calculator, etc.) is sized, positioned, and grouped on a small mobile screen.
+
+How spacing, colour, and card size convey priority and keep the interface simple rather than busy.
+
+Any specific implementation notes that would help a developer build this layout (e.g., suggested card widths, stacking rules, or breakpoint behaviour).
+
+Focus on clarity of hierarchy and ease of use on a typical phone screen, while making the design feel consistent with the current brand.

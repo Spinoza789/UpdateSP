@@ -1,0 +1,130 @@
+ Trocador.
+ EN 
+ 
+ Swap		 Prepaid Cards		 Gift Cards		 DeFi & Bridge		 AnonPay
+AnonPay Documentation
+This document details how to use our AnonPay system and provides a few examples to better illustrate its use. There's two ways AnonPay can be used, as a direct link or as a link to first generate the transaction and then show it to the final user. Both ways use the same parameters described below.
+
+The direct method is easier and involves no backend proccessing on your website, but the transaction details as address, amount and others could be changed by your user, so you must always confirm you actually received the payment on the correct address.
+With the indirect method you first create the transaction with all the desired details and receive its ID, and only then show it to your user. This prevents them from changing anything and gives you a way of checking his transaction status as you already have the transaction ID. Transactions created by this method have 72 hours to be started before being deleted from our database.
+If you really need more control over your transactions and feel comfortable programming (or doing it manually), you should use the indirect method. Otherwise the direct method is simpler and more easily integrated in your project.
+
+Transactions using AnonPay currently have a limit of the equivalent of 5BTC per transaction, to minimize delays and KYC risk.
+
+When the coin the user chooses is the same as your chosen coin there's no trade to be made, so your user is simply informed of the amount and address to which he must transfer. Trocador charges no fees for this and if you chose to receive an email when the transaction is completed you'll instead receive an email when the transaction is created informing you this, as we have no way of knowing if/when the user transfers the coins to you.
+
+While we don't yet accept fiat payments, you can define the value of your transaction in fiat (USD,EUR,etc.) and we'll automatically use the current rate to convert the amount into the equivalent in your chosen coin. We use CoinPaprika to get rates for fiat.
+
+For an even simpler way to use AnonPay, use our Payment Generator.
+
+List of required and optional Parameters
+As this uses the GET method, parameters should be added after the '/anonpay/' part of the URL, using '?' for the first one used and '&' for the rest. The order of the parameters is not important.
+
+Examples:
+https://trocador.app/anonpay/?ticker_to=xmr&network_to=Mainnet&address=XYZ
+Required Parameters:
+-ticker_to: The ticker of the coin you want to receive. E.g. btc, xmr, eth, etc.;
+-network_to: The network of the coin you want to receive. E.g. Mainnet, ERC20, BEP20, etc.;
+-address: The address in which you want to receive. E.g. 89Jb5....D1LdB12 for our Monero address;
+
+Optional Parameters:
+-amount: For payments it is the amount of the coin you want to receive and it'll be locked. For donations it is the preset amount of the coin the user will donate;
+-memo: If the network of the coin you want to receive uses Memo/ExtraID you need to provide it using this parameter or use '0' for no Memo;
+-donation: True will activate the donation mode, otherwise it defaults to payment mode;
+-direct: False will make the URL work as an API and return a JSON response with the ID of the created transaction. More details below;
+-ticker_from: If you want you can define the preselected coin the user will transfer, as in ticker_to this is the coin's ticker;
+-network_from: If you want you can define the preselected coin the user will transfer, as in network_to this is the coin's network;
+-name: The name you want to appear on the widget. Special characters must be URL encoded ( 'A B' is 'A%20B');
+-description: A description to appear in the checkout screen for the payment/donation. Special characters must be URL encoded ( 'A B' is 'A%20B');
+-ref: If you have a referral code from our affiliate program you can use it here;
+-buttonbgcolor: The color of the button, should be in hex format without the '#'. E.g. ff0000 for red;
+-textcolor: The color of the text of the button, should be in hex format without the '#'. E.g. ffffff for white;
+-bgcolor: True will give the page a gray background, otherwise it'll be transparent/white. If you won't use AnonPay in an iframe this is recommended. You can also use a color in hex format without the '#'. E.g. Example: 000000ff for black with no transparency;
+-email: An email in which you will receive confirmation when the transaction is completed;
+-fiat_equiv: If you want your transaction to be denominated in fiat currency provide a valid currency abbreviation (e.g. USD or EUR). Note that you'll receive in your chosen coin and your clients will pay in crypto, we don't yet accept fiat payments;
+-remove_direct_pay: If you don't want the user to pay you directly through AnonPay with the coin you chose to receive, you can set this parameter to True. This is useful if you have another preferred method to receive in your chosen coin and want to use AnonPay only for other coins;
+-min_kycrating: if you want to use only exchanges with a minimum of A, B or C KYC rating, please provide this parameter (Optional);
+-editable: Allows the user to change the amount to be paid when set to True;
+-webhook: if you provide an URL on this parameter, every time the status of the transaction changes, you will receive on this URL a POST request sending you the transaction data; this avoids having to call so many times our server to check the transaction status (Optional);
+-simple_mode: When set to True the checkout screen will be more streamlined for easier use by people not that familiar with crypto;
+-maximum: Sets a maximum amount for donations, in USD equivalent;
+
+Example #1
+You want to receive 1.4LTC in payment for an annual subscription to your website 'Super News' and receive an email when payment is confirmed.
+
+Parameters:
+ticker_to:	ltc
+network_to:	Mainnet
+amount:	1.4
+name:	Super%20News
+description:	Annual%20Subscription
+email:	mail@supernews.com
+address:	ltc1q....fgsw
+
+Resulting URL:
+https://trocador.app/anonpay/?ticker_to=ltc&network_to=Mainnet&amount=1.4&name=Super%20News&description=Annual%20Subscription&email=mail@supernews.com&address=ltc1qzvcgmntglcuv4smv3lzj6k8szcvsrmvk0phrr9wfq8w493r096ssm2fgsw
+
+Example #2
+You have a website called 'Freedom Matters' and want to receive donations in Monero. Also you want the widget to have a light blue/purple button and a preset amount of 0.01BTC.
+
+Parameters:
+ticker_to:	xmr
+network_to:	Mainnet
+amount:	0.01
+donation:	True
+name:	Freedom%20Matters
+address:	89Jb....dB12
+buttonbgcolor:	3315ff
+
+Resulting URL:
+https://trocador.app/anonpay/?ticker_to=xmr&network_to=Mainnet&amount=0.01&name=Freedom%20Matters&donation=True&buttonbgcolor=3315ff&address=83r6YnuwnsVXNvHmurMFYf3Urufw54rKic1Ka5ysgSv5Wvp1UrCi5UnB2vfQnxmmTp1W2JYqk452QAgqV83SpqK8D7xy7gd
+
+Indirect Method
+If you decide to use our Indirect Method, build an URL just like if you were using the direct method, but add the 'direct=False' parameter. When you call that URL you will receive a JSON Response with the generated transaction's unique 'ID' and its URL.
+
+To check the transaction's status you can use the following URL endpoint and you'll receive a JSON with its status: https://trocador.app/anonpay/status/<ID>
+
+Widget HTML Code Example
+<iframe src="https://trocador.app/anonpay/?ticker_to=xmr&network_to=Mainnet&amount=0.1&address=83r6YnuwnsVXNvHmurMFYf3Urufw54rKic1Ka5ysgSv5Wvp1UrCi5UnB2vfQnxmmTp1W2JYqk452QAgqV83SpqK8D7xy7gd" width="300" height="290" scrolling="no" style="border:0;"></iframe>
+
+Status
+These are all possible swap statuses you will find when using AnonPay.
+
+
+- anonpaynew: the trade is created, but no coin was selected for payment yet;
+- waiting: you created the swap but no deposit was detected;
+- confirming: deposit was detected and is yet to be confirmed;
+- sending: deposit confirmed and provider is sending the coins;
+- finished: there is already a payment hash to the user;
+- paid partially: there is already a payment hash to the user, but the amount is lower than asked;
+- failed: something might have happened to the swap, please contact support;
+- expired: payment time expired;
+- halted: some issue happened with the swap, please contact support;
+- refunded: exchange claims to have refunded the user;
+Trocador.app
+© Reta Development Assets LLC
+
+  
+Support:
+@TrocadorSupportBot
+ support@trocador.app
+
+Contact Us:
+ mail@trocador.app
+ TrocadorApp
+ #Trocador.app:matrix.org
+ PGP key
+
+Home
+
+AnonPay
+
+Affiliate Program
+
+API Documentation
+
+Terms of Use
+
+Privacy Policy
+
+About

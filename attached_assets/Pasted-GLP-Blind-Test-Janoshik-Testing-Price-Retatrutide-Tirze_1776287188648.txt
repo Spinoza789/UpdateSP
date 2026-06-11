@@ -1,0 +1,347 @@
+GLP Blind Test Janoshik Testing	Price
+Retatrutide, Tirzepatide or Semagulute Janoshik Testing	300
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1100
+	
+	
+	
+HGH Janoshik Testing	Price
+HGH Purity Dimer & Molecular weight	420
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1220
+	
+	
+	
+NAD Janoshik Testing	Price
+NAD Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+PH Measurement	30
+Total	1210
+	
+HCG Janoshik Testing	Price
+HCG Analysis	180
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	980
+	
+	
+Ara-290 Janoshik Testing	Price
+Ara-290 Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+BPC/TB Janoshik Testing	Price
+BP/TB Analysis	270
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1070
+	
+	
+Cagrilintide Janoshik Testing	Price
+Cagrilintide Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+CJC/IPA & Tesa/IPA Janoshik Testing	Price
+CJC/IPA Analysis	270
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1070
+	
+	
+CJC No DAC Janoshik Testing	Price
+CJC No DAC Analysis	270
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1070
+	
+CJC No DAC Janoshik Testing	Price
+CJC No DAC Analysis	180
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	980
+	
+Epitalon Janoshik Testing	Price
+Epitalon Analysis	240
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1040
+	
+	
+GHK Janoshik Testing	Price
+GHK-CU Analysis	240
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1040
+	
+	
+GHRP 2 Janoshik Testing	Price
+GHRP-2 Analysis	180
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	980
+	
+	
+Glow Janoshik Testing	Price
+Glow Analysis	420
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1220
+	
+Glutathione Janoshik Testing	Price
+Glutathione Analysis	230
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1030
+	
+	
+Hexarelin Janoshik Testing	Price
+Hexarelin Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+IGF-1 Janoshik Testing	Price
+IGF-1 Analysis	300
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1100
+	
+	
+IPA Janoshik Testing	Price
+IPA Analysis	180
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	980
+	
+	
+Kisspeptin Janoshik Testing	Price
+Kisspeptin Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+Klow Janoshik Testing	Price
+Klow Analysis	680
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1480
+	
+	
+KPV Janoshik Testing	Price
+KPV Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+LL-37 Janoshik Testing	Price
+LL-37 Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+MT1 Janoshik Testing	Price
+MT1 Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+MT2 Janoshik Testing	Price
+MT2 Analysis	180
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	980
+	
+	
+MOTS-C Janoshik Testing	Price
+MOTS-C Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+Oxytocin Janoshik Testing	Price
+Oxytocin Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+PE-22-28 Janoshik Testing	Price
+PE-22-28 Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+PT-141 Janoshik Testing	Price
+PT-141 Analysis	180
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	980
+	
+	
+Selank Janoshik Testing	Price
+Selank Analysis	240
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1040
+	
+	
+Semax Janoshik Testing	Price
+Semax Analysis	240
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1040
+	
+	
+Tesamorelin Janoshik Testing	Price
+Tesamorelin Analysis	240
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1040
+	
+	
+TA1 Janoshik Testing	Price
+TA1 Analysis	240
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1040
+	
+	
+VIP Janoshik Testing	Price
+VIP Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+SS-31 Janoshik Testing	Price
+SS-31 Analysis	380
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	1180
+	
+	
+AOD Janoshik Testing	Price
+AOD Analysis	180
+Variance Testing - 3 Vials	180
+Endotoxin Analysis	120
+LCMS Screening	170
+Sterility Testing	240
+Heavy Metals Analysis	90
+Total	980

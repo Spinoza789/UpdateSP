@@ -1,0 +1,23 @@
+#11 - Navigation & Profile Hub Categorisation
+What & Why
+The sidebar "Learn" section, portal "Health" section, mobile "More" drawer, and Profile Hub all suffer from flat, undifferentiated lists of links and stats. Grouping these into clear categories — with accordion subcategories in the nav and sectioned cards in the hub — reduces cognitive load and makes each area feel purposeful.
+Done looks like
+* The "Learn" sidebar section collapses into two labelled subcategories: "Protocols" (covering General Protocols, Med Protocols, TRT & AAS) and "Research" (covering Lab Reports, Learning Hub), accessible via accordion-style expand/collapse on the desktop sidebar
+* The portal "Health" sidebar section is reduced to a single "Health" entry that navigates to a Health Hub page; the Health Hub page shows the five health areas (GLP-1 Tracker, Compounds, Blood Tests, Health Insights, Cycle Plotter) as distinct category cards with brief descriptions, replacing the five individual sidebar links
+* The Profile Hub (account home) reorganises its content into three clearly-labelled sections: "Overview" (the 4 stat tiles), "Activity" (recent orders and active compounds), and "Quick Access" (shortcut cards to Shop, Group Buys, and Health Hub) — removing the implicit information scatter
+* The mobile "More" drawer replaces its flat mirrored list with the same two "Protocols" / "Research" subcategory groups using section headers and a divider, matching the desktop sidebar restructure
+* No pages are removed; all content remains accessible — only the entry points and groupings change
+Out of scope
+* Redesigning any individual page's internal layout (LabTests, Protocols, MedProtocols, TrtAas, etc.)
+* Changes to the "Shop" or "Tools" sidebar sections
+* Changes to the portal "Account" or "Settings" nav groups
+* Any admin UI changes
+Tasks
+1. Sidebar "Learn" accordion subcategories — Refactor the "Learn" section in PageLayout.tsx to render two collapsible subcategory groups ("Protocols" and "Research") instead of five flat items; active child items auto-expand their group.
+2. Health Hub landing page — Create a new HealthHub sub-view (or route under /account) that presents the five health areas as descriptive category cards with icons and a one-line summary. Replace the five individual "Health" portal nav entries with a single "Health" link pointing to this hub.
+3. Profile Hub content reorganisation — Restructure the hub home view in CustomerPortal.tsx to use three explicit section blocks — "Overview" (stat tiles), "Activity" (recent orders + compounds), and "Quick Access" (shop, group buys, health hub shortcuts) — each with a section heading.
+4. Mobile "More" drawer subcategory structure — Update MobileMoreDrawer in PageLayout.tsx to show the "Protocols" and "Research" subcategory groups with section headers and a divider, consistent with the desktop sidebar restructure.
+Relevant files
+* Product-Landing-Page/artifacts/peps-anonymous/src/components/PageLayout.tsx
+* Product-Landing-Page/artifacts/peps-anonymous/src/pages/CustomerPortal.tsx
+* Product-Landing-Page/artifacts/peps-anonymous/src/components/HubBottomNav.tsx

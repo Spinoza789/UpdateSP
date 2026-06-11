@@ -1,0 +1,12 @@
+id,group_buy_id,parcel_size_id,country,region,carrier,price_gbp,price_usd,price_eur,active,sort_order
+4db8f7b0-67ed-404b-adbf-8a8ffb733562,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Croatia,,RM,12.10,16.50,14.02,t,0
+c3474f96-c1d3-4f4a-b6cf-99169885b676,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Cyprus,,RM,12.10,16.50,14.02,t,0
+5d5c2835-eb4b-4dd3-8fe6-ab0b808f57cd,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Denmark,,RM,10.95,15.00,12.70,t,0
+602befd4-aca8-416a-a64a-c759e36a4e5c,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,France,,RM,11.50,15.70,13.35,t,0
+744b11e2-bd6f-444a-8908-f947c5a1a0fb,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Germany,,RM,9.95,13.60,11.55,t,0
+8e81abda-6d5e-4d2f-a81d-2237da41d079,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Italy,,RM,11.90,16.20,13.80,t,0
+3b6000bb-89fe-4a75-8c5b-f58e19d18ff4,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Portugal,,RM,12.10,16.50,14.02,t,0
+87a3e43e-c681-4497-ad06-bb9f6b61ba25,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Estonia,,RM,12.10,16.50,14.02,t,0
+64a0e14b-b087-4330-8f6d-8b590e0bdbf8,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,United States,,UPS,12.95,17.60,15.00,t,0
+f21f989c-1e5b-465f-ac4b-c9f8b6ccbf55,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Bulgaria,,RM,12.10,16.50,14.02,t,0
+9cafc4cd-8c4b-4b92-8b05-532054c52819,GW5JW,59fc228d-7f88-49b6-98a7-3f1e4c8d582b,Netherlands,,RM,10.85,14.80,12.60,t,0

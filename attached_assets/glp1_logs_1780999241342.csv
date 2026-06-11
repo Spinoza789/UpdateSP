@@ -1,0 +1,12 @@
+id,telegram_username,logged_date,compound_name,dose_mg,weight_kg,weight_unit,notes,injection_site,side_effects,calories,protein_g,water_ml,created_at
+b8058d4b-f67c-4fd4-beb8-28cbf6a7a6a9,julialeonard107,2026-04-10,CagriSema,0.200,58.000,kg,"Shot at 15:26 · 0.2 Cagri
+0.15 sema",,,,,,2026-04-15 16:27:34.120056+00
+8c0621b9-ef38-4731-b29a-d137fdcce71d,j4mes_r,2026-04-19,Retatrutide,4.000,110.000,kg,Shot at 10:30,abdomen-right,,,,,2026-04-20 20:22:05.58752+00
+0c33df95-c5c5-49fd-b644-d296b4a6c267,untamedchazy,2026-04-26,Retatrutide,8.000,94.300,kg,Shot at 23:29,abdomen-left,,,,,2026-04-26 02:55:40.400269+00
+966f5460-0e4f-4f53-94d9-53948e6901b0,thechappers,2026-05-02,Tirzepatide,7.000,125.300,kg,Shot at 08:00,abdomen-left,,,,,2026-05-02 11:14:35.364785+00
+5f93f76f-7d01-4a65-9e64-4e49e7c8a036,bat_102,2026-04-30,Tirzepatide,2.500,70.000,kg,Shot at 06:41 · A Bit nauseous immediately after the injection,abdomen-left,,,,,2026-05-03 04:42:23.755381+00
+b662d859-4c3a-4bb9-ba03-9037462fcdd1,j4mes_r,2026-04-29,Retatrutide,5.000,111.000,kg,Shot at 20:30,abdomen-left,,,,,2026-05-03 06:15:58.018367+00
+1cc7d23a-30d5-46a1-b250-5d0a57b19dc5,polipoli,2026-05-05,Retatrutide,0.750,49.000,kg,Shot at 18:52,abdomen-right,,,,,2026-05-05 15:55:02.189548+00
+11c311a0-c276-4bb8-8814-186e65e8d57d,rcoutada@proton.me,2026-05-07,Tirzepatide,6.400,102.000,kg,Shot at 08:00,abdomen-left,,,,,2026-05-07 17:28:21.679986+00
+a49c43fa-6488-4f39-93fb-aedfb643bfb9,rcoutada@proton.me,2026-05-03,Retatrutide,1.000,103.000,kg,Shot at 13:52,abdomen-right,,,,,2026-05-07 17:29:58.630664+00
+36154efb-b38b-465f-b53a-de0217119463,rcoutada@proton.me,2026-05-01,Tirzepatide,5.000,103.000,kg,Shot at 13:56,abdomen-right,,,,,2026-05-07 17:31:16.416189+00

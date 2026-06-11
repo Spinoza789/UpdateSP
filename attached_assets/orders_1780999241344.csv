@@ -1,0 +1,77 @@
+id,code,telegram_username,delivery_method,delivery_method_id,delivery_price,vendor_shipping,product_subtotal,tip,grand_total,notes,status,admin_notes,admin_message,tracking_number,payment_status,payment_tx_hash,payment_test_amount,test_payment_tx_hash,shipping_name,shipping_address,pin,inpost_qr_code,group_buy_id,testing_contribution,test_vote,refund_status,refund_reason,refunded_at,payment_rejection_reason,created_at,updated_at,payment_screenshot,royal_mail_qr_code,payment_usd_amount,shipping_country,shipping_city,shipping_postcode,shipping_carrier,carrier_service_ref,quoted_weight_grams,ip_address,reshipper_username,qr_codes,shipping_phone,country_leg_id,order_type,qr_posted,coupon_code,coupon_discount,credits_applied,deleted_at,deleted_by,amount_due,balance_screenshot,balance_tx_hash,balance_payment_status,payment_confirmed_at,balance_confirmed_at,direct_shipping_requested,direct_shipping_cost,shipping_email
+c99a8e86-8035-45bf-9ffb-d9a0e8679536,1807,@adev81,Royal Mail,dm-royal-mail,10.00,13.30,340.00,20.00,383.30,,Submitted,,,,confirmed,0x10790eed59749b0a97407fc911a384d3c0d6baa829710997704714b9048d336e,,,E Devine,"6 Sunnyside Cresent
+
+Belfast
+BT7 3DB
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-13 23:36:10.437113+00,2026-05-05 16:28:52.122+00,,,383.30,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,waived,,,f,,
+90774263-2415-41a8-8094-3aee186ce2f8,1910,@josie_uk,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,14.82,532.50,0.00,557.32,,Submitted,,,,confirmed,0x0e41e1a88d90406d0bb0864cf355f46281de3c9ef1091a0bae7dd8e047a9676b,1.72,0x16079ff18c50861b3d059cb1e82033ca71025716565b430b95c6311a7d5007dc,Josie Williams,"7 Fosters Copse
+
+Bursledon
+SO31 1ET
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-13 23:41:12.337798+00,2026-05-06 18:40:02.036+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,,2026-05-06 18:35:18.661+00,,f,,
+75ee91e8-bd60-483d-965f-c82e89293296,2055,@livejdm,InPost,ecf06c05-f2cc-4b71-9ecf-93602b698802,3.00,0.00,333.00,0.00,336.00,,Submitted,,,,confirmed,0x303174fca48e11f8d45a184130c4949cec0a21a713e595093e65edf9aededf79,,,,,0000,,93V4L,0.00,,,,,,2026-04-13 23:55:18.065657+00,2026-05-05 21:18:24.606+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,,2026-05-05 21:18:24.606+00,,f,,
+30f7a46f-84a5-412a-92ab-13c4ac2a7767,7405,@murkle_8,Royal Mail,dm-royal-mail,10.00,0.00,340.00,0.00,350.00,,Submitted,,,,confirmed,0x828e271ad4f091342c57bcc983c223b7e4e773958781633957bebf6c83c5e3c4,,,Andrew Rome,"100 Harrowside
+
+Blackpool
+FY4 1QN
+United Kingdom",0000,,DBD3Q,0.00,,,,,,2026-04-14 00:21:47.257652+00,2026-04-14 01:10:40.393+00,,,,,,,,,,,,,,,,f,,0.00,0,,,0.00,,,,,,f,,
+23305a5f-76e6-46aa-a35c-af595741d7f2,7778,@grundlefly1,InPost,ecf06c05-f2cc-4b71-9ecf-93602b698802,3.00,13.08,292.50,5.00,313.58,,Submitted,,,,confirmed,0xab286e588bddd83c49647085a8db479d3756a64c9fced8b1deafef95034e9339,1.77,0xb8c7d6724a4ae8136a2978e4c4db2007f675189cd2ecc9247eda36939cd907cd,,,0000,,93V4L,0.00,,,,,,2026-04-14 00:55:17.821596+00,2026-05-05 16:29:06.008+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,waived,,,f,,
+f9bcfb7d-8931-47cd-968f-24310ef12d0a,1083,@hotlinerider,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,13.30,545.00,0.00,568.30,,Submitted,,,,confirmed,0x0b5f7f6f280494b1e68c24792ec18836c098186f5bde1a350de09bc9b44c2e39,1.59,0x05178d2fc1a8cefbd08327a4b99f5ca6db43715436fc4c61faabc5a407745ed3,Mr J L Regan,"20 Cumberland Road
+Flat 3
+Bromley
+BR2 0PG
+United Kingdom
+Phone: +44 7989884350",0000,,93V4L,0.00,,,,,,2026-04-14 01:50:28.863901+00,2026-05-08 15:30:18.309+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,,2026-05-06 15:37:16.664+00,,f,,
+be93f299-9536-41e7-b2c1-1fb53301bb50,7466,@cwissuk,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,13.30,435.00,10.00,468.30,"Paypal or revolut please 
+Im shit with cryp",Submitted,,,,confirmed,anonpay:ARvNNFcLUs,,,Chris Rushworth,"42 Buttercup Way
+Hele Park
+Newton Abbot
+TQ12 1GT
+United Kingdom
+Phone: +44 07795360695
+Email: chrisrushworth6@gmail.com",0000,,93V4L,0.00,,,,,,2026-04-14 03:50:24.031456+00,2026-05-07 18:30:02.57+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,0xd3d182f0759be8a3f06004524070ef4725ad193b1a5a40744d4d8ef6d90f1bd6,confirmed,,2026-05-05 17:40:21.503+00,f,,
+c677e3a5-6cfc-4c50-9aff-f618817404f7,8897,@scott,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,18.96,1150.00,0.00,1178.96,,Submitted,,,,confirmed,0x515a7b00618ada5acd8888fe5ec79ea987e24ebcacfed0f7c2204cd1944b8512,,,Sb,"8 Cargills Court
+
+Wingate
+TS28 5FL
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-14 05:51:14.1476+00,2026-05-05 18:53:50.583+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,,2026-05-05 18:53:11.772+00,,f,,
+b213ae65-dc6d-4579-97b3-8dafa365b8c6,6113,@jakeh1992,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,13.74,375.00,0.00,398.74,,Submitted,,,,confirmed,0xba75516ee791de0230244872a943d0831486cab0c5d91d994015bb6729612f1a,,,Jake Harris,"117 Crispin Road
+Bradville
+Milton Keynes
+MK13 7BT
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-14 06:22:16.090848+00,2026-05-05 20:29:11.094+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,,2026-05-05 20:28:34.957+00,,f,,
+1de0fbc4-d98f-4f7c-8b4b-2892f5ed0c2e,2141,@saxont,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,12.86,250.00,0.00,272.86,,Submitted,,,,confirmed,0xacbb23b051d3ce9df3fc89e8e3a74744010b2fa6b819e46afcd4503c3e176783,,,James Lawford,"7 Holburn Way
+
+Ryton
+NE40 3RT
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-14 06:37:26.196813+00,2026-05-05 16:31:25.287+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,waived,2026-05-05 12:55:20.331+00,,f,,
+499e6367-a756-43ef-8460-a5f32ce7122e,3411,@prem_peps,InPost QR,2c83016b-8d06-4873-9a3a-2a1538de74f7,3.00,0.00,135.00,0.00,138.00,,Submitted,,,,confirmed,0xef59987b5682e542938554b051c315ff331b681eb59f48ed710fcb062382795c,,,,,0000,,DBD3Q,0.00,,,,,,2026-04-14 07:12:14.375211+00,2026-04-25 22:49:21.494+00,,,,,,,,,,,,,,,,f,,0.00,0,,,0.00,,,,,,f,,
+4536669f-9de4-4ced-a5b1-4e74138f2f80,9534,@julialeonard107,InPost,ecf06c05-f2cc-4b71-9ecf-93602b698802,3.00,13.74,270.00,0.00,286.74,,Submitted,,,,confirmed,0xb3938418fda7b6a5be1983fd57d6385c57aa776ca20a0d9aa7ff4d3c4e030546,1.46,0xd6834f91aa19e73957536131d866cec8da47c88fea1210caab6658d2269b6b64,,,0000,,93V4L,0.00,,,,,,2026-04-14 08:35:03.044075+00,2026-05-05 16:31:35.633+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,waived,2026-05-05 12:11:30.292+00,,f,,
+92d84fba-b842-417c-8aef-f778a42f78e0,1664,@del boy6666,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,17.44,651.00,0.00,678.44,,Submitted,,,,confirmed,0xd24f77df899d7c666a5d7fcbfa4f024e9ecb0509a7d6799d008748518a256098,1.05,0x58cc1c6ebbe63fba56558d751d09ab1b3447873aa3444c9cbd3077cef33d6854,Craig Hart,"64 Newells
+
+Letchworth Garden City
+SG6 2PL
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-14 08:37:02.088154+00,2026-05-05 16:31:47.784+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,waived,2026-05-05 13:19:58.57+00,,f,,
+8d0483c6-e5e3-40f0-ad48-20e87f953e57,5757,@zebble76,Royal Mail,dm-royal-mail,10.00,12.86,110.00,0.00,132.86,,Submitted,,,,confirmed,0x2fe430dfd4aac70122d31c2ff382805e02e51998701b8549f1e1449d2fb8e1c4,1.30,0x7262283c3adc924f8ac0dcebcb7de6da070271c209f4c72a06005f14baa4c3b9,Steve Jones,"2 Homestead Way
+
+Fleetwood
+FY7 7NG
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-14 09:20:09.469368+00,2026-05-05 08:01:01.401+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,,,,f,,
+4d0d99c2-0683-4154-b0fb-49b0b523443e,9857,@johncenacme,Royal Mail,dm-royal-mail,10.00,0.00,170.00,0.00,180.00,,Submitted,,,,confirmed,0x31a0980af8c120bdc54e2737a4fcf0ce2fb0f251ba5912029f9add4f3ccb0cb3,,,Rick Anderson,"23 Westbury Road
+
+Bradford
+BD6 3NQ
+United Kingdom",0000,,DBD3Q,0.00,,,,,,2026-04-14 10:23:20.684624+00,2026-04-17 11:58:46.933+00,,,,,,,,,,,,,,,,f,,0.00,0,,,0.00,,,,,,f,,
+bfade1e7-c4d3-4798-a1ff-b1f4e818dab4,5854,@mand233,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,20.27,1650.50,0.00,1680.77,,Submitted,,,,confirmed,0x55112b82a1ccc715da0f61335cfc5c73cfc50e579f5b2f47c9aff8dffc5a5909,1.30,0x917e6cb2f1a69a51d14cb27f87ede292b358f2aaa6a687dc159148ee6a07eb1e,,,0000,,93V4L,0.00,,,,,,2026-04-14 10:44:56.870579+00,2026-05-07 19:33:33.435+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,,2026-05-07 19:05:31.63+00,,f,,
+53feb65d-8de6-4d74-aacf-3190d65420fb,1132,@oc1313,Royal Mail,dm-royal-mail,10.00,12.43,165.00,0.00,187.43,,Submitted,,,,confirmed,0xf031c47ec34ae8a0687b4f2592a25943ca1dc974f60350b2321a0d3b5f3590c5,1.22,0x2c93d046203015852baa961a6d07a6f9c94946ace79f7071e34a16666d5fa094,Oliver Cassidy,"38
+PRINCES PLACE
+London
+W114QA
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-14 11:17:09.354591+00,2026-05-05 16:32:12.635+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,waived,2026-05-05 12:36:22.883+00,,f,,
+9f0ce21f-9c82-435a-b122-ab6ebfc7ab65,7206,@backtothepharma,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,15.04,500.00,0.00,525.04,,Submitted,,,,confirmed,0xaf69f88b3766adc21f8fcb0a9151606426c1a01456fd52ea184152467be7b098,,,Jake Riley,"8 Morton close
+Pitstone
+Leighton buzzard
+LU7 9BQ
+United Kingdom",0000,,93V4L,0.00,,,,,,2026-04-14 11:22:16.508557+00,2026-05-05 16:32:23.171+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,waived,2026-05-05 15:46:27.69+00,,f,,
+81500db7-d8fa-4af6-942a-948858bad43f,7215,@carpediem831,Royal Mail,28724966-3227-4a62-9574-7cd6c03d01e2,10.00,13.08,195.00,0.00,218.08,,Submitted,,,,confirmed,0xf0bd680f6077d4e33650d9159358a7528e8012679614dcbe4b78fc3f6bc7fae8,,,,,0000,,93V4L,0.00,,,,,,2026-04-14 11:37:12.223047+00,2026-05-08 09:07:11.806+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,,2026-05-08 09:07:11.806+00,,f,,
+1df7fa30-ddf5-4909-b3fe-7a624926904e,9216,@lizzie2391,InPost,dm-inpost,0.00,12.43,165.00,3.00,180.43,,Submitted,,,,confirmed,0x6b1a1618ffe2853680b4ed741fb099c0538a3397129bc03e65ab9debf040a8d0,,,,,0000,,93V4L,0.00,,,,,,2026-04-14 11:54:12.125481+00,2026-05-05 16:32:30.626+00,,,,,,,,,,,snptest,,,hnf08dna9l,,f,,0.00,0,,,0.00,,,waived,2026-05-05 15:05:44.761+00,,f,,

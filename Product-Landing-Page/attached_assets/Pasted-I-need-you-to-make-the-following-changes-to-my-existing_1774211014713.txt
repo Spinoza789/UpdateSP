@@ -1,0 +1,116 @@
+I need you to make the following changes to my existing app with the LOWEST COST and LOWEST RISK approach.
+
+Important rules:
+- Reuse existing models, forms, routes, and components wherever possible.
+- Do not rebuild working features.
+- Do not create unnecessary new tables or major refactors.
+- Prefer small UI and routing changes over backend rewrites.
+- Keep styling consistent with the current app.
+- If a feature can be hidden instead of deleted, hide it first.
+- Before changing anything, inspect the current codebase and identify the existing customer, order, login, and admin flows.
+- Then implement the changes below in the most efficient way.
+
+FEATURES TO IMPLEMENT
+
+1. ADMIN PANEL: CUSTOMER EDITING
+- In the admin panel, under Customers, allow admin to edit each customer’s details.
+- At minimum allow editing:
+  - full name
+  - email
+  - phone
+  - address
+  - account status
+- Reuse the existing customer data model if possible.
+- Add validation and save/update functionality.
+- Make sure admin can open a customer record, edit it, and save changes successfully.
+
+2. ADMIN PANEL: OLD ORDERS VISIBLE UNDER CUSTOMER
+- In the admin panel customer section, show the customer’s old orders / order history.
+- If there is already an orders relation, use that.
+- Define “old orders” as completed, cancelled, refunded, or archived orders unless the system already has a better status structure.
+- Show order number, date, status, and total if available.
+- Do not create a separate complicated reporting system; just show the existing related orders cleanly.
+
+3. FRONTEND: LONELY VIALS PAGE LOGIN BUTTON
+- On the Lonely Vials tab/page in the frontend, add a Login button.
+- The button should route users to the login section/page.
+- Keep the placement clean and visible.
+
+4. FRONTEND: LONELY VIALS LOGIN / REGISTER AREA
+- Add a login section to the Lonely Vials area.
+- Add tabs or a toggle so users can:
+  - Login
+  - Register as Seller
+- Keep the current ability for customers to buy a single vial.
+- Next to the existing single-vial section, add a section for seller registration.
+- Lowest cost approach:
+  - Reuse the existing auth flow if possible.
+  - Add a seller role flag or account type instead of creating a separate auth system.
+
+5. CUSTOMER SELF-SERVICE: EDIT DETAILS
+- After login, allow customers to edit their own details in their account section.
+- Reuse the same fields and validation logic as much as possible from the admin customer edit form.
+- Customers should be able to update their details without contacting admin.
+
+6. LOGIN PANEL: ACTIVE ORDERS DIRECT LINK
+- In the login/account panel, when a user selects Active Orders, take them directly to the order detail page.
+- Do NOT send them to a manage order page where they must re-enter their details.
+- The user should click the active order and immediately land on that order’s page/details.
+
+7. REMOVE PACKAGES SECTION
+- Remove the Packages section from the bottom tab navigation.
+- Lowest cost implementation:
+  - Remove or hide it from the UI navigation first.
+  - Only remove deeper code if it is clearly unused and safe to remove.
+
+8. CURRENCY SWITCHER: USD / GBP
+- On the Lonely Vials page, add a currency converter/switcher for USD and GBP.
+- Lowest cost implementation:
+  - Make this display-only unless checkout already supports multi-currency.
+  - If the app only supports one checkout currency, keep actual payment logic unchanged.
+  - Show converted prices in the UI only.
+- Add a simple toggle/dropdown for USD and GBP.
+- If there is no live exchange-rate service already in the project, use a configurable static conversion value in one place so it can be updated later easily.
+
+IMPLEMENTATION PREFERENCES
+- Reuse existing customer/account/order pages.
+- Reuse existing auth components if available.
+- Reuse existing order detail page for active orders.
+- Reuse existing admin layout and styling.
+- Add minimal new routes only where necessary.
+- Keep database changes minimal.
+- If account types are needed, add a simple role field such as:
+  - customer
+  - seller
+  - admin
+- Do not overengineer seller onboarding. A simple seller registration path is enough for now.
+
+DELIVERABLES
+After implementation, provide:
+1. A summary of exactly what was changed
+2. A list of files changed
+3. Any database/schema changes made
+4. Any new routes added
+5. Any follow-up items or risks to review manually
+
+ACCEPTANCE CRITERIA
+
+Admin:
+- Admin can open a customer from the Customers section
+- Admin can edit and save customer details
+- Admin can see that customer’s old orders/order history
+
+Frontend:
+- Lonely Vials page has a visible Login button
+- Lonely Vials area includes Login and Register as Seller options
+- Single-vial buying still works as before
+- Packages tab is no longer shown in bottom navigation
+- USD/GBP toggle is visible and updates displayed prices
+
+Customer account:
+- Logged-in users can edit their own details
+- Clicking an active order opens the order directly
+- Users do not need to re-enter their details just to view their active order
+
+IMPORTANT
+Please first inspect the codebase and map the current structure, then implement the changes using the cheapest safe path. Avoid unnecessary rewrites. Preserve existing functionality.

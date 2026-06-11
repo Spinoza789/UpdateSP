@@ -1,0 +1,275 @@
+id,session_id,biomarker_name,biomarker_category,value,unit,ref_range_low,ref_range_high
+8ec9318f-a3b0-420b-a34c-5b0cf0d6a449,204a8b23-33a3-49ae-b766-bbb1cd3468df,Testosterone,Hormones,54.7000,nmol/L,12.0000,30.0000
+3eefd42f-752c-4332-9cde-a97360b4f421,204a8b23-33a3-49ae-b766-bbb1cd3468df,Free Testosterone,Hormones,0.9530,nmol/L,0.2260,0.6500
+4ee5964e-787d-4f36-8ce6-aed0ecfeb334,204a8b23-33a3-49ae-b766-bbb1cd3468df,Luteinising Hormone,Hormones,0.0000,U/l,1.7000,8.6000
+d17984c3-e70e-426d-a378-a2d0cd5f1d78,204a8b23-33a3-49ae-b766-bbb1cd3468df,Follicle Stimulating Hormone,Hormones,0.0000,U/l,1.5000,12.4000
+1e74787a-186f-4904-9ffb-3fb9c72d7dcb,204a8b23-33a3-49ae-b766-bbb1cd3468df,Oestradiol,Hormones,183.0000,pmol/L,41.0000,159.0000
+a55e7576-747b-4b7b-bed7-c8b856a0eca8,204a8b23-33a3-49ae-b766-bbb1cd3468df,Prolactin,Hormones,223.0000,mIU/L,86.0000,324.0000
+5e7cda47-051e-419c-89f8-66583e0782a6,204a8b23-33a3-49ae-b766-bbb1cd3468df,Sex Hormone Binding Globulin,Hormones,61.3000,nmol/L,10.0000,57.0000
+b0452f19-2a1d-458b-87c0-91af2594cecc,204a8b23-33a3-49ae-b766-bbb1cd3468df,Free Thyroxine,Hormones,18.0000,pmol/L,12.0000,22.0000
+80a2b021-d228-45be-82ca-cdd7517f67aa,204a8b23-33a3-49ae-b766-bbb1cd3468df,Haematocrit,Hematology,46.0280,%,40.0000,52.0000
+014ed749-5eca-4081-8447-5f0eac40b655,204a8b23-33a3-49ae-b766-bbb1cd3468df,Haemoglobin,Hematology,155.0000,g/L,130.0000,180.0000
+5a0845e6-b585-4f24-b3ff-f8bb19749c19,204a8b23-33a3-49ae-b766-bbb1cd3468df,Red Blood Cells,Hematology,5.9100,10^12/L,4.4000,6.5000
+e009baa5-b71a-4732-a158-11718f128e3c,204a8b23-33a3-49ae-b766-bbb1cd3468df,White Blood Cells,Hematology,4.6800,10^9/L,3.0000,11.0000
+7d54426a-30ed-4eb1-be7c-aa417798f6a8,204a8b23-33a3-49ae-b766-bbb1cd3468df,Lymphocytes,Hematology,1.4800,10^9/L,1.5000,4.5000
+94c10ce8-a6bd-49ef-9f75-d1fa09aba8bb,204a8b23-33a3-49ae-b766-bbb1cd3468df,Monocytes,Hematology,0.3800,10^9/L,0.2000,0.8000
+f0d192ff-97cd-4557-848e-d2d2d89b1a7c,204a8b23-33a3-49ae-b766-bbb1cd3468df,Neutrophils,Hematology,2.5700,10^9/L,2.0000,7.5000
+d0baf6a6-f43b-4c95-95af-27d0fe83261e,204a8b23-33a3-49ae-b766-bbb1cd3468df,Platelets,Hematology,219.0000,10^9/L,150.0000,450.0000
+795b16f9-2e41-4a98-b66a-ea549fbed5c5,204a8b23-33a3-49ae-b766-bbb1cd3468df,Mean Cell Volume,Hematology,81.9000,fL,80.0000,100.0000
+4a94de4c-6359-4332-a2ff-97aef209e8be,204a8b23-33a3-49ae-b766-bbb1cd3468df,Mean Cell Haemoglobin Concentration,Hematology,320.0000,g/L,320.0000,360.0000
+bf1923c6-d7b5-454a-966f-05a360cc3534,204a8b23-33a3-49ae-b766-bbb1cd3468df,Mean Cell Haemoglobin,Hematology,26.2000,pg,27.0000,33.0000
+d205ac9e-99bb-4691-80b4-13d542df2544,204a8b23-33a3-49ae-b766-bbb1cd3468df,Basophils,Hematology,0.0300,10^9/L,0.0000,0.1000
+80d84785-4a64-4049-bd0f-38f4c4f5106c,204a8b23-33a3-49ae-b766-bbb1cd3468df,Eosinophils,Hematology,0.2200,10^9/L,0.0000,0.4000
+9934661e-ad79-46cd-a372-95f23391ec76,204a8b23-33a3-49ae-b766-bbb1cd3468df,High-Density Lipoprotein,Lipids,1.3700,mmol/L,0.9000,1.7000
+29b5d3ee-a517-43b9-9381-678fb0155fd1,204a8b23-33a3-49ae-b766-bbb1cd3468df,Total Cholesterol,Lipids,4.6300,mmol/L,,5.0000
+e061c7b2-8c83-4581-819d-87aeccaa7cfc,204a8b23-33a3-49ae-b766-bbb1cd3468df,Total Cholesterol: HDL Ratio,Lipids,3.3800,ratio,,5.0000
+b3496d13-999f-42b0-bdbb-9dee033df57b,204a8b23-33a3-49ae-b766-bbb1cd3468df,Alanine Transaminase,Liver,34.4000,U/L,,45.0000
+a69555ce-ff2e-44dc-8138-a3f27234960f,204a8b23-33a3-49ae-b766-bbb1cd3468df,Alkaline Phosphatase,Liver,47.0000,U/L,30.0000,130.0000
+1a8668ba-6339-43bc-916f-2f80d528f095,204a8b23-33a3-49ae-b766-bbb1cd3468df,Gamma-Glutamyl Transferase,Liver,22.4000,U/L,8.0000,61.0000
+b25a9a49-ac21-4fd9-bf0e-79eb9466beb9,204a8b23-33a3-49ae-b766-bbb1cd3468df,Albumin,Liver,47.9000,g/L,35.0000,50.0000
+cba06f45-46d2-46b6-94b6-4e9ca8853c9a,204a8b23-33a3-49ae-b766-bbb1cd3468df,Bilirubin,Liver,9.6100,μmol/L,,22.0000
+36b16be0-e836-4442-9aff-a22f3e2287f7,204a8b23-33a3-49ae-b766-bbb1cd3468df,Creatinine,Kidney,116.2000,μmol/L,60.0000,120.0000
+0f12b7d1-d2d2-4d3d-9298-21305d90472e,204a8b23-33a3-49ae-b766-bbb1cd3468df,Estimated Glomerular Filtration Rate,Kidney,75.0000,ml/min/1.73m2,60.0000,150.0000
+ac55ccf5-91db-4faf-bb7f-432bf8e138da,204a8b23-33a3-49ae-b766-bbb1cd3468df,Urea,Kidney,5.8100,mmol/L,2.5000,7.8000
+6c616231-d203-48c5-8c3c-ade11df3eb3b,204a8b23-33a3-49ae-b766-bbb1cd3468df,Glycated Haemoglobin (HbA1c),Metabolic,30.8200,mmol/mol,20.0000,42.0000
+c6cac666-da8f-47c6-83a8-1b398327fac8,204a8b23-33a3-49ae-b766-bbb1cd3468df,Ferritin,Metabolic,143.5000,μg/L,30.0000,400.0000
+91e0107f-3dcc-4337-acc1-cfd41b473034,204a8b23-33a3-49ae-b766-bbb1cd3468df,Prostate-Specific Antigen,Other,0.7900,μg/L,,2.5000
+c63355bd-9802-452c-9355-e4def1337495,acb03755-7f8a-4a4e-86e7-df35402a94bb,Testosterone,Hormones,34.6000,nmol/L,12.0000,30.0000
+e6144977-744d-4e02-b121-e65546fed83a,acb03755-7f8a-4a4e-86e7-df35402a94bb,Free Testosterone,Hormones,0.7920,nmol/L,0.2260,0.6500
+db46c172-2eff-46fa-b3ba-757464897fba,acb03755-7f8a-4a4e-86e7-df35402a94bb,Luteinising Hormone,Hormones,0.3000,U/l,1.7000,8.6000
+599df048-1359-4e8a-a518-e6e8db81cf38,acb03755-7f8a-4a4e-86e7-df35402a94bb,Follicle Stimulating Hormone,Hormones,0.3000,U/l,1.5000,12.4000
+02950fd1-e9fa-41b7-a410-46ea587b3add,acb03755-7f8a-4a4e-86e7-df35402a94bb,Oestradiol,Hormones,124.0000,pmol/L,41.0000,159.0000
+68be13a1-326c-45bf-aa62-a3ac660a2602,acb03755-7f8a-4a4e-86e7-df35402a94bb,Prolactin,Hormones,196.0000,mIU/L,86.0000,324.0000
+933c1c6d-fd44-4b86-a4b4-bdb9d459567f,acb03755-7f8a-4a4e-86e7-df35402a94bb,Sex Hormone Binding Globulin,Hormones,32.5000,nmol/L,10.0000,57.0000
+1bbc5897-1f5d-492d-8b18-273a7d9b8be2,acb03755-7f8a-4a4e-86e7-df35402a94bb,Thyroid Stimulating Hormone,Hormones,1.4000,mIU/L,0.2700,4.2000
+147ca38a-9e3c-447a-9823-8ecbbebe231b,acb03755-7f8a-4a4e-86e7-df35402a94bb,Free Thyroxine,Hormones,17.5000,pmol/L,12.0000,22.0000
+ad0a639d-b53a-4125-b40c-30b4efad9d09,acb03755-7f8a-4a4e-86e7-df35402a94bb,Haematocrit,Hematology,53.9000,%,40.0000,52.0000
+fc2fd929-ea7f-4bb9-a0eb-a1749fb9cbd0,acb03755-7f8a-4a4e-86e7-df35402a94bb,Haemoglobin,Hematology,175.0000,g/L,130.0000,180.0000
+a89d34ab-d0d5-451d-8fcb-ba120bc71534,acb03755-7f8a-4a4e-86e7-df35402a94bb,Red Blood Cells,Hematology,6.0900,10^12/L,4.4000,6.5000
+09f46fe7-6698-41fc-b9c6-9b0bb681669d,acb03755-7f8a-4a4e-86e7-df35402a94bb,White Blood Cells,Hematology,5.2400,10^9/L,3.0000,11.0000
+15ada67b-834e-4f0a-a297-087c81586a13,acb03755-7f8a-4a4e-86e7-df35402a94bb,Lymphocytes,Hematology,1.8800,10^9/L,1.5000,4.5000
+c5ed0f65-2311-4475-ac8e-aceb27147791,acb03755-7f8a-4a4e-86e7-df35402a94bb,Monocytes,Hematology,0.3000,10^9/L,0.2000,0.8000
+01bec8cb-db3d-4d2f-bf42-418c4160c76f,acb03755-7f8a-4a4e-86e7-df35402a94bb,Neutrophils,Hematology,2.8800,10^9/L,2.0000,7.5000
+e2ce759c-013b-4693-b40c-87455b2a705c,acb03755-7f8a-4a4e-86e7-df35402a94bb,Platelets,Hematology,241.0000,10^9/L,150.0000,450.0000
+c2dceaeb-bdb6-46c8-bda2-1b88c4c57f48,acb03755-7f8a-4a4e-86e7-df35402a94bb,Mean Cell Volume,Hematology,88.5000,fL,80.0000,100.0000
+4e281e7b-39e0-4dbd-86e4-84354b662d6b,acb03755-7f8a-4a4e-86e7-df35402a94bb,Mean Cell Haemoglobin Concentration,Hematology,325.0000,g/L,320.0000,360.0000
+a1d327af-64cd-4496-a3b3-fedd8bc35969,acb03755-7f8a-4a4e-86e7-df35402a94bb,Mean Cell Haemoglobin,Hematology,28.7000,pg,27.0000,33.0000
+0108e4a1-1eee-414b-8f08-3d790a1164d9,acb03755-7f8a-4a4e-86e7-df35402a94bb,Basophils,Hematology,0.0400,10^9/L,0.0000,0.1000
+e57a8971-9368-4133-8425-c25cbae84ea6,acb03755-7f8a-4a4e-86e7-df35402a94bb,Eosinophils,Hematology,0.1400,10^9/L,0.0000,0.4000
+07f58483-2cce-4e6c-b8f6-22af8cf3d8be,acb03755-7f8a-4a4e-86e7-df35402a94bb,High-Density Lipoprotein,Lipids,0.9400,mmol/L,0.9000,1.7000
+908346eb-e1a6-42f7-8fd1-12fa459a2bfe,acb03755-7f8a-4a4e-86e7-df35402a94bb,Low-Density Lipoprotein,Lipids,3.1900,mmol/L,,3.0000
+cf11ea58-51cd-45ee-a10a-56325625aa68,acb03755-7f8a-4a4e-86e7-df35402a94bb,Total Cholesterol,Lipids,4.6200,mmol/L,,5.0000
+6ac5ac8b-3728-48d6-96d2-2584eb0298ce,acb03755-7f8a-4a4e-86e7-df35402a94bb,Alanine Transaminase,Liver,49.7000,U/L,,45.0000
+f996cec6-7bd4-4cf2-85f6-137b9c5ad958,acb03755-7f8a-4a4e-86e7-df35402a94bb,Alkaline Phosphatase,Liver,50.0000,U/L,30.0000,130.0000
+c32407bc-6804-425b-b64b-882db823b78e,acb03755-7f8a-4a4e-86e7-df35402a94bb,Albumin,Liver,47.0000,g/L,35.0000,50.0000
+07489b38-a84a-4991-8467-aa41d6e77b45,acb03755-7f8a-4a4e-86e7-df35402a94bb,Bilirubin,Liver,14.3200,μmol/L,,22.0000
+b9b05470-e390-407c-afc7-39f9e89b1127,acb03755-7f8a-4a4e-86e7-df35402a94bb,Creatinine,Kidney,93.0000,μmol/L,60.0000,120.0000
+b9f77c45-42da-42de-973e-a544cd696bff,acb03755-7f8a-4a4e-86e7-df35402a94bb,Estimated Glomerular Filtration Rate,Kidney,91.0000,ml/min/1.73m2,60.0000,150.0000
+35d7675d-3f8b-4984-ae23-56c9144a5d11,acb03755-7f8a-4a4e-86e7-df35402a94bb,Urea,Kidney,5.5100,mmol/L,2.5000,7.8000
+663cc73d-1c51-47d4-b9aa-a1694f404964,acb03755-7f8a-4a4e-86e7-df35402a94bb,Glycated Haemoglobin (HbA1c),Metabolic,34.1000,mmol/mol,20.0000,42.0000
+1ea7bb11-221d-4ced-b3f2-7f39defeee44,acb03755-7f8a-4a4e-86e7-df35402a94bb,Ferritin,Metabolic,80.0200,μg/L,30.0000,400.0000
+3ef68a1c-5362-4344-bf19-7f54289bc74c,acb03755-7f8a-4a4e-86e7-df35402a94bb,Prostate-Specific Antigen,Other,0.8700,μg/L,,2.5000
+05154943-aa0d-4c4b-a602-db8e2d243bc8,acb03755-7f8a-4a4e-86e7-df35402a94bb,Triglycerides,Lipids,1.0700,mmol/L,0.0000,2.3000
+12a3b3d3-165a-4277-a1d5-92a1f7816a6f,d5e30999-4e3b-46f3-9d13-bad66ae6e08f,Testosterone,Hormones,12.3000,nmol/L,12.0000,30.0000
+b1de21c3-ccde-4ddf-9452-638a35cd8cc7,d5e30999-4e3b-46f3-9d13-bad66ae6e08f,Free Testosterone,Hormones,0.1550,nmol/L,0.2260,0.6500
+de3f1686-5ccd-4c30-b1cb-ccca38d6db19,d5e30999-4e3b-46f3-9d13-bad66ae6e08f,Luteinising Hormone,Hormones,4.1000,U/l,1.7000,8.6000
+909b4f2f-982f-4720-8c47-e3aad651b44a,d5e30999-4e3b-46f3-9d13-bad66ae6e08f,Follicle Stimulating Hormone,Hormones,2.7000,U/l,1.5000,12.4000
+eb0010c1-3109-47e3-ba31-894af343c98d,d5e30999-4e3b-46f3-9d13-bad66ae6e08f,Oestradiol,Hormones,172.0000,pmol/L,41.0000,159.0000
+5ca02f4c-df44-4ac9-b83e-4571a21632a1,d5e30999-4e3b-46f3-9d13-bad66ae6e08f,Prolactin,Hormones,162.0000,mIU/L,86.0000,324.0000
+6ce59a6f-0aa3-489d-a3aa-32f797019e77,d5e30999-4e3b-46f3-9d13-bad66ae6e08f,Sex Hormone Binding Globulin,Hormones,43.4000,nmol/L,10.0000,57.0000
+0bab00d9-ea33-4fe9-adbe-844c4ae7dc7c,7e1fcd96-ac3b-4b6e-b687-62cf9bae612f,Testosterone,Hormones,13.2000,nmol/L,12.0000,30.0000
+f9f52192-3e2b-4f29-b07e-1f150b68c5af,7e1fcd96-ac3b-4b6e-b687-62cf9bae612f,Free Testosterone,Hormones,0.3220,nmol/L,0.2260,0.6500
+68cf9284-5eab-4e1c-99f5-eadaa13db0a1,7e1fcd96-ac3b-4b6e-b687-62cf9bae612f,Sex Hormone Binding Globulin,Hormones,21.1000,nmol/L,10.0000,57.0000
+85f8e9ab-7d5d-4c44-9f80-e4e813219f18,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Testosterone,Hormones,9.0000,nmol/L,12.0000,30.0000
+04c93244-a1c2-479f-ad19-182f41308e33,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Free Testosterone,Hormones,0.2420,nmol/L,0.2260,0.6500
+f3bf4940-4630-4dc7-a94f-ecf8a1f034e7,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Luteinising Hormone,Hormones,3.2000,U/l,1.7000,8.6000
+faec0067-feaa-480c-802e-4c44df1a317f,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Follicle Stimulating Hormone,Hormones,3.2000,U/l,1.5000,12.4000
+cea49d2f-fb1a-48f3-b552-3d417873745b,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Oestradiol,Hormones,89.8000,pmol/L,41.0000,159.0000
+276a5a92-6c3d-44f5-8196-c1843372b2a0,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Prolactin,Hormones,109.0000,mIU/L,86.0000,324.0000
+f0e530e7-7824-4892-b3fc-38972c322d42,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Sex Hormone Binding Globulin,Hormones,17.4000,nmol/L,10.0000,57.0000
+2b32df9a-cf30-41cf-b3b2-aa38e8bf3381,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Thyroid Stimulating Hormone,Hormones,1.4200,mIU/L,0.2700,4.2000
+e878bdbf-e6ff-47ba-9eed-7ccce2d6940d,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Free Thyroxine,Hormones,21.0000,pmol/L,12.0000,22.0000
+285580b3-c2aa-4205-85d5-bce8da5afc2d,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Haematocrit,Hematology,47.4550,%,40.0000,52.0000
+da15900a-9891-47a5-85e2-71bcebe42a11,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Haemoglobin,Hematology,155.0000,g/L,130.0000,180.0000
+1156b4d7-c2e9-43ae-b84c-52c9986ddf83,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Red Blood Cells,Hematology,6.3500,10^12/L,4.4000,6.5000
+317406f7-501f-4977-bc00-340d28b9a379,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,White Blood Cells,Hematology,2.7900,10^9/L,3.0000,11.0000
+8efb3b4d-ff11-4bd3-bedb-9938a2e0708a,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Lymphocytes,Hematology,1.6600,10^9/L,1.5000,4.5000
+36e5c56d-ad4a-4b61-af33-f4931e3efacc,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Monocytes,Hematology,0.4400,10^9/L,0.2000,0.8000
+986c971c-f3f2-4861-a4a0-2656730f4db1,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Neutrophils,Hematology,0.3800,10^9/L,2.0000,7.5000
+48d5a277-1bee-4fc6-b181-eaa2f88f40d6,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Platelets,Hematology,168.0000,10^9/L,150.0000,450.0000
+b3482ba7-e882-46c3-b0dd-0c20e2c2ccfd,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Mean Cell Volume,Hematology,78.6000,fL,80.0000,100.0000
+fe89edd9-f9a4-4b73-b2f3-bd518456e250,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Mean Cell Haemoglobin Concentration,Hematology,311.0000,g/L,320.0000,360.0000
+68adfcf7-0925-4335-996b-06045a075661,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Mean Cell Haemoglobin,Hematology,24.4000,pg,27.0000,33.0000
+31209eba-8c10-492b-991a-3bf01a01e75b,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Basophils,Hematology,0.0500,10^9/L,0.0000,0.1000
+ec904bee-a0af-4509-8bf6-31d4077fbfe0,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Eosinophils,Hematology,0.2600,10^9/L,0.0000,0.4000
+ac3f05d2-947f-4397-91ae-99c0ac3f1b8b,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,High-Density Lipoprotein,Lipids,1.3800,mmol/L,0.9000,1.7000
+53ab1740-8aba-496c-9c74-4259ee1c7239,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Low-Density Lipoprotein,Lipids,2.8000,mmol/L,,3.0000
+d49d0c24-543e-4b7f-bafd-1cc02efcbbe3,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Total Cholesterol,Lipids,4.2000,mmol/L,,5.0000
+1f03e13d-3da6-4cdd-9de2-8525ef5e517d,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Total Cholesterol: HDL Ratio,Lipids,3.0400,ratio,,5.0000
+9be43f36-b6d7-4d29-8419-954bfd2f35dd,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Alkaline Phosphatase,Liver,67.0000,U/L,30.0000,130.0000
+3796773d-4873-44e0-80ab-1ee2f843e08e,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Gamma-Glutamyl Transferase,Liver,16.4000,U/L,8.0000,61.0000
+d9ffac6b-a4f1-4d54-9c93-fd01639fc82b,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Albumin,Liver,46.4000,g/L,35.0000,50.0000
+928d7a07-557c-4aee-8817-ccc5fb00e848,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Bilirubin,Liver,9.0400,μmol/L,,22.0000
+2d2a15f6-f4c0-4b0b-a3e5-627f04e6c06e,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Creatinine,Kidney,88.1000,μmol/L,60.0000,120.0000
+9989233f-429d-4c31-ab87-5e5c1863d38b,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Estimated Glomerular Filtration Rate,Kidney,101.0000,ml/min/1.73m2,60.0000,150.0000
+06efc955-9a59-4ea8-adf5-b8818421e613,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Urea,Kidney,9.3100,mmol/L,2.5000,7.8000
+1b4b4ab9-b7bb-4803-8305-e281c3417a7e,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Glycated Haemoglobin (HbA1c),Metabolic,35.8500,mmol/mol,20.0000,42.0000
+80e7868b-86f8-4a4e-ad02-3930e53ad524,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Ferritin,Metabolic,216.7700,μg/L,30.0000,400.0000
+341e73be-3204-4103-adc8-e7c9a3326ef1,d8e3cfa3-4357-4e7b-aea1-b8756cbf6be6,Prostate-Specific Antigen,Other,0.5100,μg/L,,2.5000
+e839cba0-a777-41f2-8a93-8fe3488482d9,c2a0317c-8c99-45cc-8861-37b8db74f88a,Testosterone,Hormones,33.9000,nmol/L,12.0000,30.0000
+a930e04c-6ddc-4a51-985a-1caf676eeba7,c2a0317c-8c99-45cc-8861-37b8db74f88a,Luteinising Hormone,Hormones,6.4000,U/l,1.7000,8.6000
+eb4b3072-fe45-4494-b324-21c572efa69c,c2a0317c-8c99-45cc-8861-37b8db74f88a,Sex Hormone Binding Globulin,Hormones,53.2000,nmol/L,10.0000,57.0000
+a5cdc727-c972-4776-8fe0-4557808823d3,c2a0317c-8c99-45cc-8861-37b8db74f88a,Thyroid Stimulating Hormone,Hormones,2.1900,mIU/L,0.2700,4.2000
+fe667f9f-501d-49ff-a148-5506cf9943cc,c2a0317c-8c99-45cc-8861-37b8db74f88a,Free Thyroxine,Hormones,18.1000,pmol/L,12.0000,22.0000
+afdce15e-d2f9-4047-aab2-5a7be98ba788,c2a0317c-8c99-45cc-8861-37b8db74f88a,Haematocrit,Hematology,48.7000,%,40.0000,52.0000
+46c96cb5-16ef-4a25-8fc7-bab43a238076,c2a0317c-8c99-45cc-8861-37b8db74f88a,Haemoglobin,Hematology,161.0000,g/L,130.0000,180.0000
+185ced18-775e-433c-a60e-35f7f4dba615,c2a0317c-8c99-45cc-8861-37b8db74f88a,Red Blood Cells,Hematology,5.1300,10^12/L,4.4000,6.5000
+e93fa464-f578-4f7e-a4ff-4f05e5e5a311,c2a0317c-8c99-45cc-8861-37b8db74f88a,White Blood Cells,Hematology,4.5500,10^9/L,3.0000,11.0000
+ebf3f6e1-6fa7-41df-8342-857ba13752f3,c2a0317c-8c99-45cc-8861-37b8db74f88a,Lymphocytes,Hematology,1.9600,10^9/L,1.5000,4.5000
+4b4e505d-310f-43a7-9b5d-afaf40748646,c2a0317c-8c99-45cc-8861-37b8db74f88a,Monocytes,Hematology,0.3400,10^9/L,0.2000,0.8000
+fec465d0-3677-45f5-842e-0e85c05de163,c2a0317c-8c99-45cc-8861-37b8db74f88a,Neutrophils,Hematology,2.0800,10^9/L,2.0000,7.5000
+bfb1dafb-62fd-4e19-8516-c2b23004681b,c2a0317c-8c99-45cc-8861-37b8db74f88a,Platelets,Hematology,173.0000,10^9/L,150.0000,450.0000
+5c6efd51-ee52-40aa-b125-c5db2be3e2dd,c2a0317c-8c99-45cc-8861-37b8db74f88a,Mean Cell Volume,Hematology,94.9000,fL,80.0000,100.0000
+0ae67cd0-ed34-40f2-9112-c00088549a87,c2a0317c-8c99-45cc-8861-37b8db74f88a,Mean Cell Haemoglobin Concentration,Hematology,331.0000,g/L,320.0000,360.0000
+b7ff1dee-4cce-4d5c-bb3b-66829bf8e015,c2a0317c-8c99-45cc-8861-37b8db74f88a,Mean Cell Haemoglobin,Hematology,31.4000,pg,27.0000,33.0000
+29bdb07e-7a21-452b-b20a-ea5c5ea45c68,c2a0317c-8c99-45cc-8861-37b8db74f88a,Basophils,Hematology,0.0400,10^9/L,0.0000,0.1000
+2644a67a-3f8c-4549-b746-192d52e62240,c2a0317c-8c99-45cc-8861-37b8db74f88a,Eosinophils,Hematology,0.1300,10^9/L,0.0000,0.4000
+ef573af4-e4b4-432d-a033-76183bfc85e6,c2a0317c-8c99-45cc-8861-37b8db74f88a,High-Density Lipoprotein,Lipids,1.6300,mmol/L,0.9000,1.7000
+22230968-e24d-4333-9679-9fd3ddd599b2,c2a0317c-8c99-45cc-8861-37b8db74f88a,Low-Density Lipoprotein,Lipids,2.7700,mmol/L,,3.0000
+332da0f2-cf3a-43fd-9e38-6c2c25856c2f,c2a0317c-8c99-45cc-8861-37b8db74f88a,Total Cholesterol,Lipids,4.9000,mmol/L,,5.0000
+adc4c9bf-dc97-436e-8f59-69c4ebeffa2b,c2a0317c-8c99-45cc-8861-37b8db74f88a,Total Cholesterol: HDL Ratio,Lipids,3.0100,ratio,,5.0000
+fa236e67-88a0-4032-a4f7-37daa143ee00,c2a0317c-8c99-45cc-8861-37b8db74f88a,Alanine Transaminase,Liver,34.7000,U/L,,45.0000
+96e23961-67a6-44bf-bac7-38ff33df46a0,c2a0317c-8c99-45cc-8861-37b8db74f88a,Alkaline Phosphatase,Liver,57.0000,U/L,30.0000,130.0000
+13623704-d6ea-4807-b4fd-67d842d70fec,c2a0317c-8c99-45cc-8861-37b8db74f88a,Albumin,Liver,45.2000,g/L,35.0000,50.0000
+e82c2ad4-5e45-41ff-8c67-dce01a45084d,c2a0317c-8c99-45cc-8861-37b8db74f88a,Bilirubin,Liver,16.8000,μmol/L,,22.0000
+234ded42-d277-42a6-824c-68940f9e5c03,c2a0317c-8c99-45cc-8861-37b8db74f88a,Creatinine,Kidney,102.1000,μmol/L,60.0000,120.0000
+d7356eb5-5357-4d1e-8779-b377563509f1,c2a0317c-8c99-45cc-8861-37b8db74f88a,Estimated Glomerular Filtration Rate,Kidney,87.0000,ml/min/1.73m2,60.0000,150.0000
+87847df0-612a-4bcf-8633-861e2cd5e7da,c2a0317c-8c99-45cc-8861-37b8db74f88a,Urea,Kidney,6.8800,mmol/L,2.5000,7.8000
+f4fc0610-6bf7-4b39-8c95-15a192277183,c2a0317c-8c99-45cc-8861-37b8db74f88a,Glycated Haemoglobin (HbA1c),Metabolic,32.4600,mmol/mol,20.0000,42.0000
+f8234a61-8b32-41f5-baa1-a8fc0da99513,c2a0317c-8c99-45cc-8861-37b8db74f88a,Ferritin,Metabolic,81.9700,μg/L,30.0000,400.0000
+7e1640d3-79c5-4e89-b0b6-96466f6e95a1,c2a0317c-8c99-45cc-8861-37b8db74f88a,Triglycerides,Lipids,0.4300,mmol/L,0.0000,2.3000
+cfafaf07-9c66-47bc-9f1a-57a3e67d2943,c2a0317c-8c99-45cc-8861-37b8db74f88a,Vitamin D (25-OH),Vitamins,186.0000,nmol/L,50.0000,175.0000
+cee7a08c-2e7d-4ce5-9b8a-9aeea6dbc58a,c2a0317c-8c99-45cc-8861-37b8db74f88a,Vitamin B12,Vitamins,947.0000,pmol/L,140.0000,725.0000
+eb1e1941-6c20-4580-8c1f-2347b259ee99,c2a0317c-8c99-45cc-8861-37b8db74f88a,Folate,Vitamins,19.2000,nmol/L,8.8300,60.8000
+066e7649-c463-4346-a225-1ad1f9681c4d,c2a0317c-8c99-45cc-8861-37b8db74f88a,C-Reactive Protein,Metabolic,0.6300,mg/L,0.0000,5.0000
+4eaccbf7-c28c-430b-9a7b-f0d0d568f6c4,c2a0317c-8c99-45cc-8861-37b8db74f88a,Uric Acid,Metabolic,287.1000,μmol/L,202.0000,416.0000
+b70397c7-36f8-467b-babc-ee1146ca5cae,c2a0317c-8c99-45cc-8861-37b8db74f88a,Iron,Metabolic,27.0000,μmol/L,11.0000,29.0000
+8cf5f69d-749f-41ee-9259-9646c80c2317,c2a0317c-8c99-45cc-8861-37b8db74f88a,Transferrin Saturation,Metabolic,40.5000,%,15.0000,50.0000
+2770175a-6bd2-4114-9489-1fffea1c2d41,c2a0317c-8c99-45cc-8861-37b8db74f88a,DHEA Sulphate,Hormones,9.2000,μmol/L,2.4100,11.6000
+9b22e6ff-89a4-467c-99c7-6ffadbdeb656,c2a0317c-8c99-45cc-8861-37b8db74f88a,Cortisol,Hormones,295.0000,nmol/L,101.0000,536.0000
+62718cf0-3673-49e5-8299-8d8eae409d71,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Testosterone,Hormones,23.0000,nmol/L,12.0000,30.0000
+ec325f86-c4a8-4b0d-9341-8d419d46e4bb,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Free Testosterone,Hormones,0.2690,nmol/L,0.2260,0.6500
+9399d8d5-6b05-4c96-afbf-d68c9cc2b2d0,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Luteinising Hormone,Hormones,5.0000,U/l,1.7000,8.6000
+5a9a688b-1edb-44b8-992e-0987bd50d07a,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Follicle Stimulating Hormone,Hormones,3.3300,U/l,1.5000,12.4000
+5b5f7c71-aa98-47b2-b067-d1d256b58ded,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Oestradiol,Hormones,122.0000,pmol/L,41.0000,159.0000
+145ac2aa-079f-48a8-8b7f-facb4c3408f9,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Prolactin,Hormones,75.0000,mIU/L,86.0000,324.0000
+7911908d-816e-414f-be98-7bb63fabc48f,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Sex Hormone Binding Globulin,Hormones,74.1000,nmol/L,10.0000,57.0000
+041d5edb-b787-4cd2-9e7a-de2e07981fda,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Free Thyroxine,Hormones,15.6000,pmol/L,12.0000,22.0000
+a65cd1a1-7cf8-4780-8bfd-d0b5398ab581,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Haematocrit,Hematology,42.0340,%,40.0000,52.0000
+029ccff4-3312-4193-93a7-5fe30d3a7d6c,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Haemoglobin,Hematology,146.0000,g/L,130.0000,180.0000
+d5796dc6-7a53-4985-a43f-fd9bdec1d7bb,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Red Blood Cells,Hematology,4.9900,10^12/L,4.4000,6.5000
+f487ea38-07ca-45ba-af1d-90d776e12f55,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,White Blood Cells,Hematology,4.7400,10^9/L,3.0000,11.0000
+be9dd45b-60be-4d49-a691-96067eae8610,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Lymphocytes,Hematology,1.4600,10^9/L,1.5000,4.5000
+b316afff-8126-418c-b216-39e16fd33142,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Monocytes,Hematology,0.3500,10^9/L,0.2000,0.8000
+97b99ff9-1f86-494b-9ae0-d838b50e3104,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Neutrophils,Hematology,2.8600,10^9/L,2.0000,7.5000
+55491454-da7e-4b88-9de0-abf0795e81b5,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Platelets,Hematology,231.0000,10^9/L,150.0000,450.0000
+a2edf492-e055-442b-8eda-f406bc5bd3be,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Mean Cell Volume,Hematology,88.6000,fL,80.0000,100.0000
+c8d5c92b-ac26-494e-9e34-ab4bfa2f0808,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Mean Cell Haemoglobin Concentration,Hematology,330.0000,g/L,320.0000,360.0000
+9f6de393-1f1a-48c2-a00e-26a4975384a1,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Mean Cell Haemoglobin,Hematology,29.3000,pg,27.0000,33.0000
+44cdb6d9-1016-4ff9-916b-c3225bd3c200,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Basophils,Hematology,0.0300,10^9/L,0.0000,0.1000
+a3de5c09-2c0c-4759-bd66-80c07c7b45ae,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Eosinophils,Hematology,0.0400,10^9/L,0.0000,0.4000
+c183d63f-6600-461d-87c7-4e37f4338dfb,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,High-Density Lipoprotein,Lipids,1.4900,mmol/L,0.9000,1.7000
+b2535127-114e-45f6-88d3-f6bca8d122d0,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Total Cholesterol,Lipids,4.0200,mmol/L,,5.0000
+4ad069db-f075-43a0-881b-71d1beadc176,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Total Cholesterol: HDL Ratio,Lipids,2.7000,ratio,,5.0000
+27a8afb9-2a9c-40b5-b2f9-2d83c37ccdce,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Alanine Transaminase,Liver,16.0000,U/L,,45.0000
+86b8d4a0-3b0b-427b-91be-f7673fbed19e,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Gamma-Glutamyl Transferase,Liver,10.9000,U/L,8.0000,61.0000
+49a2fb14-0a55-488e-af71-005fe15f3f42,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Albumin,Liver,50.0000,g/L,35.0000,50.0000
+15e2807c-9dfd-44c7-8eaf-69218a1a5d7a,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Bilirubin,Liver,16.0000,μmol/L,,22.0000
+ee39f84e-2dad-4f41-9da9-74c8b0818aa7,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Creatinine,Kidney,97.7000,μmol/L,60.0000,120.0000
+f1d63513-7094-417a-be25-577bac13b689,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Estimated Glomerular Filtration Rate,Kidney,89.0000,ml/min/1.73m2,60.0000,150.0000
+efa0058a-c55a-4386-a947-93059a090c1b,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Urea,Kidney,4.8000,mmol/L,2.5000,7.8000
+d82f6c95-a632-4675-a1c3-54295337a79d,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Glycated Haemoglobin (HbA1c),Metabolic,33.7700,mmol/mol,20.0000,42.0000
+0cbb5976-0bb5-4eee-83b0-01dbb08fc636,979c87e7-0265-41fa-98d0-27e5e5b2cbeb,Ferritin,Metabolic,102.8200,μg/L,30.0000,400.0000
+692cf98d-a9cd-46c6-b8fc-55daaa7c9137,e42ac445-5728-4b9c-9097-94bb18042820,Testosterone,Hormones,6.4300,nmol/L,12.0000,30.0000
+30293607-2dc1-4b8a-ae2f-dbbc1a2d2027,e42ac445-5728-4b9c-9097-94bb18042820,Free Testosterone,Hormones,0.1320,nmol/L,0.2260,0.6500
+be74f6c4-9b24-4bb3-b176-dfda1fb541fe,e42ac445-5728-4b9c-9097-94bb18042820,Luteinising Hormone,Hormones,3.6000,U/l,1.7000,8.6000
+f6879a64-0e60-4687-8ebb-6de03d3ad233,e42ac445-5728-4b9c-9097-94bb18042820,Follicle Stimulating Hormone,Hormones,3.2000,U/l,1.5000,12.4000
+264823ca-e9e9-460e-b3bc-3c8555e3d7e8,e42ac445-5728-4b9c-9097-94bb18042820,Oestradiol,Hormones,61.2000,pmol/L,41.0000,159.0000
+6ed3b30a-6644-47c2-af0e-72bc12016f9b,e42ac445-5728-4b9c-9097-94bb18042820,Prolactin,Hormones,148.0000,mIU/L,86.0000,324.0000
+f40fe302-9fe4-4444-98e2-de13c4b12be0,e42ac445-5728-4b9c-9097-94bb18042820,Sex Hormone Binding Globulin,Hormones,15.4000,nmol/L,10.0000,57.0000
+39e8c348-5b40-4b70-ac11-88a704d20ddd,bd9f6ce8-e851-473a-9eac-bfd6b713af42,Testosterone,Hormones,10.4000,nmol/L,12.0000,30.0000
+c1006509-83ff-4b90-9f7c-274a1fb8fd12,bd9f6ce8-e851-473a-9eac-bfd6b713af42,Free Testosterone,Hormones,0.2580,nmol/L,0.2260,0.6500
+1e253545-607e-417d-b860-e887af1ebb3b,bd9f6ce8-e851-473a-9eac-bfd6b713af42,Luteinising Hormone,Hormones,4.3000,U/l,1.7000,8.6000
+f8e8c7f7-072a-4998-a891-d21c43e0f8de,bd9f6ce8-e851-473a-9eac-bfd6b713af42,Follicle Stimulating Hormone,Hormones,3.2200,U/l,1.5000,12.4000
+5cc9cb07-5442-4591-85e3-02d718c8ef99,bd9f6ce8-e851-473a-9eac-bfd6b713af42,Oestradiol,Hormones,95.5000,pmol/L,41.0000,159.0000
+33022982-d8b2-47a1-a24b-fc7c54dbbac2,bd9f6ce8-e851-473a-9eac-bfd6b713af42,Prolactin,Hormones,208.0000,mIU/L,86.0000,324.0000
+84e6eb7d-13b0-4e29-a7fb-524b65e832cb,bd9f6ce8-e851-473a-9eac-bfd6b713af42,Sex Hormone Binding Globulin,Hormones,20.0000,nmol/L,10.0000,57.0000
+526cb9b3-e82f-4582-9fcc-24f0d0f00770,8db224f3-e6af-4f45-ac28-66a9f60537d4,Testosterone,Hormones,11.7000,nmol/L,12.0000,30.0000
+9a52c872-f4f1-4d12-9ca4-dc2693ffa590,8db224f3-e6af-4f45-ac28-66a9f60537d4,Free Testosterone,Hormones,0.2810,nmol/L,0.2260,0.6500
+74ec0613-53f8-4e9c-a1be-359763fbae2c,8db224f3-e6af-4f45-ac28-66a9f60537d4,Luteinising Hormone,Hormones,5.4000,U/l,1.7000,8.6000
+62a5b4a2-d035-4fd5-bca1-3b82f051bac7,8db224f3-e6af-4f45-ac28-66a9f60537d4,Follicle Stimulating Hormone,Hormones,3.5900,U/l,1.5000,12.4000
+f731235b-6106-4a3a-b062-89e463c84227,8db224f3-e6af-4f45-ac28-66a9f60537d4,Oestradiol,Hormones,87.5000,pmol/L,41.0000,159.0000
+16198b7e-9b3d-4079-8636-1c24f5eeccfe,8db224f3-e6af-4f45-ac28-66a9f60537d4,Prolactin,Hormones,216.0000,mIU/L,86.0000,324.0000
+57d01767-1946-4dbc-af98-ea30892b75d3,8db224f3-e6af-4f45-ac28-66a9f60537d4,Sex Hormone Binding Globulin,Hormones,19.9000,nmol/L,10.0000,57.0000
+e00b8c07-a96b-412d-9f4d-1201808aff2e,f83f1206-b6a6-495d-af91-0355f05da5ce,Testosterone,Hormones,12.0000,nmol/L,12.0000,30.0000
+a25ad944-7ec0-474f-abc9-1753d1ce640b,f83f1206-b6a6-495d-af91-0355f05da5ce,Free Testosterone,Hormones,12.0000,nmol/L,0.2260,0.6500
+74a58f68-d8b2-4c80-9ae3-7b4f785df120,f83f1206-b6a6-495d-af91-0355f05da5ce,Luteinising Hormone,Hormones,0.3000,U/l,1.7000,8.6000
+9fb6a89f-b6d0-4599-9d12-37246d23348d,f83f1206-b6a6-495d-af91-0355f05da5ce,Follicle Stimulating Hormone,Hormones,0.3000,U/l,1.5000,12.4000
+735a360b-b862-474a-99f8-454de3fde96d,f83f1206-b6a6-495d-af91-0355f05da5ce,Oestradiol,Hormones,194.0000,pmol/L,41.0000,159.0000
+f4f8c26c-c28d-4d41-a176-ee9a20b446c3,f83f1206-b6a6-495d-af91-0355f05da5ce,Prolactin,Hormones,185.0000,mIU/L,86.0000,324.0000
+3133a563-1199-4d05-a006-0947f25277cf,f83f1206-b6a6-495d-af91-0355f05da5ce,Sex Hormone Binding Globulin,Hormones,10.4000,nmol/L,10.0000,57.0000
+c8a66a53-5304-4a8e-b91f-bba0af5c7bef,f83f1206-b6a6-495d-af91-0355f05da5ce,Thyroid Stimulating Hormone,Hormones,1.3100,mIU/L,0.2700,4.2000
+e2d0e05e-67f4-4b48-b904-ed836f3f5e1b,f83f1206-b6a6-495d-af91-0355f05da5ce,Free Thyroxine,Hormones,14.5000,pmol/L,12.0000,22.0000
+ef9981c8-d5a1-41af-befa-299a686b073e,f83f1206-b6a6-495d-af91-0355f05da5ce,Haematocrit,Hematology,50.2000,%,40.0000,52.0000
+c2770bab-637a-47bd-af31-152da1a6eb2a,f83f1206-b6a6-495d-af91-0355f05da5ce,Haemoglobin,Hematology,161.0000,g/L,130.0000,180.0000
+b4919c0a-06f0-4629-a628-9583663be4ff,f83f1206-b6a6-495d-af91-0355f05da5ce,Red Blood Cells,Hematology,2.0000,10^12/L,4.4000,6.5000
+06bedcfa-6e4e-43f8-8be3-f207d82173b1,f83f1206-b6a6-495d-af91-0355f05da5ce,White Blood Cells,Hematology,6.9000,10^9/L,3.0000,11.0000
+06f4cedb-3af6-4b4f-9f9a-91099ff05fd1,f83f1206-b6a6-495d-af91-0355f05da5ce,Lymphocytes,Hematology,1.6200,10^9/L,1.5000,4.5000
+500f363a-c8d7-4b49-8f8a-5825c4f88991,f83f1206-b6a6-495d-af91-0355f05da5ce,Monocytes,Hematology,0.6100,10^9/L,0.2000,0.8000
+b3ff1bcf-04a8-4bed-99a2-ff24681f6de0,f83f1206-b6a6-495d-af91-0355f05da5ce,Neutrophils,Hematology,4.5600,10^9/L,2.0000,7.5000
+2099770b-f4ce-4480-b549-3dcaf2ea3f5a,f83f1206-b6a6-495d-af91-0355f05da5ce,Platelets,Hematology,348.0000,10^9/L,150.0000,450.0000
+86d4d181-4990-40fb-a5a5-392a3b010880,f83f1206-b6a6-495d-af91-0355f05da5ce,Mean Cell Volume,Hematology,95.8000,fL,80.0000,100.0000
+ad3fcde0-ed4b-4ef8-9158-4261e0238307,f83f1206-b6a6-495d-af91-0355f05da5ce,Mean Cell Haemoglobin Concentration,Hematology,321.0000,g/L,320.0000,360.0000
+e4987686-bd8f-4b6b-829b-ad6ffda70473,f83f1206-b6a6-495d-af91-0355f05da5ce,Mean Cell Haemoglobin,Hematology,30.7000,pg,27.0000,33.0000
+33584a83-4f8f-4862-b81e-736bb061bb5d,f83f1206-b6a6-495d-af91-0355f05da5ce,Basophils,Hematology,0.0400,10^9/L,0.0000,0.1000
+63ad503f-f89d-4154-8133-8cc3cc69fc78,f83f1206-b6a6-495d-af91-0355f05da5ce,Eosinophils,Hematology,0.0700,10^9/L,0.0000,0.4000
+ed99ab21-e750-4629-b017-24b5f9657e97,f83f1206-b6a6-495d-af91-0355f05da5ce,High-Density Lipoprotein,Lipids,0.7800,mmol/L,0.9000,1.7000
+859481fb-1c44-4954-b9e0-374419939317,f83f1206-b6a6-495d-af91-0355f05da5ce,Low-Density Lipoprotein,Lipids,2.3700,mmol/L,,3.0000
+7bce0d56-4ce1-43de-89c6-45a394802f0b,f83f1206-b6a6-495d-af91-0355f05da5ce,Total Cholesterol,Lipids,3.4600,mmol/L,,5.0000
+bba0dca5-ed49-492d-8253-35ac21f55e0d,f83f1206-b6a6-495d-af91-0355f05da5ce,Alanine Transaminase,Liver,92.3000,U/L,,45.0000
+58d94442-6a7c-43c9-a52b-1ea573d73da4,f83f1206-b6a6-495d-af91-0355f05da5ce,Alkaline Phosphatase,Liver,51.0000,U/L,30.0000,130.0000
+35f04f85-f7d4-444b-91ef-d3efd08d2c5b,f83f1206-b6a6-495d-af91-0355f05da5ce,Albumin,Liver,44.3000,g/L,35.0000,50.0000
+b76109fa-4010-461c-84bd-d1018ad67550,f83f1206-b6a6-495d-af91-0355f05da5ce,Bilirubin,Liver,8.2300,μmol/L,,22.0000
+50c45230-28b2-4eb3-86a5-20af5c08ec1b,f83f1206-b6a6-495d-af91-0355f05da5ce,Creatinine,Kidney,2.5000,μmol/L,60.0000,120.0000
+87791983-a79a-40ad-805f-9faa66dcd8bb,f83f1206-b6a6-495d-af91-0355f05da5ce,Estimated Glomerular Filtration Rate,Kidney,91.0000,ml/min/1.73m2,60.0000,150.0000
+19008115-13d7-4008-8299-df9087d00830,f83f1206-b6a6-495d-af91-0355f05da5ce,Urea,Kidney,6.5900,mmol/L,2.5000,7.8000
+1276f732-ae37-41d0-b7bd-7e8b4e618e7a,f83f1206-b6a6-495d-af91-0355f05da5ce,Glycated Haemoglobin (HbA1c),Metabolic,2.0000,mmol/mol,20.0000,42.0000
+802e0c52-6d42-4f49-a4b1-2c668078ecc5,f83f1206-b6a6-495d-af91-0355f05da5ce,Ferritin,Metabolic,72.2400,μg/L,30.0000,400.0000
+b0dd128d-428a-4731-b4fb-5efe6e812ff3,f83f1206-b6a6-495d-af91-0355f05da5ce,Prostate-Specific Antigen,Other,1.3300,μg/L,,2.5000
+378ef8e4-ea5f-4d75-a464-5fe1b809c86d,f83f1206-b6a6-495d-af91-0355f05da5ce,Triglycerides,Lipids,0.6800,mmol/L,0.0000,2.3000
+c3b38fa2-94eb-4e1d-97ee-dbe5dafd8cad,f83f1206-b6a6-495d-af91-0355f05da5ce,Vitamin D (25-OH),Vitamins,162.0000,nmol/L,50.0000,175.0000
+dac27b06-a23a-4ee2-a6cb-0977dd8f9694,f83f1206-b6a6-495d-af91-0355f05da5ce,Vitamin B12,Vitamins,2.0000,pmol/L,140.0000,725.0000
+f93a8b10-e5da-4482-a317-9d29f18f4190,f83f1206-b6a6-495d-af91-0355f05da5ce,Folate,Vitamins,21.2000,nmol/L,8.8300,60.8000
+0f4b3155-5ec0-4ae2-b793-10116332d6bd,f83f1206-b6a6-495d-af91-0355f05da5ce,C-Reactive Protein,Metabolic,1.1200,mg/L,0.0000,5.0000
+4229c8b5-8fa1-432e-b22c-704f5fcbf0b9,f83f1206-b6a6-495d-af91-0355f05da5ce,Uric Acid,Metabolic,218.3000,μmol/L,202.0000,416.0000
+2434a4b6-1393-43a5-adf4-075315cbdde4,f83f1206-b6a6-495d-af91-0355f05da5ce,Iron,Metabolic,22.0000,μmol/L,11.0000,29.0000
+a6ca47c6-d87f-4d64-a0e9-a6a75a7a1574,f83f1206-b6a6-495d-af91-0355f05da5ce,Transferrin Saturation,Metabolic,23.3000,%,15.0000,50.0000
+ff833bfa-2cfa-4b3e-b209-0ba749f40601,6a1daa32-c683-4140-9013-572d4c60acd8,Testosterone,Hormones,100.0000,nmol/L,12.0000,30.0000
+7a683216-bf1e-4d23-b431-5b898aca4629,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Haematocrit,Hematology,53.0000,%,40.0000,52.0000
+1402a958-4f83-4fd1-ba4d-0fb9d6f34dd9,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Haemoglobin,Hematology,17.9000,g/L,130.0000,180.0000
+1282224b-5598-4f02-95bd-d81528163b6a,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Platelets,Hematology,295.0000,10^9/L,150.0000,450.0000
+92169b92-8750-4d42-b5a0-6a276c7dcbea,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,High-Density Lipoprotein,Lipids,1.1900,mmol/L,0.9000,1.7000
+ab8e3b17-b9f2-487b-a58f-310562477c3b,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Low-Density Lipoprotein,Lipids,2.3300,mmol/L,,3.0000
+215f1e2c-0ad2-47d9-933f-47c9f74813c2,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Alanine Transaminase,Liver,21.0000,U/L,,45.0000
+c4e2aeac-d379-4ee5-b56f-78af61bf0604,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Alkaline Phosphatase,Liver,32.0000,U/L,30.0000,130.0000
+b0372d90-537d-4a6d-aa9a-d541a6797754,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Gamma-Glutamyl Transferase,Liver,30.0000,U/L,8.0000,61.0000
+546bd52c-9ace-4a62-83b8-d77e8893cc2e,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Bilirubin,Liver,15.3900,μmol/L,,22.0000
+54ed02b2-a91f-4173-9664-54482a82f44f,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Glycated Haemoglobin (HbA1c),Metabolic,31.0000,mmol/mol,20.0000,42.0000
+7fbd9ef6-f43d-40fc-9269-9d147bfc35ed,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Ferritin,Metabolic,312.0000,μg/L,30.0000,400.0000
+afbe2598-e0e0-4b1e-b736-b29dd9e3db32,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Prostate-Specific Antigen,Other,0.8900,μg/L,,2.5000
+f902229a-fe86-476f-a4b0-0ad836241861,79b723b0-a37f-46c5-b9e4-c7767d88ad9f,Triglycerides,Lipids,1.2200,mmol/L,0.0000,2.3000
+922d6d02-397d-4c86-973e-85e13a36a850,a65b9a64-3c91-47c5-9c2c-1c95defc96c4,Testosterone,Hormones,14.7100,nmol/L,12.0000,30.0000
+932f65a0-83b7-4571-bbdd-1e856796d314,a65b9a64-3c91-47c5-9c2c-1c95defc96c4,Oestradiol,Hormones,146.4700,pmol/L,41.0000,159.0000
+d7f3f12b-3401-4472-8a05-2afb55f4d949,a65b9a64-3c91-47c5-9c2c-1c95defc96c4,Sex Hormone Binding Globulin,Hormones,36.7900,nmol/L,10.0000,57.0000
+0dd970b1-283d-4efa-b230-7424742f8a10,a65b9a64-3c91-47c5-9c2c-1c95defc96c4,Haematocrit,Hematology,49.0000,%,40.0000,52.0000
+1b476c4a-61f6-4fc6-b807-fe5671edd386,a65b9a64-3c91-47c5-9c2c-1c95defc96c4,Haemoglobin,Hematology,165.0000,g/L,130.0000,180.0000

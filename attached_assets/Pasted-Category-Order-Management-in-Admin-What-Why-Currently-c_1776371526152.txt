@@ -1,0 +1,19 @@
+Category Order Management in Admin
+What & Why
+Currently, categories shown in the admin (and on the storefront) are derived from products and sorted alphabetically — there's no way to control the sequence. This adds a dedicated section in the admin backend where the admin can drag-and-drop (or use up/down buttons) to set a preferred display order for categories. The order is persisted in site_config and applied wherever categories are listed.
+Done looks like
+* A "Category Order" section appears in the admin Products tab, listing all existing categories
+* The admin can drag categories up/down to rearrange them and save the order
+* New categories (added via product creation or import) that aren't in the saved order automatically appear at the end
+* The saved order is respected when categories are displayed in the admin product list grouping and on the storefront category filter/navigation
+Out of scope
+* Creating or deleting categories directly from this UI (categories are still managed via products)
+* Per-organiser category ordering
+Tasks
+1. Backend: category order API — Add GET /api/admin/category-order and PUT /api/admin/category-order endpoints that read/write a JSON array of category names stored in site_config under the key category_order.
+2. Admin UI: category order panel — Add a "Category Order" section to the admin Products tab. Fetch the saved order and the current unique category list from products, merge them (saved order first, then any unordered new categories appended at the bottom), and allow the admin to reorder rows with drag-and-drop or up/down arrow buttons. Provide a Save button that calls the PUT endpoint.
+3. Apply order throughout — Replace the Array.from(new Set(...)).sort() category derivation in Admin.tsx with the saved order (falling back to alphabetical if no order is saved), and apply the same ordering to the storefront category filter/navigation so the front-end respects the admin-set sequence.
+Relevant files
+* Product-Landing-Page/artifacts/api-server/src/routes/admin.ts
+* Product-Landing-Page/artifacts/peps-anonymous/src/pages/Admin.tsx
+Dependencies

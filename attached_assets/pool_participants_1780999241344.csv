@@ -1,0 +1,13 @@
+id,pool_id,account_username,contact_email,contact_telegram,display_name,amount_usd,payment_status,payment_tx_hash,payment_currency,payment_network,payment_submitted_at,payment_verified_at,vote_test_ids,notes,created_at,account_id,payment_method,payment_screenshot_url,named_report_opt_in,named_report_name,is_public,can_provide_vial
+Xr5dTaUsqNHCw3ct,KR624cgymShOqaFv,irm1208,test,test,test,10.00,rejected,,,,,,"[""KotqwQJvL9Wa""]",,2026-04-21 08:40:46.873541+00,irm1208,crypto,,f,,t,f
+mpAUNMdGYMSI8DK2,4nFhNJmbxX6MeUbt,irm1208,tes,tes,test,10.00,pending,,,,,,,,2026-04-21 08:42:44.437961+00,irm1208,revolut,,f,,t,f
+Y6yLyBP_oAZWJ_7h,R45wXxMYhXehOq9N,admintest,test,,,10.00,pending,,,,,,,,2026-04-22 08:35:17.125027+00,admintest,anonpay,,f,,f,f
+rvctGK6sJx_YIhmr,R45wXxMYhXehOq9N,admintest,,test,AdminTest,10.00,verified,0xb1d83546c56572c630beb71799dfe337a1193af68a89a3177f62b5616d49e31b,,,2026-04-22 08:40:08.678+00,2026-04-22 08:40:40.008+00,,,2026-04-22 08:37:09.14663+00,admintest,anonpay,,f,,t,f
+0LpJ1Ivm0Xl3JLvn,bj7bwQf_lXgVPsB6,admintest,test@gmail.com,admintest,admin test,10.00,verified,0xb515047551ba270ca8bf507436ffb1cd8565f3c22866f8b5c3f8e49c90d66a69,,,2026-04-22 11:50:04.877+00,2026-04-22 11:50:41.136+00,,,2026-04-22 11:49:01.495245+00,admintest,crypto,,f,,t,f
+9mIM87lzf7iAD87Q,Q9I_73S1lET8jX5e,admintest,,Test,Test,40.00,pending,,,,,,"[""Mwqq7xzUaB5M""]",,2026-04-25 10:55:49.650561+00,admintest,crypto,,t,Test,t,f
+as7116GY12IvMK7y,Q9I_73S1lET8jX5e,iam0121,,@iam0121,,12.00,pending,,,,,,,,2026-04-25 14:29:07.907812+00,iam0121,crypto,,f,,f,f
+AssWR5Upkx8hShjP,Q9I_73S1lET8jX5e,admintest,,Test,Test,40.00,verified,anonpay:6jrbRnqpkg,,,,2026-04-25 20:13:15.661+00,"[""O32dnqpvD9QM""]",,2026-04-25 10:59:12.531173+00,admintest,anonpay,,t,Test,t,f
+YH4dOJ8fi9DhS6P7,Njr_cpyXjRu_9Zez,prem_peps,premal@hotmail.co.uk,@prem_peps,Prem,30.00,pending,,,,,,"[""Azj05sg2Do0x"", ""2Nls6kgyelQK""]",,2026-04-26 08:05:38.393057+00,prem_peps,,,f,,t,t
+-xPgFfFYfqjvN8JZ,Q9I_73S1lET8jX5e,prem_peps,premal@hotmail.co.uk,@prem_peps,Prem,30.00,pending,,,,,,"[""k_9YjwUhEoVD"", ""R4bQxoztC0VH""]",,2026-04-26 08:07:02.080164+00,prem_peps,,,f,,t,f
+Ulskq9roTqg4hBzH,Q9I_73S1lET8jX5e,mkp_uk,,@mkp_uk,,40.00,verified,0xb78c5f5c8c52d9c5c56afcc2c124fa0bba8e6d0f84057e8ed166d8ace311e4a6,,,2026-04-26 13:10:12.499+00,2026-04-26 19:41:41.549+00,"[""R4bQxoztC0VH"", ""k_9YjwUhEoVD""]",,2026-04-26 09:14:45.06955+00,mkp_uk,,,f,,f,f
+69atI7MFpTlx58Ms,Njr_cpyXjRu_9Zez,snptest,test,@snptest,test,20.00,pending,,,,,,"[""nzdAp4G8yGx-""]",,2026-04-29 13:04:27.58055+00,snptest,janoshik,,f,,t,f

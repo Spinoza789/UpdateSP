@@ -1,0 +1,210 @@
+I need you to add an Admin Alerts / Notifications system to my existing app using the LOWEST COST and LOWEST RISK approach.
+
+Important rules:
+- Reuse existing admin panel layout, components, routes, and models wherever possible.
+- Do not rebuild the whole admin panel.
+- Prefer a simple in-app alert system first.
+- Keep changes modular and easy to extend later.
+- Keep styling consistent with the current admin UI.
+- Before coding, inspect the codebase and find the existing admin layout, header/navbar, orders, customers, auth, seller, stock, and support/contact flows.
+- Then implement the cheapest safe version of the alert system.
+
+GOAL
+I want an alert icon in the admin panel header/navbar that shows:
+1. a bell/alert icon
+2. a badge/count of unread alerts
+3. a dropdown or panel showing all alerts
+4. ability to mark alerts as read
+5. ability to click an alert and go directly to the relevant page/item
+
+LOWEST COST APPROACH
+- Create a simple alerts/notifications table or model only if needed.
+- If there is already an activity/event model, reuse it.
+- Start with in-app alerts only.
+- Do not build push notifications, SMS, or complex real-time sockets unless the project already supports it.
+- If real-time is expensive, refresh alerts on page load and at a reasonable interval.
+- Keep the system simple, clean, and admin-focused.
+
+FEATURES TO IMPLEMENT
+
+1. ADMIN ALERT ICON
+- Add a bell/notification icon to the admin panel header or top navigation.
+- Show a badge with the number of unread alerts.
+- If unread count is 0, either hide the badge or show 0 depending on current design consistency.
+
+2. ALERT DROPDOWN / PANEL
+- Clicking the bell should open a dropdown, drawer, or panel.
+- Show recent alerts in a clean list.
+- Each alert should show:
+  - alert type
+  - short message
+  - date/time
+  - read/unread state
+  - clickable link to the relevant item/page
+- Add:
+  - Mark as read
+  - Mark all as read
+  - View all alerts page if needed
+
+3. ALERTS PAGE
+- Add a simple “All Alerts” admin page if the dropdown is too limited.
+- Include filters if cheap to add:
+  - unread
+  - read
+  - high priority
+  - all
+- Most recent alerts should appear first.
+
+4. CLICK-THROUGH BEHAVIOR
+- Every alert should deep-link to the correct destination.
+Examples:
+- new order alert -> order detail page
+- customer registration alert -> customer detail page
+- seller approval alert -> seller review page
+- refund alert -> order/refund detail page
+- support request alert -> support/contact request page
+
+5. READ / UNREAD BEHAVIOR
+- Alerts should support:
+  - unread
+  - read
+- Opening or clicking an alert may mark it as read, or there can be a dedicated button.
+- Add “mark all as read”.
+
+ALERT TYPES TO INCLUDE
+
+A. ORDERS
+Create alerts for:
+- new order placed
+- payment received / order paid
+- payment failed
+- order cancelled
+- refund issued
+- chargeback/dispute created if the app supports it
+- active order stuck too long in one status if easy to implement
+
+B. CUSTOMERS
+Create alerts for:
+- new customer registered
+- customer updated important details (email, phone, address)
+- customer submitted support/contact request
+- suspicious or repeated failed login attempts if already trackable
+
+C. SELLERS
+Create alerts for:
+- new seller registration
+- seller pending approval
+- seller profile incomplete if this state exists
+- seller suspended/rejected if this state exists
+
+D. STOCK / FULFILMENT
+Create alerts for:
+- low stock
+- out of stock
+- order not dispatched within expected timeframe if there is dispatch logic already
+
+E. ADMIN / SYSTEM
+Create alerts for:
+- admin manually changes an order
+- admin edits a customer
+- new admin account created
+- important settings changed if settings page exists
+- payment/integration failure if already detectable
+
+PRIORITY LEVELS
+Add a simple priority field if cheap to implement:
+- high
+- medium
+- low
+
+Suggested priorities:
+- High:
+  - new paid order
+  - payment failed
+  - refund issued
+  - chargeback/dispute
+  - seller pending approval
+  - low/out of stock
+  - suspicious login
+- Medium:
+  - new customer registration
+  - customer detail update
+  - order cancelled
+  - support request
+  - admin edited customer/order
+- Low:
+  - general informational items if needed
+
+DATA MODEL (CHEAPEST VERSION)
+If needed, create a simple alerts table/model with fields like:
+- id
+- type
+- title
+- message
+- priority
+- is_read
+- link_url or route
+- related_entity_type
+- related_entity_id
+- created_at
+- updated_at
+
+Optional:
+- metadata/json field for flexibility
+
+Do NOT overengineer this. Keep it simple.
+
+BACKEND REQUIREMENTS
+- Add logic to create alerts when the above events happen.
+- Reuse existing service/controller logic where possible.
+- Do not duplicate business logic.
+- Hook into the current order/customer/seller/admin flows at the points where those actions already happen.
+
+FRONTEND / UI REQUIREMENTS
+- Notification bell in admin header/navbar
+- Unread badge count
+- Dropdown/drawer with recent alerts
+- Read/unread styling
+- Click goes directly to relevant page
+- All Alerts page if needed
+- Keep admin design consistent
+
+OPTIONAL ONLY IF CHEAP
+If easy and low risk, also add:
+- auto-refresh every 30–60 seconds
+- filter by type
+- filter by priority
+- show relative time like “5 minutes ago”
+
+DO NOT ADD YET
+- SMS notifications
+- mobile push notifications
+- email notification engine
+- complex websocket infrastructure
+- full audit logging system unless already present
+
+DELIVERABLES
+After implementation, provide:
+1. summary of what was added
+2. files changed
+3. any database/schema changes
+4. where alerts are created from
+5. routes/pages added
+6. anything that still needs manual review
+
+ACCEPTANCE CRITERIA
+- Admin sees a bell/alert icon in the admin panel
+- Admin sees unread alert count on the icon
+- Clicking the icon shows alert items
+- Alerts can be marked read
+- Admin can mark all alerts as read
+- Alerts link directly to the correct page/item
+- Alerts are created for orders, customers, sellers, stock, and admin/system events where applicable
+- The system is simple, stable, and uses the cheapest safe implementation path
+
+IMPORTANT
+Before coding, first tell me:
+1. which existing files/components/layouts you found for admin header, orders, customers, seller flow, and support flow
+2. the cheapest implementation path you will use
+3. whether a new alerts table/model is required
+Then proceed with implementation.

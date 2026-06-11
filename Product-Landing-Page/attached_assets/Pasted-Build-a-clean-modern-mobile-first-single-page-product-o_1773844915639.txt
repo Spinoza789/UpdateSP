@@ -1,0 +1,361 @@
+Build a clean, modern, mobile-first single-page product ordering website for my business called Peps Anonymous. This is not a traditional ecommerce store. It should function as a multi-product order form where users can build an order, see live pricing and totals, submit it, and return later to edit it.
+
+The goal is to make ordering simple for customers and easy for me to manage from Google Sheets without editing code whenever products, prices, or postage change.
+
+Business/branding requirements:
+- Business name: Peps Anonymous
+- Include a clean business name / logo area at the top
+- Add this message prominently near the top:
+  “Pick your peps and if you want half kits don’t worry about finding someone.”
+- Add a short instruction section explaining:
+  - how to start a new order
+  - how to return to an existing order
+  - how to edit an order using Telegram username and a 4-digit code
+
+Platform/build requirements:
+- Build this for Replit
+- Keep the stack simple, reliable, and easy to maintain
+- Make it easy to run and edit inside Replit
+- Prefer a practical production-ready structure
+- Use clean, well-commented code
+- Make it low-maintenance and friendly for future updates
+
+Overall design requirements:
+- Single-page website
+- Minimal, professional, modern look
+- White or light neutral background
+- Clean typography
+- Trustworthy business appearance
+- Focus on usability, not flashy animations
+- Fast and easy to use
+- Fully mobile optimized first, then desktop responsive
+- Large tap targets, large buttons, and clean spacing
+- Make the product ordering flow especially easy on phones
+
+Customer information requirements:
+Remove normal customer fields such as:
+- full name
+- company name
+- email
+- phone number
+- delivery address
+
+Only include:
+- Telegram username (required)
+- Notes / special instructions (optional)
+
+Order login / return / editing requirements:
+Users must be able to return later and edit their order.
+
+Use this flow:
+- A user starts a new order
+- The system generates a 4-digit code for that order
+- After submission, show the 4-digit code clearly and tell the user to save both:
+  - Telegram username
+  - 4-digit code
+- The user can later return and load the order using:
+  - Telegram username
+  - 4-digit code
+- If the details match, load the saved order into the form
+- The user can edit products, quantities, delivery method, postage, and notes
+- The user can re-submit the updated order
+
+Important:
+- Use a true unique backend order ID internally
+- Keep the user-facing return flow simple with Telegram username + 4-digit code
+- Require exact Telegram username + 4-digit code match to retrieve an order
+- Show generic error messages if lookup fails
+- Add basic retry protection / rate limiting for repeated failed lookup attempts if practical
+- Prevent duplicate submissions by disabling submit/update buttons while saving
+
+Order lifecycle requirements:
+- Support order statuses such as:
+  - Draft
+  - Submitted
+  - Processing
+  - Shipped
+  - Completed
+  - Cancelled
+- Allow users to edit orders only while the order is in an editable status, such as Draft or Submitted, depending on configuration
+- If an order is not editable, show a clear message and prevent changes
+- Include admin notes support in the backend spreadsheet if useful
+
+Order form requirements:
+Create a multi-product order form where the user can add multiple product rows.
+
+Each product row must include:
+- A searchable dropdown with products loaded dynamically from Google Sheets
+- A quantity input with minimum value 1
+- A remove row button
+- Visible unit price
+- Visible line total for that row
+
+Include:
+- one product row by default
+- an “Add Another Product” button so users can add unlimited rows
+- inline validation messages where helpful
+
+Validation requirements:
+- Prevent empty product rows from being submitted
+- Ensure all selected products and quantities are captured correctly
+- Prevent duplicate validation bugs with dynamic rows
+- Validate required fields before submission
+- Validate quantity as whole numbers only
+- Prevent invalid product selections
+- Prevent accidental double-submit
+- Make sure the form works properly for both new orders and loaded existing orders
+- Duplicated products can either be merged automatically or blocked with a clear message; choose the cleaner UX and implement it consistently
+
+Delivery and postage requirements:
+Add a delivery method selection with these options:
+- Royal Mail
+- InPost
+- International
+
+Add a separate postage selection/field that is NOT automatically linked to delivery logic.
+
+Important:
+- Delivery method and postage must be separate fields
+- Postage must be editable from the backend spreadsheet
+- Postage should not be auto-calculated from delivery unless explicitly configured later
+- The selected postage name and postage price must be shown clearly on the order page
+- The selected postage must be stored with the order
+
+Pricing and totals requirements:
+I need pricing to be very clear throughout the order page.
+
+Show:
+- product price for each selected item
+- line total for each row
+- selected postage price
+- product subtotal
+- grand total
+
+The total must:
+- update live whenever products, quantities, or postage change
+- work correctly for both new orders and edited orders
+- be visible at all times through a floating or sticky summary area
+
+Add a floating / sticky total summary that works well on mobile and desktop.
+
+The sticky summary should clearly show:
+- products subtotal
+- postage
+- grand total
+
+Mobile UX for totals:
+- make the sticky summary mobile-friendly
+- do not let it block important form fields
+- use a sticky bottom summary/action area on mobile if that works better
+- make it easy to see the running total while ordering
+
+Review step requirement:
+Before final submission or update, include a review/confirmation step that shows:
+- selected products
+- quantities
+- unit prices
+- line totals
+- delivery method
+- postage
+- notes
+- subtotal
+- grand total
+
+This review step should let the user confirm before placing or updating the order.
+
+Autosave/draft behavior:
+If practical, autosave the current order locally in the browser so users do not lose progress if they refresh or leave temporarily before final submission.
+
+Google Sheets admin backend requirements:
+Use Google Sheets as the admin backend / control panel.
+
+I want to manage these from the spreadsheet without editing code:
+- products
+- prices
+- postage options
+- postage prices
+- product active/inactive status
+- optional sort order
+- order statuses
+- admin notes if useful
+
+The website must read products, prices, and postage from Google Sheets dynamically.
+
+Do not hardcode products, prices, or postage permanently in the frontend.
+
+Spreadsheet structure requirements:
+Use Google Sheets with a clear tab structure. Prefer this structure:
+
+1. Products tab
+Columns:
+- Product ID
+- Product Name
+- Price
+- Active/Inactive
+- Sort Order
+
+2. Postage tab
+Columns:
+- Postage ID
+- Postage Name
+- Postage Price
+- Active/Inactive
+- Sort Order
+
+3. Order Headers tab (one row per order)
+Columns:
+- Order ID
+- 4-digit code
+- Created timestamp
+- Last updated timestamp
+- Telegram username
+- Delivery method
+- Postage name
+- Postage price
+- Product subtotal
+- Grand total
+- Notes
+- Order status
+- Admin notes
+
+4. Order Line Items tab (one row per product line)
+Columns:
+- Order ID
+- Line Item ID or Row ID
+- Product ID
+- Product Name
+- Quantity
+- Unit Price
+- Line Total
+- Created timestamp
+- Last updated timestamp
+
+5. Total Orders tab
+This tab should summarize totals across all orders and contain separate columns for:
+- Product
+- Total Quantity Ordered
+- Total Value of All Orders
+
+The Total Orders tab should make it easy to review how many of each product has been ordered and the total value across all orders.
+
+Use the most reliable approach for Total Orders:
+- either formulas in Google Sheets
+- or backend updates if truly necessary
+Prefer the more reliable and maintainable option.
+
+Data integrity requirements:
+- Save the exact unit price, postage price, line total, subtotal, and grand total at the time of submission/update
+- Historical orders must keep their original saved prices even if the spreadsheet prices change later
+- Ensure totals remain accurate when an order is edited
+- Link order headers and line items with a shared order ID
+
+Backend/integration requirements:
+Connect the site to Google Sheets in a reliable Replit-friendly way.
+
+Preferred options:
+- Google Apps Script web app / webhook
+- or another secure webhook/API approach that works well in Replit
+
+The integration must support:
+- loading products from Google Sheets
+- loading product prices
+- loading postage options and postage prices
+- creating a new order
+- retrieving an order by Telegram username + 4-digit code
+- updating an existing order
+- maintaining the Order Headers tab
+- maintaining the Order Line Items tab
+- maintaining or enabling the Total Orders summary tab
+
+Choose the most reliable and scalable option.
+
+Technical/architecture requirements:
+- Build a simple, maintainable frontend and backend for Replit
+- Keep configuration centralized
+- Read spreadsheet columns by header name where possible instead of hardcoded column numbers
+- Keep all tab names, webhook URLs, keys, and config values in one config section
+- Add clear comments showing where to configure:
+  - Google Sheet connection details
+  - Apps Script/webhook URL
+  - spreadsheet tab names
+  - editable statuses
+  - admin settings
+- Structure the code so products, postage, and spreadsheet fields can be changed later without major rewrites
+- Use robust form state handling for dynamic product rows
+- Make backend writes safe and predictable
+- Handle refresh/edit flows cleanly
+- Make network failures graceful and user-friendly
+- Use idempotent or retry-safe write logic if practical
+
+Frontend UX requirements:
+Include clear user actions such as:
+- Start New Order
+- Load Existing Order
+- Add Another Product
+- Remove
+- Review Order
+- Place Order
+- Update Order
+- Return to Edit Order
+
+Success and error handling:
+- Show a clear success message when a new order is placed
+- Show the generated 4-digit code clearly after order creation
+- Tell the user to save their Telegram username + 4-digit code
+- Show a clear success message when an order is updated
+- Show clear, helpful errors if:
+  - order retrieval fails
+  - Telegram username/code do not match
+  - submission fails
+  - spreadsheet connection fails
+  - an order is no longer editable
+
+Mobile optimization requirements:
+- design mobile-first
+- make the layout extremely easy to use on phones
+- stack fields cleanly on small screens
+- keep dropdowns usable on mobile
+- keep quantity inputs and remove buttons easy to tap
+- keep sticky total visible without blocking the form
+- ensure the entire order flow feels smooth on small screens
+
+Security/reliability requirements:
+- validate all required fields on frontend and backend
+- never trust frontend totals alone; recalculate totals in the backend
+- prevent duplicate submissions
+- add basic protection against repeated failed order lookups
+- log backend errors where practical
+- handle partial failures gracefully
+- do not corrupt order data during updates
+
+Implementation preference:
+If helpful, use:
+- a clean modern frontend
+- a simple API/backend in Replit
+- Google Sheets / Apps Script as the admin data layer
+
+But prioritize reliability, clarity, and maintainability over unnecessary complexity.
+
+Please generate:
+- the full page layout
+- the mobile-optimized frontend
+- the Telegram username + 4-digit code order access flow
+- the multi-product order form
+- the searchable product dropdown logic
+- the add/remove product row logic
+- the live pricing logic
+- the sticky/floating total summary
+- the review step before final submission
+- the new order submission flow
+- the load existing order flow
+- the order editing and update flow
+- the Google Sheets integration structure
+- the recommended backend/API structure for Replit
+- the spreadsheet tab setup
+- the Total Orders tab setup
+- clear setup instructions for Replit
+- clear setup instructions for Google Sheets / Apps Script / webhook integration
+- comments showing exactly where I can customize products, prices, postage, statuses, and config later
+
+Important implementation goal:
+Make this as easy as possible to manage from the backend spreadsheet, so I can update products, prices, and postage without touching code, while users can clearly see all prices and totals on the order page and easily return to edit their order later.

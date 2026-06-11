@@ -1,0 +1,4 @@
+"id","name","description","status","close_date","invite_pin_hash","manufacturer","manufacturer_country","info_cards","currency","sort_order","created_at","updated_at"
+"5401505b-5421-4b87-adec-62a64e52a302","Biochem GB","Biochem Minimum order quantity 50 MOQ","draft",,"$2b$12$0rQPSbfsLqFiGOq25M8Ocu2pKyMJnEiZDJb4olTmHrn0/g2YNHP6y","Biochem",,"[{""id"":""rho4yk6l"",""title"":""test"",""body"":""test"",""icon"":""""}]","GBP",,"""2026-03-23T12:34:14.044Z""","""2026-03-23T12:34:25.356Z"""
+"92384a15-3471-4850-83cc-b198ddd6f10a","Test GB 2",,"archived",,"$2b$12$xZgXqyOxsJPY4rAhmspGX.ka51BmIAe1veVT2Iub9bmXgRNx/MSJO",,,,"GBP",,"""2026-03-23T10:45:13.754Z""","""2026-03-23T10:45:31.957Z"""
+"gb-1","Group Buy 1","Original Peps Anonymous group buy — migrated automatically.","active",,,,,,"GBP",,"""2026-03-23T10:36:51.281Z""","""2026-03-23T10:36:51.281Z"""

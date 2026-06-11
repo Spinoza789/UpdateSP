@@ -1,0 +1,4 @@
+id,name,price,active,sort_order,created_at,updated_at,info_enabled,info_text
+dm-royal-mail,Royal Mail,0.00,t,1,2026-03-18 15:19:10.655+00,2026-04-15 13:04:39.732+00,f,
+dm-inpost,InPost,0.00,t,2,2026-03-18 15:19:10.662+00,2026-04-15 13:04:40.28+00,f,
+dm-international,International,0.00,f,3,2026-03-18 15:19:10.665+00,2026-04-15 13:04:40.828+00,f,

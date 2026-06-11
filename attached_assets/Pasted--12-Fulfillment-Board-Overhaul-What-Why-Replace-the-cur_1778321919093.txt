@@ -1,0 +1,48 @@
+#12 - Fulfillment Board Overhaul
+What & Why
+Replace the current country-leg-grouped Kanban board with a routing-destination-grouped board that reflects where parcels physically go. Every change saves immediately to the database. Introduces live cost display per batch, undo, cost impact preview, filters, conflict detection, payment blocking controls, reshipper codes management, and a separate isolated reshipper portal. Supersedes and absorbs tasks #2, #3, and #4.
+Done looks like
+* Board groups orders by routing destination: Direct Shipping / per-reshipper / Unrouted — not by customer country
+* Each group shows live: total kit count, current tier, total vendor shipping cost, per-order share — updates the moment an order is moved
+* Cross-border orders (customer country ≠ reshipper hub) are clearly flagged on the card with both flags shown
+* Moving an order shows a cost impact preview (old tier → new tier, affected order count, cost change per order) before the move is confirmed
+* Confirmed moves write immediately to the database — no browser state for routing decisions
+* An undo button reverts the last action by re-applying the previous state from routing_history
+* Filters: by routing type, payment status, country, balance due flag, missing address flag, batch lock status, search by username
+* Admin has ultimate control — if a GB organiser edits concurrently, they receive a conflict error and their change is rejected; admin's version wins
+* Payment blocking toggle per reshipper group and per direct shipping group — pausing one does not affect others
+* When a batch cost recalculation affects confirmed-payment orders, a warning panel lists them with options: absorb all, spread cost, or review individually
+* Missing address flag visible on order cards with direct count shown per group
+* Legacy orders (NULL routing_type) appear in a dedicated "Legacy — Needs Backfill" section, separated from active routing groups
+* Warning panel at the top of the board shows: legacy order count, unresolved balance dues, capacity alerts, orders amended after lock — sourced from the routing-warnings endpoint
+* Reshipper code management panel: admin can view, set, rotate, and deactivate codes per reshipper per GB from within the board
+* Board works correctly on mobile screens (replaces task #4)
+* GB organiser view is read-only with a conflict error on attempted edits
+Out of scope
+* Reshipper portal (separate view for reshippers — out of scope for this task, handled in the reshipper route)
+* FS3 vendor order generation (Task 3)
+* Customer portal changes (Task 4)
+* Removing legacy board code until all GBs are confirmed migrated
+Steps
+1. Restructure board data model on the frontend — Replace the current country-leg-grouped data structure with a routing-destination structure. Orders are grouped into: direct (all direct regardless of customer country), one group per unique reshipper_username in the GB, and unrouted (routing_type = unrouted or NULL). Legacy orders (NULL routing_type) form a separate legacy group. This grouping is computed from the API response, not from local state.
+2. Build the group header component — Each routing group has a header showing: group name (reshipper username or "Direct Shipping"), total orders, total kits, current tier label, total vendor shipping cost for the batch, and per-order share. For reshipper groups, show the reshipper's hub country flag. For cross-border orders within the group, show a secondary flag breakdown (e.g. "NL ×18, IE ×2, BE ×2"). Values come from the live API response — no client-side calculation.
+3. Build the order card component — Each card shows: customer username, customer country flag, kit count, routing_type badge, payment status badge, reshipper code badge (if assigned via code), cross-border indicator (if customer country ≠ reshipper hub), missing address warning, balance due flag, batch lock badge. Card is expandable to show full cost breakdown and routing history timeline.
+4. Implement drag-and-drop with cost preview — Using the existing @dnd-kit library, allow dragging orders between routing groups. On drag-over (before drop), call GET /admin/orders/:id/routing-preview?targetReshipper=X which returns the projected cost impact. Display a floating preview tooltip showing: source batch old/new tier and cost, destination batch old/new tier and cost, net change per order in each batch. On drop confirmation, call PATCH /admin/orders/:id/routing and update the board from the API response. If the API returns an error (conflict, locked batch), show an inline error and revert the card to its original position.
+5. Implement quick-action routing controls on cards — Each card has: "Route Direct" button, "Assign Reshipper" dropdown (lists active reshippers for the GB), "Move to Leg" dropdown (for correcting country leg). These are alternatives to drag-and-drop for precision routing. Each action calls the routing mutation endpoint and triggers a board refresh from the API response.
+6. Implement undo last action — A persistent "Undo" button in the board header. On click, calls POST /admin/group-buys/:gbId/routing-undo which reads the most recent routing_history entry for the GB, reverses the change, and returns the updated board state. Only one level of undo (the last action). After undo, the history entry is marked as undone. Disabled when there is nothing to undo or when the last action was a batch lock.
+7. Add filters and search bar — Filter bar above the board with: routing type multi-select, payment status multi-select, country multi-select, balance due toggle, missing address toggle, batch lock status toggle, text search (username). Filters are applied server-side — filter state is sent as query params to GET /admin/group-buys/:gbId/fulfillment-board. Filter state is preserved in the URL so it survives refresh.
+8. Implement conflict detection — Board loads with a last_modified timestamp from the API. On each mutation, send If-Unmodified-Since: <timestamp> header. If the server detects a more recent change (from another admin or organiser), it returns 409 with the conflicting change details. The board shows a banner: "Changes were made by [user] at [time] — refresh to see latest state." GB organiser mutations are always rejected with a 409 if an admin has made any change since their last load.
+9. Build payment blocking controls — Each routing group header has a payment toggle (active/paused). Toggling calls PATCH /admin/group-buys/:gbId/reshippers/:reshipperUsername/payment-block or PATCH /admin/country-legs/:legId/payment-block. The toggle state is loaded from the API with the board data. Visual indicator (red banner on the group) when payments are blocked for that group.
+10. Build the balance due review panel — When a recalculation affects confirmed-payment orders, a modal shows the affected orders with old amount, new amount, and difference per order. Three actions: "Absorb All" (admin covers the difference, no customer notification, logs to routing_history), "Spread Cost" (difference divided equally across all unconfirmed orders in the batch, logs to routing_history), "Review Individually" (opens each order for a per-order decision). No customer notification fires from any of these actions — notification is a separate admin-triggered step.
+11. Build the warning panel — Persistent collapsible panel at the top of the board. Fetches from GET /admin/group-buys/:gbId/routing-warnings on load and after each mutation. Shows counts and expandable lists for: legacy orders needing backfill, unresolved balance dues, missing address orders, capacity breach alerts, orders amended after batch lock. Each warning links directly to the relevant order card.
+12. Build reshipper code management panel — Accessible from a settings icon on each reshipper group header. Shows the current code, active/inactive status, current assignment count, and capacity (if set). Actions: generate new code, deactivate current code (existing assignments unaffected), set capacity. Calls PATCH /admin/group-buys/:gbId/reshippers/:username/code. Code is shown masked by default with a reveal toggle.
+13. Implement mobile-responsive layout — Board switches from horizontal Kanban columns to a stacked vertical layout on screens below 768px. Each routing group is a collapsible card. Drag-and-drop is replaced with a tap-to-select + tap-destination routing flow on mobile. Filters collapse into a sheet drawer. Cost display remains fully visible.
+14. Remove the old board structure — Once the new board is confirmed working, remove the old country-leg-grouped Kanban view and the legacy "sub-lanes" implementation. Keep the list view as an alternative display mode.
+Relevant files
+* Product-Landing-Page/artifacts/peps-anonymous/src/components/AdminGbFulfilment.tsx
+* Product-Landing-Page/artifacts/peps-anonymous/src/pages/Admin.tsx
+* Product-Landing-Page/artifacts/peps-anonymous/src/pages/GbOrganiser.tsx
+* Product-Landing-Page/artifacts/api-server/src/routes/reshipper-admin.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/organiser-reshippers.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/gb-country-legs.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/admin.ts

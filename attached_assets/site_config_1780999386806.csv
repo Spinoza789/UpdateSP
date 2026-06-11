@@ -1,0 +1,31 @@
+key,value,updated_at
+walletAddress,0x3B5670Fe10369082297f29eB6dB950C2db7d3659,2026-03-18 17:33:51.806+00
+walletChangeCodeHash,41071ea6b4245c84275a8d3de474dda11ae560f5466a9fd407525753fe257e5d,2026-03-18 17:34:11.004+00
+telegramBotToken,8695162713:AAHfcEylnM2Hjvq0zeJFGKvKeLFzLppBzMs,2026-04-12 16:57:32.177+00
+telegramAdminChatId,6178447383,2026-04-12 16:57:32.217+00
+publicNavItems,"[{""id"":""shop"",""label"":""Lonely Vial"",""enabled"":true},{""id"":""accessories"",""label"":""Accessories"",""enabled"":false},{""id"":""lab"",""label"":""Lab Reports"",""enabled"":true},{""id"":""protocols"",""label"":""Protocols"",""enabled"":true},{""id"":""medications"",""label"":""Med Protocols"",""enabled"":true},{""id"":""trtaas"",""label"":""TRT & AAS"",""enabled"":true},{""id"":""learn"",""label"":""Learning Hub"",""enabled"":true},{""id"":""safety"",""label"":""Endotoxin Calc"",""enabled"":true},{""id"":""calculator"",""label"":""Dose Calc"",""enabled"":true}]",2026-04-12 16:58:28.156+00
+paymentsEnabled,true,2026-04-13 22:26:20.558+00
+track17ApiKey,129C2BA68127F22DBEABCE3F12FBFA08,2026-04-13 23:24:25.560744+00
+discuss_limit,5,2026-04-14 09:29:14.264626+00
+wholesale_vendors,"[{""id"":""moh73xye"",""name"":""Uther"",""tiers"":[""1–5"",""6–10"",""11–15"",""16–25""],""regions"":[{""name"":""UK"",""prices"":[50,61,70,72],""countries"":[""United Kingdom""]},{""name"":""EU"",""prices"":[50,61,70,84],""countries"":[""Austria"",""Belgium"",""Bulgaria"",""Croatia"",""Cyprus"",""Czech Republic"",""Denmark"",""Estonia"",""Finland"",""France"",""Germany"",""Greece"",""Hungary"",""Ireland"",""Italy"",""Latvia"",""Lithuania"",""Luxembourg"",""Malta"",""Netherlands"",""Poland"",""Portugal"",""Romania"",""Slovakia"",""Slovenia"",""Spain"",""Sweden""]},{""name"":""US"",""prices"":[84,84,84,84],""countries"":[""United States""]},{""name"":""Canada"",""prices"":[50,61,70,84],""countries"":[""Canada""]},{""name"":""Australia"",""prices"":[50,61,70,84],""countries"":[""Australia""]},{""name"":""Brazil"",""prices"":[50,61,70,84],""countries"":[""Brazil""]}]}]",2026-05-08 11:11:07.647+00
+qiyunleToken,share_bmd1OURHNFlEbURtRDUtMEJHVVNOaVRlQlBBek5qZ0NVZzdBeEYzbHBjWHVO,2026-04-30 15:36:53.35674+00
+qiyunleSession,PHPSESSID=borbetdbjjgu78plc7j2minbp4; adm_name=edge; adm_passwd=edge; Nod_User_Id=12; Nod_User_Token=Eq8ChJi8FKGdkaYYpUKLTAmiFR6RjP,2026-05-08 12:21:58.07953+00
+inventoryModalEnabled,true,2026-04-30 15:42:56.962847+00
+qiyunleBaseUrl,https://web3.qiyunle.com,2026-05-08 12:21:58.313273+00
+qiyunleSessionAt,1778242918072,2026-05-08 12:21:58.413506+00
+wholesale_usdt_wallet,0x44565d299D53244FC0fFB59863bf777b9A52BE30,2026-05-05 19:14:59.799373+00
+wholesale_anon_pay_enabled,true,2026-05-05 19:14:59.806+00
+wholesale_anon_pay_ticker,usdt,2026-05-05 19:14:59.837918+00
+wholesale_anon_pay_network,ERC20,2026-05-05 19:14:59.850502+00
+qiyunleUsername,edge,2026-05-01 10:31:31.664959+00
+qiyunlePassword,edge,2026-05-01 10:31:31.684875+00
+wholesale_active_vendor,moh73xye,2026-05-02 10:59:35.42381+00
+anonPayEnabled,true,2026-05-02 11:05:49.758756+00
+anonPayWallet,0x44565d299D53244FC0fFB59863bf777b9A52BE30,2026-05-02 11:06:18.64925+00
+anonPayTicker,usdt,2026-05-02 11:06:18.663731+00
+anonPayNetwork,ERC20,2026-05-02 11:06:18.677755+00
+wholesale_requires_approval,false,2026-05-02 11:38:33.104+00
+adminTabOrder,"[""alerts"",""orders"",""summary"",""products"",""shipping"",""intlshipping"",""payments"",""packages"",""fs3"",""notifications"",""announcements"",""tg-templates"",""groupbuy"",""feedback"",""labtests"",""vialshop"",""import"",""usernames"",""activity"",""customerlog"",""lockouts"",""logs"",""config"",""organisers"",""reshippers"",""trackinglinks"",""testingpools"",""tglog"",""invite-codes"",""coupons"",""siteconfig"",""schedulers"",""auditlog"",""rolelogs"",""tickets"",""ai-chatbot""]",2026-05-07 07:46:33.545517+00
+qiyunleLastSync,2026-05-08T14:23:04.323Z,2026-04-30 15:41:16.739689+00
+qiyunleLastSyncCount,118,2026-04-30 15:41:16.752012+00
+qiyunleKnownUnmapped,"[""NA500-0505"",""ELO10-0425"",""C/I1010-0424"",""CORE45-0418"",""BP20-0418"",""SS100-0401"",""PTD5-0331"",""RE60-0327"",""P10-0130"",""RE60-0110"",""ILLUM-0106"",""HUM10-1231"",""HEX3-1220"",""NASX50-1130"",""NASK50-1130"",""CORE45-1127"",""OZ20-1126"",""THY100904""]",2026-05-02 09:11:55.44965+00

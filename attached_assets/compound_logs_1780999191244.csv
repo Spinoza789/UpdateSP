@@ -1,0 +1,17 @@
+id,telegram_username,compound_name,compound_type,dose_amount,dose_unit,frequency,route,start_date,end_date,notes,created_at
+0c9e5c43-0f2b-442d-9bdf-30ecc8b707e3,thequakee,Testosterone Enanthate,AAS,120.000,mg,EOD,IM,2026-04-06,,,2026-04-14 08:59:09.55769+00
+ce89d6c2-f9c2-41e8-b8eb-ce9feea4dd35,thequakee,NPP,AAS,60.000,mg,EOD,IM,2026-04-06,,,2026-04-14 09:00:36.228887+00
+8f5e7d8e-0186-4ac9-b8c5-25fb4f76efd5,thequakee,Retatrutide,Peptide,1.500,mg,EOD,SubQ,2026-04-06,,,2026-04-14 09:01:23.848973+00
+849eb1e7-78c3-4438-bfde-bf6f04d5a8e3,thequakee,Melanotan II,Peptide,500.000,mcg,Daily,SubQ,2026-04-10,,,2026-04-14 09:02:01.568636+00
+28716d3a-fe89-407f-bba1-32880b932a6c,thequakee,GHK-Cu,Peptide,3.000,mg,Daily,SubQ,2026-04-10,,,2026-04-14 09:02:22.31855+00
+d0fc40f6-03c5-4b27-840f-3da0cba87dd4,thequakee,HGH,Peptide,7.000,IU,Daily,SubQ,2026-03-24,,,2026-04-14 09:04:44.085861+00
+5d7c8c01-bece-4dd4-b884-b2f16f551809,thequakee,Glutathione,Peptide,400.000,mg,Other,IM,2026-04-14,,,2026-04-14 09:07:05.209174+00
+eec02d31-4f30-4aef-ab90-535979024ac0,j4mes_r,BPC-157,Peptide,1.000,mg,Other,SubQ,2026-04-14,,,2026-04-15 05:42:31.413882+00
+d8e2f96b-6f5a-43a0-ae04-8b3cc105afea,j4mes_r,TB-500,Peptide,1.000,mg,Daily,SubQ,2026-04-14,,,2026-04-15 05:44:21.950523+00
+53ea1380-7fff-4704-8f4d-1d02baa258d4,j4mes_r,Testosterone Cypionate (TRT),TRT,45.000,mg,Other,IM,2026-04-14,,,2026-04-15 05:45:47.603581+00
+7da83d63-d8c2-40f9-bd5d-5e97799a92a6,benji1205,Testosterone Cypionate (TRT),TRT,50.000,mg,2x/week,SubQ,2026-04-21,,,2026-04-21 19:07:16.493574+00
+a2d8f058-f56e-4ec0-8586-1ac9f2dc7f95,untamedchazy,NAD 1000,Peptide,25.000,mg,E3D,SubQ,2026-04-27,2026-04-29,,2026-04-29 05:53:25.905504+00
+355d74b6-10ed-4624-9921-3ac7fb82478e,thechappers,Testosterone Enanthate (TRT),TRT,85.000,mg,2x/week,SubQ,2026-04-05,,,2026-05-02 11:12:28.984994+00
+495191e0-6d9c-41b7-8b96-fbb2941fbe31,thechappers,SS-31,Peptide,4.000,mg,Daily,SubQ,2026-05-02,,,2026-05-02 11:16:14.076374+00
+594528fe-0b1d-429a-a0ed-0874ac4bcaa6,thechappers,KLOW,Peptide,3.200,mg,Daily,SubQ,2026-05-02,,,2026-05-02 11:17:00.226238+00
+86782f61-dbf2-4c8c-9642-75977663ea37,bat_102,Terzapetide,Peptide,2.500,mcg,Weekly,SubQ,2026-04-30,,,2026-05-03 04:41:04.918755+00

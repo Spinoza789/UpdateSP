@@ -1,0 +1,145 @@
+Specimen
+Specimen Type: BLOOD
+Specimen Reference#: 1
+Collected: 09 May 2025
+Received: 09 May 2025
+Provider Sample ID: B,25.1219334.W
+
+Pathology Investigations
+
+Urea and electrolytes eGFR result calculated using CKD-EPI (2009) method.
+For more information please see lab website heftpathology.com
+Normal = 90 - 150 ml/min/1.73m
+Serum sodium level 141 mmol/L [133.0 - 146.0]
+Serum potassium level 4.3 mmol/L [3.5 - 5.3]
+Serum urea level 7.9 mmol/L [2.5 - 7.8]; Above high reference limit
+Serum creatinine level 92 umol/L [64.0 - 104.0]
+GFR calculated abbreviated MDRD > 90 ml/min/1.73m^2 [> 60.0]
+Acute kidney injury warning stage NA
+
+General Information
+Service Type: New
+Status: Unspecified
+Provider Report ID: BSC0671792505100335B,25.1219334001
+Report Date: 10 May 2025
+
+Specimen
+Specimen Type: BLOOD
+Specimen Reference#: 1
+Collected: 09 May 2025
+Received: 09 May 2025
+Provider Sample ID: B,25.1219334.W
+
+Pathology Investigations
+
+Haemoglobin A1c level - IFCC standardised 32 mmol/mol [20.0 - 41.0]; For diagnosis, >48mmol/mol + symptoms is consistent with diabetes
+With no symptoms, a second positive result confirms diagnosis
+HbA1c 42-47mmol/mol suggests a high risk of future diabetes
+IFCC HbA1c target in diabetes monitoring is 48-58 mmol/mol
+
+
+Specimen
+Specimen Type: BLOOD
+Specimen Reference#: 1
+Collected: 09 May 2025
+Received: 09 May 2025
+Provider Sample ID: B,25.1219334.W
+
+Pathology Investigations
+
+Full blood count For clinical advice and interpretation of FBC results please see:
+www.heftpathology.com/Clinical-Advice/Haematology-Clinical-Advice
+Be aware that some Haem results are filed on the Misc Tab on PICS
+Total white blood count 4.76 10*9/L [3.26 - 11.2]
+Red blood cell count 5.81 x10*12/L [3.9 - 5.77]; Above high reference limit
+Haemoglobin concentration 151 g/L [130.0 - 171.0]
+Haematocrit 0.477 L/L [0.37 - 0.52]
+Mean cell volume 82.1 fL [83.0 - 103.0]; Below low reference limit
+Mean cell haemoglobin level 26.0 pg [27.0 - 34.0]; Below low reference limit
+Mean cell haemoglobin concentration 317 g/L [304.0 - 353.0]
+Red blood cell distribution width 13.3 % [12.2 - 14.8]
+Platelet count - observation 184 10*9/L [150.0 - 400.0]
+Platelet distribution width (UoM=fL) 13.5 fL [9.0 - 16.0]
+Neutrophil count 2.78 10*9/L [1.5 - 7.0]
+Lymphocyte count 1.50 10*9/L [0.5 - 4.0]
+Monocyte count - observation 0.32 10*9/L [0.3 - 0.9]
+Eosinophil count - observation 0.14 10*9/L [0.03 - 0.61]
+Basophil count 0.02 10*9/L [0.05 - 0.1]; Below low reference limit
+Nucleated red blood cell count 0.00 10*9/L
+
+
+
+Specimen
+Specimen Type: BLOOD
+Specimen Reference#: 1
+Collected: 09 May 2025
+Received: 09 May 2025
+Provider Sample ID: B,25.1219334.W
+
+Pathology Investigations
+
+B12 and Folate Elevated vitamin B12 result. Is patient on replacement therapy?
+For patients receiving B12 injections, vitamin B12 levels
+do not need to be monitored.
+In the presence of a normal result, if a strong clinical
+suspicion of B12 deficiency remains seek advice from Clinical
+Haematology or Biochemistry
+Serum vitamin B12 level 1052 ng/L [187.0 - 883.0]; Above high reference limit
+Serum folate level 6.5 ug/L [3.1 - 20.5]
+
+General Information
+Service Type: New
+Status: Unspecified
+Provider Report ID: BSC0671762505100320B,25.1219334001
+Report Date: 10 May 2025
+
+
+Specimen
+Specimen Type: BLOOD
+Specimen Reference#: 1
+Collected: 09 May 2025
+Received: 09 May 2025
+Provider Sample ID: B,25.1219334.W
+
+Pathology Investigations
+
+Serum ferritin level 126 ng/mL [22.0 - 501.0]; Note reference range changed from 04/12/23.
+
+General Information
+Service Type: New
+Status: Unspecified
+Provider Report ID: BSC0671742505100310B,25.1219334001
+Report Date: 10 May 2025
+
+
+Specimen
+Specimen Type: BLOOD
+Specimen Reference#: 1
+Collected: 09 May 2025
+Received: 09 May 2025
+Provider Sample ID: B,25.1219334.W
+
+Pathology Investigations
+
+Serum TSH level 2.3 mu/L [0.4 - 4.9]; For clinical interpretation of thyroid function test results,
+please see heftpathology.com, clinical advice and interpretation.
+
+General Information
+Service Type: New
+Status: Unspecified
+Provider Report ID: BSC0671742505100310B,25.1219334001
+Report Date: 10 May 2025
+
+
+Pathology Investigations
+
+Total Vitamin D 110.1 nmol/L [> 49.9]; 50 nmol/L or greater = Adequate Vitamin D status
+For more information please see lab website heftpathology.com
+
+General Information
+Service Type: New
+Status: Unspecified
+Provider Report ID: BSC0671742505100310B,25.1219334001
+Report Date: 10 May 2025
+
+

@@ -1,0 +1,7 @@
+id,ticket_id,author_role,author_username,body,created_at
+1,519935bd-4843-4ff9-9ed3-7e65b1b86fce,admin,admin,Ddj,2026-05-06 20:48:08.101+00
+2,18e26692-a6d5-42a7-b0a2-d9bcb5e13490,customer,snptest,What's up,2026-05-06 23:10:46.801+00
+3,18e26692-a6d5-42a7-b0a2-d9bcb5e13490,admin,urbanblend789,What is it,2026-05-06 23:11:05.753+00
+4,d9f5f67e-0112-497e-ade8-f1567f27278d,customer,toml789,Payment options,2026-05-08 03:48:25.306+00
+5,d9f5f67e-0112-497e-ade8-f1567f27278d,admin,admin,Just crypto,2026-05-08 09:09:03.183+00
+6,3eb024ca-e80a-47e7-84a1-9f30ec16b431,customer,xxsoca,Where shall i provide those things?,2026-05-08 15:20:36.349+00

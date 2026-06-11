@@ -1,0 +1,28 @@
+Lab Testing Pool Page Redesign
+What & Why
+Radically redesign the GbTestingPool.tsx page to elevate it into a premium, pharma-grade visual experience. The gauge circle should become the undisputed hero of the page — larger, fully animated, with threshold amounts labelled directly on the arc. The overall layout and information hierarchy should feel clinical and precise while remaining visually appealing and clearly readable on desktop, tablet, and mobile.
+Done looks like
+* The gauge circle is significantly larger and dominates the top of the page as the central focal point
+* Threshold amounts are labelled directly on the arc (tick marks + callout labels positioned near the marker dots on the SVG)
+* The gauge fill animates smoothly on mount, with a subtle pulse/orbiting dot on the active fill endpoint when the round is "active"
+* On desktop (lg+), the layout is two-column: gauge + threshold breakdown on the left, vote panel + leaderboard on the right
+* On tablet (md), the gauge fills the full width of its card and threshold cards sit below it side by side
+* On mobile, everything stacks vertically with the gauge taking full card width
+* The overall aesthetic is clean and pharma-inspired: precise white space, clinical card style, monospace-style data readouts inside the circle (pool total, contributor count, status), and a subtle "lab report" header treatment
+* Threshold cards are redesigned as numbered step cards (Step 01 / Step 02) with test type, amount, and locked/unlocked state clearly displayed
+* The leaderboard has rank numbers, cleaner animated progress bars, and vote percentage shown alongside count
+* All existing functionality (vote panel steps, auto-refresh, results section, vial cost breakdown) is fully preserved
+* No backend or API changes
+Out of scope
+* Any changes to the API or database schema
+* Admin-side pages
+* Any other page beyond GbTestingPool.tsx
+Tasks
+1. Redesign the PoolGauge SVG — Increase the circle size substantially, add threshold tick marks and amount labels directly on the arc (positioned outward from the marker dots), redesign the inner content with a cleaner data hierarchy (large animated pool total, contributor count below, status indicator inside the circle), and add a pulsing animated dot at the current fill endpoint when the round is active.
+2. Redesign the page layout — Implement a responsive two-column layout for desktop (gauge + thresholds left, voting + leaderboard right), full-width single-column for tablet and mobile. Give the gauge a full-bleed card hero treatment. Add a clinical pharma-style header with a subtle lab/test-round treatment for the GB name and status.
+3. Redesign threshold cards and leaderboard — Rebuild threshold cards as numbered step cards (Step 01 / Step 02 style) with locked/unlocked state, test name, and target amount prominent. Refresh the leaderboard with rank numbers, cleaner animated bars, and vote percentage shown alongside count.
+4. Polish animations and micro-interactions — Enhance the Framer Motion gauge fill animation with spring easing, add a rotating/pulsing dot at the fill tip during "active" status, stagger section entrance animations cleanly, and ensure the results panel and vote panel transitions feel smooth and polished.
+Relevant files
+* Product-Landing-Page/artifacts/peps-anonymous/src/pages/GbTestingPool.tsx
+* Product-Landing-Page/artifacts/peps-anonymous/src/index.css
+Dependencies

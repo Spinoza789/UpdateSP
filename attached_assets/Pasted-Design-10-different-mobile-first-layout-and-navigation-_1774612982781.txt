@@ -1,0 +1,44 @@
+Design 10 different mobile‑first layout and navigation concepts for the Salt & Peps website, using the attached screenshots as the visual source of truth. The site must keep the existing light theme, colours, gradients, rounded cards, and typography exactly as shown; do not switch to dark mode or introduce a new visual style.
+
+The product does three distinct things:
+
+Hosts group buys for peptide kits (“Group Buy Login” / group‑buy ordering).
+
+Sells single items via “The Lonely Vial” shop (separate from the group‑buy flow).
+
+Provides tools and resources: peptide calculator, endotoxin & BAC safety calculator, lab reports, etc.
+
+Use information‑architecture and mobile‑UX best practices to clearly separate these three modes while keeping them easy to access, so users are not hit with everything at once.
+
+Requirements:
+
+Preserve all existing content and labels; only reorganise structure, hierarchy, and layout.
+
+“Group Buy Login” (group buys) and “The Lonely Vial” (single‑vial shop) are the two primary flows and should be the most prominent and easiest to reach from the home experience.
+
+The calculators, lab reports, and safety tools should be grouped into a clearly labelled “Tools & Lab” area, accessible via secondary navigation (tabs, section, or separate screen) instead of being scattered through the main purchase flows.
+
+Avoid information overload: use clear grouping, white space, and progressive disclosure so users first choose between Group Buys, Single Vials, and Tools, then see details within that area.
+
+Generate 10 clearly different concepts that vary in scope and design while still using the same visual style:
+
+Vary the global navigation pattern (examples: bottom tab bar with three items, top segmented control, single home screen with three large entry cards, hamburger + sub‑home, etc.).
+
+Vary the home experience: some concepts can be a simple hub with three big cards; others can highlight Group Buys first and expose Single Vials and Tools via secondary panels; others can use sections, accordions, or carousels.
+
+Vary the layout density and hierarchy: some more minimal with very few elements on screen at once, others slightly richer but still readable on mobile.
+​
+
+For each of the 10 concepts, describe:
+
+The global navigation model and how a user switches between Group Buys, Single Vials, and Tools & Lab.
+
+The order and grouping of sections on the mobile home screen (if there is a home screen).
+
+How “Group Buy Login” and “The Lonely Vial” are visually prioritised compared with Tools & Lab and “Manage your order”.
+
+How information overload is reduced (for example, which content is hidden behind tabs, accordions, or sub‑screens).
+
+Any specific implementation notes useful for a developer (e.g., which components become separate screens, how cards stack at small breakpoints).
+
+Do not change the brand or switch to dark mode. Focus on structure, hierarchy, and navigation while keeping the existing light look and feel.

@@ -1,0 +1,4 @@
+"id","name","price","active","sort_order","created_at","updated_at"
+"dm-inpost","InPost","3.00","true","2","""2026-03-18T15:19:10.662Z""","""2026-03-18T15:19:10.662Z"""
+"dm-international","International","8.50","false","3","""2026-03-18T15:19:10.665Z""","""2026-03-18T15:19:10.665Z"""
+"dm-royal-mail","Royal Mail","10.00","true","1","""2026-03-18T15:19:10.655Z""","""2026-03-18T15:19:10.655Z"""

@@ -1,0 +1,87 @@
+You are a senior security engineer and full‑stack developer.
+
+I am running a web application on Replit and I want a full security audit of all code, configurations, and dependencies.
+
+Perform the following steps:
+
+Static‑code review
+
+Scan all files for:
+
+SQL injection risks (raw SQL, unsafe string interpolation).
+
+XSS (unsafe innerHTML, eval, unsanitized user‑supplied HTML).
+
+Command injection (unsafe exec, shell, system‑like calls).
+
+SSRF, path‑traversal, insecure file operations.
+
+For each language, apply secure patterns (e.g., parameterized queries, proper escaping, safe libraries).
+
+Dependencies & environment
+
+List all dependencies (e.g., package.json, requirements.txt, pom.xml, etc.).
+
+Check for known vulnerabilities (CVE‑style) or outdated packages.
+
+Flag hard‑coded secrets, API keys, or credentials in code.
+
+Recommend moving secrets into Replit Secrets and using environment‑variable‑style access.
+
+Authentication & authorization
+
+Review all auth code (login, signup, tokens, sessions).
+
+Check that passwords are hashed and salted (e.g., bcrypt, argon2).
+
+Check that every API endpoint and action properly verifies user permissions (RBAC/ABAC‑like checks).
+
+Input validation & output encoding
+
+Ensure all user input (forms, query params, JSON, file uploads) is validated and sanitized.
+
+Ensure output to HTML/JSON is properly encoded to prevent XSS.
+
+HTTP security headers
+
+Check if your server/framework sets:
+
+Content-Security-Policy (CSP),
+
+X‑Content‑Type‑Options,
+
+X‑Frame‑Options,
+
+Strict‑Transport‑Security (HSTS),
+
+Referrer‑Policy (if applicable).
+
+If any are missing, suggest exact headers and values.
+
+Replit‑specific security
+
+Confirm you are using Replit Secrets for all credentials.
+
+Warn if any .env‑like files or secrets are checked into code.
+
+Check that public/private visibility in Replit is correct (no unintentionally public sensitive repls).
+
+Flag any unsafe agent‑generated code that might have been imported.
+
+Output format
+
+Return a numbered checklist of vulnerabilities and misconfigurations.
+
+For each item, include:
+
+file name, line number (or approximate location),
+
+type of vulnerability,
+
+impact,
+
+a concrete code fix suggestion (prefer short code snippets).
+
+End with a summary of the top 3–5 critical‑severity issues and priority fixes.
+
+Do not invent new features or rewrite the app unless explicitly asked. Focus only on security.

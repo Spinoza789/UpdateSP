@@ -1,0 +1,82 @@
+id,code,name,description,default_price_usd,unit_label,sort_order,active,created_at,category,analysis_section,lab_name
+cat_kisspeptin,kisspeptin,Kisspeptin analysis,,380.00,test,1,t,2026-04-20 20:15:43.885029+00,analysis,compound,Janoshik Analytical
+cat_klow,klow,KLOW (GHK or GHK-Cu / TB-500 / BPC-157 / KPV) analysis,,680.00,test,2,t,2026-04-20 20:15:43.902202+00,analysis,compound,Janoshik Analytical
+cat_hexarelin,hexarelin,Hexarelin analysis,,380.00,test,11,t,2026-04-20 20:15:44.019179+00,analysis,compound,Janoshik Analytical
+cat_hgh_purity,hgh_purity,Human Growth Hormone amount and purity analysis,,300.00,test,12,t,2026-04-20 20:15:44.0326+00,analysis,compound,Janoshik Analytical
+cat_ghrp2,ghrp2,GHRP-2 analysis,,180.00,test,13,t,2026-04-20 20:15:44.045543+00,analysis,compound,Janoshik Analytical
+cat_heavy_metals,heavy_metals,Heavy Metals Analysis,,90.00,test,104,t,2026-04-18 16:14:12.78973+00,single,,
+cat_seq_verification,seq_verification,Sequence Verification,,50.00,test,3,f,2026-04-18 16:14:12.74966+00,analysis,compound,
+cat_lcms,lcms,LCMS Purity Analysis,,150.00,test,1,f,2026-04-18 16:14:12.717052+00,analysis,compound,Janoshik
+cat_mass_spec,mass_spec,Mass Spectrometry (HRMS),,200.00,test,2,f,2026-04-18 16:14:12.736695+00,analysis,compound,Janoshik
+cat_kpv,kpv,KPV analysis,,380.00,test,3,t,2026-04-20 20:15:43.914924+00,analysis,compound,Janoshik Analytical
+cat_livagen,livagen,Livagen analysis,,380.00,test,4,t,2026-04-20 20:15:43.92793+00,analysis,compound,Janoshik Analytical
+cat_hgh_full,hgh_full,"Human Growth Hormone amount, purity and dimer and higher molecular weight proteins analysis",,420.00,test,5,t,2026-04-20 20:15:43.940945+00,analysis,compound,Janoshik Analytical
+cat_ghrp6,ghrp6,GHRP-6 analysis,,180.00,test,14,t,2026-04-20 20:15:44.058363+00,analysis,compound,Janoshik Analytical
+cat_glow,glow,GLOW (GHK or GHK-Cu / TB-500 / BPC-157) analysis,,420.00,test,15,t,2026-04-20 20:15:44.071503+00,analysis,compound,Janoshik Analytical
+cat_bronchogen,bronchogen,Bronchogen analysis,,380.00,test,23,t,2026-04-20 20:15:44.177752+00,analysis,compound,Janoshik Analytical
+cat_cagrilintide,cagrilintide,Cagrilintide analysis,,380.00,test,24,t,2026-04-20 20:15:44.190588+00,analysis,compound,Janoshik Analytical
+cat_cjc_nodac_ipa,cjc_nodac_ipa,CJC No DAC - MOD GRF (1-29)/Ipamorelin blend analysis,,270.00,test,25,t,2026-04-20 20:15:44.203713+00,analysis,compound,Janoshik Analytical
+cat_vip,vip,VIP analysis,,380.00,test,48,t,2026-04-20 20:15:44.497783+00,analysis,compound,Janoshik Analytical
+cat_testagen,testagen,Testagen analysis,,380.00,test,49,t,2026-04-20 20:15:44.510416+00,analysis,compound,Janoshik Analytical
+cat_ph_measurement,ph_measurement,pH Measurement,,30.00,test,5,f,2026-04-18 16:14:12.776207+00,analysis,extra,
+cat_humanin,humanin,Humanin analysis,,380.00,test,6,t,2026-04-20 20:15:43.954167+00,analysis,compound,Janoshik Analytical
+cat_igf1_lr3,igf1_lr3,IGF-1 LR3 analysis,,300.00,test,7,t,2026-04-20 20:15:43.966945+00,analysis,compound,Janoshik Analytical
+cat_thymagen,thymagen,Thymagen (Thymogen) analysis,,380.00,test,50,t,2026-04-20 20:15:44.523716+00,analysis,compound,Janoshik Analytical
+cat_raw_data,raw_data,Raw Data,,20.00,test,20,f,2026-04-18 16:14:12.856931+00,addon,,
+cat_additional_report,additional_report,Additional Report,,30.00,test,20,f,2026-04-18 16:14:12.869975+00,addon,,
+cat_glutathion,glutathion,Glutathion analysis,,240.00,test,16,t,2026-04-20 20:15:44.084409+00,analysis,compound,Janoshik Analytical
+cat_thymalin,thymalin,Thymalin/Thymulin analysis,,380.00,test,51,t,2026-04-20 20:15:44.536423+00,analysis,compound,Janoshik Analytical
+cat_ipamorelin,ipamorelin,Ipamorelin analysis,,180.00,test,8,t,2026-04-20 20:15:43.979843+00,analysis,compound,Janoshik Analytical
+cat_hcg_hplc,hcg_hplc,HCG - HPLC analysis,,180.00,test,9,t,2026-04-20 20:15:43.993187+00,analysis,compound,Janoshik Analytical
+cat_elamipretide,elamipretide,Elamipretide (SS-31) analysis,,380.00,test,17,t,2026-04-20 20:15:44.09771+00,analysis,compound,Janoshik Analytical
+cat_epithalon,epithalon,Epithalon analysis,,240.00,test,18,t,2026-04-20 20:15:44.110291+00,analysis,compound,Janoshik Analytical
+cat_ta1,ta1,Thymosin Alpha-1 analysis,,240.00,test,52,t,2026-04-20 20:15:44.549385+00,analysis,compound,Janoshik Analytical
+cat_aod9604_hplc,aod9604_hplc,rHGH fragment or AOD-9604 (HPLC) analysis,,180.00,test,53,t,2026-04-20 20:15:44.56258+00,analysis,compound,Janoshik Analytical
+cat_hcg_immunoassay,hcg_immunoassay,HCG - HPLC immunoassay alternative,,240.00,test,10,t,2026-04-20 20:15:44.006322+00,analysis,compound,Janoshik Analytical
+cat_foxo4dri,foxo4dri,FOXO4-DRI analysis,,380.00,test,19,t,2026-04-20 20:15:44.123154+00,analysis,compound,Janoshik Analytical
+cat_endotoxin,endotoxin,Endotoxin Analysis,,120.00,test,101,t,2026-04-18 16:14:12.803891+00,single,,
+cat_ghk,ghk,GHK (or GHK-Cu) analysis,,240.00,test,20,t,2026-04-20 20:15:44.136611+00,analysis,compound,Janoshik Analytical
+cat_sterility,sterility,Sterility Testing,,240.00,test,103,t,2026-04-18 16:14:12.816855+00,single,,
+cat_na_semax,na_semax,N-acetyl Semax analysis,,380.00,test,60,t,2026-04-20 20:15:44.651237+00,analysis,compound,Janoshik Analytical
+cat_cjc1295_nodac,cjc1295_nodac,CJC-1295 no DAC (MOD GRF (1-29)) analysis,,180.00,test,27,t,2026-04-20 20:15:44.229176+00,analysis,compound,Janoshik Analytical
+cat_glp1_blind,glp1_blind,"Common GLP-1 peptide blind test (Semaglutide, Tirzepatide and Retatrutide)",,300.00,test,28,t,2026-04-20 20:15:44.24208+00,analysis,compound,Janoshik Analytical
+cat_cagrisema,cagrisema,Cagrilintide/Semaglutide (CagriSema) blend analysis,,530.00,test,29,t,2026-04-20 20:15:44.255046+00,analysis,compound,Janoshik Analytical
+cat_cartalax,cartalax,Cartalax analysis,,380.00,test,30,t,2026-04-20 20:15:44.267997+00,analysis,compound,Janoshik Analytical
+cat_mgf,mgf,MGF analysis,,380.00,test,61,t,2026-04-20 20:15:44.663701+00,analysis,compound,Janoshik Analytical
+cat_chonluten,chonluten,Chonluten analysis,,380.00,test,31,t,2026-04-20 20:15:44.280716+00,analysis,compound,Janoshik Analytical
+cat_cjc_dac_ipa,cjc_dac_ipa,CJC DAC/Ipamorelin blend analysis,,270.00,test,32,t,2026-04-20 20:15:44.293634+00,analysis,compound,Janoshik Analytical
+cat_adamax,adamax,Adamax analysis,,380.00,test,33,t,2026-04-20 20:15:44.306307+00,analysis,compound,Janoshik Analytical
+cat_ahk_cu,ahk_cu,AHK-Cu analysis,,380.00,test,34,t,2026-04-20 20:15:44.318909+00,analysis,compound,Janoshik Analytical
+cat_ara290,ara290,ARA-290 analysis,,380.00,test,35,t,2026-04-20 20:15:44.33151+00,analysis,compound,Janoshik Analytical
+cat_crystagen,crystagen,Crystagen analysis,,380.00,test,38,t,2026-04-20 20:15:44.369998+00,analysis,compound,Janoshik Analytical
+cat_dihexa,dihexa,Dihexa analysis,,380.00,test,39,t,2026-04-20 20:15:44.382818+00,analysis,compound,Janoshik Analytical
+cat_dsip,dsip,DSIP analysis,,240.00,test,40,t,2026-04-20 20:15:44.395631+00,analysis,compound,Janoshik Analytical
+cat_sermorelin,sermorelin,Sermorelin analysis,,240.00,test,41,t,2026-04-20 20:15:44.408494+00,analysis,compound,Janoshik Analytical
+cat_snap8,snap8,SNAP-8 analysis,,380.00,test,42,t,2026-04-20 20:15:44.421222+00,analysis,compound,Janoshik Analytical
+cat_tb500,tb500,TB4/TB-500/TB4(17-23) analysis,,180.00,test,43,t,2026-04-20 20:15:44.434067+00,analysis,compound,Janoshik Analytical
+cat_mots_c,mots_c,MOTS-c analysis,,380.00,test,62,t,2026-04-20 20:15:44.6762+00,analysis,compound,Janoshik Analytical
+cat_tesamorelin,tesamorelin,Tesamorelin analysis,,240.00,test,44,t,2026-04-20 20:15:44.446695+00,analysis,compound,Janoshik Analytical
+cat_ta1_thymalin,ta1_thymalin,Thymosin Alpha-1/Thymalin (Thymulin) blend analysis,,500.00,test,45,t,2026-04-20 20:15:44.459335+00,analysis,compound,Janoshik Analytical
+cat_vesugen,vesugen,Vesugen analysis,,380.00,test,46,t,2026-04-20 20:15:44.471952+00,analysis,compound,Janoshik Analytical
+cat_na_epithalon_amidate,na_epithalon_amidate,N-acetyl Epithalon Amidate analysis,,380.00,test,63,t,2026-04-20 20:15:44.689169+00,analysis,compound,Janoshik Analytical
+cat_na_epithalon,na_epithalon,N-Acetyl Epithalon analysis,,380.00,test,64,t,2026-04-20 20:15:44.702141+00,analysis,compound,Janoshik Analytical
+cat_ll37,ll37,LL-37 analysis,,380.00,test,65,t,2026-04-20 20:15:44.714604+00,analysis,compound,Janoshik Analytical
+cat_mazdutide,mazdutide,Mazdutide analysis,,380.00,test,66,t,2026-04-20 20:15:44.727623+00,analysis,compound,Janoshik Analytical
+cat_melanotan1,melanotan1,Melanotan 1 analysis,,380.00,test,67,t,2026-04-20 20:15:44.740195+00,analysis,compound,Janoshik Analytical
+cat_melanotan2,melanotan2,Melanotan 2 analysis,,180.00,test,68,t,2026-04-20 20:15:44.753153+00,analysis,compound,Janoshik Analytical
+cat_bpc157,bpc157,BPC-157 analysis,,180.00,test,21,t,2026-04-20 20:15:44.149919+00,analysis,compound,Janoshik Analytical
+cat_bpc157_tb500,bpc157_tb500,BPC-157/TB-500 blend analysis,,270.00,test,22,t,2026-04-20 20:15:44.164832+00,analysis,compound,Janoshik Analytical
+cat_lcms_screen,lcms_screen,LCMS Screening,,170.00,test,102,t,2026-04-20 20:15:44.77826+00,single,,Janoshik Analytical
+cat_arg_bpc157,arg_bpc157,Arg-BPC-157 analysis,,180.00,test,36,t,2026-04-20 20:15:44.344162+00,analysis,compound,Janoshik Analytical
+cat_cortagen,cortagen,Cortagen analysis,,380.00,test,37,t,2026-04-20 20:15:44.357141+00,analysis,compound,Janoshik Analytical
+cat_vilon,vilon,Vilon analysis,,380.00,test,47,t,2026-04-20 20:15:44.484961+00,analysis,compound,Janoshik Analytical
+cat_cjc1295_dac,cjc1295_dac,CJC-1295 DAC analysis,,180.00,test,26,t,2026-04-20 20:15:44.21666+00,analysis,compound,Janoshik Analytical
+cat_na_selank,na_selank,N-Acetyl Selank analysis,,380.00,test,58,t,2026-04-20 20:15:44.625777+00,analysis,compound,Janoshik Analytical
+cat_na_semax_amidate,na_semax_amidate,N-acetyl Semax Amidate analysis,,380.00,test,59,t,2026-04-20 20:15:44.638414+00,analysis,compound,Janoshik Analytical
+cat_aod9604_lcms,aod9604_lcms,rHGH fragment or AOD-9604 (LCMS+CHNS) analysis,,290.00,test,54,t,2026-04-20 20:15:44.575186+00,analysis,compound,Janoshik Analytical
+cat_selank,selank,Selank analysis,,240.00,test,55,t,2026-04-20 20:15:44.587715+00,analysis,compound,Janoshik Analytical
+cat_semax,semax,Semax analysis,,240.00,test,56,t,2026-04-20 20:15:44.600476+00,analysis,compound,Janoshik Analytical
+cat_na_selank_amidate,na_selank_amidate,N-Acetyl Selank Amidate analysis,,380.00,test,57,t,2026-04-20 20:15:44.61307+00,analysis,compound,Janoshik Analytical
+cat_tfa_analysis,tfa_analysis,TFA Analysis,,240.00,test,20,f,2026-04-18 16:14:12.88316+00,addon,,
+cat_residual_solvents,residual_solvents,Residual Solvents,,110.00,test,21,f,2026-04-18 16:14:12.829585+00,addon,,
+cat_fentanyl_presence,fentanyl_presence,Fentanyl Presence Analysis,,60.00,test,22,f,2026-04-18 16:14:12.843187+00,addon,,

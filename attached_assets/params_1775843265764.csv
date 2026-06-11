@@ -1,0 +1,308 @@
+﻿"Carrier Code(运输商代码)","Carrier Name(运输商名称)","Parameter(参数信息)","Description(官方描述)","Sample(输入示例)","Require(是否必填)"
+"2061","Bpost","postal_code","postal_code
+","1000","No"
+"7041","DHL Paket","postal_code","postal_code
+","1000 AA","No"
+"14041","PostNL","destination_country","destination_country
+","FR","Yes"
+"14041","PostNL","postal_code","postal_code
+","1000 AA","No"
+"21051","USPS","mid","mid
+","123456","No"
+"100003","FedEx","ship_date","ship_date
+","	2024-01-01","No"
+"100005","GLS","postal_code","postal_code
+","Postal code","No"
+"100010","DPD (UK)","postal_code","postal_code
+","Postcode","No"
+"100017","Yodel","postal_code","postal_code
+","Postal code","No"
+"100024","GLS (IT)","postal_code","postal_code
+","Postal code","No"
+"100026","BRT Bartolini(DPD)","postal_code","postal_code
+","1000 AA","No"
+"100027","Colis Prive(Colis Privé)","postal_code","postal_code
+","12345","No"
+"100060","Delhivery","number_type","Track Number Type
+1:AWB
+2:Order Id
+3:LRN
+","1","No"
+"100074","J&T Express (ID)","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"100078","Caribou","postal_code","postal_code
+","1000","No"
+"100086","JNE Express","phone_number_last_4","phone_number_last_4
+","88888","Yes"
+"100155","Commonline","postal_code","postal_code
+","1000","No"
+"100167","XDP EXPRESS","postal_code","postal_code
+","LS27 0BN","Yes"
+"100189","GLS Spain (National)","postal_code","postal_code
+","123456","Yes"
+"100207","GLS (Croatia)","postal_code","postal_code
+","Postal code","No"
+"100221","Estes","number_type","Track Number Type
+1:PRO Number
+2:BOL Number
+3:Purchase Order Number
+","1","No"
+"100268","Post Haste","number_type","Track Number Type
+5:Track Bar Code
+","5","No"
+"100268","Post Haste","parameter","Product Code or Company ID
+","1000000","No"
+"100271","J&T Express (TH)","phone_number_last_4","phone_number_last_4
+","8888","No"
+"100280","GLS (HU)","postal_code","postal_code
+","Postal code","No"
+"100281","GLS (CZ)","postal_code","postal_code
+","Postal code","No"
+"100282","GLS (SK)","postal_code","postal_code
+","Postal code","No"
+"100283","GLS (SI)","postal_code","postal_code
+","Postal code","No"
+"100284","GLS (RO)","postal_code","postal_code
+","Postal code","No"
+"100304","Mondial Relay","postal_code","postal_code
+","123456","No"
+"100316","GLS (PT)","postal_code","postal_code
+","Postal code","Yes"
+"100321","DPD (BE)","postal_code","postal_code
+","1000 AA","No"
+"100356","GEODIS","postal_code","postal_code
+","1000 AA","No"
+"100364","Paack","postal_code","postal_code
+","12345","Yes"
+"100384","GLS (NL)","postal_code","postal_code
+","12345","Yes"
+"100388","J&T Express (MX)","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"100394","Pall-Ex (UK)","postal_code","postal_code
+","CO14 8LF","Yes"
+"100396","GEL Express Logistik","postal_code","postal_code
+","1000 AA","No"
+"100424","Gefco","postal_code","Please enter a zip code.
+","12345","Yes"
+"100431","Gebrüder Weiss (GW)","postal_code","postal_code
+","Please enter a zip code, city, country or a shipper/ consignee name.","Yes"
+"100436","Nacex","parameter","Origin franchise office
+","0000","No"
+"100436","Nacex","client_code","Client Code
+","0000","No"
+"100436","Nacex","number_type","Select Number Type
+1:Request shipment
+2:Shipment
+3:Código de barras QR
+4:Request shipment Reference + Client/Office code
+5:Shipment Reference + Client/Office code
+","1","No"
+"100438","Seur","phone_number_last_4","phone number/mobile number last four digits/email
+","8888","Yes"
+"100438","Seur","postal_code","postal_code
+","28001","Yes"
+"100438","Seur","receiver_sender_type","Receiver Or Sender Type
+1:Receiver
+2:Sender
+","1","No"
+"100456","J&T Express (VN)","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"100457","Loggi Express BR","postal_code","Enter the postal code for the package delivery address
+","11111-111","No"
+"100466","Cycloon (Fietskoeriers)","postal_code","postal_code
+","1000 AA","Yes"
+"100483","DPD (CZ)","postal_code","postal_code
+","1000 AA","No"
+"100484","DX","postal_code","postal_code
+","12345","Yes"
+"100522","Ryder","postal_code","postal_code
+","88888","Yes"
+"100524","Tuffnells","postal_code","postal_code
+","S27 1BZ","Yes"
+"100552","Postmedia Parcel Services (BNI Parcel Tracking)","postal_code","postal_code
+","H4E 5R4","Yes"
+"100556","DPD (AT)","postal_code","postal_code
+","1000 AA","No"
+"100580","Walkers Transport","postal_code","postal_code
+","LS27 0BN","Yes"
+"100584","DPD (HU)","postal_code","postal_code
+","1000 AA","No"
+"100590","SiCepat","phone_number_last_4","phone_number_last_4
+","88888","No"
+"100592","New Zealand Couriers","number_type","Track Number Type
+1:Courier tickets / packs
+2:Customer printed labels (incl. Despatch IT labels)
+","1","No"
+"100592","New Zealand Couriers","parameter","Ticket product code or Company A/C
+","1000000","No"
+"100594","InPost (ES)","postal_code","postal_code
+","51900","Yes"
+"100598","InPost (PT)","postal_code","postal_code
+","51900","Yes"
+"100619","J&T Express (EG)","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"100623","Allied Express Transport","postal_code","postal_code
+","1000","Yes"
+"100646","GLS Portugal (National)","postal_code","postal_code
+","1000-205","Yes"
+"100680","Mazet","agency","Agency
+","80H","No"
+"100680","Mazet","receipt","Receipt
+","49798","No"
+"100688","A TU HORA EXPRESS","postal_code","postal_code
+","1000","No"
+"100694","Ontime","postal_code","postal_code
+","1000","Yes"
+"100797","J&T Express (BR)","cpf_or_cnpj","CPF/CNPJ
+","1000000","Yes"
+"100807","DPD (HR)","postal_code","postal_code
+","1000 AA","No"
+"100808","DPD (EE)","postal_code","postal_code
+","1000 AA","No"
+"100809","DPD (LV)","postal_code","postal_code
+","1000 AA","No"
+"100810","DPD (LT)","postal_code","postal_code
+","1000 AA","No"
+"100811","DPD (NL)","postal_code","postal_code
+","1000 AA","No"
+"100812","DPD (SK)","postal_code","postal_code
+","1000 AA","No"
+"100813","DPD (SI)","postal_code","postal_code
+","1000 AA","No"
+"100815","DPD (CH)","postal_code","postal_code
+","1000 AA","No"
+"100842","DHL Supply Chain APAC","destination_country","destination_country
+","ID","Yes"
+"100862","The United Pallet Network","postal_code","postal_code
+","LS27 0BN","Yes"
+"100881","Furdeco","postal_code","postal_code
+","LS27 0BN","Yes"
+"100900","Palletways","postal_code","postal_code
+","1000 AA","No"
+"100932","Instabox","phone_number","Phone number or email
+","5190 or xx@xx","Yes"
+"100936","France Express","postal_code","postal_code
+","1000 AA","No"
+"100949","Bonds Transport Group","ship_date","ship_date
+","	2025-01-01","No"
+"100956","Central Transport","number_type","Track Number Type
+1:Pro
+2:BOL
+","1","No"
+"100956","Central Transport","parameter","Date
+","	2025-02","No"
+"100959","Transaher","postal_code","postal_code
+","12345","No"
+"101003","BJS Home Delivery","phone_number","postcode or mobile number
+","8888888888","Yes"
+"101010","Palletforce","postal_code","postal_code
+","S27 1BZ","Yes"
+"101038","Hofmann","postal_code","postal_code
+","10000","Yes"
+"101039","Emons","postal_code","postal_code
+","10000","Yes"
+"101040","Sislógica","cpf_or_cnpj","CPF/CNPJ
+","1000000","No"
+"101065","APC Overnight","postal_code","postal_code
+","1000 AA","Yes"
+"101070","GLS (DE)","postal_code","postal_code
+","1000","No"
+"101072","Relay","postal_code","postal_code
+","LS27 0BN","No"
+"101076","Arrow XL","postal_code","postal_code
+","1000 AA","No"
+"101093","Exclusive Delivery Network","postal_code","postal_code
+","1000","Yes"
+"101095","Kindersley Transport","number_type","select track number type
+1:Pro Bill
+2:PO
+3:BOL
+4:PU Ref
+","1","No"
+"101105","Bringly","postal_code","postal_code
+","1000","Yes"
+"101108","DPD Group","postal_code","postal_code
+","1000 AA","No"
+"101109","GLS Group","postal_code","postal_code
+","Postal code","No"
+"101115","The Delivery Group","postal_code","postal_code
+","123456","Yes"
+"101128","Packs","postal_code","postal_code
+","123456","Yes"
+"101164","Bookabldg","postal_code","postal_code
+","Delivery Post Code","No"
+"101167","XDP DELIVERIES","postal_code","postal_code
+","Postal code","Yes"
+"101185","Cargoboard","postal_code","postal_code
+","123456","Yes"
+"101194","BEST Inc (VN)","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"101226","Xtra Express Logistics","postal_code","postal_code
+","Postal code","No"
+"101233","CTL","postal_code","postal_code
+","Postal code","Yes"
+"101235","SHALOM","postal_code","postal_code
+","Postal code","Yes"
+"101248","schaeflein","postal_code","postal_code
+","12345","Yes"
+"101255","Track Your Parcel","destination_country","destination_country
+","FR","Yes"
+"101255","Track Your Parcel","postal_code","postal_code
+","1000 AA","Yes"
+"101269","RhenusLogistics","postal_code","Postcode of the recipient
+","80687","No"
+"101275","TransMission","postal_code","postal_code
+","9671LJ","Yes"
+"101286","Agediss","postal_code","postal_code
+","12345","Yes"
+"101291","Furniture Logis","postal_code","postal_code
+","123456","Yes"
+"101291","Furniture Logis","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"101313","Inntralog","postal_code","postal_code
+","Postcode","Yes"
+"101325","TST-CF Express","number_type","select track number type
+1:Pro
+2:BOL
+","1","No"
+"101328","Dynalogic","postal_code","Postcode
+","1111AA","Yes"
+"101331","VIGOCLOUD","parameter","Delivery Postcode
+","BT33 AAA","Yes"
+"101331","VIGOCLOUD","number_type","Track Number Type
+1:Tracking Code
+2:Consignment Number
+3:Order Ref
+","2","No"
+"101348","Roadit Rhenus Logistics","postal_code","Postcode of the recipient
+","80687","Yes"
+"101368","NTL","postal_code","First 2 digits only
+","46","Yes"
+"101372","J&T EXPRESS COLOMBIA","phone_number_last_4","phone_number_last_4
+","4444","Yes"
+"101378","DUPONT BEDU","postal_code","postal_code
+","38160","Yes"
+"101381","method","postal_code","postal_code
+","08222","Yes"
+"101391","BOLT KARGO","phone_number","phone_number
+","(000) 6642524","Yes"
+"101394","SGK Distribution","postal_code","postal_code
+","123456","Yes"
+"190415","UC Express","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"190441","YiMiDiDa","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"190455","ZTO Express","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"190766","SF Express(CN)","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"190845","KYE (CN)","phone_number_last_4","phone_number_last_4
+","8888","Yes"
+"191121","JD Logistics","phone_number_last_4","phone_number_last_4
+","8706","Yes"
+"191916","Unknown","company_id","company_id
+","smPWxD80Km+oUKgPH5qyXQ==","Yes"
+"199992","GLSSpainASM(ES)","postal_code","postal_code
+","123456","Yes"
+"999997","","ship_date","ship_date
+","	2022-01-17","Yes"

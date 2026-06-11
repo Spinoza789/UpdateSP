@@ -1,0 +1,6980 @@
+A-Ret Gel 0.025%	Tretinoin Gel
+A-Ret Gel 0.05%	Tretinoin Gel
+A-Ret Gel 0.1%	Tretinoin Gel
+Accufine 10mg	Isotretinoin
+Accufine 20mg	Isotretinoin
+Accufine 30mg	Isotretinoin
+Accufine 40mg	Isotretinoin
+Accufine 5mg	Isotretinoin
+Allegra 120mg	Fexofenadine
+Allegra 180mg	Fexofenadine
+Almox 250 mg	Amoxicillin
+Almox DT 125 mg	Amoxicillin (Dispersable Tablet)
+Almox DT 250 mg	Amoxicillin (Dispersable Tablet)
+Almox 500mg	Amoxicillin 
+Almox CV 625 mg	Amoxicillin/Clavulanic Acid
+Ana-Ash 1mg	Anastrazole
+Arimee 1mg	Anastrazole
+Artvigil 50mg 	Armodafinil
+Artvigil 150mg	Armodafinil
+Artvigil 250mg	Armodafinil
+Asthalin 4mg	Salbutamol
+Atomexet 10mg	Atomexine
+Atomexet 25mg	Atomextine
+Atomexet 40mg	Atomextine
+Augmentine 1000mg	Amoxicillin/Clavulanic Acid
+Ezanic 20 Gel	Azelaic Acid 20%
+Bacloheal 10mg	Baclofen
+Bacloheal 25mg	Baclofen
+Bacteriostatic Water	Sterile Water + Benzyl Alcohol
+Bempedoic Acid 180mg	Bempedoic Acid
+Benzo 5% Gel	Benzoyl Peroxide
+Bupron SR 150 MG	Bupropion
+Bupron XL 150 MG	Bupropion
+Bupron XL 300 MG	Bupropion
+Buproban 150 MG	Bupropion
+Buspin 5mg	Buspirone
+Buspin 10mg	Buspirone
+Cabermax 0.5mg	Cabergoline
+Cabermax 1mg	Cabergoline
+Cenforce LD	Sildenafil / Dapoxetine
+Cerecetam 800mg	Piracetam
+Ciplar 10mg	Propranolol
+Ciplar SR 20mg	Propanolol (Sustained Release)
+Ciplar 40mg	Propanolol
+Ciplar SR 40mg	Propanolol (Sustained Release)
+Clobisol	Clobetasol Propionate
+Clomisign 50mg	Clomiphene
+Clomisign 100mg	Clomiphene
+Cortivac 1%	Hydrocortisone
+Cyanocobalamin 500mcg/ml	Vitamin B12 Injection
+Depin retard 15mg	Nifedipine (Extended Release)
+Dostiheal 0.25mg	Cabergoline
+Esoheal 20mg	Esomeprazole
+Famocid 20mg	Famotidine
+Famocid 40mg	Famotidine
+Fertogard 50mg	Clomiphene
+Finpecia 1mg	Finasteride
+Finpecia 1mg	Finasteride
+Fosirol 8g	Fosfomicyn
+Fosfomicyn Injectable	Fosfomicyn
+Gabatop 100mg	Gabapentin
+Gabatop 300mg	Gabapentin
+Gabatop 400mg	Gabapentin
+Gabatop 600mg	Gabapentin
+Gabatop 800mg	Gabapentin
+Gabatop NT 400/10mg	Gabapentin / Nortripyline
+Glycoheal 500mg	Metformin
+Glycoheal 850mg	Metformin
+Glycoheal 1000mg	Metformin
+Glycopharge XR 500mg	Metformin (Extended Release)
+Glycopharge XR 1000mg	Metformin (Extended Release)
+Glycomet SR 500mg	Metformin (Sustained Release)
+Glycomet SR 850mg	Metformin (Sustained Release)
+Glycomet SR 1000mg	Metformin (Sustained Release)
+Healpecia 1mg	Finasteride
+Hipres 50mg	Atenolol
+Hypnite 1mg	Eszopiclone
+Hypnite 2mg	Eszopiclone
+Hypnite 3mg	Eszopiclone
+Ivervid 12mg 	Ivermectin 
+Jeequin 200mg	Hydroxychloroquine
+Jeequin 400mg	Hydroxychloroquine
+Lamez 25mg	Lamotrigine
+Lamez OD 50mg	Lamotrigine (Oro-dispersible)
+Lamez 100mg	Lamotrigine
+Lamez OD 100mg	Lamotrigine (Oro-dispersible)
+Lamez OD 150mg	Lamotrigine (Oro-dispersible)
+Lamez OD 200mg	Lamotrigine (Oro-dispersible)
+Lamotrig DT 100mg	Lamotrigine (dispersible)
+Lipidator 5 mg	Atorvastatin
+Lipidator 10 mg	Atorvastatin
+Lipidator 40 mg	Atorvastatin
+Lipidator 80 mg	Atorvastatin
+Levocetrizen 5mg	Levocetirizine
+Levocetrizen 10mg	Levocetirizine
+Lodonak 1.5mg	Low Dose Naltrexone
+Lodonak 3mg	Low Dose Naltrexone
+Lodonak 4.5mg	Low Dose Naltrexone
+Lodonak BP 8/90mg	Naltrxone/Bupropion
+Lulican Cream (1% w/w)	Luliconazole
+Lulican Cream (1% w/w)	Luliconazole
+Lulican Forte (5%) Lotion	Luliconazole
+Ketoconazole 2% C GEL	Ketoconazole
+Maxtan 10mg	Rizatriptan
+Melorise 7.5mg	Meloxicam
+Melorise 15mg	Meloxicam
+Mesteronum 25mg	Mesterelone (Proviron)
+Minicycline 100mg	Doxycycline
+Minoxytop 5% solution	Minoxidil Topical
+Minoxytop 5mg	Minoxidil Oral
+Miragon 25mg	Mirabegron
+Miragon 50mg	Mirabegron
+Modaheal 100mg	Modafinil
+Modaheal 200mg	Modafinil
+Modasafe 300mg	Modafinil
+Modasmart 400mg	Modafinil
+Montair LC 10/5mg	Montelukast / Levocetirizine
+Montair FX 10/120mg	Montelukast / Fexofenadine
+Montair 4mg	Montelukast
+Montair 10mg	Montelukast
+Montair Plus 10/10mg	Montelukast / Bambuterol
+Naprosyn 250mg	Naproxen
+Naprosyn 250mg	Naproxen
+Naprosyn 500mg	Naproxen
+Naprosyn sr 750mg	Naproxen (Sustained Release)
+Nebimax 5mg	Nebivolol
+Neosporin-H Ear Drops 5ml	Neomycin
+Noosanta 100mg	Tapentadol
+Noosanta 200mg	Tapentadol
+Novamax 500mg	Amoxicillin
+Omez 10mg	Omeprazol
+Omez 20mg	Omeprazol
+Omez 40mg	Omeprazol
+Ondaheal MD 4mg	Ondansetron
+Ostalmiv 75mg	Oseltamivir Phosphate
+Oxynine 5mg	Oxybutinin
+Piretam 1200mg	Piracetam
+Pranovir 500mg	Inosine Pranobex
+Predniheal 5mg	Prednisolone
+Predniheal 10mg	Prednisolone
+Provanol SR 40mg	Propanolol (Sustained Release)
+Provanol SR 60mg	Propanolol (Sustained Release)
+Provanol SR 80mg	Propanolol (Sustained Release)
+Puregraf 150iu	Menotrophin
+Raloxiheal 60mg	Raloxifene
+Rosufree 5mg	Rosuvastatin
+Rosufree 10mg	Rosuvastatin
+Rosufree 20mg	Rosuvastatin
+Rosufree 40mg	Rosuvastatin
+Sertrafine 50mg	Sertraline
+Sleepose 10mg	Melatonin
+Sleepose 20mg	Melatonin
+Sleepose 3mg	Melatonin
+Sodac 8.4% injection	Sodium Bicarbonate Injection
+Sumitop 25mg	Sumatriptan
+Sumitop 50mg	Sumatriptan
+Sumitop 100mg	Sumatriptan
+Suminat 25mg	Sumatriptan
+Suminat 50mg	Sumatriptan
+Suminat 100mg	Sumatriptan
+Tamalong 20mg	Tamoxifen
+Tapaday 200mg	Tapentadol
+Telmaheal 20mg	Telmisartan
+Telmaheal 40mg	Telmisartan
+Telmaheal 80mg	Telmisartan
+Telmaheal Beta 25mg	Telmisartan / Metoprolol
+Tenovate Ointment	Clobetasol
+Tenovate Cream	Clobetasol
+Testoheal 40mg	Testosterone (Capsules)
+Testoright 40mg	Testosterone (Capsules)
+Tretiheal 0.025%	Tretinoin Cream
+Tretiheal 0.05%	Tretinoin Cream
+Tretiheal 0.1%	Tretinoin Cream
+Ursodec 200mg	Ursodeoxycholic Acid
+Ursodec 300mg	Ursodeoxycholic Acid
+Vidalista 20mg	Tadalafil
+Vidalista 5mg	Tadalafil
+Voveran SR 100mg	Diclofenac
+Wormental 150 mg	Fenbendazole
+Xmalon 25mg	Exemestane
+Xtane 25mg	Exemestane
+Xylocaine NF Cream	Lidocaine
+Zen 100mg	Carbamazepine
+Zetiheal 10mg	Ezetimibe
+Zolmist Nasal Spray	Zolmitriptan
+Zopifresh 10mg	Zopiclone
+Zopisign 7.5mg	Zopiclone
+FERTIGYN HP 5000 IU INJ	Human Chorionic Gonadotropin (HCG)
+BENOQUIN CREAM 30GM	
+TAPADAY 100 MG	Tapaday
+BILTREE 600 MG	Biltree
+A RET GEL 0.05% 20GM	Tretinoin
+ABHIFORCE 100 MG	Sildenafil + Dapoxetine
+ABHIGRA 100 MG ORAL JELLY	Abhigra
+ACCUFINE 10 MG	Accufine
+ACCUFINE 20 MG	Accufine
+ACIVIR 5% CREAM 10GM	Acivir
+ACNETOP SOAP 75GM	Clindamycin
+AGOPREX 25 MG	Agoprex
+ALDACTONE 100 MG	Spironolactone
+ALMOX 250 MG (1X15)	Almox
+ALMOX 500 MG (1X10)	Almox
+ALPOSTIN 500 MCG INJ	Alpostin
+AMLIP 10 MG	Amlip
+AMLIP 5 MG	Amlip
+AMOTIC MD 4 MG	
+ANTREOL 1 MG	Antreol
+APCALIS SX 20 MG ORAL JELLY (1x7)	
+AQUAZIDE 12.5 MG	Aquazide
+AQUAZIDE 25 MG	Aquazide
+ARIZOLE 10 MG	Arizole
+ASPADOL 100 MG	Aspadol
+ASPADOL 50 MG	Aspadol
+ASPADOL ER 150 MG	
+ASPADOL ER 200 MG	
+ASTHAFEN 1 MG	Asthafen
+ASTHALIN INHALER	
+ATARISE 10 MG	Atarise
+ATARISE 25 MG	Atarise
+AUGMENTIN 625 DUO TAB (1X6)	Amoxicillin + Clavulanate
+AUROGRA 100 MG	Aurogra
+AVANA 100 MG	Avana
+AZEETOP 250 MG 1X10	Azithromycin
+AZIMAX 200 MG DT	Azithromycin
+AZIPRO 500 MG	Azithromycin
+AZISIGN 250 MG	Azisign
+AZISIGN 500 MG	Azisign
+BACLOSIGN 10 MG	Baclosign
+BACLOSIGN 25 MG	Baclosign
+BETNESOL 0.5 MG	Betnesol
+BETNOVATE SKIN CREAM 20 GM	
+BLACK COBRA ORAL JEELY 100 MG	
+BONAIR AEROSOL INHALER	
+BRITE CREAM 20GM	
+BRUFEN 600 MG	Ibuprofen
+BUDECORT 1.0 RESP 2ML	Budesonide
+BUPROBAN 150 MG	Bupropion
+CAMPICILLIN 500 MG	Campicillin
+CANESTEN 2% CREAM 15GM	Canesten
+CARDIVAS 12.5 MG	Cardivas
+CARDIVAS 6.25 MG	Cardivas
+CAREPROST 0.03% EYE DROP	Careprost
+CB PLEX VITAMIN B COMPLEX INJ 30ML	
+CENFORCE 100 MG	Sildenafil
+CENFORCE 150 MG	Sildenafil
+CENFORCE 200 MG	Sildenafil
+CENFORCE 25 MG	Sildenafil
+CENFORCE 50 MG	Sildenafil
+CENFORCE D	Sildenafil
+CENFORCE FM	Sildenafil
+CENFORCE PRO 100 MG	Sildenafil
+CENFORCE SOFT 100 MG	Sildenafil
+CEPHADEX 500 MG	Cephalexin
+CERNOS SOFT 40 MG	
+CETRAM 20 MG	Cetram
+CIALIS 20 MG (1X1)	Cialis
+CIPLAR 10 MG	Ciplar
+CIPLAR LA 40 MG (1X15)	
+CLEARGEL NICO GEL	
+CLOCHIHEAL 0.5 MG	Clochiheal
+CLOMICARE 25 MG	Clomicare
+CLOPIHEAL 75 MG	Clopiheal
+COBRA 120 MG	Cobra
+COVIMACTIN 12 MG	Ivermectin
+COVIMECTIN 6 MG	Ivermectin
+CYFLOX 250 MG	Cyflox
+CYNOPIC FORTE VITAMIN B12 INJ	
+CYSTOPEN 100 MG	Cystopen
+DABUR SHILAJIT GOLD CAP (1X20)	
+DALAHEAL 300 MG	Dalaheal
+DAXID 100 MG	Daxid
+DECA INSTABOLIN 100 MG INJ	
+DERIPHYLLIN OD 300 MG (1X15)	
+DEXAREX 0.5 MG	Dexarex
+DEXLYSONE 0.5 MG	Dexlysone
+DOXYCYCLINE 100 MG	Doxycycline
+EEMA HP 5000 INJ	
+ELIQUIS 2.5 MG	Eliquis
+ELIQUIS 5 MG	Eliquis
+ELTROXIN 100 MCG	Levothyroxine
+ERIACTA 100 MG	Eriacta
+ESOMI 40 MG	Esomi
+EUKROMA CREAM 4% 20GM	
+EXTRA SUPER P FORCE	Sildenafil + Dapoxetine
+FEMALEGRA 100 MG	Sildenafil
+FEMPRO 2.5 MG	Fempro
+FERTIGYN HP 10000 IU INJ	Human Chorionic Gonadotropin (HCG)
+FERTOGARD 100 MG	Fertogard
+FERTOGARD 50 MG	Fertogard
+FERTOMID 50 MG	Fertomid
+FILDENA 100 MG	Sildenafil
+FILDENA SUPER ACTIVE	Sildenafil
+FILITRA 20 MG	Filitra
+FILITRA 40 MG	Filitra
+FILITRA PRO 20 MG	
+FINCAR 5 MG	Finasteride
+FINPECIA 1 MG (1X10)	Finasteride
+FINPECIA 1 MG (1X15)	Finasteride
+FLEXABENZ ER 15 MG	
+FLIBAN 100 MG	Fliban
+FLUCONAZ 200 MG	Fluconaz
+FLUNIL 20 MG	Fluoxetine
+FORACORT 200 MCG INHALER	Formoterol + Budesonide
+FRASIX  100  MG	Frasix
+FRASIX 40 MG	Frasix
+FUNG 200 MG	
+GABASIGN 600 MG	Gabapentin
+GABATOP 400 MG	Gabatop
+GABATOP 600 MG	Gabatop
+GABATOP 800 MG	Gabatop
+GLYCIPHAGE 500 MG	Metformin
+HCQS 200 MG (1X15)	
+HCQS 300 MG (1X10)	
+HEPPRA 500 MG	Heppra
+HUCOG 10000 IU INJ	Human Chorionic Gonadotropin (HCG)
+HYDROBET 400 MG	Hydrobet
+HYPERNIL 10 MG	Hypernil
+HYPNITE 2 MG	Hypnite
+HYPNITE 3 MG	Hypnite
+INDERAL LA 40 MG (1X15)	
+I-PILL TAB	
+IVECOP-DT 3 MG	Ivermectin
+IVERFAST 12 MG	Ivermectin
+JARDIANCE 25 MG	Empagliflozin
+KAMAGRA CT 100 MG	
+KAMAGRA GOLD 100 MG	
+KAMAGRA GOLD 50 MG	
+KAMAGRA ORAL JELLY 100 MG (1X7)	
+KENACORT 0.1% PASTE (7.5GM)	Kenacort
+KETOFLAM SR 400 MG	
+LANZOL 30 MG	Lanzol
+LASIX 40 MG	Furosemide
+LAVETA M	
+LIPVAS 10 MG	Atorvastatin
+LIPVAS 20 MG	Atorvastatin
+LOVEGRA 100 MG	Lovegra
+LOX 2% JELLY 30GM	
+LUMIGAN 0.01% EYE DROP	Lumigan
+LUMIGAN 0.03% EYE DROPS	Lumigan
+LUPI HCG 5000 IU INJ	
+LURASID 80 MG	Lurasid
+MALEGRA ORAL JELLY 100 MG 5GM	Sildenafil
+MAXTAN 10 MG	Maxtan
+MAXTAN 5 MG	Maxtan
+MELAMET CREAM 15GM	
+MEP 4 MG	
+MINJUV 5 MG	Minoxidil
+MODAFIL MD 100 MG	
+MODAFIL MD 200 MG	
+MODAFRESH 200 MG	Modafinil
+MODAHEAL 200 MG	Modaheal
+MODALERT 100 MG	Modafinil
+MODALERT 200 MG	Modafinil
+MODAWAKE 200 MG	Modafinil
+MODAHEAL 100 MG	Modaheal
+MODVIGIL 200 MG	Modafinil
+MONTAIR 10 MG	Montair
+MONTAIR PLUS TAB	
+MUCOLITE 30 MG	Mucolite
+NASONEX NASAL SPRAY 50 MCG	
+NERVIGESIC 150 MG	Pregabalin
+NICLOSIG 500 MG	Niclosig
+NODICT 50 MG	Nodict
+OKACET 10 MG	Okacet
+OLMECIP 40 MG	Olmecip
+OMNACORTIL 10 MG	Omnacortil
+OMNACORTIL 20 MG	Omnacortil
+OMNACORTIL 40 MG	Omnacortil
+OMNACORTIL 5 MG	Omnacortil
+ONOFF 100 MG	Onoff
+ORLIGAL 120 MG	Orligal
+OXETIN 20 MG	Oxetin
+PAIN O SOMA 350 MG	
+PAIN O SOMA 500 MG	
+PANACUR 1.5 GM	Fenbendazole
+PENEGRA 100 MG	Penegra
+PENTIDS 400 MG	Pentids
+PHAGE 500 MG	Phage
+PHENERGAN 25 MG	Phenergan
+POLYCAP CAP	
+PREDNIHEAL 20 MG	Predniheal
+PREDNIHEAL 40 MG	Predniheal
+PREDNISONE 5 MG	Prednisone
+PREGARICA 300 MG	Pregabalin
+PROSCALPIN 1 MG	Finasteride
+PROSCAR 5 MG	Finasteride
+PROSCARE 5 MG	Finasteride
+PROSOMA 350 MG	Prosoma
+PROSOMA 500 MG	Prosoma
+PROVIRONUM 25 MG	Provironum
+QUETI 100 MG	Queti
+QUETI 50 MG	Queti
+RABIACE DSR CAP	
+RAMIPRES 5 MG	Ramipril
+REACTINE 100 MG SR	Reactine
+RICHOVA SR 75 MG	
+RIFAGUT 550 MG	Rifagut
+RIPTIN 25 MG	Riptin
+RIZORA 5 MG	Rizora
+S CITADEP 10 MG	
+SAFEHEART 1.25 MG	Safeheart
+SEROFLO INHALER 250MCG	Salmeterol + Fluticasone
+SIFASI AQUVA 5000 IU INJ	Human Chorionic Gonadotropin (HCG)
+SIGNAQUIN 200 MG	Signaquin
+SILAGRA 100 MG	Silagra
+SILDENAFIL 100 MG	Sildenafil
+SILDENAFIL SOFT 100 MG	Sildenafil
+SILDIGRA SOFT 100 MG	
+SILDITOP 100  MG	Silditop
+SIROVA 1 MG	Sirova
+SLIM TRIM ACTIVE 60 MG	
+SLIMTOP 120 MG	Slimtop
+SNOVITRA STRONG 40 MG	Vardenafil
+SNOVITRA SUPER POWER	Vardenafil
+SPORIDEX 500 MG	Sporidex
+SUHAGRA 100 MG (1X4)	Suhagra
+SUMINAT 50 MG	Suminat
+SUPER KAMAGRA	
+SUPER LASH 0.03% DROPS	
+SUPER P FORCE	Sildenafil + Dapoxetine
+SUPER TADAPOX	Tadalafil + Dapoxetine
+SUPER VIDALISTA	Tadalafil
+SUPER VILITRA	
+SUSTANON 250 MG INJ 1ML	Sustanon
+SUSTAVIRON 250 MG INJ	Sustaviron
+SYMBICORT TURBUHALER 160/4.5/DOSE	
+TADACIP 20 MG	Tadalafil
+TADAGA 20 MG	Tadalafil
+TADAGA SUPER 60 MG	Tadalafil
+TADAGRA 20 MG	Tadagra
+TADAGRA SOFT 20 MG	
+TADALAFIL 20 MG	Tadalafil
+TADALISTA 60 MG	Tadalafil
+TADALISTA SUPER ACTIVE	Tadalafil
+TADAPOX TAB	Tadalafil + Dapoxetine
+TADARISE 20 MG ORAL JELLY	Tadalafil
+TADARISE PRO 20 MG	Tadalafil
+TADARISE PRO 40 MG	Tadalafil
+TADORA 20 MG	Tadalafil
+TAMILONG 20 MG	Tamilong
+TAMOREX 20 MG	Tamorex
+TAP 100 MG	
+TAPADAY O 100 MG	
+TAPAL 100 MG	Tapal
+TAPAL 50 MG (1X15)	Tapal
+TAPAL ER 100 MG	
+TAPDOL 100 MG	Tapdol
+TAPDOL 50 MG	Tapdol
+TAPENTA 100 MG	Tapenta
+TASPODOL 100 MG	Taspodol
+TESTENATE DEPOT 250 MG INJ	
+TESTOHEAL 40 MG	Testoheal
+TESTOSTERON DEPOT 250 MG INJ	
+TESTOVIRON DEPOT 250 MG INJ	
+THYROTAG 25 MCG	Levothyroxine
+THYROTAG 50 MCG	Levothyroxine
+THYROX 25 MG (1X100)	Levothyroxine
+THYROX 50 MG (1X50)	Levothyroxine
+TIZAN 2 MG	Tizan
+TRETIHEAL 0.05% CREAM 20GM	Tretiheal
+TRINEX 2 MG	Trinex
+TYDOL 100 MG	Tydol
+UNIDEP SR 300 MG	
+UNIZITH OD 500 MG	
+URIHEAL 100 MG	Uriheal
+VALACLOVIR 1000 MG	Valaclovir
+VALCIVIR 500 MG	Valcivir
+VALCLOVIR 500 MG	Valclovir
+VASFREE 100 MG	Vasfree
+VEGA EXTRA 120 MG (1X5)	Sildenafil
+VIAGRA 100 MG (PFIZER) 1X1	Sildenafil
+VIAGRA 100 MG PFIZER (1X2)	Sildenafil
+VICTOZA 6 MG/ML INJ	Victoza
+VIDALISTA 10 MG	Tadalafil
+VIDALISTA 2.5 MG	Tadalafil
+VIDALISTA 20 MG	Tadalafil
+VIDALISTA 40 MG	Tadalafil
+VIDALISTA 5 MG	Tadalafil
+VIDALISTA 60 MG	Tadalafil
+VIDALISTA 80 MG	Tadalafil
+VIDALISTA CT	Tadalafil
+VIDALISTA PRO 20 MG	Tadalafil
+VIGORE RED 100 MG	Sildenafil
+VIKOSOLONE 10 MG	Vikosolone
+VILAFINIL 200 MG	Modafinil
+VILITRA 10 MG	Vilitra
+VILITRA 20 MG	Vilitra
+VILITRA 40 MG	Vilitra
+VILITRA 60 MG	Vilitra
+VIROPACE 25 MG	Viropace
+VITARA V 20 MG ORAL JELLY	Tadalafil
+WAKLERT 150 MG	Armodafinil
+XAVIAN 20 MG	Xavian
+XTANE 25 MG TAB (1X30)	Xtane
+ZINDERM BPO GEL	
+ZIVERDO KIT TAB	
+ZOP 7.5 MG	
+ZOPICON 7.5 MG	Zopicon
+ZOPINAX 7.5 MG	Zopinax
+ZOPISIGN 10 MG	Zopisign
+ZOPISIGN 7.5 MG	Zopisign
+ZOSERT 5% CREAM	Zosert
+ZOVICLOVIR 800 MG	Zoviclovir
+ZOVICLOVIR 400 MG	Zoviclovir
+ZUNESTAR 3 MG	Zunestar
+ZYLOMOX 250 MG	Zylomox
+ZYLOMOX 500 MG	Zylomox
+ESRAM 20 MG	Escitalopram
+MIRA 30 MG	
+ROBICAN 500 MG	Robican
+ANARIDEX 1 MG	Anaridex
+TAFFIC TAB (1X30)	
+MEGALIS 10 MG	Megalis
+ANGIOTENSIN H 5 MG/12.5 MG	Losartan
+AMANTREL TAB	
+TADARISE 5 MG	Tadalafil
+TADARISE 20 MG	Tadalafil
+SETRO 100 MG	Setro
+FLEXABENZ 5 MG	Flexabenz
+FLEXURA 400 MG	Flexura
+VIDALISTA BLACK 80 MG	Tadalafil
+CLOMISIGN 50 MG	Clomisign
+HYDRIP 4% CREAM	Hydrip
+MINTOP FORTE 5% SOLUTION 60ML	Minoxidil
+CABERDOST 0.5 MG	Caberdost
+TADALISTA 5 MG	Tadalafil
+SNOVITRA 20 MG	Vardenafil
+FILAGRA GEL SHOT 100 MG	
+JANUVIA 100 MG	Sitagliptin
+PARACIP 500 MG	Paracetamol
+CERNOS GEL 1%	
+DIOVAAL 160 MG	Diovaal
+PIVASTA 4 MG	Pivasta
+PIVASTA 2 MG	Pivasta
+BIMAT 0.03% EYE DROP	Bimat
+IVEARHEAL 12 MG	Ivearheal
+VEGA 100 MG	Sildenafil
+AVOSTERIDE 0.5 MG	Avosteride
+SERTAFINE 50 MG	Sertafine
+ELEVAT 20 MG CAP	Elevat
+TRIDON 50 MG	Tridon
+TRIDON 100 MG	Tridon
+XMALON 25 MG	Xmalon
+WARF 5 MG	
+TRETIVA 20 MG	Isotretinoin
+TRAZONIL 50 MG (1X10)	Trazonil
+KAMAGRA EFFERVESCENT	
+CLOMISIGN 100 MG	Clomisign
+HEALTROXIN 125 MG	Healtroxin
+SNOVITRA XL 60 MG	Vardenafil
+PRAMIPEX 0.25 MG	Pramipex
+VRILIGY 60 MG	Vriligy
+TRAZONIL 100 MG	Trazonil
+TYPENTA 100 MG	Typenta
+TYPENTA 150 MG	Typenta
+TYPENTA 200 MG	Typenta
+FORZEST 20 MG (1X7)	Forzest
+TAZRET FORTE CREAM 0.1% 20GM	
+RALOXIHEAL 60 MG	Raloxiheal
+FLUNIL 40 MG	Fluoxetine
+TRETIHEAL 0.1% CREAM 20GM	Tretiheal
+SILDIGRA SUPER POWER	
+MALEGRA PRO 100 MG	Sildenafil
+FEMALE UP 20 MG	
+ZENEGRA 100 MG	Sildenafil
+VALIF 20 MG	Vardenafil
+FILDENA EXTRA POWER 150 MG	Sildenafil
+YASMIN TAB	
+TACROZ 0.03% OINTMENT 20GM	Tacroz
+ACNETOR AD 15GM GEL	
+TAC 150 MG	
+TADARISE 40 MG	Tadalafil
+TASTYLIA 20 MG ODS (1X10)	Tastylia
+ELI 20 MG	
+HEALTHROXIN 100 MCG TAB	Levothyroxine
+MALEGRA 100 MG	Sildenafil
+HYPNITE 1 MG	Hypnite
+MALEGRA DXT PLUS	Sildenafil
+GLYCOHEAL 850 MG	Glycoheal
+MELORISE 15 MG	Melorise
+VALZAAR-H 160 MG (1X10)	
+ANGIOTENSIN 20 MG	Losartan
+CAVERTA 100 MG	Sildenafil
+GLYNASE XL 5 MG	Glibenclamide
+BRUFEN 200 MG	Ibuprofen
+FILDENA DOUBLE 200 MG	Sildenafil
+MINTOP 5% SOLUTION	Minoxidil
+TADARISE 60 MG	Tadalafil
+MALEGRA 200 MG	Sildenafil
+MEBENSTAR 100 MG	Mebendazole
+AVANA 200 MG	Avana
+TADAGA POWER 80 MG	Tadalafil
+KAMAGRA POLO 100 MG	
+SILDALIST STRONG TAB	
+SUMITOP 50 MG	Sumitop
+BECLATE ROTACAPS 200MCG (1X30)	
+ACIVIR 500MG IV INJ	Acivir
+ZOSTER CREAM 5GM	
+PREDNIHEAL 10 MG	Predniheal
+AUGMINE 625 MG	Augmine
+ABHIRISE 20 MG	Abhirise
+CENFORCE 120 MG	Sildenafil
+HUCOG 5000 I.U HP INJ	Human Chorionic Gonadotropin (HCG)
+P-FORCE FORT 150 MG	
+TASPODOL 50 MG	Taspodol
+PEXEP CR 25 MG (1X10)	
+DISPOVAN SYRINGE 5ML	
+BETAMIL GM  CREAM 25GM	
+GLYCOHEAL 500 MG (1X20)	Glycoheal
+HEALPECIA 1 MG	Finasteride
+AZIDERM 10% GEL 15GM	Aziderm
+GLYCO 12% CREAM 30GM	Glyco
+RIVAROX 20 MG	Rivarox
+DUTANOL 0.5 MG	Dutasteride
+POXET 30 MG	Poxet
+ZOLMIST NASAL SPRAY	
+ZIPSYDON 20 MG	Zipsydon
+NERVIGESIC 300MG	Pregabalin
+MEGALIS 20 MG	Megalis
+FILDENA 50 MG	Sildenafil
+HALOX LOTION 30ML	
+DUTAS 0.5 MG	Dutasteride
+LONITAB 5 MG	Lonitab
+IVERHEAL 6 MG	Ivermectin
+TADASOFT 20 MG	Tadasoft
+SILVITRA 120 MG	Tadalafil
+ENDOBLOC 10 MG	Endobloc
+HEADON 4 IU INJ	Headon
+TYNEPT OD 37.5 MG	
+EN CLOFERT 50 MG	
+SILDIGRA GOLD 200 MG	
+PREDNIHEAL 5 MG	Predniheal
+TADAGRA POWER 80 MG	
+PROPYSALIC NF 6 OINT 20GM	
+KAMAGRA EXPORT 100 MG	
+THYROTAG 100 MCG	Levothyroxine
+VIAGRA 50 MG PFIZER(1X2)	Sildenafil
+POXET 60 MG	Poxet
+EXTRA SUPER TADARISE	Tadalafil
+ARKAMIN 100 MCG (1X30)	Arkamin
+BUDECORT 200 INHALER	Budesonide
+HCQS 400 MG (1X10)	
+COZARTAN 100 MG	Cozartan
+TRAZOCAN 100 MG	Trazocan
+LUPI HMG 75 MG INJ	
+MELALITE FORTE 4% CREAM	
+CLARKS 350 MG (1X180)	Clarks
+OSTEOFOS 35 MG	Osteofos
+LANTUS 100 IU/ML INJ	Lantus
+HUMALOG KWIKPEN 100 IU/3ML	
+ESOHEAL 40 MG	Esoheal
+COBIX 200 MG CAP	Cobix
+NEOROF 1% INJ 10ML	Neorof
+ESRAM 10 MG	Escitalopram
+RETESTO 250 MG INJ 1ML	Retesto
+QL 300 MG (1X10)	
+NEURO SELIRON 300 MG	
+SILDAMAX 100 MG	Sildamax
+ZENEGRA RED 100 MG	Sildenafil
+IVERJOHN 3 MG	Ivermectin
+STERILE WATER	
+ZUNESTAR 2 MG	Zunestar
+ATOMOXET 40 MG	Atomoxet
+SOHA 0.1% EYE DROPS	
+LOBATE GM NEO CREAM	
+TRAVATAN EYE DROPS 40 MCG 2.5ML	
+TRIVON 10 MG	Trivon
+SPECTRA 75 MG	Spectra
+FLAGYL 400 MG	Flagyl
+GABASIGN 300 MG	Gabapentin
+DECA DURABOLIN 100 MG INJ	
+JANUMET 50/1000 MG (1X15)	Sitagliptin + Metformin
+CLOFERT 25  MG	Clofert
+MENABOL 2 MG	Menabol
+DECA INTABOLIN 50 MG INJECTION	
+GLYCOHEAL 1000 MG	Glycoheal
+TIOVO 9 MCG INHALER	Tiovo
+ITROTAB 200 MG	Itrotab
+TADARISE 10 MG	Tadalafil
+PENON CREAM	
+FILDENA PRO 100 MG	Sildenafil
+PENTIDS 800 MG	Pentids
+CYFLOX 500 MG	Cyflox
+LYRICA 150 MG (1X14)	Pregabalin
+PREGARICA 150 MG	Pregabalin
+DOSTIHEAL 0.5 MG TAB	Dostiheal
+CELEHEAL 200 MG	Celeheal
+ROPARK 2 MG	Ropark
+BACTRIM DS	
+CHESTON COLD	
+HQCHEAL 200 MG	Hqcheal
+WHY NOT 12 CREAM	
+VENLAF ER 37.5 MG	
+PREMARIN 0.625 MG	Premarin
+TAPADAY 200 MG	Tapaday
+ESTRAHEAL 2 MG (1X28)	Estraheal
+TADALISTA 20 MG	Tadalafil
+SILODAL D 8 MG CAP	
+METOSARTAN 50 MG	Metosartan
+VIGORA 100 MG	Sildenafil
+IMIQUAD 5% CREAM (1X3)	Imiquad
+VOVERAN SR 100 MG TAB	Diclofenac
+ACIVIR 200 MG DT	Acivir
+SUMITOP 100 MG	Sumitop
+THYROX 125 MCG	Levothyroxine
+ARTVIGIL 150 MG	Armodafinil
+AZILSMART 80 MG	Azilsmart
+PERMIN 5% CREAM 30GM	Permin
+MELACARE FORTE CREAM 25GM	
+THYROX 12.5 MG	Levothyroxine
+BROM 2.5 MG	
+SUHAGRA 50 MG	Suhagra
+ASTHALIN ROTACAPS 200 MCG (1X60)	
+SNOVITRA SOFT 20 MG	Vardenafil
+SUPER TADARISE	Tadalafil
+SILJUV -D (1X4)	
+TERBIFACE 250 MG	Terbiface
+PLACENTREX GEL 20GM	
+FINJUV 1 MG	Finjuv
+MORR F 5% SOLUTION 60ML	Minoxidil
+DURATIA 30 MG	Duratia
+PAINHEAL + GEL 15GM	
+HCTZIDE 25 MG	Hctzide
+HYALGAN 20 MG INJ	Hyalgan
+FLUXICAN 10 MG	Fluxican
+XEPAR 10 MG	Xepar
+IVERHEAL 12 MG	Ivermectin
+ANTIDEP 25 MG	Antidep
+AGOBLISS 25 MG	Agobliss
+AXEPTA 40 MG	Axepta
+ACCUFINE 30 MG	Accufine
+TOFYPEACE 100 MG	Tofypeace
+AZEMARDA 100 MG	Azemarda
+AUGMINE 1000MG	Augmine
+LQUIN 750 MG	Levofloxacin
+FINAX 1 MG (1X30)	Finasteride
+STUD 2000	
+RAMICON 5 MG	Ramicon
+DA'ZEAGRA OIL	
+DEE X 1 MG	
+GABATOP 300 MG	Gabatop
+COMBIMIST INHALER	
+KETOFORCE 2% CREAM 15GM	Ketoforce
+FLUCONAZ 150 MG	Fluconaz
+FILDENA XXX 100 MG	Sildenafil
+SNOVITRA PRO 20 MG	Vardenafil
+TOPTADA 20 MG	Toptada
+VITARA V 20 MG	Tadalafil
+DUTSAT 0.5 MG	Dutsat
+OMNI GEL 30 GM	
+SIFASI 10000 IU INJ	Human Chorionic Gonadotropin (HCG)
+FINALO 1 MG	Finalo
+ATAM 800 MG	
+IVERJOHN 12 MG	Ivermectin
+TOFYPEACE 50 MG	Tofypeace
+INAPURE 5 MG	Inapure
+LIGNOHEAL 2% GEL 30GM	Lignoheal
+GABATOP 100 MG	Gabatop
+CARISOMA COMPOUND	
+RIZACT 10 MG	Rizact
+GLYNASE XL 10 MG	Glibenclamide
+CEFIX 200 MG	Cefixime
+HQ-STAR 400 MG	
+IVERHEAL 3 MG	Ivermectin
+VIRADAY TAB	
+INSGTRA 50 MG	Insgtra
+ELIWEL 10 MG	Eliwel
+PREGABID 150 MG	Pregabid
+ESRAM 5 MG	Escitalopram
+TOFICALM 50 MG	Toficalm
+SOMA DOL 750 MG	
+NEULOX 60 MG	Neulox
+ZOPFRESH 10 MG	Zopfresh
+Pulmopres 20 mg (1X15)	
+GLYCOMET GP 1 FORTE	Metformin
+TESTOVIRON DEPOT 100 MG INJ	
+INDOCAP 25 MG	Indocap
+IVERJOHN 6 MG	Ivermectin
+SLIMTOP 60 MG	Slimtop
+PSYFAX 37.5 ER MG	Psyfax
+LIPIDATOR 80 MG	Atorvastatin
+IROVEL 150 MG	Irovel
+A RET 0.025% GEL 20GM	Tretinoin
+HQ STAR 200 MG	
+DULATA 60 MG	Dulata
+ZINCO BOOST 50 MG	
+OLMO 20 MG	Olmesartan
+OC MIN 50	
+HELPECIA 5 MG	Helpecia
+NIZONIDE 500 MG	Nizonide
+COVILIFE 12 MG	Ivermectin
+TOPINATE CREAM 30GM	
+VALCIVIR 1000 MG	Valcivir
+DUTAHEAL 0.5 MG	Dutasteride
+BETNESOL FORTE TAB (1X20)	
+INSTRA 50 MG	Instra
+FILDENA STRONG 120 MG	Sildenafil
+LAMIGINE 100 MG (1X10)	Lamigine
+EFON 60 MG	
+ALDACTONE 25 MG	Spironolactone
+NALSIGN 50 MG	Nalsign
+DOX 100 MG (1X10)	
+NIXANIDE 500 MG	Nixanide
+REGAINE 5% SOLUTION 60ML	Minoxidil
+PROGYNOVA 2 MG	Progynova
+CLINCITOP GEL	
+BACTERIOSTIC WATER 30 ML	
+HIBOSE 50 MG	Hibose
+IVERBEST 12 MG	Ivermectin
+AEROCORT ROTACAPS (1X30)	
+TENVIR EM	
+ADAFERIN GEL 0.1% 15GM	
+VOXA 100 MG	
+MIRA 15 MG	
+QUETI 25 MG	Queti
+OL TAP 200 MG ER	
+PRUWEL 1 MG	Pruwel
+D-VENTODEP XR 100 MG	
+CELEHEAL 100 MG	Celeheal
+TOPCYNTA 100 MG	Topcynta
+NAPROSYN 500 MG (1x15)	Naprosyn
+MENODAC 150 IU	Menodac
+CENFORCE GOLD 100 MG	Sildenafil
+SILJUV 100 MG	Siljuv
+DOXYPEN 100 MG	Doxypen
+STABLON 12.5 MG	Stablon
+SEROFLO INHALER 125 MCG	Salmeterol + Fluticasone
+PLACENTREX CREAM 20GM	
+ARIMIDEX 1 MG	Arimidex
+POXET 90 MG	Poxet
+APIGAT 5 MG	Apigat
+EPIDUO FORTE GEL 30GM	
+VELTRIDE 0.5 MG	Veltride
+GESTOFORD 200 MG	Gestoford
+TOPPER 50 MG	Topper
+SILECTON 25 MG	Silecton
+PHEXIN 250 MG	Phexin
+MEGACLOX CAP	
+LADYGRA 100 MG	Ladygra
+AZEETOP 500 MG	Azithromycin
+RETINO A CREAM 0.025 %	Tretinoin
+VANLID 250 MG	Vanlid
+CREMA GEL 2%	
+CAMPICILLIN 250 MG	Campicillin
+VOVERAN MAX GEL 2.32 %	Diclofenac
+SIGNAPRED 4 MG	Signapred
+INVOKANA 100 MG	Invokana
+TESTOSIGN 40 MG	Testosign
+VIGORE 100 MG	Sildenafil
+DUOLIN 20/50 MCG INHALER	Duolin
+HERPEX 5% CREAM	Herpex
+CLOBISOL CREAM	
+ABHIGRA 100 MG	Abhigra
+SILDIGRA 100 MG	Sildigra
+TAMSUHEAL 0.4 MG	Tamsuheal
+BUSIRON 5 MG	Busiron
+PRAMIXIL 0.5 MG	Pramixil
+CLIMAX SPRAY	
+TOPPER 25 MG	Topper
+AZEE 250 MG (1x10)	Azithromycin
+OCID QRS 20 MG	
+THYRONORM 100 MCG	Levothyroxine
+MEFTAL 500 MG	Meftal
+ALDOL 400 MG	Aldol
+MOX 500 MG	
+CALPOL 650 MG	Calpol
+PANTOCID DSR	
+PENISOLE CAP	
+CEPHADEX 250 MG	Cephalexin
+SINGAPRED 4 MG	Singapred
+ANTIFLU 75 MG	Antiflu
+ZUDENA 100 MG	Zudena
+PENTIDS 200 MG	Pentids
+VALCLOVIR 1000 MG	Valclovir
+HYDROEYES EYE 0.05% 3ML DROPS	
+COZARTAN 50 MG	Cozartan
+LIPVAS 40 MG	Atorvastatin
+JARDIANCE 10 MG	Empagliflozin
+JOHNCEF 400 MG	Johncef
+RIFAXIHEAL 550 MG	Rifaxiheal
+CIPMOX 500 MG	Cipmox
+METRONIDAZOLE 400 MG	Metronidazole
+FORACORT 400 MCG INHALER	Formoterol + Budesonide
+DURATIA 60 MG	Duratia
+MAXIFLO 250 MCG INHALER	Maxiflo
+SEROFLO 250 ROTACAPS (1X30)	Salmeterol + Fluticasone
+VIDLAISTA BLACK 80 MG	
+REXIGUT 550 MG	Rexigut
+BLUEMEN 100 MG	Bluemen
+THROMBOPHOB GEL 20GM	
+SELGIN 5 MG	Selgin
+NICIP 100 MG	Nicip
+METOLAR 25 MG (1X15)	Metolar
+AMLOKIND 10 MG	Amlokind
+DYTOR 100 MG	Torasemide
+RESTFINE 10 MG	Restfine
+TRETIHEAL 0.25% CREAM 20 GM	Tretiheal
+ATARAX 10 MG	Atarax
+TELMAHEAL 20 MG	Telmisartan
+JAKNAT 5 MG	Jaknat
+QL 200 MG (1X10)	
+PRIMAQUINE PHOSPHATE 15 MG	
+CLIFORD 150 MG	Cliford
+NORDITROPIN NORDIFLEX 15 MG INJ	
+BUPRON XL 150 MG	Bupropion
+TOPISAL 3% LOTION 50ML	Topisal
+MEDROL 4 MG	Medrol
+PILEX TAB (1X60)	
+PILEX FORTE OINT 30GM	
+KRTOCIP 1% SHAMPOO	Krtocip
+ASTHALIN 2 MG (1X45)	Asthalin
+AMARYL 1 MG	Glimepiride
+XEPAR 20 MG	Xepar
+MELACARE CREAM 25GM	
+TOPNITE 3 MG	Topnite
+PLAVIX 75 MG	Plavix
+COVID 19 ANTIGEN CARD	Covid
+AMOXYHEAL CV 625 MG	Amoxicillin + Clavulanate
+DEXONA 0.5 MG	Dexona
+COLCHIHEAL 0.5 MG	Colchiheal
+SILECTONE 100 MG	Silectone
+FLUXICAN 40 MG	Fluxican
+MELANOCYL SOLUTION 25ML	
+PLETOZ 100 MG	Pletoz
+SYMBAL 60 MG	Symbal
+CERNOS DEPOT 1000 MG INJ	
+PARACIP 650 MG	Paracetamol
+BRUFEN 400 MG	Ibuprofen
+CALCINASE 30 MD NASAL SPRAY	Calcinase
+MALEGRA FXT	Sildenafil
+PROSTAL 500 MCG INJ	Prostal
+OMEZ 40 MG	
+FERTOMID 25 MG	Fertomid
+SILDIGRA 250 MG	Sildigra
+VOMISTOP 10 MG	Vomistop
+PREDMET 16 MG	Predmet
+RAPACAN 1 MG	Rapacan
+GLYCIPHAGE SR 500 MG	Metformin
+TONACT 10 MG	Atorvastatin
+TUGAIN 10% SOLUTION 60ML	Minoxidil
+AZEE 500 MG (1x5)	Azithromycin
+SUNFORCE D3 60 K	
+DYTOR 20 MG	Torasemide
+SUPER KAMAGRA ORAL JELLY (1X7)	
+SUPER AVANA	
+ZHEWITRA 20 MG	Vardenafil
+AEROCORT INHALER	
+BUDECORT 100 MCG INHALER	Budesonide
+IVECOP 12 MG	Ivermectin
+ISOTROIN 5 MG	Isotretinoin
+HYLORIC 300 MG	Hyloric
+RETINO A MICRO 0.04% GEL	Tretinoin
+METFOR 500 MG	Metfor
+BUSPICAN 5 MG	Buspican
+BUSPICAN 10 MG	Buspican
+BRUSH	
+MOXIKIND CV 625 MG	Amoxicillin + Clavulanate
+A TO Z NS	
+TESTOHEAL GEL 1%	
+TRETIVA 10 MG	Isotretinoin
+URIMAX 0.4 MG	Urimax
+MOXIKIND CV DRY SYP 30 ML	Amoxicillin + Clavulanate
+ZENTEL 400 MG	Albendazole
+AZIDERM CREAM 10 % 15GM	
+ACNESOL 1% GEL 20GM	Clindamycin
+ATOMOXET 25 MG	Atomoxet
+CLOCIP 1% CREAM 15 GM	Clocip
+TETRACYCLINE 500 MG	Tetracycline
+ZEAGRA 100 MG	Zeagra
+THYROX 200 MG (1X100)	Levothyroxine
+OL TAP 100 MG	
+PYRIDIUM 200 MG	Pyridium
+SILDIGRA XL PLUS	
+HYNIDASE 1500 IU INJ	Hynidase
+VEGA EXTRA COBRA 200 MG ORAL JELLY 5GM	Sildenafil
+LQUIN 500 MG	Levofloxacin
+SIGNAPRED 8 MG	Signapred
+FLUXICAN 20 MG	Fluxican
+TADAFLO 5 MG	Tadaflo
+HCGCAN 5000 IU INJ	Hcgcan
+SINGAPRED 8 MG	Singapred
+ALDACTONE 50 MG	Spironolactone
+HIBOSE 25 MG	Hibose
+OMEEFORCE 20 MG	Omeeforce
+VOMINORM 10 MG	Vominorm
+DUPROST 0.5 MG	Duprost
+OPINE 2.5 MD	Opine
+BETABLOCK XL 100 MG	
+ECOSPRIN 325 MG	Ecosprin
+PHENOJET 25 MG	Phenojet
+IVERVID 12 MG	Ivermectin
+ARACHITOL _ 6L ( VIT D3) INJ	
+CAL D3 INJ INJECTION	
+CEREBROLYSIN INJ 10ML	
+CORT-S INJ 100 MG	
+LETROHEAL 2.5 MG	Letroheal
+TOFISO 50 MG	Tofiso
+KENACORT 10 MG INJ	Kenacort
+DURALAST 30 MG	Duralast
+ALTHROCIN 500 MG	Althrocin
+INTAGESIC MR 50MG	Aceclofenac + Paracetamol + Chlorzoxazone
+MOPRIDE 100 MG	Mopride
+NEOSPORIN SKIN OINTMENT	
+DECMAX 8 MG	Decmax
+IVERVID 6 MG	Ivermectin
+ANGIOTENSIN 10 MG	Losartan
+NOVOMIX 30 PENFILL	Novomix
+DECMAX 4 MG	Decmax
+BUDECORT 1 MG NEBULIZER	Budesonide
+ZOPFRESH 20 MG	Zopfresh
+DIANE 35 MG	Diane
+MIRAGO 50 MG	Mirago
+BRINTELLIX 10 MG	Brintellix
+MELALITE 5 MG	Melalite
+PANTANAM D	
+OSELTAFLU 75 MG	Oseltaflu
+MINOXYTOP 10% SOLUTION 60ML	Minoxidil
+NEBIDER 5 MG	Nebider
+MPHEAL 4 MG	Mpheal
+TAMODEX 20 MG	Tamodex
+FORXIGA 10 MG	Dapagliflozin
+LATOPROST 0.005% EYE DROP	Latoprost
+TADAGRA STRONG 40 MG	
+COBRA 200 MG (1X6)	Cobra
+FUCIDIN CREAM 15GM	
+MINJUV 10 MG	Minoxidil
+NIFTAS 50 MG	Niftas
+D-RISE 60 K	
+LIMCEE 500 MG	Limcee
+FLYGYL 400 MG	Flygyl
+RIVAJON 20 MG	Rivajon
+SETRO 50 MG	Setro
+ZOCLAR 500 MG	Zoclar
+NIVEOLI 6MCG/100MCG INHALER	Niveoli
+PRAMIXIL 0.25 MG	Pramixil
+ISOTROIN 30 MG	Isotretinoin
+TUGAIN 5% SOLUTION 60ML	Minoxidil
+STUD 5000	
+ROXIKEM 150 MG	Roxikem
+D3B12  TAB	
+DEXALAB 4 MG INJ 2ML	Dexalab
+KETANOV INJ 1ML 30MG	Ketorolac
+OMEE 20 MG	
+MVI INJ 10ML	
+MAGSOCAN 50% INJ 2ML	Magsocan
+L-VIT 12 INJ 30ML	
+ELDERVIT 12 INJ (2X2ML)	Eldervit
+SILDIGRA 120 MG (1X5)	Sildigra
+TRILUMA CREAM	
+BUDENOL 0.5 MG RESPULES	Budenol
+PHENERGAN SYRUP 5 MG 100ML	
+MAHAPOD 200 MG	Mahapod
+TOPNITE 1 MG	Topnite
+PIRFESIGN 200 MG	Pirfesign
+TADALISTA 40 MG	Tadalafil
+COSART 50 MG	Cosart
+ASTHALIN 4 MG (1X45)	Asthalin
+RIPTIN 75 MG	Riptin
+SILECTONE 50 MG	Silectone
+PRADAXA 150 MG	Pradaxa
+DELTON 30 MG	Delton
+TOFISO 100 MG	Tofiso
+DAPAZIGA 10 MG	Dapaziga
+PROMOX 50 MG	Promox
+AZEETOP 1 GM	Azithromycin
+FCN 200 MG	
+AMOXYHEAL CV 1000 MG	Amoxicillin + Clavulanate
+CHOCOGRA 100 MG	Chocogra
+JEEQUIN 200 MG	Jeequin
+JEEQUIN 400 MG	Jeequin
+ZOVIRAX 400 MG	Zovirax
+YAZ TAB	
+PUREGRAF 150 IU	Urofollitropin
+TAMODEX 10 MG	Tamodex
+DURADEC 100 MG INJ	Duradec
+HQCHEAL 400 MG	Hqcheal
+HEALCEE PLUS	
+AMBISTRYN S INJ	
+LIGNOCAN 2% INJ 30 ML	Lignocan
+TENOF EM	
+SOMA DOL T 450 MG	
+FLECARITE 100 MG (1x10)	Flecarite
+IVECOP 6 MG	Ivermectin
+KETOFORD DT 10 MG	
+IVEJUV 6 MG	Ivermectin
+PRACTIN 4 MG	Practin
+ZOVICLOVIR 200 MG	Zoviclovir
+MPHEAL 16 MG	Mpheal
+D RISE 60 K	
+ABD 400 MG	
+ACCUFINE 5 MG	Accufine
+FINREST 1 MG	Finrest
+TRETIVA 40 MG	Isotretinoin
+LOX 5% OINTMENT	
+FERTOGARD 25 MG	Fertogard
+HAIR 4U 10% SOLUTION	Minoxidil
+SUHAGRA 25 MG	Suhagra
+REVIZE CREAM 0.02%	
+AUGMENTIN 375 MG (1X10)	Amoxicillin + Clavulanate
+IVERMECTOL 12 MG	Ivermectin
+XARELTO 20 MG (1X28)	Xarelto
+BUDECORT 0.5 RESPULS	Budesonide
+LEECORT 10 MG	Leecort
+LUPIRTIN 100 MG	Lupirtin
+TADASOFT 40 MG	Tadasoft
+NEXTRIL 100 MG	Nextril
+SLIM TRIM ACTIVE 120 MG	
+COMBIVIT INJ	
+SILECTONE 25 MG	Silectone
+CHOCOLIS 20 MG	Chocolis
+HEALVITAL 10 G TAB	Healvital
+MONTEL 10 MG	Montel
+SUMINAT 100 MG	Suminat
+BICIPHSGE 1000 MG	Biciphsge
+ATOMOXET 10 MG	Atomoxet
+NALTIMA 50 MG	Naltima
+LARIGO DS 500 MG	
+AREOCORT FORTE ROTACAPS (1X30)	
+ZHEWITRA SOFT 20 MG	Vardenafil
+LEVOHEAL 500 MG	Levofloxacin
+REVITAL H WOMAN	
+ECOSPRIN 150 MG	Ecosprin
+OSTEOFOS 70 MG	Osteofos
+V ILANO 20 MG	
+LIPIDATOR 20 MG	Atorvastatin
+PRUEASE 2 MG	Pruease
+TADALISTA 10 MG	Tadalafil
+TELMAHEAL 80 MG	Telmisartan
+ATENHEAL 100 MG	Atenolol
+MEPHEAL 8 MG	Mepheal
+ADMENTA 5 MG	Admenta
+HYPLON 10MG	Hyplon
+GABASIGN 400 MG	Gabapentin
+CENFORCE 130 MG	Sildenafil
+GLUTACAN 600 MG INJ	Glutacan
+FOUR DERM OINT 15GM	
+THYRONORM 125 MCG	Levothyroxine
+THYRONORM 75 MCG	Levothyroxine
+DOSTIHEAL 0.25 MG	Dostiheal
+LIV 52 (1X100)	
+TESTYLIA 20 MG ORAL JELLY	Testylia
+METALITE 5 MG	Metalite
+BUPIRON XL 300 MG	
+ELINIDE 500 MG (1X6)	Elinide
+GENOTROPIN 16 IU(5.3 MG/ML) INJ	Genotropin
+ADR INJ 1ML	
+THYRONORM 150 MCG	Levothyroxine
+THYRONORM 25 MCG	Levothyroxine
+ROKO 2 MG	
+DELTONE 60 MG	Deltone
+SIMTAG 20 MG	Simtag
+CIPLACTIN 4 MG	Ciplactin
+FAMOCID 40 MG (1X14)	Famocid
+IPRAVENT 500 MCG RESPULES	Ipravent
+GABASIGN 800 MG	Gabapentin
+MORR F 10% SOLUTION 60ML	Minoxidil
+GALAMER 4 MG	Galamer
+NOVORAPID FLEXPEN 100IU 3ML	
+TEGRITAL 200 MG	Tegrital
+BUDECAN RESPULES 0.5 MG 2ML	
+VOMIFORD 4 MD	Vomiford
+VOMIFORD 8 MD	Vomiford
+LANTUS SOLOSTAR 100 IU 3ML	
+TELMAHEAL 40 MG (1X15)	Telmisartan
+MORNING PILL	
+CLARIFORD 500 MG	Clariford
+VIKTRIM D.S.	
+ONDAHEAL MD 8 MG	
+HEALPECIA 5 MG	Finasteride
+IVREA 1 % CREAM 30GM	Ivermectin
+VIGORE LIDO 9.5% SPRAY	Sildenafil
+RIDSUNATE 50 MG	Ridsunate
+LIPIDATOR 40 MG	Atorvastatin
+SUSTEN 8.0% GEL	Susten
+REACTINE 50 MG	Reactine
+CLOZINE 100 MG	Clozine
+CIPCAL D3	
+RIFAXIMIN	Rifaximin
+GERCIP 500 MG	Gercip
+LETHYROX 100 MCG (1X120)	Levothyroxine
+TAP 200 MG	
+TAPEASE NS SPRAY	
+SEROQUINT 50 MG	Seroquint
+GLYCOMET SR 500 MG	Metformin
+GABATOP NT TAB	
+NERVISMART 450 MG	Pregabalin
+IVERSUN 12 MG	Ivermectin
+SUPER ZHEWITRA	Vardenafil
+NERVISMART 300 MG	Pregabalin
+RIDSUNATE 100 MG	Ridsunate
+ZINCOVIT  TAB	
+IVEJUV 12MG	Ivermectin
+TINVISTA 500 MG	Tinvista
+VIROVIR 500 MG (1x3)	Virovir
+CYCLORYX  15 ER	Cycloryx
+SLEEPOSE 3 MG (1X15)	Sleepose
+DABUR RED PASTE 200GM	
+ZYHCG HP 5 K	
+DEMELAN CREAM 20GM	
+DABUR SHILAJIT DOUBLE GOLD	
+ASHVAGANDH CAP	
+INDULEKHA BRINGHA OIL 50ML	
+CIPLOX EYE/EAR DROP 5ML	Ciprofloxacin
+JANUMET XR CP	Sitagliptin + Metformin
+PANACUR 150 MG	Fenbendazole
+FLUVOXIN 50 MG	Fluvoxin
+AUGMENTIN 1G DUO	Amoxicillin + Clavulanate
+AUGMENTIN DUO SYRUP	Amoxicillin + Clavulanate
+Norflox 0.3 % Eye Drop	
+DECA DURABOLIN 25MG INJ.	
+ZOMACTON 4 MG 12 (IU)	Zomacton
+EMESET 8 MG	Emeset
+LOCULA 10 % EYE DROP 10ML	Locula
+MOOV STRONG GEL	
+ALERID 10 MG	Alerid
+RETINO AC GEL	Tretinoin
+METROGYL 200MG	Metrogyl
+OLMO-AM 20 MG	Olmesartan
+AZIPRO 250 MG	Azithromycin
+TOFICALM 100 MG	Toficalm
+AYURSLIM CAP (1X60)	
+DOLO 650 MG (1X15)	Paracetamol
+PREGARICA 75 MG	Pregabalin
+KETOCIP 2% SHAMPOO 100 ML	Ketocip
+FINAST 5 MG	Finast
+FILDENA CT 100 MG	Sildenafil
+CLENBUT 40 MG (1X10)	Clenbut
+LEXAHEAL 10 MG	Lexaheal
+SUPER P FORCE ORAL JELLY (1X7)	Sildenafil + Dapoxetine
+CEPHADEX 250 MG DT	Cephalexin
+ASSURANS 20 MG (1X15)	Sildenafil
+ACETASMART 250 MG	Acetasmart
+RIZATOP 10 MG	Rizatop
+SEROQUIT 25 MG	Seroquit
+RESTILIN 500 MG	Restilin
+VITARA V 40 MG	Tadalafil
+APREZO 30 MG	Aprezo
+ZYCOLCHIN 0.5 MG	Zycolchin
+IVERVID 3 MG	Ivermectin
+COVILIFE NAC 600 MG	
+LULICONAZ CREAM 50 GM	
+ZETIHEAL 10 MG	Ezetimibe
+ATOGUARD  40 MG	Atoguard
+ECOSPRIN -75 MG	
+TEMODOL 100 MG	Temodol
+ZOVIRAX 800 MG	Zovirax
+PREDNIWEL -A-40	
+AZILAB 500 MG (1X3)	Azilab
+KENACORT 40 MG INJ 1ML	Kenacort
+WARF 2 MG	
+BETABLOCK XL 25 MG	
+LIGNOCAD GEL 30GM	
+SLEEPOSE 10 MG	Sleepose
+HUMALOG 100 IU CARTIDGE 3ML	Humalog
+BUDECHEM 1 MG 2 ML	Budechem
+MONOCEF 1GM INJECTION	Monocef
+MALEGRA DXT	Sildenafil
+CALCIGEN D3 CAP	
+DAPASMART 10 MG	Dapasmart
+ITROTAB 100 MG	Itrotab
+FILDENA 25 MG	Sildenafil
+PRIMOLUT N 5 MG	
+PANTOSEC 40 MG	Pantosec
+TRETIVA 5 MG	Isotretinoin
+AZIDERM 20% GEL 15GM	Aziderm
+EFLORA 13.9% CREAM 15GM	Eflora
+ALDOL 100 MG	Aldol
+TOFISERN 100 MG	Tofisern
+PAPARIN INJ 2ML	
+ISOTROIN 10 MG	Isotretinoin
+FORCAN 200 MG	Forcan
+EMESET 4 MG	Emeset
+MEDROL 16 MG	Medrol
+MODULA 5MG	Modula
+DIABETROL SR TAB	
+LOETTE TAB	
+TOPAZ 200 MG	Topaz
+THIAMINE INJ 2ML	
+ATENOLOL 50 MG	Atenolol
+NAPROSYN SR 750 MG	
+BACSTOL 100 MG	Bacstol
+CLOPICARD 75 MG	Clopicard
+CLOPICARD AP 75 MG	
+FRUSENEX 100 MG	Frusenex
+SERTAFINE 100 MG	Sertafine
+TOPPER 100 MG	Topper
+CIPRODAC 250 MG	Ciprofloxacin
+XEPAR 40 MG	Xepar
+FLONIDA 5% CREAM 10GM	Flonida
+NEBIMAX 5 MG	Nebimax
+MINICYCLINE 100 MG	Minicycline
+MINOZ 50 MG	Minoz
+EXTRA SUPER AVANA	
+BENZ PEARLS 100 MG	
+ROSUBEST 20 MG	Rosuvastatin
+NEBIMAX 10 MG	Nebimax
+DONAKEM 10 MG	Donakem
+IVEREDGE 12 MG	Iveredge
+AQIZIDE 25 MG	Aqizide
+BUPRON SR 150 MG (1X10)	Bupropion
+CIPRODAC 500 MG	Ciprofloxacin
+ROSUFREE 10 MG	Rosufree
+SUSTEN 100 MG	Susten
+SIROKEM 1 MG	Sirokem
+AZMARDA 50 MG	Azmarda
+METOZ 2.5 MG	Metoz
+ARTEMISININ 100 MG	Artemisinin
+DOXYNEC KIT	
+FABI SPRAY NASAL SPRAY	
+BECOSULES CAP	
+JANUMET 50/500 TAB	Sitagliptin + Metformin
+METROGYL 400 MG (1X15)	Metrogyl
+BETNOVATE N CREAM 25GM	
+FLUKA 150 MG	Fluka
+LEVEMIR FLEX PEN 100IU 3ML	
+LEXAHEAL 20 MG	Lexaheal
+RIFAXIHEAL 400 MG	Rifaxiheal
+POLYBION AMPULE 2ML	
+NEUROBION FORTE RF INJ (1X7Ampule)	
+RYBELSUS 14 MG	Semaglutide
+ARACHITOL INJ 3L IU (6*1ML)	
+ACCUFINE 40 MG	Accufine
+DILIGAN 25 MG (1X15)	Diligan
+HIFORCE ORAL JELLY (1X7)	Sildenafil + Dapoxetine
+IVERBEST 6 MG	Ivermectin
+KENACORT 4 MG	Kenacort
+LETHYROX 125 MCG (1X50)	Levothyroxine
+VOVERAN SR 75 MG TAB	Diclofenac
+ROSUFREE 20 MG	Rosufree
+EVALON CREAM (15 GM)	
+TADADAY 20 MG	Tadaday
+VENTODEP ER -150 MG	
+AXENTRI 150 MG (1X60)	Axentri
+ARMOD 150 MG	Armodafinil
+JANUVIA 25MG	Sitagliptin
+HIMCOLIN GEL 30GM	
+SILDIGRA BLACK FORCE 200 MG	
+CEFIX 100 MG	Cefixime
+MEPRATE 10MG	Meprate
+METOLAR 100MG (1X10)	Metolar
+CHLORNOL 12.5MG	Chlornol
+POTASSIUM IODIDE 30MG	
+ROSUBEST 10 MG	Rosuvastatin
+SEROQUIT 50 MG	Seroquit
+TERBIFACE 1% CREAM	Terbiface
+ATEHEAL 50 MG	Ateheal
+TERBIFACE 500 MG	Terbiface
+TENTEX FORTE TAB	
+SLEEPOSE 20 MG	Sleepose
+KOJIC CREAM 25GM	
+ISOJUV 40 MG	Isojuv
+BENZAC AC 5% GEL	Benzoyl Peroxide
+TAZRET 0.05% GEL 20GM	Tazret
+GLYCO 6% CREAM 30GM	Glyco
+BANOCIDE FORTE 100 MG (1X30)	Diethylcarbamazine
+METROGYL 2% GEL 30GM	Metrogyl
+QUADRIDERM RF CREAM 10GM	
+EMOLENE CREAM 100 GM	
+ROYAL 225 MG	Royal
+PERSOL AC 5% GEL 30GM	Benzoyl Peroxide
+ELOCON CREAM 30GM	
+B BACT 5 GM	
+CIPLOX 500 MG	Ciprofloxacin
+ALTHROCIN 250 MG	Althrocin
+AZEE 500 MG  (1X3)	Azithromycin
+REXIGUT 200 MG	Rexigut
+MOZEP-2 MG	
+NINTIB 150 MG	Nintib
+SALICYLIX SF 12% OINTMENT	
+JUVMIDE 500 MG	Juvmide
+MELORISE 7.5 MG	Melorise
+TRAZOCAN 50 MG	Trazocan
+ETOVA -ER 600 MG	Etoricoxib
+MESLACARE 400 MG	Meslacare
+PHARMADOL 650 MG	Paracetamol
+CORTRIMA CREAM 15GM	
+PRAMIPEX 1 MG	Pramipex
+SUPER FILDENA TAB	Sildenafil
+LOVEGRA ORAL JELLY (1x7)	
+MUCOLITE SR 75MG	
+FLUCONAZ 100 MG	Fluconaz
+V-ORAL STRIPS	Sildenafil
+KAMAGRA -FX ORAL JELLY 100 MG	
+FLAGYL 200 MG (1X15)	Flagyl
+GENTASIGN EYE DROPS	
+OKAMET 500 MG	Okamet
+TRETIN 0.025% CREAM	Tretin
+BRILINTA 90 MG (1X14)	Brilinta
+DERMA KT REO	
+BETADINE 10% SOLUTION 100ML	Betadine
+A RET GEL 1% 20GM	Tretinoin
+STEMETIL MD 5 MG	
+PERINORM 10 MG	Perinorm
+KAMINI ORAL JELLY	
+SOMA DOL-500 MG	
+EPTOIN 100 MG (1X120)	Eptoin
+CITACAN 20 MG	Citacan
+AMLOHEAL 5 MG	Amloheal
+ERYTHROCIM 500 MG	Erythrocim
+P FORCE FORT 150 MG	Sildenafil + Dapoxetine
+ABHIFORCE D	Sildenafil + Dapoxetine
+AZIDERM 20% CREAM 15GM	Aziderm
+SILDAY 200 MG	Silday
+EMPAONE 10 MG	Empaone
+PRONOL 40 MG	Pronol
+RIDSUNATE 200 MG	Ridsunate
+REDOTREX  500 MG	Redotrex
+AMBISTRYN  INJ	
+ICCHABHEDI RAS	
+KRIMIKUTHAR RAS	
+DAPOFORCE 60 MG	Dapoforce
+OLOPAT OD EYE DROP 3ML	
+RESPIZEN NASAL SPRAY	
+MECOFOL FORTE INJ 2ML	
+RANTAC 150 MG (1X30)	Rantac
+SPEMAN TAB	
+ATAZOR R 300MG/100MG	
+IVERNORM 1% CREAM 20GM	Ivernorm
+VITARA V 60MG	Tadalafil
+MYATRO EYE DROP 5ML	
+VERMISOL 150 MG (1x1)	Vermisol
+ACIMOL MR TAB	
+GLUCOBAY 50 MG	Glucobay
+ETORIZOX 60 MG	Etoricoxib
+HUCOG 2000 HP INJ	Human Chorionic Gonadotropin (HCG)
+SILDIGRA PRO 100 MG	
+Vitamin C  SERUM CREAM	
+LORATIN 10 MG	Loratin
+METHY BLUE INJ 10ML	
+HEPAMERZ INFUSION	
+ZINFATE TAB	
+SIROMUS 1 MG	Siromus
+EUTHYROX 100MCG	Levothyroxine
+GEE C TAB	
+RUPACET 10 MG	Rupacet
+COZARTAN 25MG	Cozartan
+COTRIP 50 MG	Cotrip
+AMLOHEAL 10MG	Amloheal
+TRAZOCAN 25 MG	Trazocan
+CLOPIDRILL 75 MG	Clopidrill
+SIMLUP 20 MG	Simvastatin
+RYBELSUS 3 MG	Semaglutide
+VENLASIGN XR 150 MG	
+NEULOX 20 MG	Neulox
+TRYPTICAN 10 MG	Tryptican
+AMOTIC 4 MG	Amotic
+RYBELSUS 7 MG	Semaglutide
+SEROFLO CIPHALER 500 MG	Salmeterol + Fluticasone
+CIP ZOX TAB	
+SILDIGRA 25 MG	Sildigra
+FEMALEFIL 10MG	Femalefil
+RIZANET 10MG	Rizanet
+OLMO 40MG	Olmesartan
+DOXYPET 200 MG	Doxypet
+KETOFORCE 200MG	Ketoforce
+MUSLI SUTRA CAP	
+ABEL 80MG	
+SKIN LITE CREAM (25GM)	
+KOZIMAX SKIN LIGHTENING CREAM 15GM	
+ROBINAX 500MG	Robinax
+AZEE 1000 MG	Azithromycin
+TUGAIN 2 % SOLUTION 60ML	Minoxidil
+PARTYSMART (1X5)	
+NADIBACT 1% CREAM 10GM	Nadibact
+MINOXYTOP 5 % SOLUTION 60ML	Minoxidil
+A RET HC CREAM	Tretinoin
+ETADOL 100 MG	Etadol
+ISOJUV 20 MG	Isojuv
+PSYFAX 37.5 ER	Psyfax
+VENLASIGN 75 MG	Venlasign
+LIV 52 DS (1X60)	
+OXETIN 10 MG	Oxetin
+DEPAKOTE 250 MG	Depakote
+MELANOCYL 10 MG	Melanocyl
+MIEGEST 200 MG	Miegest
+DUOVIR E KIT	
+MIFEGEST KIT (1 KIT)	
+ACNETOP GEL 20GM	Clindamycin
+MISO-GYN 200 MG	
+TAFICITA TAB	
+MOMENTA 10 MG	Momenta
+MERTONIDAZOLE 400 MG	Mertonidazole
+CLOMICARE 50 MG	Clomicare
+NOVACLAV-625 MG	
+AMOXYHEAL CV-375 MG	Amoxicillin + Clavulanate
+ALKEMCORT 40 MG	Alkemcort
+RESTILIN 250 MG	Restilin
+PHAGE SR 1000MG	
+BUPRON XL 300 MG	Bupropion
+VIGLIPTIN SR 100 MG	
+VARIMAX 20 MG	Varimax
+NORTIMER 50 MG	Nortimer
+SIROBOON 1 MG	Siroboon
+KETOROKEM INJECTION 1ML	
+ARIMEE 1 MG	Arimee
+LOMOOTHER 40 MG	Lomoother
+NALTIVA 50 MG	Naltiva
+THALIX 50 MG	Thalix
+LARIAGO DS 500MG	
+TOPICACYL EYE DROP	
+SEROFLO CIPHALER 250 MG	Salmeterol + Fluticasone
+CBENZPRIME 5 MG	Cbenzprime
+AZICIP 250 MG	Azithromycin
+WYSOLONE 20 MG	Wysolone
+BURNHEAL CREAM 15GM	
+DIOVAAL 40 MG	Diovaal
+GLYCOMET SR 850 MG	Metformin
+AZELAX 20% CREAM 20GM	Azelax
+CAVERTA 50 MG	Sildenafil
+TENOVATE OIN 15GM	
+SORIFIX 0.05%	Sorifix
+MALEGRA 120 MG	Sildenafil
+MINOXYTOP 5 MG	Minoxidil
+DAXID 50 MG	Daxid
+ASHWAGANDHA TAB (1X60)	
+IVERLAST 12 MG	Iverlast
+SAAZ 500 MG	
+CYCLOTEC 250 MG	Cyclotec
+COMBUTOL 800 MG	Combutol
+PYZINA 500 MG	Pyzina
+CEFTECH CV TAB	
+ETOSHINE 60 MG	Etoshine
+ALPHADOL 0.25 MG	Alphadol
+CALCIQUICK ALFA 0.25	
+GLYXAMBI 10 MG/5 MG	Glyxambi
+IVERGUARD 12MG	Iverguard
+DILUXRAM 250 MG	Diluxram
+HYDROIDS 100 MG INJ	Hydroids
+RAMISMART 10 MG	Ramismart
+BUSCOGAST 10 MG	Buscogast
+IVERSUN 6 MG	Ivermectin
+ZOPFRESH 7.5 MG (1X10)	Zopfresh
+PREBASUN 300 MG	Prebasun
+ZINCOTAG 50 MG	Zincotag
+HCGCAN 10K IU INJ	Hcgcan
+MINOZ 100 MG	Minoz
+TESTOCYP INJ 25 MG	
+SOFRAMYCIN SKIN CREAM	
+ATENHEAL 50MG	Atenolol
+SODICAN 8.4% INJ	Sodican
+MOQUET 50 MG	Moquet
+AZILSMART 40 MG	Azilsmart
+ANXOL 25 MG	Anxol
+GLIMITH 4MG	Glimith
+NEKSIUM 40 MG (1X10)	Neksium
+FAMOCID 20 MG	Famocid
+RIZE 1 MG	
+VENTODEP ER 75 MG	
+AVAFORCE 100 MG	Avaforce
+EFON 40 MG	
+SLEPICKA 30MG	Slepicka
+OXYSPAS 5MG	Oxyspas
+LEVOFLOX 500 MG	Levoflox
+BENZ 100MG	
+EUTHYROX 25MG	Levothyroxine
+SUPER TADALIS SX	
+ENCLOMISIGN 50 MG	Enclomisign
+DABITA 150 MG	Dabita
+ACNEDAP 5% GEL 15GM	Acnedap
+SYNDOPA 275 MG	Syndopa
+COSALON 50MG	Cosalon
+KILLPREG KIT	
+NORTROPH 25 MG	Nortroph
+SCAPHO 150 MG INJ	Scapho
+OMNACORTIL 2.5 MG	Omnacortil
+ZENSARTAN 80 MG	Zensartan
+ZENSARTAN 40 MG	Zensartan
+FLECARITE 50 MG	Flecarite
+LOSAFRENCH  50 H	Losafrench
+CARBIROSE 10 MG	Carbirose
+RENOLINE 500 MG SR	Renoline
+IVADIB 5 MG	Ivadib
+TELMIGEN H TAB	
+ATENOLIX 25 MG	Atenolix
+DAPADOC 10 MG	Dapadoc
+AMIODON 150 MG INJ	Amiodon
+BISOBIS A 2.5 MG	
+ATORVATIN 20 MG	Atorvatin
+CARVENOL 12.5 MG	Carvenol
+CYTOHEAL 200 MCG	Cytoheal
+DEXAVAC 4 MG	Dexavac
+THYROX 150 MG	Levothyroxine
+LOSAFRENCH 50 MG	Losafrench
+INDITAB SR 1.5 MG	
+PREGADER 75 MG	Pregader
+URIDER 0.4 MG	Urider
+ATODER A 75 MG	
+PROPRADAR 40 MG	Propradar
+TELMILIX H 12.5 MG	
+TELMAVAC AM 80/5	
+NITROPLUS 25 MG INJ	Nitroplus
+CARVISMART 12.5 MG	Carvismart
+PRED FORTE DROP 10ML	
+NICORACE 5 MG	Nicorace
+TRIMESTAR MR	
+LOSAFRENCH  AM	
+LEBEVAC 100 MG	Lebevac
+NIPRESS 50 MG INJ	Nipress
+EVION 400 MG (1X20)	Evion
+CLONATE LOTION 0.05 %	
+LAMIFIL 250 MG	Lamifil
+HCTZIDE 12.5MG	Hctzide
+DURATIA 90 MG	Duratia
+MONOCEF-O 200 MG	
+ETORIZOX 120 MG	Etoricoxib
+DICLOLAB GEL 30GM	
+VOVERAN EMULGEL GEL (50 GM)	Diclofenac
+HQCGUARD 200 MG	Hqcguard
+SOLONEX 300 MG	Solonex
+CETCIP 10 MG	Cetcip
+HISONE 20 MG	Hisone
+IVERNORM 12 MG	Ivernorm
+DYNAPAR TAB	
+ZERODOL 100 MG	Zerodol
+SEROQUIT 100MG	Seroquit
+ESOHEAL 20 MG	Esoheal
+GESTOFORD 100 MG	Gestoford
+NORDITROPIN 5 MG INJ	Norditropin
+SUSTAMIX 250 INJ 1ML	Sustamix
+SUPER ZUDENA	
+TESTACYP INJ 250 MG 1ML	
+THYRODAC 100 MCG	Thyrodac
+AUGMED 625MG	Augmed
+CAPNEA INJ 20MG 2ML	
+CLENBUT 60 MG (1X10)	Clenbut
+VICKS INHALER	
+FHENA 150 MG	Fhena
+PACIMOL 650 MG	Pacimol
+THYROX 100 MG (1X100)	Levothyroxine
+HIFORCE 100 MG	Sildenafil + Dapoxetine
+BENZAC AC 2.5% GEL 30 GM	Benzoyl Peroxide
+FLOMIST F NASAL SPRAY 120 MD	
+PURETRIG 5000 IU HP	Puretrig
+GENTALAB EYE DROPS 10ML	
+CYCLOPAM TAB	
+GABAZEN 300 MG	Gabazen
+MAXGALIN ER 75 MG	
+MAXGALIN ER 150 MG	
+NERVIGUARD 300 MG	Nerviguard
+CANDIBIOTIC EAR DROP 5ML	
+CLEARLAX 5 MG	Clearlax
+BIOVORIN 15 MG	Biovorin
+NEULOX 30 MG	Neulox
+ZITATE 50 MG	Zitate
+PSYCOMER SR 50 MG	
+LQUIN 250 MG	Levofloxacin
+ESTOGEL GEL 0.06% 80 GM	
+TELMIGEN 40 MG	Telmigen
+FABKURE 150 MG	Fabkure
+MELOAXIS 15 MG	Meloaxis
+MELONEX ORAL SUSPENSION 10ML	
+BISODER 5 MG	Bisoder
+NAC 50 MG	
+CONCENTIN 18 MG	Concentin
+ARCOVIT C INJ 5 ML	
+SKIN SHINE CREAM 30 GM	
+IRBEMAX 150 MG	Irbemax
+ARTECAN INJ 60 MG	
+EBAST 10 MG	Ebast
+ARTECAN INJ 120 MG	
+SOMA BOOST 750 MG	
+L VIT 12 INJ 30ML	
+METODER XL 50 MG	
+OLMEZEN 20 MG	Olmezen
+DUOLEVLIN RESPULES	
+AZI EDGE 250 MG	
+VITCOFOL INJ 10ML	
+FOLITRAX 5 MG	Folitrax
+SILJUV ODF 50 MG (1 STRIPS)	
+TASTYLIA 10 MG ODS (1X10)	Tastylia
+MYINO FORTE 1000 MG	
+REMOQUEEN 15 MG	Remoqueen
+ZARBOSE- M 0.3 MG	
+DYNAPAR QPS SPRAY	
+TORVOX 20 MG	Torvox
+CALACARE LOTION	
+SPECTRA 10 MG	Spectra
+PROSTACEL INJECTION 500 MCG	
+CBENZPRIME ER 15 MG	
+SALICYLIX SF 6 % OINTMENT	
+BECLATE 200 MCG INHALER	Beclate
+DEXACAN INJ	
+MIRZACAN 7.5MG	Mirzacan
+GENOTROPIN 36 IU 12MG	Genotropin
+ARTVIGIL 250 MG	Armodafinil
+C-DINE 0.1MG	
+FLEXABENZ PLUS TAB	
+THYROXINOL 100 MG	Levothyroxine
+FLUCORT SKIN CREAM 20GM	
+NECFOLIC INJ 5ML	
+MODOTH 25 MG	Modoth
+PROTHIADEN 25 MG	Prothiaden
+K- PET  200 MG	
+BIOTREXATE INJ 50 MG	
+ALDOSMIN 1000 MG	Aldosmin
+PRUEASE 1 MG	Pruease
+NUROKIND INJ	
+ELMOX CV 1000	
+PROFFIENT 10 MG	Proffient
+MOTIVYST 300 MG	Motivyst
+ZYLORIC 100 MG	Zyloric
+MIRAGRON ER 50 MG	
+QUTOX SR 100 MG	
+INDOCAP SR 75 MG	
+VIZYLAC RICH	
+LINAPIL 5 MG	Linapil
+ZHEVAVIR 1 MG	Zhevavir
+TRANESMA GEL 15GM	
+TAPEDAC 100 MG	Tapedac
+NADOXIN CREAM 1% 10GM	
+VARDEJUV 20 MG	Vardejuv
+AUGMENTIN DDS 457 MG SYRUP	Amoxicillin + Clavulanate
+PHEXIN 500 MG	Phexin
+KETROHEAL DT 10 MG	
+VARDITRA 40 MG	Varditra
+VARDITRA 60 MG	Varditra
+TADAFLO 20MG	Tadaflo
+BENZOCAN CREAM	
+BUDEZ CR 3 MG	
+NAILROX CREAM 30GM	
+AZITHROMAX 250 MG	Azithromax
+ACETIK HC EAR  DROP	
+RESTASIS DROP 0.05 %	
+DELACOS 300 MG	Delacos
+VARDITRA 20 MG	Varditra
+WYSOLONE DT 10 MG	
+ONDAHEAL MD 4 MG	
+PREBASUN 75 MG	Prebasun
+DAPASMART 5 MG	Dapasmart
+ANEPT 12.5 MG	Anept
+GLYCOMET 850 MG	Metformin
+MIRAGRO ER 25 MG	
+NORPIT 25 MG	Norpit
+D-VENLOR 100 MG	
+ZYHCG HP 10K	
+PERMITE CREAM 5% 60GM	
+GRAFIX CREAM	
+TRULICITY 1.5 MG INJ	Trulicity
+DERMICROS CREAM	
+TENVIR 300MG	Tenvir
+CABGOLIN 0.5 MG	Cabgolin
+LAMOTRIG-DT 100 MG	
+PREBASUN 450 MG	Prebasun
+REXIGUT 400 MG	Rexigut
+TADASIVA EXTRA POWER 120 MG	
+LARIAGO 250 MG	Lariago
+SIMLUP 10 MG	Simvastatin
+CLOMICARE 75 MG SR	Clomicare
+NORWAYZ 45 MG	Norwayz
+BRILINTA 90 MG (1X180)	Brilinta
+MINOXIBOON 5 MG	Minoxiboon
+DIAMICRON XR 60MG (1X14)	
+TRELEGY ELLIPTA 100MCG INHALER	
+TELMINOF 40 MG	Telminof
+DERMOZOLE 500 MG	Dermozole
+ESILOC 20 MG	Esiloc
+VITAMIN A TAB	
+BROMHEXINE TAB	
+REVIZE MICRO 0.025% CREAM 20GM	
+EUTHYROX 88 MCG	Levothyroxine
+THYRONORM 137 MCG	Levothyroxine
+NERVISIGN 300 MG	Nervisign
+LANOXIN 0.25 MG	Lanoxin
+MELATONIN 10 MG	Melatonin
+SIBOFIX 400 MG	Sibofix
+SIBOFIX 550 MG	Sibofix
+CALCIGIANT 500 MG	Calcigiant
+JOYCLAV 625 MG	Joyclav
+DAILYMET SR 850 MG	
+DAPOTIME 60 MG	Dapotime
+VIROVIR 250 MG (1X6)	Virovir
+TADACT 10  MG	Tadact
+KETASMA 1 MG	Ketasma
+FLUTIVIN NASAL SPRAY 120 MD	
+QUTIPIN 50 MG	Qutipin
+ANTIPREG KIT	
+REST FINE ORAL SPRAY	
+CYCLOBOON ER 30 MG	
+DYNAPAR QPS SOLUTION	
+ONCO- BCG 40 MG	
+ATODER 10 MG	Atoder
+CLOPIZEN 75 MG	Clopizen
+PROGYNOVA 1MG	Progynova
+VOGLIHEAL M 500 MG	
+QUADRIDERM CREAM 10 GM	
+INDOMATHES 75 MG	Indomathes
+CITACAN 40 MG	Citacan
+METODER 50 MG	Metoder
+METHIMEZ 10 MG	Methimez
+CALCIGIANT 500MG	Calcigiant
+CRONOTOL 500 MG	Cronotol
+ROSUFREE 5 MG	Rosufree
+BICIPHAGE SR 500 MG	
+PRAMIXOLE 0.25 MG	Pramixole
+OLEANZ 5 MG	Oleanz
+ZOFER MD 4 MG	
+PLACENTA EXTRACT GEL	
+AZITHRAL 100 MG	Azithral
+TADAJUV 80 MG	Tadajuv
+PIRCETAM 800 MG	Pircetam
+ACNELAK CLZ CREAM 15GM	
+EPIDUO GEL 30GM	
+POXIJUV 60 MG (1X10)	Poxijuv
+DEMELAN CREAM 10 % 15GM	
+VOLINI GEL	
+COVERIT 2 % SOLUTION	Coverit
+TADAJUV 20 MG	Tadajuv
+ACTRAPID FLEX PEN 100 IU	
+ACTRAPID HM PENFILL INJ	
+TRESIBA PENFILL 100 UNITS	
+TRESIBA FLEXTOUCH 100 UNITS	
+ORLIJUV 120 MG	Orlijuv
+DALACIN C 150 MG	
+AZITHROMAX 500 MG	Azithromax
+MOMEMTA 10 MG	Momemta
+VILANO 40 MG	Vilano
+SIZOPIN 100 MG	Sizopin
+HAIRBLESS TABLET	
+CLOZCARE 25 MG	Clozcare
+SUPATRET 0.04% GEL 20GM	Supatret
+OLMEZEN 40 MG	Olmezen
+AXEPTA 18 MG	Axepta
+AXEPTA 25 MG	Axepta
+EREX 100 MG	
+AXEPTA 60 MG	Axepta
+LUPINEM 500  MG INJ	Lupinem
+VORITROL 200 MG	Voritrol
+OMNIKACIN 500 MG INJ	Omnikacin
+ERYTOP GEL 20GM	
+LIPRIL 10 MG (1X15)	Lipril
+IZRA 40 MG	
+DUOLIN ROTACAPS (1X60)	
+OXRA 10 MG (1X14)	
+XARELTO 15 MG (1X28)	Xarelto
+TADALIS-SX 20 MG	
+CANDID B CREAM(20GM)	
+ISOTROIN 20 MG	Isotretinoin
+SIRDALUD 2 MG	Sirdalud
+GABAPIN 800 MG	Gabapin
+GABAPIN 300 MG (1X15)	Gabapin
+DA ZEAGRA	
+LIOFEN 25 MG	Liofen
+FLUDAC 20 MG	Fludac
+FLUDAC 10 MG	Fludac
+DOXT-SL	
+PREJAC 60 MG	Prejac
+METOPROL XL 50 MG	
+AMLOKIND AT 5 MG	
+SHELCAL OS (1X15)	
+LOCULA EYE DROP 20 %	
+MICOGEL 2% CREAM 15GM	Micogel
+LITHICAN 300 MG	Lithican
+DUOLIN 1.25 MG REPSULES	Duolin
+AMOLIFE 50 MG	Amolife
+GLYCOMET 250 MG	Metformin
+GLYCOMET 1 GM	Metformin
+SPORANOX 100 MG	Sporanox
+FERTIGYN HP 2000 IU	Human Chorionic Gonadotropin (HCG)
+MANFORCE 100 MG	Manforce
+VEGA EXTRA COBRA 120 MG	Sildenafil
+CYNODER PLUS INJ 500MG	
+ITASPOR 200 MG	Itaspor
+EUTHYROX 50 MG	Levothyroxine
+PARI 20 MG	
+FLUDAC 60 MG	Fludac
+DAPSONE 100MG	Dapsone
+LETHYROX 75 MCG (1X120)	Levothyroxine
+ARZEP NASAL SPRAY 10ML	
+MEBEX 100 MG	Mebex
+ZOVIRAX 200 MG	Zovirax
+SEROFLO INHALER 50 MCG	Salmeterol + Fluticasone
+TIOVA ROTACAP 18MCG (1X30)	
+SILDALIST TAB	
+LETHYROX 50 MCG (1X120)	Levothyroxine
+LETHYROX 25 MCG (1X120)	Levothyroxine
+CARVEJOHN 25 MG	Carvejohn
+GABAPIN 600 MG	Gabapin
+TADALISTA PRO 20 MG	Tadalafil
+TRYPTICAN 75 MG	Tryptican
+ROPARK 0.5 MG	Ropark
+KUFFDRYL D 25 MG	
+ASTRIPARIN INJ 25000 I.U	
+MEGTE 40 MG	Megte
+SULPITAC 400 MG	Sulpitac
+CYCLOMUNE 0.1 % EYE DROP	Cyclomune
+LONITAB 2.5 MG	Lonitab
+WINSTROL 10 MG	Winstrol
+CLOMIFORD 25 MG	Clomiford
+CLOFERT 50 MG	Clofert
+INFECTO OINTMENT	
+NAPROSYN 250 MG	Naprosyn
+ENPRED EYE DROPS 0.05 %	
+FLUPETIME 100 MG	Flupetime
+BUSIRON 10 MG	Busiron
+CALAPTIN 120 SR	Calaptin
+GLUCOZONE TABLET	
+NITROL INJ	
+LEVOZET M TAB	
+APIGAT 2.5 MG	Apigat
+FAMCIMAC 250 MG	Famcimac
+AUGMENTIN 625 MG DUO (1X10)	Amoxicillin + Clavulanate
+SOFTDRYL SYRUP 14.08 MG	
+HEALVITAL 10 MG	Healvital
+MORR 5% SOLUTION 60ML	Minoxidil
+MORR 10 %SOLUTION	Minoxidil
+GERCILLIN 500 MG	Gercillin
+CHLORTHED 12.5 MG	Chlorthed
+ESTRABET 2 MG	Estrabet
+MITRA 30 MG	Mitra
+VC X SERUM 10ML	
+SILDAGRA XL PLUS 150 MG	
+GRAVOL 50 MG	Gravol
+FORCAN 150 MG	Forcan
+FORXIGA 5 MG	Dapagliflozin
+FUCIBET CREAM 15GM	
+PREDMET 4 MG	Predmet
+LEEMIGRAN 100 MG	Leemigran
+TRULICITY 0.75 MG	Trulicity
+DEJAC-T TAB (1X4)	
+DURA PLUS	
+PREGACIP M 75MG	
+TRETIN 0.05% CREAM 30GM	Tretin
+ANTOXID - HC (1X30)	
+TRAZOKEM 100 MG	Trazokem
+DAUNOCYTE INJ 20 MG	
+NOOTROPIL 800 MG	Nootropil
+MINIRIN 0.2 MG	Minirin
+ACNEJ 20 MG	Acnej
+NATAMET 0.5% EYE DROPS 5ML	Natamet
+MINOXIBOON 10 MG	Minoxiboon
+DONEPAZE 10 MG	Donepaze
+REGEN D 150 GEL	
+SKIN SHINE CREAM 15 GM	
+PREGALIN 150 MG	Pregalin
+LINGESIC 300 MG	Lingesic
+TOPAMAC 25 MG	Topamac
+SEROFLO ROTACAP 100 MCG (1X30)	Salmeterol + Fluticasone
+ZINCONIA 50 MG	Zinconia
+ATARAX 25 MG	Atarax
+METOLAR XR-50 MG (1X15)	
+KENZ 2.0% LOTION	
+TAVIN EM	
+FORACORT INHALER 6/100 MCG	Formoterol + Budesonide
+LOTEPRED 0.5% EYE DROP 5ML	Lotepred
+CIPLOX 250 MG	Ciprofloxacin
+SILDIGRA 50 MG	Sildigra
+MELAFINE CREAM	
+WINVOL 100 MG INJ 1ML	Winvol
+CANDISTRUM 8 MG	Candistrum
+MONOTRATE SR 60 MG	
+LIPIDATOR 10 MG	Atorvastatin
+MUPIHEAL 2% OINT 5GM	Mupiheal
+MOXONOL 0.3 MG	Moxonol
+LOTENSYL 10 MG	Lotensyl
+ZYLE 100 MG	
+THALIX 100 MG	Thalix
+TADAUP 20 MG	Tadaup
+TYPENTA 50 MG	Typenta
+RADIGAN 25 MG	Radigan
+QUECARE SR 200 MG	
+QUTAN SR 400 MG	
+TRENTAL 400 MG	Trental
+RIZACT 5 MG	Rizact
+METROGYL INJ (5MG/ML) 100ML	
+BUDETROL INHALER 200 MCG	
+PNOLOL SR 80 MG	
+VARNA 60 MG	Varna
+ACNEJ 40 MG	Acnej
+RIVABAX 20 MG	Rivabax
+CRONOTOL 250 MG	Cronotol
+DANABOL 10MG	Danabol
+DECABOL 200 MG INJ 1ML	Decabol
+VARNITRIP 1 MG	Varnitrip
+PENEGRA 50 MG (1X4)	Penegra
+DABUR SHILAJIT CAPSULE	
+CLARIFACE 500 MG (1X4)	Clariface
+ZHEWITRA 40 MG	Vardenafil
+TADAGRA PROF 20 MG	
+VARNITRIP 0.5 MG	Varnitrip
+PAPULEX CREAM	
+AUTITAM 400 MG	Autitam
+ACNEJ 10 MG	Acnej
+POXIJUV 30 MG	Poxijuv
+ZOFER 4 MG	Zofer
+KETOMAC 2%	Ketomac
+ZIFI 400 MG	
+VOXYLID TAB	
+CANDISTRUM 16 MG	Candistrum
+AMLOKIND H	
+BOTOX INJ 100 UNITS	
+OXCQ 200 MG	
+SEXFORCE 100 MG	Sexforce
+EKOVIR 800 MG	Ekovir
+ASTYMIN 3 INJ (20ML)	Astymin
+RECOVORIN 50 MG INJ	Recovorin
+AHABIR 500 MG	Ahabir
+FLUCEL 250 MG	Flucel
+LUPROVA 11.25 MG	Luprova
+GEMTERO 200 MG INJ	Gemtero
+OXALITERO 100 MG INJ	Oxalitero
+RELIGRAST 300 MCG INJ	Religrast
+FEMISTRA TAB	
+LINDOSHIL 25 MG	Lindoshil
+MESAHENZ 1200 MG	Mesahenz
+DAPOFORCE 90 MG	Dapoforce
+ETADOL 200 ER MG	Etadol
+SILVEREX IONIC 2% GEL 20GM	
+SITASMART M 50/1000 MG	
+ISOTROIN 10 MG(1X15)	Isotretinoin
+ZHEWITRA 10 MG	Vardenafil
+FINAAS 1 MG	Finaas
+BIMAT LS EYE DROP 0.01%	
+MORR 2% SOLUTION 60ML	Minoxidil
+MORR 12.5% SOLUTION 60ML	Minoxidil
+BIOCETAM 400 MG	Biocetam
+CLONIL 25 MG	Clonil
+SURGICAL GLOVES	
+PANCH TULSI RAS	
+L- QUIN 750 MG	
+C WIN SHAMPOO	
+KETOMAC 2 % SHAMPOO 100ML	Ketomac
+CANRISE D3 INJ	
+TRIGLOW CREAM 20GM	
+ENCICARB 500 MG INJ	Encicarb
+ONDAJAN INJ	
+WALCOBAL FORTE INJ	
+ROOT IN 2.5 MG	
+SILDIGRA 225 MG	Sildigra
+SETA 100 MG	
+ELDOBEN 400 MG	Eldoben
+SILDIGRA SOFT GEL 100 MG	
+NORSUNATE 200 MG (1X4)	Norsunate
+EXERMET SR 1000 MG	
+SETA 25 MG	
+BUPROKEM ER 150 MG	
+PALI XR 6 MG	
+BONITAR 100 MG	Bonitar
+ABD PLUS	
+ESCITAL 5 MG	Escital
+ARIN 10 MG	
+LUPI HCG 10000 IU INJ	
+PHENERGAN 10 MG	Phenergan
+FEBUVEL 80 MG	Febuvel
+CARIDOLL 500 MG	Caridoll
+ANAVAR 10 MG	Anavar
+LINGESIC 150 MG	Lingesic
+CLENABOL 40 MG	Clenabol
+NEOCALM PLUS 5 MG	
+ZYLOMOX CV 625 MG	
+VITAMIN B 12 MG INJ	
+THYRONORM 50 MCG (1X120)	Levothyroxine
+SERTIMA 25 MG	Sertima
+AVIL 50 MG	
+TAPSMART 200 MG	Tapsmart
+NEBIHEAL 10 MG	Nebiheal
+ACARBOZ 50 MG	Acarboz
+GLYXAMBI 25 MG/5 MG	Glyxambi
+BD ULTRA FINE PEN NEEDLES (1X5)	
+T3 25 MCG	
+CONCOR 1.25 MG	Concor
+BISOMAX 2.5 MG	Bisomax
+FLAVEDON OD 80 MG	
+RAMISMART 5 MG	Ramismart
+TEST E 250 MG INJ 1ML	
+REVIZE MICRO 0.04% GEL	
+MOMIN CREAM 15GM	
+HAIR 4U F SOLUTION 5%	Minoxidil
+TADAGEN 20 MG	Tadagen
+ANABREZ 1 MG	Anabrez
+ERYTHEGO GEL	
+F-PECIA 1 MG	
+VARNA 40MG	Varna
+JGLUT 600 MG INJ	Jglut
+NITROBEST 100 MG	Nitrobest
+STANORIX 100 MG INJ	Stanorix
+DDR 60 MG	
+TERBICIP 250 MG	Terbicip
+TOPAMAC 100 MG	Topamac
+TESTORIX C 250 MG INJ	
+TESTORIX P 100 MG INJ	
+SUSTARIX 250 MG INJ	Sustarix
+LENVATOL 4 MG	Lenvatol
+MORR F 3% SOLUTION 60ML	Minoxidil
+ARKACAN 100 MCG	Arkacan
+NERVIGESIC 450 MG	Pregabalin
+NORSUNATE 100 MG (1X4)	Norsunate
+INDERAL 10 MG	Inderal
+MALEGRA FXT PLUS	Sildenafil
+EXTRA SUPER VIDALISTA	Tadalafil
+SITASMART 50 MG	Sitasmart
+HAIR 4U 5.0 % SOLUTION	Minoxidil
+ADDYZOA CAP	
+VENLOR-XR 37.5 MG	
+XARELTO 10 MG (1X7)	Xarelto
+SPECTRA 25 MG	Spectra
+PASITREX C CREAM 15GM	
+XYLOCAINE 5% OINT (50GM)	Xylocaine
+ITRASHOOT 100 MG	Itrashoot
+TENTEX ROYAL CAPS	
+GOKSHURA CAPS (1X60)	
+CONFIDO TAB	
+TRIPHALA CAPS	
+RUMALAYA FORTE	
+ROTAHALER	
+SELEPEG 400 MCG	Selepeg
+DERMIKEM OC+ CREAM 15GM	
+TADOVAS 20 MG (1X4)	Tadovas
+DEVENLAF-XR 50 MG	
+CIPLOX D EYE DROP 10ML	Ciprofloxacin
+SELEPEG 200 MCG	Selepeg
+FORMOST 200 MCG INHALER 120MD	Formost
+LEVOLIN INHALER 50 MCG	
+INDERAL LA 20 MG	
+OBELIT 120 MG	Obelit
+TOPINATE GEL	
+NATRILIX 2.5 MG	Natrilix
+ALGLUT INJ 1200 MG	
+VARNA 20 MG	Varna
+NEUROBION FORTE INJ 2ml*7amul	
+NEKSIUM 20 MG	Neksium
+MANFORCE 50 MG	Manforce
+MORR PRO SERUM	Minoxidil
+METALITE 3 MG	Metalite
+DEPOPRED 80 MG INJ 2ML	Depopred
+BOLDABOL 250 MG INJ 1ML	Boldabol
+SHYTOMEL 5 MCG	Shytomel
+SHYTOMEL 25 MCG	Shytomel
+MIRZACAN 30 MG	Mirzacan
+MEGVAL 50 MG INJ	Megval
+AZITHRAL 200 MG LIQ 30GM	Azithral
+TRANCYP 10 MG	Trancyp
+TAPSMART 100 MG	Tapsmart
+SERTA 50 MG	Serta
+ATEN 100 MG	
+BIGOMET SR 1000 MG	
+MYOTOP P	
+ZHEWITRA 60 MG	Vardenafil
+ELMOX 500 MG	Elmox
+BEPLEX FORTE INJ	
+ACNEJ 5 MG	Acnej
+ZITHROX XL 200 MG	
+TADAUP 10 MG	Tadaup
+PILOCAR 2% EYE DROP	Pilocar
+CRIXAN GEL 1%	
+BACLOF 10 MG	Baclof
+FLAVEDON MR 35 MG	
+OLEX 20 MG TAB	
+ARIPAXE 20 MG TAB	Aripaxe
+FLUZEST 100 MG CAP	Fluzest
+AMISULE-100 MG	
+FEXOGRA 120 MG	Fexogra
+BASALOG ONE INJ	
+POLYBION ACTIVE SYRUP	
+SUPRADYN TABLET	
+ENTEROGERMINA TAB	
+YOGRAJ GUGGLU TAB	
+SAT-ISABGOL POWDER	
+REJOINT 750 MG	Rejoint
+TRIPHALA CHURNA	
+MECOFOL PLUS NF CAPSULE	
+OMEZ 20 MG	
+UJALA EYE DROP	
+F TINE 20 MG	
+CLOPIVAS 75 MG	Clopivas
+MINOZ ER 65 MG	
+DEXAVAC 2 MG	Dexavac
+PROLOMET XL 25 MG (1X10)	
+OVIGIL HP 10000 IU	
+GESTOHEAL 200 MG	Gestoheal
+ANGIZEM CD 120 MG	
+GLUMIT INJ 600 MG	
+MONTAS L 15 MG	
+CEPHY 500 MG	Cephy
+CANDID EAR DROPS 10ML	
+CANDID CREAM 30GM	
+PREGARICA M	Pregabalin
+LUBOWEL 24 MCG (1X15)	Lubowel
+APIQUIS 2.5 MG	Apiquis
+LUPI HMG 150 IU	
+VENPRES CH 40 MG/12.5 MG	
+PRIMOBOL 100 MG INJ 1ML	Primobol
+NEEDLE 23 NO	Needle
+TEST-PROP INJ 100 MG 1ML	
+VALIF ORAL JELLY 20 MG 5GM	Vardenafil
+NATCLOVIR 500 MG	Natclovir
+MYTRET C GEL	
+DUTANOM 0.5 MG	Dutanom
+MINOXYNOM 10 MG	Minoxynom
+METHIMEZ 5 MG	Methimez
+R-CIN 300 MG	
+TOPAHEAL 100 MG	Topaheal
+RIBUTIN 150 MG	Ributin
+CLINSOL 300 MG	Clinsol
+NICARDIA XL 30MG (1X10)	
+LYCOLYFE CAP	
+ISOSHINE 20 MG	Isoshine
+VEGA EXTRA COBRA 120 MG ORAL JELLY (1X7)	Sildenafil
+OFLOCHEM 400 MG	Oflochem
+BENZO 5% GEL	Benzo
+MUPIZER OINTMENT	
+CARVENOL 6.25 MG	Carvenol
+VALEMBIC 5/80 MG	Valembic
+VIBOLIV 500 MG	Viboliv
+NACPHIN INJ 10 MG	
+RIVASMART 20 MG	Rivasmart
+DIPROBATE RD CREAM 30GM	
+DUVANTA 60 MG	Duvanta
+ARIZOLE 30 MG	Arizole
+LIOFEN 10 MG	Liofen
+ACNEJ 30 MG	Acnej
+VITNEURIN AQ INJ B1-B6-B12	
+LEVOQUIN 500 MG	Levoquin
+HPDOL 5 MG INJ 1ML	Hpdol
+OTOCIN C EAR DROP 5ML	
+MINOCYCLONE 100 MG	Minocyclone
+HEALTROXIN 50 MCG	Healtroxin
+TELMIS 80 MG	Telmis
+HYDRAX 25 MG	Hydrax
+CEFLOX D EYE DROPS	
+APISMART 5 MG	Apismart
+EPLERENOL 25 MG	Eplerenol
+ZYRIK 300 MG	Zyrik
+METOLAR XR 12.5 MG (1X15)	
+ELOSONE-HT CREAM 15GM	
+BLUEFORCE 1-50 MG	Blueforce
+BLUEFORCE 1-200 MG	Blueforce
+BLUEFORCE 1-100 MG	Blueforce
+OLZEP 20 MG	Olzep
+O-STAT 120 MG	
+INTALFA 5 MIU/ML	Intalfa
+FENBENZ 500 MG	Fenbenz
+HUMOG 150 MG INJ	Humog
+PREMARIN CREAM	
+ANASTRONAT 1 MG	Anastronat
+BLUEFORCE 1-150 MG	Blueforce
+CARODYL 75 MG (1X6)	Carodyl
+LEVOFLOX 750 MG	Levoflox
+CAVERTA 25 MG	Sildenafil
+APISMART 2.5 MG	Apismart
+AZITHRAL 250 MG	Azithral
+AVANA 50 MG	Avana
+VOMIKIND MD 4 MG	
+METGEM 1 GM	Metgem
+ERYTHROMYCIN 250 MG	Erythromycin
+TACROHEAL 0.1 % OIN 10GM	Tacroheal
+ILOSURE 4 MG	Ilosure
+VOVERAN EMULGEL (21GM)	Diclofenac
+MONOCEF 500 MG INJ	Monocef
+FLUXICAN 60 MG	Fluxican
+MYTRET 0.1% GEL 15GM	Mytret
+ZYZOLIDE 600 MG (1X4)	Zyzolide
+PIRFEHEAL 200 MG	Pirfeheal
+DIAMOX 250 MG	Diamox
+DUTPRO 0.05 MG	Dutpro
+BLUEFORCE 1-250 MG	Blueforce
+MALINATE 100 MG	Malinate
+ARTEEMAXX 100 MG	Arteemaxx
+DOXIFIC 100 MG	Doxific
+FERTOMID 100 MG	Fertomid
+TOPIROL 100 MG	Topirol
+HEALTROXIN 100 MG	Healtroxin
+ACTAPRO OD 300 MG	
+MIRNITE 7.5 MG	Mirnite
+DAFLON 1000 MG (1X10)	Daflon
+NICOTEX GUM 2 MG	
+PREGAFIT-75 SR	
+ASCOAIR 100 MCG INH 200 MD	Ascoair
+SAFI NATURAL BLOOD PURIFIER SYRUP	
+MITRA 7.5 MG	Mitra
+TEST C 250 MG INJ 1ML	
+CARVISTAR 6.25 MG	Carvistar
+RANISH 150 MG	Ranish
+NO SCARS CREAM	
+BLUEFORCE 1-25 MG	Blueforce
+TOFIDAXIN 50 MG	Tofidaxin
+CARIDOLL 350 MG	Caridoll
+OSELTAVAC 75 MG	Oseltavac
+ANDROL 50 MG (1X10)	Androl
+FLUPICARE 100 MG	Flupicare
+PAZOM 20 MG	Pazom
+VIGORE FORCE	Sildenafil
+TAMOXICAN 10 MG	Tamoxican
+ARCALION 200 MG	Arcalion
+OMNIGEL SPRAY 75 GM	
+NORSUNATE 50 MG (1X4)	Norsunate
+RICOVIR EM 300 MG	
+NEMOCID 250 MG	Nemocid
+AMICLINE 500 MG	Amicline
+VITAMIN C SERUM 15 GM	
+MALEGRA 50 MG	Sildenafil
+SUMITOP 25 MG	Sumitop
+TADAUP 2.5 MG	Tadaup
+TADAUP 40 MG	Tadaup
+TADAUP 60 MG	Tadaup
+TADAUP 80 MG	Tadaup
+HIFORCE 25 MG	Sildenafil + Dapoxetine
+HIFORCE 50 MG TAB	Sildenafil + Dapoxetine
+EPOFER 4000 IU INJ	Epofer
+TAFERO EM 25 MG	
+SILVEREX SSD CREAM 10GM	
+LOSAKIND-H 50/12.5 MG	
+ONAZIT 500 MG	Onazit
+TADAUP 5 MG	Tadaup
+MEPLIX 4 MG	Meplix
+PHEXIN REDISYP 250 MG	
+TRAZOSIG 50 MG	Trazosig
+AZEE DRY SYRUP 200 MG 15ML	Azithromycin
+FESTIVE-D EYE DROP	
+GENMOX CV FORTE	
+ULTRA GEL 1% EYE DROP	
+TRAZOSIG 100 MG	Trazosig
+SITASMART 100 MG	Sitasmart
+ZOPINAP 10 MG	Zopinap
+MECODER PLUS INJ 2ML	
+ZOPINAP 7.5 MG	Zopinap
+ZOPINAP 20 MG	Zopinap
+DOXYLIFE 100 LB	Doxylife
+PYRIGESIC 1000 MG	Pyrigesic
+URIVRON 100 MG	Urivron
+CELEBREX 200 MG	Celebrex
+ANOVATE OINT 20GM	
+SILDOEASE 8 MG	Sildoease
+EUMOSONE CREAM	
+ONDEM 2 MG SYRUP	Ondem
+DECA-INSTABOLIN 25 MG INJ	
+ROYALE 450 MG	Royale
+CELIN 500 MG	Celin
+OSELVIR 75 MG	Oselvir
+DEXONA INJ 4 MG	
+MYSOLINE 250 MG	Mysoline
+MODANIL 100 MG	Modanil
+CARDIOROSTIN 10 MG	Cardiorostin
+SULFALIX 500 MG	Sulfalix
+OLANA 2.5 MG	Olana
+MAXIFLO INH 125 MCG (120MD)	
+NITROROIN 100 MG	Nitroroin
+AZITHRAL 500 MG	Azithral
+LOPID 300 MG	Lopid
+BETACAP TR 40 MG	
+DEXTOMID 100 MCG INJ	Dextomid
+DAXIN 0.25 MG	Daxin
+TRENARIX-E 200 MG INJ 1ML	
+MOZA 5 MG	
+FLUPITOR 100 MG	Flupitor
+POLARAMINE 2 MG	Polaramine
+CANDID CL SUPPOSITORIES	
+CADID CL GEL	
+RADINATE 200 MG	Radinate
+GERCICLOX DC	
+LULIFORD CREAM 20GM	
+CIPROPEN 500 MG	Cipropen
+VENLAF ER 75 MG	
+NERVIGESIC 75 MG	Pregabalin
+LEVOCET M	
+VIRLIGY 60 MG	Virligy
+FOSIROL POWDER	
+HAIR 4U 2% SOLUTION	Minoxidil
+TOPNITE 2 MG	Topnite
+AZIFAST GEL 2% 20GM	
+VOLITRA PLUS GEL	
+PERMED 5% LOTION 60ML	Permed
+MINOXIBOON 2.5 MG	Minoxiboon
+ELMOX CV 625 DUO	
+REDNISOL 16 MG	Rednisol
+TIOVA INH 9 MCG 200 MD	
+TRANELIX 500 MG INJ	Tranelix
+AZOPT 1% EYE DROPS	Azopt
+TABLODEP DT 100 MG	
+BRITE LITE CREAM 20GM	
+SSDEE UILTA CREAM 15GM	
+DK GEL	
+CORDARONE X 200 MG	
+ZERODOL SP TAB	
+TENOHEAL 300 MG	Tenoheal
+INTALFA 3 MIU	Intalfa
+NEUROBION FORTE TAB (1X30)	
+NINDANIB 150 MG	Nindanib
+BUDEFINE 200 MCG INHALER	Budefine
+SITASMART M 50/500 MG	
+HUMAN MIXTARD 40 IU 10ML	
+ZINDA TILISMATH	
+RUTINIB CREAM 1.5%	
+HUMAN ACTRAPID 40 IU 10ML	
+SCABOMA LOTION 100ML	
+NATRISE 30 MG TAB	Natrise
+OTRIVIN NASAL DROP 10ML	
+AUGMED INJ 1.2 GM	
+CYCLOBOON ER 15 MG	
+CARODYL 100 MG (1X30)	Carodyl
+LOX 2% INJ 30ML	
+MOXANUTE 500 MG	Moxanute
+FLUTICONE-FT 27.5 MCG SPRAY	
+GLYCIPHAGE SR 1 GM	Metformin
+GLUFORMIN XL 1000 MG	
+FLOXIP 500 MG	Floxip
+CEFZONE-S 1.5 MG	
+CLAVAM DRY SYRUP 30ML	
+ARCALION TAB (1X6)	
+LENVENIB 4 MG	Lenvenib
+FLUMET 400 MG	Flumet
+TRAZINE-S TAB (1X10)	
+SKIN LITE CREAM (15GM)	
+ANSWELL TAB	
+RENOCRIT 4000 IU INJ	Renocrit
+BOLDARIX 250 MG INJ 1ML	Boldarix
+CIPMIDO 5 MG (1X30)	Cipmido
+DECARIX 250 MG INJ	Decarix
+FLUGESIC SR 400 MG	
+GERMOX SYRUP	
+VEMOX 250 MG	Vemox
+UPRISE D3 2 K (1X10)	
+ENTAVIR 0.5 MG	Entavir
+SCABVENT LOTION 5% 60ML	
+VITANOVA D3 6L INJ	
+FLUPISIGN 100 MG	Flupisign
+JOYCLAV 375 MG	Joyclav
+CLARKS 350 MG TAB (1X90)	Clarks
+MODAFEEL 200 MG	Modafeel
+INTIMAX GOLD 100 MG	
+SYMBICORT INHALER 320/9 MCG	
+ELITH SR 450 MG	
+OPINE 10 MG	Opine
+OLANCARE MD 10 MG	
+MOZINE MD 10 MG	
+ESTRABET GEL 80GM	
+FLUSENEX 100 MG	Flusenex
+OZIM MD 10 MG	
+CROCIN 650 MG	Crocin
+Pramixole 1 mg	
+ELITH SR 400 MG	
+ESZOPINAP 3 MG	Eszopinap
+MINPRO 5 MG	Minpro
+MINPRO 10 MG	Minpro
+TASTYLIA 2.5 MG TAB	Tastylia
+TASTYLIA 5 MG TAB	Tastylia
+TASTYLIA 10 MG TAB	Tastylia
+TASTYLIA 20 MG TAB	Tastylia
+TASTYLIA 40 MG TAB	Tastylia
+TASTYLIA 60 MG TAB	Tastylia
+TASTYLIA 80 MG TAB	Tastylia
+MINOXYTOP 10 MG TAB	Minoxidil
+TINIBA 500 MG	Tiniba
+FLYGYL 200 MG	Flygyl
+ETOSHINE 120 MG	Etoshine
+ARTEEMAXX 200 MG	Arteemaxx
+ARPICAN 30 MG	Arpican
+ZIPSYDON 40 MG	Zipsydon
+FLUPICARE SR 400 MG	
+TOPAHEAL 50 MG	Topaheal
+REGEN-D 60 GEL	
+MUCIZID 600 MG	Mucizid
+CALCIGIANT D3 SOFTGEL CAP(60,000 IU)	
+TREN-A 100 MG INJ 1ML	
+HISONE 10 MG	Hisone
+FURAMIST NASAL SPRAY	
+ZERODOL-P TAB	
+SORIFIX OINTMENT 15GM	
+VEMOX 500 MG	Vemox
+LAFAXID 10 MG	Lafaxid
+ACILOC 300 MG (1X20)	Aciloc
+DALACIN C 300 MG	
+KETOROL DT 10 MG	
+DILZEM CD 180 MG	
+CYCLOBENZ 15 MG	Cyclobenz
+ELITH 300 MG	Elith
+ABHIFORCE 150 MG	Sildenafil + Dapoxetine
+HUMAN INSULATARD 40 IU	
+THYROX 88 MG (1X100)	Levothyroxine
+Ovarivac Tab	
+ZINCOLIX TAB	
+MALEGRA GREEN 100 MG	Sildenafil
+ALGREAT 180 MG	Algreat
+URISPAS 200 MG	Urispas
+GENTICYN 80 MG INJ	Genticyn
+AMFY V 0.1% GEL	
+AZICIP 500 MG (1X3)	Azithromycin
+THYCAD 100 MG	Thycad
+PODOWART INJ 10ML	
+ELPRESS 5 MG	Elpress
+TERBEST 250 MG	Terbest
+TECZINE 5 MG	Teczine
+BILASHINE 20 MG TAB	Bilashine
+LULIFIN CREAM (10GM)	
+ABZORB DUSTING POWDER	
+INDOMATHES 25 MG	Indomathes
+JAKNAT XR TAB	
+DISPO VAN INJ (10ML)	
+VILAPAD 20 MG	Vilapad
+TASTYLIA 20 MG ORAL JELLY 5GM	Tastylia
+GLI 80 MG	
+PREGALYV 75 MG	Pregalyv
+THYROXIUM 50 MCG	Levothyroxine
+VELPANAT TAB (1X28)	
+SERTIMA 50 MG	Sertima
+DESLOR 5 MG	Deslor
+NEKSIUM 40 MG (1X15)	Neksium
+TOFIDAXIN 100 MG	Tofidaxin
+ARTEEMAXX 50 MG	Arteemaxx
+HALOVATE 0.05% CREAM (30GM)	Halovate
+CORTIVAC 10 MG	Cortivac
+MIRZAT 15 MG	Mirzat
+MOXIBOLIC CV 625 MG	
+PLERMIN 0.01% GEL	Plermin
+ACEMIZ 100 MG	Acemiz
+COVILIFE QTN 250 MG (1X10)	
+BILYPSA 4 MG	Bilypsa
+TEXIFEN 250 MG	Texifen
+NIMEK 100 MG	Nimek
+CALCIUM SANDOZ INJ 10ML	
+DICLOMOL TAB	
+LEVOQUIN 250 MG	Levoquin
+ONDEM 4 MG	Ondem
+ETORIZOX 90 MG	Etoricoxib
+MIRADDER ER 50 MG	
+OLANA 5 MG	Olana
+STR STERILE WATER (5ML)	
+VALTOVAL 1G	Valtoval
+HIPRES 25 MG	Hipres
+KLENSMART 40 MG	Klensmart
+CANDIFACE 200 MG	Candiface
+FALCIGO 120 MG INJ	Falcigo
+LUMERAX 80 MG	Lumerax
+CABGOLIN 0.25 MG	Cabgolin
+TRAZONIL 25 MG	Trazonil
+GABANTIN 300 MG	Gabantin
+ZINOCAINE 2% INJ	Zinocaine
+ONVIN 4 MD	Onvin
+METROGYL DG GEL FORTE 1.5%	
+ACNESOL 1% SOLUTION	Clindamycin
+CLINDAC A 1% GEL 20GM	
+CEFLOX 250 MG	Ceflox
+SIPHENE 100 MG	Siphene
+TYNEPT 12.5 MG	Tynept
+CLOCIP B CREAM (10GM)	
+FINAAS 5 MG	Finaas
+LANSOSTRUM 60 MG	Lansostrum
+RABESEC 20 MG	Rabesec
+CLOZINE 25 MG	Clozine
+CLOZINE 50 MG	Clozine
+ELMOX 250 MG	Elmox
+COLCHISIGN 0.5 MG	Colchisign
+ATEN 25 MG	
+TOFISIGN 100 MG	Tofisign
+VIAGRA 100 MG PFIZER(1X4)	Sildenafil
+REMOQUEEN 30 MG	Remoqueen
+PRIMORIX 100 MG INJ 1ML	Primorix
+ZOSERT 100 MG	Zosert
+TRENARIX-A 100 MG 1ML INJ	
+MYTRET 0.04% GEL	Mytret
+ELIDEL 1% CREAM 10GM	Elidel
+SETROL INJ 2ML	
+VINTOR 4000 IU INJ	Vintor
+CABERLIN 0.5 MG	Caberlin
+NORMABRAIN SYRUP 500 MG/5ML	
+RIDOL 2 MG	Ridol
+ELTOCIN 250 MG	Eltocin
+ZOCLAR 250 MG	Zoclar
+D ACNE PLUS GEL 20GM	
+TELMA 80 MG	Telma
+ACIVIR DT 400 MG (1X5)	
+LOCERYL 5% NAIL LACQUER	Loceryl
+KERENDIA 10 MG	Kerendia
+TRYPTICAN 25 MG	Tryptican
+ESOMIFOR 40 MG (1X15)	Esomifor
+TRAVO-Z EYE DROP	
+AMOLOX 50 MG	Amolox
+TESTORIX-E 250 MG INJ 1ML	
+DAILYMET 500 MG	Dailymet
+NAPROHEAL 500 MG	Naproheal
+MULTIRICH CAP	
+CARBOPHAGE XR 500 MG	
+DAUNOTEC 20 MG INJ	Daunotec
+ORNIDA 500 MG (1x10)	Ornida
+INDERAL 40 MG	Inderal
+ACNETOIN PLUS	
+NINTIB 100 MG	Nintib
+GABAPIN 100 MG	Gabapin
+PARACETAMOL 500 MG	Paracetamol
+ABHIRISE 60MG	Abhirise
+BEMPESTA 180MG	Bempesta
+METOLAR XR 100 MG (1X10)	
+AZEETOP DT 100 MG (1X10)	Azithromycin
+GLIMDA 1MG	Glimda
+NICIP PLUS	
+MINOXYNOM 5 MG	Minoxynom
+MOXIKIND CV 1 GM (1X6)	Amoxicillin + Clavulanate
+PROCHLOROMETIL - MD	
+TERAPRESS 2 MG (1X7)	Terapress
+OLMEVAC AM TAB	
+ALPHAGAN EYE DROP 5ML	
+DISPO VAN STERILE	
+BOSENLEE 62.5 MG	Bosenlee
+DASANAT 50 MG	Dasanat
+FIXIM DT 200 MG	
+LEETREXATE 2.5 MG	Leetrexate
+LIPICARD 160 MG	Lipicard
+ENDFLI 75 MG	Endfli
+TENOVATE CREAM	
+CILOSTOZ 100 MG	Cilostoz
+FORTIUS 5 MG	Fortius
+VEGA FORCE 50 MG	Sildenafil
+APIEDGE 5 MG	Apiedge
+REDNISOL 4 MG	Rednisol
+ALLOFINE 100 MG	Allofine
+EBERNET 1% CREAM	Ebernet
+X-VIR 0.5 MG	
+8X CREAM 1%	
+QUITIN 25 MG (1X10)	Quitin
+LAMIGINE 200 MG OD	Lamigine
+OFLOX 200 MG	Oflox
+BEPLEX FORTE 260 MCG (1X20)	
+GABAGESIC GEL	
+THYROSE 25 MG	Thyrose
+VYMADE 100 MG	Vymade
+MACITENT 10 MG	Macitent
+ISONORM 10 MG	Isonorm
+VIGORE 50 MG	Sildenafil
+VITAMIN D3 INJ	
+BRAHMI GHRUTA	
+KANCHANAR GUGGULU	
+MAXGUN 100 MG	Maxgun
+CRESTOR 40 MG (1X10)	Crestor
+BETABLOCK XL 50 MG	
+AMDATIME 100 MG (1X15)	Amdatime
+MAZETOL 100 MG	Mazetol
+THYROX 75 MCG (1X120)	Levothyroxine
+CLOFI 100 MG	Clofi
+CYCLOMUNE 0.05% EYE DROP 3ML	Cyclomune
+BICOMINE 50 MG	Bicomine
+ELSARTAN 50 MG	Elsartan
+MOMATE LOTION 0.1% 30ML	
+ELECTRAL ORS POWDER	
+ROFADAY 500 MCG	Rofaday
+DEVIRY 10 MG	Deviry
+CALUTIDE 50 MG	Calutide
+TRAZOCON-50	
+MAXGALIN 50 MG	Maxgalin
+ERITEL CH 40 TRIO	
+DABIGO 110 MG	Dabigo
+BOTOX INJ 200 UNITS	
+HUMOG-75 IU	
+DEPOPRED 40 MG INJ 2ML	Depopred
+THROMBOPHOB OINT 20GM	
+CEFPOSIGN 200 MG	Cefposign
+PRAMIXOLE 0.50 MG	Pramixole
+DECA DURABOLIN INJ 50 MG	
+ACAMPROL 333 MG	Acamprol
+ENDFLU 75 MG	Endflu
+PRUVICT 2 MG	Pruvict
+EMPAONE 25 MG	Empaone
+BUDERATOR 0.5 MG RES	Buderator
+KAMAGRA ORAL JELLY 100 MG VOL II	
+COMBIGAN SOLUTION DROP	
+ANGIOTENSIN 5 MG	Losartan
+CONAFORCE 200 MG	Conaforce
+CEROM 500 MG	Cerom
+DECABOL 250 MG INJ 1ML	Decabol
+LYNX INJ 300 MG	
+VOMISHUT INJ 2 ML	
+PALID-OD 6 MG	
+TRIOHALE INHALER	
+GABIMAX 600 MG	Gabimax
+DEPNOCEPT 100 MG	Depnocept
+NEBIHEAL 5 MG	Nebiheal
+TACROVIN LOTION	
+MIXTARD 30 FLEXPEN 3ML	Mixtard
+MOQUET 100 MG	Moquet
+AMPHONAT INJ 50 MG	
+SULPHOSALIC SOAP	
+POSANAT INJ 300 MG	
+ADMENTA 10 MG	Admenta
+FORAIR 100 MG	Forair
+ORLIMAX 120 MG	Orlimax
+SKELEBENZ 15 MG CAP	Skelebenz
+ONOFF 400 MG	Onoff
+MALEGRA GOLD 100 MG	Sildenafil
+CEPHAL 500 MG	Cephal
+ADRENALIN INJECTION	
+ASTHALIN RESPULES 15ML	
+INMECIN 50 MG	Inmecin
+TOBRA 0.3% EYE DROP	Tobra
+LUPI HCG 2000 IU INJ	
+Resteclin 500 mg	
+GLUTATHIONE 600 INJ	Glutathione
+CHLOROQUINE 250 MG	Chloroquine
+COMBIFLAM SUSPENSION	
+HEXILAC ULTRA GEL	
+STPASE INJ 1500000 IU	
+ZONAXID 500 MG	Zonaxid
+RIZE 2 PLUS	
+MOX 250 MG (KID-TAB)	
+AMITONE 10 MG	Amitone
+TADAFLO 10 MG	Tadaflo
+SIPHENE 50 MG	Siphene
+IPRAVENT ROTACAP (1X30)	
+PAXOBROOK TAB	
+ADNEON 6 MG INJ	Adneon
+ZAYO 50 MG	
+MINIMALIST 16% SERUM	Minimalist
+MINIMALIST 0.2% SERUM	Minimalist
+CYNOCOBALAMINE 500 MCG INJ	Cynocobalamine
+STERILE WATER FOR INJ 10 ML	
+PASITREX OINT 20GM	
+MONTEVAC 10 MG	Montevac
+SIMPARICA TRIO	
+FLUVOXIN 100MG	Fluvoxin
+GOREE DAY & NIGHT CREAM	
+GOREE BEAUTY CREAM	
+GOREE WHITENING SOAP	
+VASMOL OIL	
+MINTOP 10% LOTION 60ML	Minoxidil
+GABAPIN SR 600 MG	
+TAPFINE 100 MG	Tapfine
+SUMINAT 25 MG	Suminat
+ELCEPHASE 1000 SR	Elcephase
+MAXGALIN 150 MG	Maxgalin
+MODASAFE -A 250 MG	
+OLMEZEST H 40	
+NICARDIA RETARD 20MG	Tretinoin
+PHEXIN BD 750 MG	
+BETAGEE INJ 4 MG	
+ELTOCIN DS 500 MG	
+SLEMETIL MD 5 MG	
+WORMENTAL 150 MG	Wormental
+REBAGEN 100 MG	Rebagen
+BOSENTAS 62.5 MG	Bosentas
+FLEXURA D TAB	
+PARAGEE 500 MG	Paragee
+T-BACT OINTMENT 15GM	
+ZINTAC 150 MG	Zintac
+VELTAM PLUS TAB (1X15)	
+ANGISPAN TR 2.5 MG (1X25)	
+PHYSIOGEL HYPOALLERGENIC	
+RENERVE CAP	
+OLMEHEAL 20 MG	Olmeheal
+OPTICHLOR SL OINT 5gm	
+KLENSMART 60 MG	Klensmart
+SODATAB 500 MG	Sodatab
+TONOFERON DROP 15ml	
+MONOCEF-O 50 MG 30ML	
+PAN 40 MG (1X15)	
+LASUNA GARLIC CAP	
+PIROX DT 20 MG	
+CINZAN 75 MG DT TAB	Cinzan
+SOMADOL 350 MG	Somadol
+CABERSMART 0.5 MG	Cabersmart
+PRIMOX 25 MG	Primox
+REFAXINOL 550 MG	Refaxinol
+MUCOMIX INJ 1 GM (5ML)	
+MUCOMIX 400 MG INJ (2ML)	Mucomix
+MIRAGRON ER 25 MG	
+FEMOSTON 1/10 MG	Femoston
+PREMARIN 0.3 MG	Premarin
+TELMA 40 MG	Telma
+ZOCON T KIT	
+VOVERAN EMULGEL (30GM)	Diclofenac
+TERABET CREAM 20GM	
+URIWIN 300 MG	Uriwin
+FEROMAXX-XT TAB	
+HUMINSULIN N 40 IU	
+MAMOFEN 20 MG	Mamofen
+BULETRIP SR 300 MG	
+IMMULINA 400 MG	Immulina
+MELAQUICK 3 MG	Melaquick
+ZOCON EYE DROPS	
+ZOLE-F OINTMENT 15GM	
+MICODIN 2% SHAMPOO	Micodin
+OVRAL L TAB	
+MAHAFLOX 400 MG	Mahaflox
+MUKTA VATI EXTRA POWER	
+UDAPA 10 MG	Udapa
+DUZELA 60 MG	Duzela
+STORVAS 20 MG	Storvas
+COVERSYL AM 18 MG	
+ASTHALIN RESPULES 2.5 ML	
+HYPIN 5 MG	Hypin
+ITRADILA 200 MG	Itradila
+AMPHOTRET 50 MG INJ	Amphotret
+ARMOTRAZ 1 MG	Armotraz
+Glycomet SR 1000 mg	Metformin
+FINCAR 1 MG	Finasteride
+SERETIDE ACCUHALER 50/250 MCG	
+TADAJUV ODF 20 MG (1 STRIPS)	
+REVOCON 25 MG	Revocon
+FLOMIST NASAL SPRAY 50 MCG 10ML	
+ELTROXIN 50 MCG	Levothyroxine
+FIRMAGON 80 MG INJ	Firmagon
+CALCINASE NASAL SPRAY 60MD	
+RASALECT 1 MG	Rasalect
+LUPIRTIN SR 400 MG	
+TOLVAHEAL 15 MG	Tolvaheal
+ACARBOSE 50 MG	Acarbose
+DYCERIN 50 MG	Dycerin
+TASTYLIA BLACK 80 MG	
+GLUTABEST 20% 50ML	Glutabest
+ZEXIPAG 400 MG	Zexipag
+ZEXIPAG 200 MG	Zexipag
+RISOFOS 35 MG	Risofos
+EPOFER 10000 IU INJ	Epofer
+SCALP VEIN SET 22 NG	
+TACMOD 0.1% LOTION 30ML	Tacmod
+BEPLEX FORTE MONO INJ 11ML	
+PICLIN ORAL SOLUTION 150ML	
+URIRON 100 MG	Uriron
+JANAM GHUNTI 125ML	
+CLEARZ MAX CREAM 15GM	
+CEFAKIND 250 MG	Cefakind
+ONDEM MD 8 MG	
+TESTOBOON CP 250 MG INJ 1ML	
+KAMAJOY 200 MG	Kamajoy
+LEVOHEAL 250 MG	Levofloxacin
+METDROP SR 1000 MG	
+BETACAP TR 60 MG	
+NAILON SOLUTION 5ML	
+NAMOCEF INJ	
+KENZ 2.0% CREAM 30GM	
+TOBA DM 0.3% ED 10ML	
+NATURAL AMLA 500 MG	
+SOMPRAZ 20 MG	Sompraz
+MESACOL OD TAB (1X15)	
+EAZYPET TAB	
+AUGMENTIN DUO DRY SYRUP 30ML	Amoxicillin + Clavulanate
+PROVILBOL 25 MG	Provilbol
+THYROACTIVE 50 MG	Thyroactive
+SUSTEN 400 MG CAPS	Susten
+VANLID 500 MG INFUSION INJ	Vanlid
+Strocit 500 MG	
+BRESOL TAB	
+EFAVIR 600 MG	Efavir
+MILNA 50 MG	Milna
+APOQUEL 16 MG	Apoquel
+OTOGESIC EAR DROPS 10ML	
+BARIJAK 4 MG	Barijak
+SPASMOHEAL 80 MG	Spasmoheal
+ONDION 4 MG	Ondion
+TRENTAL ER 400 MG	
+ZUFLO 200 MG	Zuflo
+VISTADROX 500 MG	Vistadrox
+PUBERGEN HP 10000 INJ	
+ETOZOX 60 MG	Etozox
+C-ONE 1000 MG INJ	
+QUOTOX 25 MG	Quotox
+SIBOLONE 2.5 MG	Sibolone
+POLYBION A INJ (2ML)	
+COMBIFLAM TAB (1X20)	
+RUMALAYA TAB (1X60)	
+TADAJUV 10 MG	Tadajuv
+EXERMET SR 500 MG	
+DICLOPLAST PATCH	
+LIDRIN 5 MG	Lidrin
+CYANOCOBLAMINE INJ 500 MCG	
+ETHAMCIP 500 MG	Ethamcip
+CABLIZ 0.25 MG	Cabliz
+SILDITOP 50 MG	Silditop
+THALIDON 25 MG	Thalidon
+CONAFORCE 100 MG	Conaforce
+NEOSPORIN H EAR DROPS 5ML	
+CARIDOLL 750 MG	Caridoll
+CYCLOPHIL ME 50 MG	
+PENIDURE LA 12 MG INJ	
+ITRAL EYE/EAR DROPS 5ML	
+DUOVIR N TAB	
+ITRASHOOT 200MG	Itrashoot
+TRENABOL 100 MG INJ 1ML	Trenabol
+MASTERON 100 MG INJ 1ML	Masteron
+LEETREXATE 10 MG	Leetrexate
+QUININ 300 MG	Quinin
+DEPONOCEPT 50 MG	Deponocept
+LARI 500 MG	
+AMOXYCLAV 375 MG	Amoxyclav
+SERTA 25 MG	Serta
+HCG CAN 5000 IU INJ	
+CEFADROX 500 MG	Cefadrox
+CETIL 500 MG	Cetil
+TOBRA D EYE DROP 10ML	
+ESOPEN 40 MG	Esopen
+SOL 5 MG	
+MAMOFEN 10 MG	Mamofen
+HEPBEST 25 MG	Hepbest
+PRIMACORT 100 MG INJ	Primacort
+CAREPROST PLUS EYE DROP	
+DAYVIGO 10 MG	Dayvigo
+PHENERGAN INJ 2ML	
+TRAZOKEM 50 MG	Trazokem
+NEBICIP 5 MG	Nebicip
+LDN 3 MG	
+LDN 1.5 MG	
+LDN 4.5 MG	
+CHLORPROMAZINE 50 MG	Chlorpromazine
+GLIMED 3 MG	Glimed
+LODONAK BP 8/90 MG	
+CETAPIN XR 500 MG (1X15)	
+PRIMIWAL E4 4 MG	
+DAYVIGO 5 MG	Dayvigo
+MIRABEN ER 50 MG	
+TESTOSIGN GEL 1%	
+NEUROZION FORTE 7 amp	
+CYCLOXAN 50 MG	Cycloxan
+DHRUBH 150 MG	Dhrubh
+ALERMED 120 MG	Alermed
+MYOTAN CT 40/12.5 MG	
+WALCOBAL 1500 MCG INJ 1ML	Walcobal
+VYMADA 50 MG	Vymada
+SYCOMIN 25 MG	Sycomin
+MIRA 7.5 MG	
+TINFAL 5 MG	Tinfal
+ALENDEOS 70 MG	Alendeos
+HISONE 5 MG	Hisone
+CARIQUEL 1.5 MG	Cariquel
+DEPNOCEPT 50 MG	Depnocept
+PANCURE 150 MG	Pancure
+LUBISTAR 0.5% DROP	Lubistar
+CLOFI 25 MG	Clofi
+CONIMUNE ME 25 MG	
+REFFRON TAB	
+GLUCOBAY 25 MG	Glucobay
+VITADERM C SCAR GEL	
+TEMOSIDE 100 MG	Temoside
+BIGOMET SR 500 MG	
+INVEGA SUSTENNA INJ 100 MG	Sildenafil
+RIVASMART 10 MG	Rivasmart
+MYATRO 0.01% SOLUTION	Myatro
+LINEATOR	
+MECOBROOK G	
+LACARNIT 330 MG	Lacarnit
+CHLORTHED 6.25 MG	Chlorthed
+TRIQUILAR	
+MINOLAST FX	
+CEFITAXE 200 DT	Cefitaxe
+GLUCONOL 500 MG	Gluconol
+ADAR INJ 1 ML	
+TESTASYP CYPIONATE INJ 250 MG	
+SEBIFIN 250 MG (1x15)	Sebifin
+DUPHASTON 10 MG	Duphaston
+AMFETA ER 150 MG	
+STEARATE 250 MG	Stearate
+ALTIVA 120 MG	Altiva
+NEULOX 40 MG	Neulox
+ARACHITOL INJ 6 IU (6x1ml)	
+ONDET 2 MG INJ 2ML	Ondet
+E-CEF 200 MG	
+FLAGYL 200 MG SUSPENSION	Flagyl
+TADAJUV 5 MG	Tadajuv
+DICLO PLUS TAB	
+MOVEXX-SP TAB	
+UNOGRA 50 MG ODS	Unogra
+MIRAGO 25 MG	Mirago
+GASEX TAB (1X100)	
+ZIFEXIM 200 MG	Zifexim
+DIGIHALER SF 250 MG	
+BENZIL 5 MG	Benzil
+LYCOR 1 % CREAM 15GM	Lycor
+NEUZOL 400 MG	Neuzol
+PACITANE 2 MG TAB (1X30)	Pacitane
+TOFIFRESH 100 MG	Tofifresh
+SKYMAC PET 10 MG	
+BEETAPET 62.5 MG	Beetapet
+REVOLUTION DROPS	
+STANO 50 MG INJ 1ML	Stano
+TOLPEVAC 150 MG	Tolpevac
+ORLIJOHN 120 MG	Orlijohn
+ZYHCG HP 2K	
+PREDNIWEL-A 80 (40 MG) INJ	
+DOX T SL	
+DUZELA 20 MG	Duzela
+LISTRIL PLUS TAB (1X10)	
+RAMI RACE 5 MG	
+SCLEROGEM 240 MG	Sclerogem
+B-COLEX SYRUP 225ML	
+TAKFA FORTE OINTMENT 0.1 %	
+RIFAGUT 400 MG	Rifagut
+OMNIX 200 DT	Omnix
+D - GOLD TABLET	
+HAMMER OF THOR	
+SEXUAL DRIVE	
+APOQUEL 5.4 MG	Apoquel
+SOMA BOOST- T 225 MG	
+REPROSATE 335 MG	Reprosate
+LUPIN 150 HMG	Lupin
+PIRETAM 1200 MG	Piretam
+BRIMODIN EYE DROP 5ML	
+CARDICHEM 12.5 MG	Cardichem
+VORIER 200 MG	Vorier
+HEPTRAL 400 MG	Heptral
+BACTRIM SYP	
+HUMAN MIXTARD 100 IU 10ML	
+GLYCOMET 500 MG	Metformin
+OPTINEURON FORTE INJ	
+ANXOSLEEP DUO	
+CYCLOBENZ 30 MG	Cyclobenz
+IROVEL 300 MG	Irovel
+LIXEN 600 MG	Lixen
+MELONEX 1.5 MG INJ	Melonex
+NOOSANTA 100 MG	Noosanta
+SYMBICORT INHALER 80/4.5 MCG	
+OLMEVAC 20 MG	Olmevac
+MUPIMET OINT 2% 5GM	
+DOXEPRIME 25 MG	Doxeprime
+HYOIMAX S  0.125	
+CELLCEPT 500 MG	Cellcept
+D3 SURE SOLUTION	
+NICARDIA XL 60  MG	
+AMIN 25 MG	
+FLURASTED 500 MG INJ 10ML	Flurasted
+ETOFORD 120 MG	Etoford
+PROPELAR F	
+OZEMPIC 1 MG INJ	Ozempic
+AZIDERM 15 % GEL 15GM	Aziderm
+NAILROX NAIL LACQUER SOLUTION 5ML	
+VENLOR XR 75 MG	
+LEVOLIN RESPULES	
+BACLOF OD 30 MG	
+PIRFENEX 400 MG	Pirfenex
+B-COLEX CAP	
+ROXYCHEM 150 MG	Roxychem
+NEODROL 40 MG INJ	Neodrol
+MAXAGALIN ER 75 MG	
+LENEL 75 MG	Lenel
+RIVAFLO 20 MG	Rivaflo
+ISOKEY 30 MG	Isokey
+GLYKIND XR 60 MG	
+QUTIPIN SR 100 MG	
+NEXTRIL 50 MG	Nextril
+PIMAPEXOLE 0.5 MG	Pimapexole
+IPRAVENT RESPIRATOR SOLUTION 15ML	
+QUTIPIN 300 MG	Qutipin
+QUTIPIN SR 400 MG	
+NAC NANO GEL 4% 25GM	
+INTACOXIA 120 MG	Intacoxia
+CROTORAX HC CREAM 10GM	
+DEPIWHITE CREAM 15ML	
+SYSTANE ULTRA EYE DROP	
+OSTERI INJ 600 MCG PEN WITH NEEDLES	
+ZINCONOF	
+CYTOTAM 10 MG	Cytotam
+GLYCIPHAGE 850 MG	Metformin
+MINOXYTOP F 5 % SOL 60ML	Minoxidil
+BRILANTE INTENSE SERUM 30ML	
+FLEXITEAR HA EYE DROPS	
+SIMVATIC 40 MG	Simvatic
+SUPATRET C GEL 4% 15GM	
+ZEDOCEF 200 MG	Zedocef
+FURAMIST AZ NASAL SPRAY	
+VOVERAN GE 50 MG	Diclofenac
+CETZINE 10 MG (1X15)	Cetzine
+COZARTAN H	
+FILITRA 10 MG	Filitra
+TESTORIGHT 40 MG	Testoright
+MUCOMIX 200 MG INJ 5ML	Mucomix
+TOPIRA 50 MG	Topira
+DOXYLAB TAB (1X8)	
+ORIPRIM DS TAB	
+LUPIVOR 20 MG	Lupivor
+FITARO 1 MG INJ	Fitaro
+ZIX MR OD	
+HCQS 200 MG (1X10)	
+ATORVAFINE 20 MG (1X10)	Atorvafine
+CYNOMIST B 12 INJ 30 ML	
+NAPROZEN S TAB	
+HIFORCE 200 MG	Sildenafil + Dapoxetine
+CABERLIN 0.25 MG	Caberlin
+SHELCAL 500 MG (1X15)	Shelcal
+CONJUBROOK 0.625 MG	Conjubrook
+HONVAN 120 MG	Honvan
+XONE 1 GM INJ	
+AVIL INJ 2ML	
+SUPER TASTYLIA	
+DAPOFORCE 30 MG	Dapoforce
+EMPETUS 100 MG	Empetus
+SILJUV 200 MG	Siljuv
+ZOMET 500 MG	Zomet
+LIP BALM	
+DEXTOMID 50 MCG INJ	Dextomid
+EXOTINE CR 12.5 MG	
+BUSPIN 5 MG	Buspin
+TURINABOL 10 MG TAB	Turinabol
+FEBUTOP 40 MG	Febutop
+RECOPRESS 500 MG	Recopress
+STOP NIC 4 MG GUM	
+OXYNINE 5 MG	Oxynine
+HALOCARE  10 MG	Halocare
+MOPRIDE 200 MG	Mopride
+OMNIPRES 40 MG	Omnipres
+ORSEMA 0.25 MG INJ	Orsema
+ORSEMA 0.50 MG INJ	Orsema
+SUSTEN 200/100 MG	Susten
+MONTEK LC 15 MG	
+SUPHACID SUSPENSION 1020 MG	
+AXEPTA 10 MG	Axepta
+EMESET 2ML INJ	Emeset
+IPRAVENT RESPULES 500 MCG	
+TRAPIC 500 MG	Trapic
+VELTAM 0.4 MG (1X15)	Veltam
+I SITE AF TAB	
+GLUTIMAX 600 MG INJ	Glutimax
+GLUTIMAX 1200 MG INJ	Glutimax
+TRICHUP NATURAL SHAMPOO(200ML)	
+TINFAL PLUS SOLUTION 60ML	
+SKINSHINE FACE WASH (60GM)	
+RCIFAX 200 MG	Rcifax
+ZEFU 250MG	
+RANOL SR 80 MG	
+CENOFI AMFY KIT	
+MEGASLIM CAP	
+APETEMIN SYRUP 200 ML	
+CLENORUSH TROCHE 10 MG	
+JGLUT 1200 MG INJ	Jglut
+THYROACTIVE 100 MG	Thyroactive
+OPTINEURON B12 INJ 3ML	
+EUTRIG HP 2000 IU INJ	
+AVANAIR 200 MG	Avanair
+FORMOST 400 MCG INHALER	Formost
+SPORIDEX AF 375 MG	
+ATORVAFINE 40 MG (1X10)	Atorvafine
+EXTRA SUPER ZHEWITRA	Vardenafil
+GLIMIMORE 4 MG	Glimimore
+FESOBIG 8 MG	Fesobig
+LURAMAX  20 MG	Luramax
+CEFASIGN 500 MG	Cefasign
+DYTOR 40 MG	Torasemide
+FERICIP XT	
+ITRALASE 200 MG	Itralase
+HEARTACE 5 MG	Heartace
+IVASOOTH 5 MG	Ivasooth
+SUPER VARDITRA	
+TADAJUV ODF 10 MG (1X10)	
+ISOJUV 10 MG	Isojuv
+NOVODART 0.5 MG	Novodart
+Q METH 500 MG INJ	
+NOVAMOX 500 MG	Novamox
+COMBIFLAM 850 MG	Combiflam
+IMEGLYN 500 MG	Imeglyn
+TRANCODOL LA 50 MG INJ	
+UDILIV 150 MG (1x15)	Udiliv
+PANTOZEN 40MG INJ 10ML	Pantozen
+AGEFINE FORTE	
+PREBEL 75 MG	Prebel
+AQUAVIRON 25 MG INJ	Aquaviron
+LASIX 10 MG INJ	Furosemide
+OXADROL 10 MG	Oxadrol
+TACROZ FORTE 0.1% OINTMENT 20 GM	
+KETANOV 10 MG	Ketorolac
+ONDON 4 MG INJ	Ondon
+TELMAVAC 80 MG	Telmavac
+RENOCEL 10000 MG INJ	Renocel
+TRANEXACAN INJ 500 MG	
+TRENAXA 500 MG	Trenaxa
+LARINATE 100  MG	Larinate
+SMPTRIO 20- 40 KG (1X3)	Smptrio
+OLMECIP 20 MG	Olmecip
+INDOVENT SR 75 MG	
+EUKROMA CREAM 2% 40GM	
+DANOGEN 100 MG (1X10)	Danogen
+STERLE WATER	
+AMAZEO 50 MG	Amazeo
+MUSLIGRA CAP	
+RANOL 20 MG	Ranol
+NALKEM 50 MG	Nalkem
+CYANOJAN FORTE INJ 500 MCG	
+CEFASYN 500 MG	Cefasyn
+ONDION 8 MG	Ondion
+SLEPICKA 130 MG	Slepicka
+TETRALAB 500 MG	Tetralab
+TINVISTA 300 MG	Tinvista
+CARNOTOL 250 MG	Carnotol
+VERTIN 8 MG	Vertin
+VOLITROY GEL	
+CROMAL FORTE EYE DROPS 5ML	
+JUPRAZI 600 MG	Juprazi
+PRILOX CREAM 30 GM	
+THYROXINOL 125 MG	Levothyroxine
+SIMVATIC 20 MG	Simvatic
+OMEZ 10 MG	
+PARAXIN 500 MG	Paraxin
+FAROBACT ER 300 MG	
+HOPEANA 1 MG	Hopeana
+NORFLOX 400 MG	Norflox
+CLARIBID 500 MG	Claribid
+CERBROLYSIN  INJ	
+T BACT CREAM 10GM	
+ESTRAVAC 2 MG	Estravac
+TAZZLE 10 MG	Tazzle
+QUITIPIN 100 MG	Quitipin
+NOOTROPIL 1200 MG	Nootropil
+ANTIDEP 75 MG	Antidep
+NORTROP 25 MG	Nortrop
+CLONIL SR 75 MG	
+TOPAHEAL 25 MG	Topaheal
+SETMAX 100 MG	Setmax
+ELDAPRIL 10 MG	Eldapril
+U.V.A.CEF-100 DT	
+VEGA EXTRA COBRA 120 MG ORAL STRIPS	Sildenafil
+CLONITIN SR 75 MG	
+SHYTOMEL 50 MCG	Shytomel
+ASPRITO 5 MG	Asprito
+SERTANE 100 MG	Sertane
+ROYAL HONEY	
+THYROACE 50 MG	Thyroace
+PRAMIXOLE 0.125 MG	Pramixole
+VALMATA 100 MG	Valmata
+TESTOST DEPOT 250 MG INJ	
+ALGREAT 120 MG	Algreat
+ZOSERT 25 MG	Zosert
+AGEFINE SOAP 75GM	
+TRICANORT 40 MG INJ 1ML	Tricanort
+RAMISTAR 10 MG	Ramistar
+IVANORM 12 MG	Ivanorm
+OROKINASE TAB	
+DIPROBATE PLUS CREAM 30GM	
+LASMA 10 MG	Lasma
+SPARKLING WHITE TOOTHPASTE 80GM	
+VARDEJUV 10 MG	Vardejuv
+LULIDILA CREAM 20GM	
+TOFATAS 5 MG (1X10)	Tofatas
+ISOTRENOM 10 MG	Isotrenom
+LIZOLID 600 MG	Lizolid
+OMEN 20 MG	
+ANTI DANDRUFF SHAMPOO 180 ML	
+ZENICOOL 120 MG	Zenicool
+CIPCAL 500 MG	Cipcal
+FLUCONAZ 50 MG	Fluconaz
+BENOCIDE FORTE 100 MG	
+CANDIFACE 100 MG (1X10)	Candiface
+TERBINAFORCE PLUS CREAM	
+NICERBIUM 30 MG	Nicerbium
+STEYLONG SPARY 20GM	
+RUBILON 50 MG INJ	Rubilon
+VALOVERA 500 MG	Valovera
+APCITROL D3 60000 IU	
+PACEBEAT 200 MG	Pacebeat
+BECOMED INJ 10ML	
+XET-20 MG	
+ATRO INJ 1 ML	
+MESORAL INJ 2 ML	
+GRAVITOR 60 MG	Gravitor
+MEDOZ KIT (1KIT)	
+FOZO RED-Z CAPS	
+TELKONOL H 80 MG	
+POTAMIN INJ 10 ML	
+LEE-CYOMAK 500 MCG INJ 30 ML	
+AVIL 25 MG	
+DUTAMAX LOTION 60ML	
+MOXICIP 400 MG	Moxicip
+MALRID DS 15 MG	
+LUMIVAC A	
+TEROL LA 4 MG ER	
+SIGNACAFE CLASSIC ORAL POWDER (1X5)	
+SYLIS ORAL POWDER (1X5)	
+SLIM TRIM PRO	
+CLINDANOL 300 MG	Clindanol
+OTRIVIN OXY FAST RELIEF NASAL SPRAY	
+ZOXAN D EYE DROPS	
+SOFOVIR 400 MG	Sofovir
+DACLAHEP 60 MG	Daclahep
+FOLIGRAF 150 MG IU INJ	Foligraf
+ERICH 400 MG	Erich
+APSODOL 100 MG	Apsodol
+TAZAR 2.25 GM INJ	Tazar
+PIRFENEX 600 MG	Pirfenex
+CEFTROPAL SB 750 MG INJ	
+ENZAR FORTE	
+KELAC INJ 1 ML	
+TESTOBOON DEPOT 250 MG INJ 10ML	
+TESTOBOON-PP 100 MG INJ 1ML	
+EVERMIL 10 MG	Evermil
+BIOMETHRIN CREAM	
+THYROACE 100 MCG	Thyroace
+RECOPRESS 250 MG (1X6)	Recopress
+PREGABID OD 100 MG	
+INVISTA 100 MG	Invista
+SHATAVARI WOMENS	
+ASPRITO 30 MG	Asprito
+RELGIN 1MG	Relgin
+LITHOSUN 300MG	Lithosun
+RCIFAX 550 MG	Rcifax
+IOTIM EYE DROPS 5ML	
+ANTI HAIR FALL SHAMPOO 400ML	
+FM DERMA OINTMENT	
+DULATA 20 MG	Dulata
+GERCILLIN 500 MG INJ	Gercillin
+CARVISMART 6.25 MG	Carvismart
+AUGMENTIN 1.2 GM INJ 20ML	Amoxicillin + Clavulanate
+D DOXY 100 MG	
+MENOPUR 75 IU INJ	Menopur
+TLS  80 MG	
+SAFEHEART 5 MG	Safeheart
+OKACET-L 5 MG	
+ZOPIRISE 10 MG	Zopirise
+GA-6 CREAM	
+TETRALAB 250 MG	Tetralab
+DABUR SHILAJIT GOLD	
+LOSATAN 50 MG	Losatan
+UNWANTED 72 MG	Unwanted
+LASUN CARDIAC 250 MG	
+DOVERIN 40 MG	Doverin
+DILZEM CD 120 MG	
+K-PET 200 MG	
+TRETIZEN 20MG	Tretizen
+PALIP XR 6 MG	
+NOOSANTA 200 MG	Noosanta
+TELMIKIND 40 MG	Telmikind
+RABICIP 20 MG	Rabicip
+ACIVIR DT 800 MG	
+AMLOPRES 10 MG	Amlopres
+NICOTEX GUM 4 GM	
+UBICAR TAB (1X10)	
+BANDY PLUS (1X1)	
+UPRISE D3 60K (1X8 CAPS)	
+LURASID 40MG	Lurasid
+AHAGLOW-S FACE WASH	
+NOVAMOX 125MG	Novamox
+DEPSOL 75MG	Depsol
+ROPARK XL 4 MG	
+LETHYROX 150MCG	Levothyroxine
+VINTOR 6000 IU INJ	Vintor
+LANTUS CARTRIDGES 3ML	
+PRAZOPRESS XL 2.5 MG (1X30)	
+ONE TOUCH  ULTRA	
+UNDER EYE  CREAM	
+FLUTIVATE CREAM 20GM	
+T MUCE OINTMENT 5GM	
+CARISPEC 3 MG	Carispec
+HETRAZAN 100MG (1X30)	Hetrazan
+LOX 10% SPRAY 50ML	
+SEFDIN 300MG	Sefdin
+CANDID B CREAM 10 GM	
+PRUWEL 2MG	Pruwel
+MESACOL 800MG	Mesacol
+NODON 5MG	Nodon
+DIGOXIN 0.25MG	Digoxin
+CLOFRANIL 25MG	Clofranil
+CEEZEE TAB	
+JANUVIA 50MG	Sitagliptin
+INSUGEN N (NPH) 40 IU INJ	
+INSUGEN 30/70 40 IU INJ	Insugen
+INSUGEN 50/50 40 IU INJ	Insugen
+CARDIVAS 25MG	Cardivas
+ANGIZEM CD 180MG	
+TOBA EYE DROP 0.3% 5ML	
+ESTOVA 2MG	Estova
+CEFRINE 300MG	Cefrine
+NOVORAPID INSULIN 100IU INJ	
+LINOSPAN 600MG	Linospan
+BREXELANT BREAST CREAMS	
+DOXX L  100MG	
+DUONASE NASAL SPRAY 140MCG	
+MONTAIR  LC	
+CIFRAN 500MG	Cifran
+ASCORIL SF SYRUP 100 ML	
+DILVAS 2.5MG	Dilvas
+ORAWAYS 0.1% 5 GM	Oraways
+HYPODERMIC NEEDLES 24G	
+INFUSION SET STERILES	
+SURGEON CAP DISPOSABLES	
+N 95 MASKS	
+ABHIFORCE  FM	Sildenafil + Dapoxetine
+DONECEPT 10MG	Donecept
+DOXOFILE ER 400 MG	
+REVITAL-H (1X60)	
+PEGRED 3350MG	Pegred
+ONABET 2% CREAM 15GM	Onabet
+CANDIDERMA + CREAM 10 GM	
+CANDIFORCE 100MG	Candiforce
+ALDONIL 50MG	Aldonil
+FML LIQUIFILM EYE DROPS 5ML	
+ZIMIVIR 1000MG	Zimivir
+AZEE DT 100MG	Azithromycin
+MOXIFORD 400MG	Moxiford
+QUTIPIN 25MG	Qutipin
+SERETIDE ACCUHALER 50/500 MCG	
+SEVCAR 800MG	Sevcar
+MINIRIN 0.1MG	Minirin
+ZOCON 150MG	Zocon
+OROFER S 200 MG INJ	
+NICOTEX  21 MG	Nicotex
+PAXZEN TAB	
+ALMOX DT 250MG	
+CLOTAN 200 MG	Clotan
+OLSAR H 20MG	
+ALMOX DT 125MG	
+FOLLIHAIR  TAB (1X10)	
+TEMSUJOHN 0.4 MG	Temsujohn
+FITARO 2.4 MG INJ	Fitaro
+BETIN INJ 1 ML	
+TADANOVA 20 MG	Tadanova
+HYTRIN 1 MG (1X10)	Hytrin
+LUPIGEST 100 MG	Lupigest
+SEFDIN 100 MG	Sefdin
+URSOCOL 300 MG	Ursocol
+NAPROHEAL 250 MG	Naproheal
+HIFORCE 50 MG ODS	Sildenafil + Dapoxetine
+DORZOX 2% EYE DROPS 5 ML	Dorzox
+METNI 16 MG	Metni
+HIPRES 50MG	Hipres
+NATFLU 75 MG	Natflu
+OLMEZED 20 MG	Olmezed
+BEPARINE 25000 IU INJ 5ML	Beparine
+MUCINAC 20% INJ  2ML	Mucinac
+MORES 2 MG	Mores
+MORES 3 MG	Mores
+MOZINE 5 MG	Mozine
+MOSERT 50 MG	Mosert
+SYCOTIL 100 MG	Sycotil
+LONITAB 10 MG	Lonitab
+NORAD INJECTION	
+FERRARI TAB (1X8)	
+MUCOPAIN GEL 15GM	
+MODASMART 400 MG	Modasmart
+HARD PLUS	
+LAXUS PLUS	
+MOCITA 10 MG	Mocita
+MOQUET 200 MG	Moquet
+MAXIMAN PLUS	
+123-V	
+CYTODROX 500 MG	Cytodrox
+DOXY 1 L DR FORTE	
+AZITHRAL EYE DROPS 1% 3ML	
+SCAREND SILICONE GEL 10GM	
+TORVOX 5 MG	Torvox
+BRILINTA 60MG (1X14)	Brilinta
+SMILO GEL 10GM	
+MAXFORMIN 750 MG	Maxformin
+GEMER 2 MG	Gemer
+SILICON SCAR SHEET	
+SIROBOON 2 MG	Siroboon
+DIVABORT KIT	
+MYTRET GEL 0.025% 15 GM	
+XANTOX GLO	
+HEALTROXIN 150 MG	Healtroxin
+FINOBRATE 160 MG	Finobrate
+HYDRONOL 12.5 MG	Hydronol
+ACYLOVIR 800 MG	Acylovir
+LETROZ 2.5 MG (1X30)	Letroz
+KAMINI VIDRAWAN RAS	
+THYROACTIVE 25 MG (1X100)	Thyroactive
+AMIFRU 40 MG	Amifru
+REVITAL H MEN (1X60)	
+MASTARIX 100 MG INJ	Mastarix
+TRANEXAHEAL 500 MG	Tranexaheal
+RIZANET ORAL STRIPS 10 MG	
+MINIPRESS XL 2.5 MG	
+NEBICARD 10 MG	Nebicard
+TENTAL 400 MG	Tental
+FACECLIN GEL 20GM	
+TAZZLE 20 MG	Tazzle
+CEFIVAC 400 MG	Cefivac
+VITAMIN B-17 CAPS (1X100)	
+LAXIKEM PLUS SYRUP 170ML	
+AMEE 500 MG INJ	
+OPIPROL 50 MG	Opiprol
+TIGER BALM	
+MUSTARD OIL 100ML	
+TULSI 51 DROPS	Tulsi
+CAPSITOP O ROLL ON GEL	
+CLONIL 10 MG	Clonil
+PRAMIPEX 0.5 MG	Pramipex
+ROYALE 225 MG	Royale
+NEBIVOL 2.5 MG	Nebivol
+DEFLAVAC 30 MG	Deflavac
+METGEM 500 MG	Metgem
+ELIMENTA 10 MG	Elimenta
+MUCLITE SR 75 MG	
+METRONIDAZOLE 200 MG	Metronidazole
+DISPO VAN NEEDLES 26 G	
+VYMADE 50 MG	Vymade
+PARAXIN DDRAGEES 250 MG	
+FLOROCOT 100 MCG	Florocot
+ACEMIDE 250 MG	Acemide
+NIMORHAGE 30 MG	Nimorhage
+MITRA 15 MG	Mitra
+INTAGESIC SPRAY 55 GM	Aceclofenac + Paracetamol + Chlorzoxazone
+ZOCON DT 100 MG	
+LUPI FSH 75 IU INJ	
+BACLOHEAL 10 MG	Bacloheal
+EMCOR 0.25 % CREAM 15GM	Emcor
+ENTRAK SOOTHE OINT 5GM	
+BOTOX INJ 50 UNITS	
+CYCLORINE 250 MG	Cyclorine
+NELIPER 5 MG	Neliper
+FUNGDID B CREAM 15GM	
+NIMODEP 30 MG	Nimodep
+PANTAFOL DSR	
+ESOMEFOL DSR	
+FLOACE EYE DROP 0.1% 5ML	
+MACPEE 25 MG	Macpee
+JATIFALADI VATI 5GM	
+DONAKEM 5MG	Donakem
+MOQUET SR 300 MG	
+FRENIN 10 MG INJ 1ML	Frenin
+HYDROBACT 4% CREAM 20GM	Hydrobact
+TRANSEMA 5% GEL 15GM	Transema
+TRANSEMA 5% GEL 30GM	Transema
+EUTRIG HP 5000 IU INJ	
+HP KIT (1 KIT)	
+TORSINOL 20 MG	Torsinol
+CARDIAX 20 MG	Cardiax
+TCA 15 %	
+MONOTAX 500 MG INJ	Monotax
+GLYNASE 5 MG	Glibenclamide
+ENTACOM 200 MG	Entacom
+RCIFAX 400 MG	Rcifax
+CETAPIN XR 1000 MG (1X15)	
+VAVA KIT(1X9)	
+NATUROGEST 100 MG	Naturogest
+COMBICAN EYE DROPS 5ML	
+EVION LC TAB	
+FESTAL-N TAB	
+FURAMET TAB	
+FURAZOLE -D TAB	
+AMLONG 5 MG	Amlong
+ZOMELIS 50 MG	Zomelis
+VIBACT  CAPS (1X10)	
+TAVERA M TAB	
+WELLSTAB 12.5 MG	Wellstab
+PARI 10 MG	
+SHYTOMEL 100 MCG	Shytomel
+ACARSAFE 25MG	Acarsafe
+DILVAS 10 MG	Dilvas
+VANKING 500MG INJ 10ML	Vanking
+COMPLETE CARE TOOTHPASTE 80GM	
+R HUCOG 6500 IU INJ	Human Chorionic Gonadotropin (HCG)
+ROSEDAY 10MG	Roseday
+COVERSYL 4MG	Coversyl
+CARDIVAS CR 10MG	
+MODASAFE 300MG	Modasafe
+JUVMOD 200 MG	Juvmod
+SILYDOC 140MG	Silydoc
+GENTLE BABY SHAMPOO 100ML	
+CARVENOL 3.125MG	Carvenol
+GENTLE BABY SOAP 75GM	
+XARELTO 2.5MG (1X14)	Xarelto
+TINIBA 300MG	Tiniba
+GENTLE BABY SHAMPOO 200ML	
+MINOXYQURE F SPRAY 60ML	
+IVREA SHAMPOO 0.5% 30ML	Ivermectin
+TADARISE 2.5 MG	Tadalafil
+TADAJUV D SUPER TAB	
+AYURVEDA SANDAL GLOW SOAP 75GM	
+NEEM TURMERIC SOAP 75GM	
+RAMIZEN 5 MG	Ramizen
+BANDY 400 MG	Bandy
+SUPER HIFORCE	Sildenafil + Dapoxetine
+GENTLE BABY SOAP 125GM	
+CIPLAR 40MG	Ciplar
+OLMEZED 40 MG	Olmezed
+VALASHER 500 MG	Valasher
+DURASHER 60 MG	Durasher
+PROZOL-P 40 MG	
+KOFLET TAB (1X10)	
+CYSTRAN 5MG	Cystran
+REPACE 50MG	Repace
+DEPIN 5 MG (1X30)	Depin
+FLUCOJON 150 MG	Flucojon
+PERSOL AC 2.5% GEL 30GM	Benzoyl Peroxide
+TADAJUV 60 MG	Tadajuv
+SEPTILIN TAB	
+ABANA TAB	
+DESOSOFT 0.05% CREAM 10GM	Desosoft
+OLPAVIR 75 MG	Olpavir
+TESTOBOON CP 250 MG INJ 10ML	
+BIGOMET 250 MG	Bigomet
+PATADAY 2% SOL 2.5ml	Pataday
+DULATA 30 MG	Dulata
+IMMUSANTE TAB	
+REOSTO TAB	
+DEMELAN LITE LOTION 50ML	
+DIABECON DS TAB (1X60)	
+DOXENORM LBX	
+KERA XL SERUM 60ML	
+TESTOBOON-PP 100 MG INJ 10ml	
+PIROX IM 40 MG 2ML	
+NEERI 60 MG	Neeri
+POTRATE 10 MG	Potrate
+MALIRID DS	
+FITARO 0.5 MG INJ	Fitaro
+APETAMIN SYRUP 200ML	
+DOXYPET 100 MG	Doxypet
+METASPRAY NASAL SPRAY 10GM	
+TERAPAL 500 MG	Terapal
+VYMATOR 50 MG	Vymator
+MODASMART 200 MG	Modasmart
+TIMOLONG EYE DROP 5ML	
+FIRMER (HYALURONIC ACID+COLLAGEN SERUM) 10ML	
+AZEE 500 MG INJ 5ML	Azithromycin
+GENTALAB 40 MG 2ML INJ	Gentalab
+OFLOX INFUSION 2 MG 100ML	
+PYRI 500 MG	
+REBEZ 20 MG	Rebez
+FOLLIHAIR NUTRACEUTICAL TAB	
+VILAZINE 40 MG	Vilazine
+KETOCIP 1% SHAMPOO 100ML	Ketocip
+WALCOBAL 2500 MCG INJ 1ML	Walcobal
+SETFRAC 500 MG	Setfrac
+PEXEP CR 37.5 MG	
+VALANCE OD 500 MG	
+PLACENTAHEAL GEL 20GM	
+DDR 30 MG	
+DORZOX-T EYE DROP 5ML	
+ITRASPOROX 200 MG	Itrasporox
+CETCIP-L 5 MG	
+GLIMITH 2 MG	Glimith
+XTRALITE CREAM 15GM	
+XYLOCAINE 10% SPRAY 50ML	Xylocaine
+T BACT OINTMENT 2% 5GM	
+MORMOX-F EYE DROPS 5GM	
+GABATRON GEL 30GM	
+PRAZISHER 600 MG	Prazisher
+SIMVATIC 10 MG	Simvatic
+FLUCORT SKIN LOTION 30ML	
+NICOTEX GUM 2 MG (1X12)	
+GLYCIDAP 10 MG (1X15)	Glycidap
+CONTIFLO ICON 0.4 MG	
+U.V.A.CEF-CV 100 MG	
+BD ULTRA FINE INSULIN (1x10)	
+IVREA 1% LOTION 30ML	Ivermectin
+BIOGLANDIN 500 MCG INJ	Bioglandin
+TAPENAX ER 50 MG	
+RUTOHEAL D	
+CHOREA AID DROPS 30ML	
+BARSHASHA POWDER (HAMDARD) 60GM	
+BARSHASHA POWDER (MULTANI) 60GM	
+ASCOR JM INJ 6ML	
+XALATAN EYE DROPS 0.005% 2.5ML	
+URIMAX 0.2 MG	Urimax
+CLOBIDEX CREAM 0.05% 25GM	
+SUPER C TAB.	
+EXESIN 25 MG	Exesin
+CARDIVAS 3.125 MG	Cardivas
+PRAMIROL 1.5 MG	Pramirol
+UROTONE 25 MG	Urotone
+CARDIOROSTIN 5 MG	Cardiorostin
+GAVIR 250 MG	Gavir
+PARAXIN 250 MG	Paraxin
+ZEP CR 300 MG	
+CAMPICILLIN 500 MG INJ	Campicillin
+FLEMICLAV I.V 1.2 G INJ	
+BUSPIN 10MG	Buspin
+FAMONEXT 40 MG	Famonext
+MOREASE SR 200 MG	
+MOREASE 135 MG	Morease
+CLOCIVIR 500 MG INJ 10ML	Clocivir
+NUROKIND-OD 1500 MCG INJ 1ML	
+STAMLO 5 MG	Stamlo
+INTACOXIA 60 MG	Intacoxia
+ALLERJA-L 5 MG	
+ERYTHROMYCIN 500MG	Erythromycin
+OZIM 5 MG	
+IVERFRESH 12 MG	Iverfresh
+CIPROKEM 2MG CONTAINER 100ML	Ciprokem
+DUOLIN 3MG RESPULES 3ML	Duolin
+ZEP CR 400 MG	
+CHRICOHOL POWDER 250 MG 3.5GM	
+NORTIMER 25 MG	Nortimer
+SAHELI TAB	
+NIRIT SPAL TAB	
+NORTIMER 75 MG	Nortimer
+CARIQUEL 6 MG	Cariquel
+LURAMAX 80MG	Luramax
+VATOBET 16 MG	Vatobet
+FITARO 1.7 MG INJ	Fitaro
+TOFAJAK-IN 5 MG	
+SULFAZEE 1000 MG	Azithromycin
+VARENISMART 1 MG	Varenismart
+TRIMINE 25 MG	Trimine
+AZITHRAL XL 200 MG SUSPENSION 30ML	
+VERQUVO 5 MG	Verquvo
+OXALO FORTE CAPS	
+FITARO 0.25 MG INJ	Fitaro
+JAKNAT 10 MG	Jaknat
+PULMOSIL 10 MG INJ 12.5ML	Pulmosil
+FLEXON MR TAB (1X10)	
+DASUTRA X 30 MG	
+REFRESH TEARS 0.5% 10ML EYE DROPS	
+CLINSOL PLUS GEL 15GM	
+PRUCALP 2 MG	Prucalp
+FERISMART INJ 5ML	
+MENACAN K 3 INJ 1ML	
+CELSTROL 160 MG	Celstrol
+ZOLASTA 4 MG INJ 4ML	Zolasta
+DEROBIN OINTMENT 30GM	
+LODONAK 3 MG	Lodonak
+LUPIHEME 12 MG	Lupiheme
+CHRICOHOL 500 MG	Chricohol
+EZEDOC 10 MG	Ezedoc
+FEMAFORD 2.5 MG	Femaford
+TOFASIG 5 MG	Tofasig
+TAKJAK  XR 11 MG	
+CORECT SUPPOSITORIES	
+MINOKEM -N 5% SOLUTION 60ML	
+VOXA 50MG	
+OMNACORTIL 30 MG	Omnacortil
+MOXICIP D EYE DROP 5ML	
+ALDIGESIC SP 100 MG	
+FOUR DREM CREAM 5GM	
+VTIDOL N 100 MG	
+ZOPFRESH-E 6 MG	
+LANYDOL 100 MG	Lanydol
+NANDROLIN 100 MG INJ 1ML	Nandrolin
+OLANA 10 MG	Olana
+RISCAN 4 MG	Riscan
+FIROTAIL 227 MG	Firotail
+STAY ON POWER OIL 30ML	
+MOPRIDE 50 MG	Mopride
+TOLVAHEAL 30 MG	Tolvaheal
+DISPO VAN SYRING 3ML	
+CALARC INJ 10ML	
+MODKEM 200 MG	Modkem
+HARD ON TAB	
+CABERMAX 1 MG	Cabermax
+CERECETAM 800 MG	Cerecetam
+MALEGRA 25MG	Sildenafil
+TRETIVA 30 MG	Isotretinoin
+LIV 52 HB TAB	
+MELOSET 3MG	Meloset
+CARISPEC 1.5 MG	Carispec
+ISTAVEL 100 MG	Istavel
+SITA SMART M 50/500 MG	
+POMIDE 2 MG	Pomide
+ALTRAZ 1 MG	Altraz
+WAKLERT 50 MG	Armodafinil
+ARTVIGIL 50 MG	Armodafinil
+AMLOPRES 5 MG	Amlopres
+NICOTEX 7 MG	Nicotex
+AZIZOOM 250 MG	Azizoom
+MOBICAM DT 20 MG	
+METNI 8 MG	Metni
+ZINKEL 50 MG	Zinkel
+ERYTHROCIN 250 MG	Erythrocin
+MAYUS 50 MG	Mayus
+FALCIMEF 250 MG	Falcimef
+ELSARTAN H	
+ZOLE SKIN OINT 2% 15GM	
+AZI EDGE 500 MG	
+MODASAFE 200 MG	Modasafe
+VEGA ORAL JELLY 100 MG 5GM	Sildenafil
+VILDASMART DAPA 100/10 MG	
+ARTHRET FORTE CAPS	
+TRALO 20 MG	Tralo
+CHLOROCOL OINT 1 % 3GM	
+NOVOFINE NEEDLE 31G 6MM	
+TADAGA 10 MG	Tadalafil
+SUSTEN 200 MG	Susten
+DYDROBOON 10 MG	Dydroboon
+RIVAJON 15 MG	Rivajon
+EPLEBLESS 25 MG	Eplebless
+CIPMOL 500 MG	Cipmol
+LYCOZON SG CAPS	
+TRALO 10 MG	Tralo
+DAILYMET 1000 MG	Dailymet
+NOVAPIME 1000 MG INJ 10ML	Novapime
+VENLAF ER 150 MG	
+NUROKIND LC 1GM INJ 5ML	
+FORACORT ROTACAPS 200 MG (1X30)	Formoterol + Budesonide
+HYDROZIDE 25 MG	Hydrozide
+RTSUNATE 200 MG	Rtsunate
+AMLONG 10 MG	Amlong
+SHYTOMEL DUO 47 MCG	
+VITAMIN C QUERCETIN & ZINC CAPS	
+BACSTOL 200 MG	Bacstol
+ROPARK 1 MG	Ropark
+GABAPIN 400 MG	Gabapin
+NICOTINE PATCHES 7 MG	
+VOLTIDO 100 MCG ROTACAPS (1X15)	Voltido
+RAMIPRES 1.25 MG	Ramipril
+NATRILIX SR 1.5 MG	
+BENITOWA 8 MG	Benitowa
+GESTOSERV 100 MG	Gestoserv
+AMLIP 2.5 MG	Amlip
+NAC SR 75 MG	
+MULTIVITE FM OMEGA CAPS (1X30)	
+MINOXIHEAD 2.5 MG	Minoxihead
+LODONAK 1.5 MG	Lodonak
+SOMA BOOST 1000 MG	
+LIPOCUT 60 MG (1X10)	Lipocut
+SIROASH 1 MG	Siroash
+ANARIX 10 MG	Anarix
+INTACOXIA 90 MG	Intacoxia
+TOBASTAR EYE DROP 5ML	
+RISCON 2 MG	Riscon
+ALZOCIN 10 MG	Alzocin
+WYSOLONE DT 5 MG	
+IBSET TAB	
+ELDICET 50 MG	Eldicet
+AMLODAC 10 MG	Amlodac
+REVOLUTION 120 MG 3 DOSES	Revolution
+ZUNICZOMPI-TZ TAB	
+MOCITA 20 MG	Mocita
+RITO 100 MG	
+ALKEMOX CV 625 MG	
+LARINATE 200 MG	Larinate
+ZILARTA CT 40/12.5 MG	
+DEPO PROVERA 150 MG INJ 1ML	
+TETANUS VACCINE 0.5ML	
+OMNI HOT GEL 30GM	
+SERPINA TAB	
+VALTAN 80 MG	Valtan
+XBIRA 500 MG	Xbira
+CRESTOR 5 MG	Crestor
+COLY-MONAS 2MIU INJ	
+NIFTAS SR 100 MG	
+FOSFOCIN POWDER 3GM	
+BDFOSFO 4MG INJ	Bdfosfo
+KENACORT 0.1% PASTE (5GM)	Kenacort
+MOXMED 500 MG	Moxmed
+AZIRITE 500 MG	Azirite
+ISOFAIR 10 MG	Isofair
+SIMPLEX XL CREAM 240 GM	
+CABSHER 0.5 MG	Cabsher
+CANDIHEAL 1% CREAM 30 GM	Candiheal
+THYRONORM 88 MCG	Levothyroxine
+GESTONE 100 MG INJ 2ML	Gestone
+SORBITRATE 10 MG	Sorbitrate
+SORBITRATE 5 MG	Sorbitrate
+MESACOL SUPPOSITORY 500 MG	
+XYLOCAINE 2% INJ 30ML	Xylocaine
+ORTHO SENZ OINT 30GM	
+ANNAVAIL 10 MG	Annavail
+YDRO 200 MG	
+PARDOL 650MG	Pardol
+ALAMIN M FORTE CAP	
+NASIVION ADULT NASAL SPRAY 10ML	
+NASIVION BABY 0.025% 10ML	
+AZIRITE 250 MG	Azirite
+APP UP SYRUP 200ML	
+HUNGREE SYRUP 200ML	
+VOLINI MAX GEL 30GM	
+ACTON PROLONGATUM 60 IU 5ML	
+CRESTOR 10 MG (1X30)	Crestor
+OLEX 5 MG	
+ETOLYTE MR	
+HAXIMAR B OINT 15GM	
+CIPZEN FORTE 10 MG	
+HYALU GEL 30GM	
+TRAVONEXT EYE DROP 2.5ML	
+T BACT OINT 15GM	
+MILFLOX 0.5% EYE DROP 5ML	Milflox
+BRUKEM 100 MG	Brukem
+ADD UP 4 MG	
+GABIMAX 100 MG	Gabimax
+AMICLINE 100 MG	Amicline
+ALKEM METRO IV INFUSION 100ML	
+VYMATOR 100 MG	Vymator
+CIPMIDO 5 MG (1X10)	Cipmido
+SUCIRON INJ 5ML	
+BOSENLEE 125 MG	Bosenlee
+URIKIND KM 5GM	
+NEBICARD 5 MG	Nebicard
+BOSENTAS 125 MG	Bosentas
+GLUTATHIONE 250 MG CAPS	Glutathione
+THYROXIUM 100 MCG	Levothyroxine
+CLOMIFONE 50 MG	Clomifone
+TAMOXICAN 20 MG	Tamoxican
+TOPCEF 200 MG	Topcef
+SOFOKAST PLUS TAB	
+ERLOTERO 100MG	Erlotero
+MELANOCYL OINT 25GM	
+PIGMENTO TAB (1X40)	
+VITIX GEL 50ML	
+TADADAY 60MG	Tadaday
+ASKLEROL INJ 2ML	
+DOXYVAC-C 100 MG	
+ILUMAX CREAM 20GM	
+BRAHMI TAB (1X60)	
+TORSINOL 5 MG	Torsinol
+AVARTA ANTI AGEING CREAM 50GM	
+VASOGRAIN TABLET	
+AZTOR 10 MG	Aztor
+NEOPRIDE 25 MG	Neopride
+LUMIFEN 80/480 MG	Lumifen
+SEACOD CAPS	
+MENTAT TAB (1X60)	
+FLIXONASE NASAL SPRAY 120MD	
+TOPIRA 100MG	Topira
+GLIMP 1MG	Glimp
+MOXICIP EYE DROPS 0.5%	
+CHOLTRAN ORAL SUSPENSION 5GM	
+VARDEGRA 20MG	Vardegra
+OLVAS H	
+PIMAPEXOLE 1 MG	Pimapexole
+ZYRIK 100MG	Zyrik
+QUTOX SR 200MG	
+QUTOX 25MG	Qutox
+ZINCO POWER TAB	
+PEXEP 20 MG	Pexep
+CALAPTIN 40 MG	Calaptin
+BLUETRIP SR 300 MG	
+ATORLIP 5 MG	Atorlip
+DEFCORT 18 MG	Defcort
+VEECEE-Z	
+CARIQUEL 3 MG	Cariquel
+DOXYT 100 MG (1X8)	Doxyt
+ITRASPOROX 100 MG	Itrasporox
+CEDOX 200 MG	Cedox
+REDOTIL 100 MG	Redotil
+NALCIP 50 MG	Nalcip
+OLEANZ 10 MG	Oleanz
+MELALITE 15 CREAM 30GM	Melalite
+OXETOL 300 MG	Oxetol
+DXM 20 MG	
+APIBLITZ 5 MG	Apiblitz
+CARODYL 25MG	Carodyl
+PUREGRAF 75IU INJ 2ML	Urofollitropin
+MEGAENTIN 1200 MG INJ	Megaentin
+FLUSID 0.2% CREAM 10GM	Flusid
+BISOMAX 10 MG	Bisomax
+NEOMEC 10MG	Neomec
+STAZNOR 10MG (1x10)	Staznor
+DISPO VAN SYRINGE 1ML	
+TIATAN 12.5 MG	Tiatan
+SYNDOPA PLUS TAB	
+ABORTAB 200 MG (1X1)	Abortab
+NITROPLUS 5 MG INJ 5ML	Nitroplus
+FINGOMOD 0.5 MG	Fingomod
+PANTOP 20 MG	Pantop
+HIFI 200MG	
+AMERICANO MVI INJ 10ML	
+ELOCON CREAM 10GM	
+ROXITID 150 MG	Roxitid
+TERIFRAC 750 MCG INJ 3ML	Terifrac
+TERIFRAC PEN	
+POMIDE 4 MG	Pomide
+MOX CV 625 MG	
+OZEMPIC 0.5 MG INJ 1ML	Ozempic
+GRAVITOR SR 180 MG	
+LICAB 300 MG	Licab
+URSOLID 150 MG	Ursolid
+FALCIGO INJ 60 MG	
+HQTOR 200 MG	Hqtor
+RELISPRAY 36 GM 48ML	Relispray
+MARTIFUR 100MG	Martifur
+DIGYTON DROP 30ML	
+ANXOCARE TAB.	
+HIMAX OINTMENT 50GM	
+GLYCOLATE 1 MG	Glycolate
+CEFTAZ INJ 1000 MG 10 ML	
+TESTOBOON DEPOT 250 MG INJ 1 ML	
+VILITRA 80 MG	Vilitra
+ALMOX 500 MG (1X15)	Almox
+PAN D (1X15)	
+ZINCOVIT TAB (1X15)	
+MELMET SR 1000 MG	
+CONCOR COR 2.5 MG	
+ROZAVEL 5 MG	Rozavel
+TRIVASTAL L.A 50 MG	
+TELVAS-AM 80/5MG (1X15)	
+SLEEPOSE XTRA TAB	
+SHILAJIT TAB.	
+SAFED MUSLI TAB	
+DABUR HAJMOLA TAB	
+PUDIN HARA LIQUID 10ML	
+VICCO TOOTHPASTE 50GM	
+DETTOL LIQUID 125ML	
+DABUR HONEY 50GM	
+DABUR HONEY 100GM	
+GELUSIL TAB	
+ZANDU BALM 8ML	
+AMRUTANJAN BALM 7.4GM	
+VICKS VAPORUB 25ML	
+ENO LEMON FLAVOUR 100GM	
+BOROLINE CREAM 20GM	
+SELSUN SHAMPOO 60ML	
+SSDEE CREAM 15GM	
+SEROFLO ROTACAPS 500MG (1X30)	Salmeterol + Fluticasone
+TENORMIN 25MG (1X14)	Tenormin
+TENORMIN 50MG (1X14)	Tenormin
+CANDEVAC 16MG	Candevac
+GLYCOMET GP 1 MG	Metformin
+SETA 50 MG	
+NORFLOKEM 400MG	Norflokem
+DERMAFIL 250 MG	Dermafil
+CABERMAX 0.5 MG	Cabermax
+ISTAMET 50/500 MG	Istamet
+DIAVIT PLUS	
+CLOMIFORD 100 MG	Clomiford
+AMOXYCLAV DS ORAL SUSPENSION 30ML	
+HEALING O2 TAB	
+CORTIVAC CREAM 1% 15GM	
+TRIAMADERM OINT 15GM	
+NIRMACOM 100 MG	Nirmacom
+MEFTAL -SPAS TAB	
+MOXMED 250 MG	Moxmed
+NETAZOX DT 200 MG	
+BETACAP TR 80 MG	
+VENPRES 20MG	Venpres
+DISRAM 250MG	Disram
+ALPHAGAN P EYE DROP 5ML	
+OXOZEP 600 MG	Oxozep
+CANDITRAL 100MG	Canditral
+MEDERMA CREAM 10GM	
+DARBECURE 25MG INJ 0.42ML	Darbecure
+NUPENTA 40MG	Nupenta
+DHEA 25 MG	
+AMPHOTIN 50 MG B INJ 10ML	Amphotin
+GTN SORBITRATE CR 6.4 MG	
+LIVAPT 500 MG	Livapt
+SUPER DIGESTIVE ENZYMES	
+NETAZOX 100 MG SUSPENTION 30ML	Netazox
+CROCIN 500 MG	Crocin
+MIRACORS ER 25MG	
+NETALO EYE DROP 0.02% 3ML	
+BISOMAX 5MG	Bisomax
+VERTIFORD 24MG	Vertiford
+GABAFRESH 1000 MG (1X10)	Gabafresh
+DOXORLLY LB 100MG	
+ACUTRET 20MG	Acutret
+RANTAC 300MG	Rantac
+DECAMAXX 400 MG INJ 1ML	Decamaxx
+VBOLNOR 10MG	Vbolnor
+DALSTEP TABLET	
+PARALYF SR 1000MG	
+DROVILAB M	
+WORMENTAL 500MG	Wormental
+LAMIVIR HBV 100MG	
+CHEMIST AT PLAY BODY LOTION 236ML	
+TURMERIC SOAP (MOTI) 150GM	
+VENTOCAL-D3 NANO SOLN 5ML	
+SETMAX 50MG	Setmax
+MONDESLOR TAB	
+U 40 SYRINGE 1ML	
+GLUCONATE CREAM 250GM	
+TOPCEF DT 100MG	
+LARINATE 50MG	Larinate
+CETCIP 5MG	Cetcip
+DIABECON TAB	
+OMNICLAV 625MG	Omniclav
+CLOFRANIL 50 MG	Clofranil
+HYDROHEAL AM GEL 50GM	
+HAIR-O-TIN	
+MINWIN 5MG	Minwin
+MINWIN 10MG	Minwin
+KETO LOTION 2 % 50ML	
+VARDITRA 10 MG	Varditra
+PILL CUTTER	
+AXORIN INJ 40 MG 0.4ML	
+ARJUNA TAB (1X60)	
+DOXIHEAL 100 MG	Doxiheal
+ACENAC-P 100MG (1X15)	
+DIAREX TABLETS (1X30)	
+MINOXYTOP 2.5MG	Minoxidil
+METOTRIP 5MG	Metotrip
+UNIENZYME TAB	
+PUDIN HARA	
+AMALAKI TAB	
+SHALLAKI TAB	
+ARIZOLE 5MG	Arizole
+MUCOLCER GEL 0.1% 5GM	
+LEVIFIL SUPER POWER	
+MYTERA 250MG	Mytera
+ZAPIX 100MG	Zapix
+MOLITH-ER 450MG	
+GLYCIPHAGE 250 MG	Metformin
+PROLOMET XL 100 MG	
+PONTIAC DSR 40 MG	
+NAVRATNA OIL 45ML	
+NILGIRI OIL 5ML	
+CIRZOLE 1MG	Cirzole
+RESVERATROL 500MG	Resveratrol
+NEX INJ 400MG 1ML	
+STREPSILLS (1X8)	
+SIMVOTIN 20 MG	Simvotin
+TEGRITAL CR 400 MG	
+EUTROPIN 4IU INJ	Eutropin
+LAMEZ OD 50 MG	
+EIDO FE CAPS	
+DILTANOL 30 MG	Diltanol
+VALCUBIT 50MG	Valcubit
+SEROWEL 10 MG	Serowel
+TUGAIN 5% FOAM 60GM	Minoxidil
+MEGAHENZ 40 MG	Megahenz
+6MP TAB	
+MELAPIK PLUS CREAM 20GM	
+MYVAJRA TAB	
+VENIZ XR 75 MG	
+CALAPTIN 80 MG	Calaptin
+AMBRODIL TAB	
+DINOGEST 2MG	Dinogest
+TAZLOC TRIO 40 MG	
+EGA CREAM 30GM	
+MAZETOL 200 MG	Mazetol
+QUALIFAL 150 IU INJ	Qualifal
+TINEFCON TABLET	
+DANZEST 200 MG	Danzest
+CUTISOFT CREAM 1% 15GM	
+NEOROF 1% INJ 20ML	Neorof
+LOX 10 % SPRAY 20ML	
+PROLUTON DEPOT 500 MG 2ML	
+X TAR PASTE 100 GM	
+SHINE N SMILE 75 GM	
+CALCIMAX FORTE TAB	
+PNOLOL 40 MG	Pnolol
+ANAPROCT CREAM 15GM	
+LYCOLIFE CAPS	
+MOXIFLOT 400 MG	Moxiflot
+LAMIFIN BODY LOTION 60ML	
+MAJIGLOW CREAM 30GM	
+OLMEHEAL 40 MG	Olmeheal
+ALKALITH SYRUP 100 ML	
+RANLOC INJ 2ML	
+MONOGEE-O 200 MG	
+ZINKOFOL TAB	
+DEXAVAC 8 MG	Dexavac
+PYNOMAX TX CREAM 15GM	
+MELANO TX CREAM 15GM	
+MEDO 200 MG	
+NOCOHOL TAB	
+GERIFORTE TAB	
+FENBENZ 1000 MG	Fenbenz
+NUMMIT SPRAY	
+CILAMIN 250 MG	Cilamin
+FACEMED GEL 15GM	
+MORR 3% SOLUTION 60ML	Minoxidil
+MOMATE CREAM 20GM	
+URIMAX D TAB (1X15)	
+WORMENTAL 222 MG	Wormental
+VOMIRAP MD TAB	
+PEROCLIN 5% GEL 15GM	Peroclin
+MOMATE CREAM 10GM	
+TELMINOF 20 MG	Telminof
+PROMTRIZ 25 MG	Promtriz
+ROCALTOP 0.25 MG	Rocaltop
+PAINHEAL + GEL 30GM	
+PNOLOL 20 MG	Pnolol
+LABETA 100 MG	Labeta
+KETROCAN 30 MG INJ 1ML	Ketrocan
+ZINOX 200 MG	Zinox
+PREGABANYL 300 MG	Pregabanyl
+MOXI D EYE DROP 10ML	
+TRIMADERM OINT 15GM	
+TOFAKAY 5 MG	Tofakay
+DANARIX TAB (1X100)	
+CERAMIDE & HYALURONIC ACID MOISTURISER 100GM	
+DIARUN PLUS	
+ELYN CREAM 15GM	
+ORYZA CREAM 50GM	
+MINOZ ER 45 MG	
+MELAPIK HQ CREAM 20GM	
+LOBATE CREAM 30GM	
+MOXIFLOX TAB	
+APP UP 4 MG (1X10)	
+ZENTAL 400 MG	Albendazole
+LUPIFORD OINT 20GM	
+SERLIFT 50 MG	Serlift
+COSGLO NEW CREAM 30GM	
+EPILITE SOLUTION 40ML	
+NIGRIFIX CREAM 50GM	
+BETACAP TR 20 MG	
+DAPAWORTH 10 MG	Dapaworth
+SYNOPTOPHORE SLIDE	
+CARBIGET TAB	
+CLLENBUT 40 MG	Cllenbut
+CLAVIX 300 MG	Clavix
+NEFROSAVE FORTE TAB	
+AVANAIR 100 MG (1X4)	Avanair
+TENEBETIC 20 MG	Tenebetic
+CARMENDAN INJ	
+NEUKINE 300 MCG INJ	Neukine
+FLUOXECARE MD 20 MG	
+CIPCAL D3 SOFTGEL CAPS	
+METOTRIP 20 MG	Metotrip
+WORMENTAL 444 MG	Wormental
+CHEKFALL + SOLUTION 60ML	
+MEGAPEN KID TABS	
+DEVENLAF-XR 100 MG	
+FLUOXECARE 20 MG	Fluoxecare
+DIPROBATE PLUS LOTION 50ML	
+EXEL CREAM 30GM	
+CLINDAC A SOLUTION 25ML	
+CIPLAR LA 20 MG	
+FLAGYL ER 600 MG	
+METROZEE 400 MG	Metrozee
+MAXMAN PLUS TAB	
+MOX 250 MG CAPS	
+METROGYL ER TAB	
+ACECLOHEAL SP TAB	
+RET GROW-A 0.1% 20GM	
+METNI 4 MG	Metni
+MIEDOX 100 MG INJ	Miedox
+ACYPROVE 800 MG	Acyprove
+DHEA 50 MG	
+NEBISTAR 10 MG (1X15)	Nebistar
+TEARS DROPS 10ML	
+CLEAR GEL 20GM	
+LENVAT 4 MG	Lenvat
+GESTOFIT 400 MG	Gestofit
+AKTISOFT MOISTURISING LOTION 150ML	
+SUNAKT 30 NANO GEL 50GM	Sunakt
+ESTRASIGN 2 MG	Estrasign
+MYFAIR CREAM 20GM	
+GLU-Q 600 MG INJ	
+SUNCROS SOFT CREAM 50GM	
+BRIMTOFAST EYE DROP 0.03% 3ML	
+CEFAKIND 500 MG	Cefakind
+FRUSELAC TAB	
+FLAGYL SYRUP 60ML	
+IVERHUMAN CREAM 1% 30 GM	
+XEPAR 30 MG	Xepar
+TEST-PROP INJ 100 MG 10 ML	
+BICIPHAGE SR 1000 MG	
+REPACE 100 MG	Repace
+LUPIGEST 200 MG	Lupigest
+ITROSTRED GEL 15GM	
+ZORBAX 500 MG	Zorbax
+TEST E 250 MG INJ 10ML	
+PEROBAR 5% SOAP 75GM	Perobar
+LOSAKIND 50 MG	Losakind
+SPIRONOL 50 MG	Spironol
+TRYPTINOL 10 MG	Tryptinol
+EMSCAB LOTION 100ML	
+CONTRACTUBEX CREAM 20GM	
+HEXILAK ULTRA CREAM 15GM	
+SEBOGEL 30GM	Sebogel
+RUMALAYA GEL 30GM	
+KAPIKACHU CAPS (1X60)	
+ANGIOTENSIN 2.5 MG	Losartan
+MEGAHEAL SPRAY 60ML	
+BIGOMET 500MG	Bigomet
+ZOPIFRESH 7.5 MG	Zopifresh
+POWER V TAB	
+EUTRIG HP 10000 IU INJ	
+SLEEPIREST 20 MG	Sleepirest
+ACNESTAR GEL 22GM	
+SEFPIL CREAM 30GM	
+SLEEPOSE 3 MG (1X10)	Sleepose
+HIMALAYA FOOT CREAM 20GM	
+AUTOLYSE OINT 15GM	
+SELOKEN XL 50 MG	
+AF 300 MG	
+ZEEBEE TAB	
+PANTOSEC DSR TAB	
+REGAINE 2% SOLUTION 60ML	Minoxidil
+AKLIEF CREAM 30GM	
+FOOT CARE CREAM 25GM	
+CIPLOX EYE/EAR DROP 10ML	Ciprofloxacin
+RIZORA 10 MG	Rizora
+LAMETEC DT 100 MG	
+LAMETEC DT 50 MG	
+ARIN 20 MG	
+INSTGRA 50 MG	Instgra
+DANAVIR R 800 MG	
+TEST C 250 MG INJ 10ML	
+TEST-P 100 MG INJ 1ML	
+LABDIC RELIEF TAB	
+DOSETIL LOTION 0.05% 30ML	
+VANTAXA 20 MG	Vantaxa
+PACROMA CREAM 30GM	
+COTRIMAX DS TAB	
+MICOHEAL CREAM 30GM	
+PERSOL FORTE CREAM 30GM	Benzoyl Peroxide
+CIPZOX TAB	
+SCRABIC LOTION 50ML	
+NEXITO 5 MG	Nexito
+NEXITO 10MG	Nexito
+ARIZEX 10 MG	Arizex
+ZOXAN EYE OINT 10GM	
+TOFAJAK IN XR 11MG	
+GEFTIB 250 MG	Geftib
+C NAC EYE DROP 10ML	
+RANOHEAL 500 MG	Ranoheal
+A2 LITE CREAM 20GM	
+ABD SUSP 200 MG 10ML	
+L CARNIBOL 5ML INJ	
+BROMOPRIN 2.5 MG	Bromoprin
+ONDICAN 4 MG INJ 4ML	Ondican
+DICLOCAN AQ INJ 1ML	
+ZOSTER 800 MG	Zoster
+HYDROCORT 100 MG INJ 5ML	Hydrocort
+INBEC CAPS	
+KERENDIA 20MG	Kerendia
+MOXI EYE DROPS 10ML	
+MABURA 40PFS INJ	Mabura
+KETOFLY 200 MG	Ketofly
+ACARBOZ 25 MG	Acarboz
+DISPOVAN SYRING 2ML	
+ATOXIT 40 MG	Atoxit
+THYRONORM 62.5 MG	Levothyroxine
+HEXIDINE BLUE MOUTH WASH 500ML	
+CANDID TOTAL PLUS CREAM 20GM	
+GUDUCHI CAP (1X60)	
+MESHASHRINGI CAPS	
+PROVANOL SR 40 MG	
+KAMRAJ TABLETS	
+NIORET NANO GEL 0.025%	
+FLUCONAZ 400 MG	Fluconaz
+REEQUIL MOISTURISER 100GM	
+SUNCROS SOFT LOTION 60ML	
+DABUR SHILAJIT GOLD CAPS	
+ETUMAX ROYAL HONEY 10GM (1X12)	
+ZHEWITRA ORAL JELLY 20MG	Vardenafil
+METGY 400 MG	Metgy
+LISPRO 10 MG	Lispro
+DABINOL 150 MG	Dabinol
+ENTAVIR  0.5 MG	Entavir
+OMNIGEL 75GM	Omnigel
+MIGDOX INJ 100 MG 5ML	
+SIROBOON 3 MG	Siroboon
+FENOLIP 145 MG	Fenolip
+NEUROZION FORTE	
+DETARTRINE PASTE FOR SCALING /POLISHING 45GM	
+KOJIMIC PLUS CREAM 15GM	
+WITGLOW CREAM 30GM	
+GLUTAFACE AR CREAM 30GM	
+ST GLOW EFFERVECENT TAB	
+ROSU-HDL 20 MG	
+COGNIVEL TAB	
+CARBOPHAGE XR 1000 MG	
+MOSITAM 800 MG	Mositam
+GTN SORBITRATE CR 2.6 MG	
+MEGAPEN 250 MG	Megapen
+ROBINAXOL TAB	
+FRX HEARTSTART SMART PADS	
+SMARTI 10 MG	Smarti
+SEXFORCE 100 MG ODS (1X7)	Sexforce
+AMOXYCLAVE 625 MG	Amoxyclave
+DEMASONE 0.5 MG	Demasone
+TYRODIN CREAM 20GM	
+LINEZOL 600MG	Linezol
+APREZO 10MG	Aprezo
+ITRADILA 100 MG	Itradila
+LULIFORD OINT 20GM	
+OLEX 10 MG	
+MAXXIMA-V TAB	
+SEBIFIN CREAM 30GM	
+INTAGESIC GEL 30GM	Aceclofenac + Paracetamol + Chlorzoxazone
+OCUPOL DX DROP 5ML	
+SPORIDEX REDIMIX 125 MG 30ML SUSPENTION	
+CYTOMID 250 MG	Cytomid
+PROLOMET XL 50 MG	
+MINOLAST 10MG	Minolast
+VALACVIR 1000 MG	Valacvir
+VALACVIR 500 MG	Valacvir
+NEERI KFT SYRUP 200ML	
+LATOPROST RT EYE DROP 0.005% 2.5ML	
+RAMISTAR 2.5 MG	Ramistar
+MUPICIP OINT 5GM	
+PAUSE MF TAB	
+SIZODON MD 0.5MG	
+GLYCOMET GP 2 TAB	Metformin
+PLACENTREX INJ 2ML	
+TRAVOSUN EYE DROP 3ML	
+PREGABID 50 MG	Pregabid
+URSOLID 300 MG	Ursolid
+DASATRUE 50 MG	Dasatrue
+CEFLOX DEE E/E DROP 10ML	
+TRUNEX MS GEL 15GM	
+VALZAAR H TAB (1X15)	
+3D FLAM INJ 3ML	
+UBIK Q CAPS	
+FINATE 160 MG	Finate
+PIOGLIT 30 MG	Pioglit
+OVACARE TAB	
+ZIGLIM M2 TAB	
+OFLOX EYE DROPS 5ML	
+GLIDE TAB	
+FLUCORT H CREAM 30GM	
+DOMSTAL 10 MG	Domstal
+ACIVIR DT 400 MG (1X10)	
+OXYSPAS 2.5 MG	Oxyspas
+CYNODER INJ 30ML	
+TINFAL 5% LOTION 60ML	Tinfal
+TAFERO 25 MG (1X30)	Tafero
+ZOCON-C CREAM 15GM	
+SHATAVARI CAPS	
+PREGAMET SR TAB	
+BENGREAT 8 MG	Bengreat
+BRUFOCAN 400 MG	Brufocan
+SCALPE + SHAMPOO 75ML	
+OMFORCE 20 MG	Omforce
+XAFINACT 100 MG	Xafinact
+ALKEMCORT H INJ	
+DOXY 100 MG (1X8)	
+DOX 100 MG (1X8)	
+ONDET 4 MG INJ 4ML	Ondet
+AVOL CR 500 MG	
+TESTOBOON 250 MG INJ 10ML	Testoboon
+SHILAJIT CAPS (1x100)	
+ROSUFREE 40 MG	Rosufree
+EFIL 2.5 MG	
+MESACOL 400 MG	Mesacol
+ONDEM MD 4 MG	
+ANDROL 50 MG (1X100)	Androl
+VITAMBION 500 MCG INJ 30ML	Vitambion
+TRENBOLON 200 MG INJ 1ML	Trenbolon
+FINE NERVE GEL 30GM	
+MENOCTYL TAB	
+BEMPETOL EZ TAB	
+NOVELON TAB	
+KOJIVIT ULTRA GEL 30GM	
+CANDIFORCE 200 MG	Candiforce
+GRISS ODT TAB	
+SUSTEN 100 MG INJ 1ML	Susten
+CEFADROX 250 MG	Cefadrox
+MOXIFORD EYE DROP 0.5% 5ML	
+VELTAM 0.2 MG (1X10)	Veltam
+DISPO NEEDLE 24 NO	
+VIKRIM DS TAB	
+CETRAM 10 MG	Cetram
+NEBIVOL 5 MG	Nebivol
+VALPIMO CR 500 MG	
+PARABOL INJ 1ML	
+ORCERIN CAP	
+OCUFLUR DP EYE DROP 5ML	
+MELRIO CREAM 20GM	
+ACULAR LS DROP 5ML	
+TOPMETRO GEL 20GM	
+MPHEAL 8MG	Mpheal
+VICTOZA LIRAGLUTIDE 3ML	
+PRAMIROL 1 MG	Pramirol
+SECNIL FORTE TAB (1X2)	
+FORCAN 150 MG (1X4)	Forcan
+DUVANTA 20 MG	Duvanta
+VENUSIA MAX CREAM 150GM	
+CHEKFALL-F SOLUTION 60ML	
+METNEY 400 MG	Metney
+AZIVENTIS 250 MG	Aziventis
+LABMOX 500 MG	Labmox
+PREDMET EYE DROP 10ML	
+DOXYMUST 100 MG	Doxymust
+NEOMEC INJ 1ML	
+ALMOX CV 625 MG	
+VALEMBIC AM 80 MG	
+TAZACT 1.125GM INJ	Tazact
+PEGSTIM PFS INJ 0.6ML	
+MEBIZ SR 200 MG	
+ZENPRIDE M1 TAB	
+PINKLADY 100 MG	Pinklady
+METOLAR 50 MG (1X15)	Metolar
+GALVUS MET 50/500MG	
+VILDASMART M 50/500 MG	
+COVANCE 50 MG	Covance
+LINOX 600 MG	Linox
+HALOVATE-S OINT 30GM	
+REDIHALER DEVICE	
+TIGEBAX 50MG INJ	Tigebax
+MERO 1 GM INJ	
+WIDEMOX 250 MG	Widemox
+AMLEOD 10 MG	Amleod
+FLUOXECARE 40 MG	Fluoxecare
+PHYSIOGEL HYPO CREAM 75GM	
+TAPADAY GOLD 250 MG	
+XYLOCAINE 2% JELLY 30GM	Xylocaine
+SKINDID CREAM 15GM	
+POMALID 2 MG	Pomalid
+BD INSULIN SYRINGES 1ML	
+MEP 16 MG	
+ZOPIMAXX 25 MG	Zopimaxx
+ELIMENTA 5 MG	Elimenta
+PL 40 MG	
+TESTOST DEPOT 250 MG 1ML	
+PROVANOL SR 60 MG	
+KS ORGASMAX CONDOM (1X12)	
+MOX REDIMIX SYRUP 125MG 30ML	
+TILSTIGMIN TAB	
+SODICAN INJ 10ML	
+MOX REDIMIX SYRUP 125MG 60ML	
+MICRODOX LBX CAP	
+ZINCODERM-GM NEO CREAM 15GM	
+CRIXAN 500 MG	Crixan
+OCHEK CAPS	
+SUSTEN SR 400 MG	
+FORGLYN PLUS INHALER 120MD	
+SUPACEF 1.5GM INJ	Supacef
+OCUFLUR EYE DROPS 5ML	
+DECABOL 250 MG INJ 10ML	Decabol
+COXVIT-12 INJ 30ML	
+HISPO FORTE TAB	
+EUVIFOL-HP 150 IU	
+PETVIT MULTIVITAMIN TAB	
+TRAJENTA 5MG	Trajenta
+MIDGEO 2.5 MG	Midgeo
+ASHVAGANDHA TAB	
+MASHASHRINGI TAB	
+MINIMALIST VITAMIN C SERUM	
+BOTANICA 3D SERUM 30ML	Botanica
+FITNESS VEDA (1X90)	
+RESVERATROL TAB (1X60)	
+DEHLVI BARSHASHA 60GM	
+ANTI WRINKLE CREAM 125GM	
+MARKS GO CREAM 25GM	
+FEBUTAX 80 MG	Febutax
+MEGAMENTIN 625 MG	Megamentin
+CEFOPROX XP 500 MG INJ	
+CASPOGIN IV 70MG 10ML INJ	
+INFA-HEP 25K IU INJ 5ML	
+BREAST UP (1X30) TAB	
+SETRO 25 MG	Setro
+LITHOSUN SR 400 MG	
+LAMEZ 100 MG	Lamez
+MAXRICH YU CREAM 100GM	
+GLYCOLATE 2MG	Glycolate
+DISPO NEEDLE 18 G	
+NEO CLOBENATE GM CREAM 10GM	
+KETO B CREAM 10GM	
+DITIM MF TAB	
+XYLOCAINE 2% JELLY 50GM	Xylocaine
+GLU Q 600 MG INJ	
+TEMOSIDE 250 MG	Temoside
+SAFI 500ML	
+ENAPRIL 10 MG	Enapril
+ZOSTUM 500 MG INJ 5ML	Zostum
+KZ CREAM 30GM	
+ENOCIN B 500 MG	
+AGEFINE CREAM 20GM	
+AHA LIGHTENING HQ GEL 30ML	
+CELGINASE 1000 IU INJ	Celginase
+METHYCOBAL INJ 1ML	
+INDICID SR 75 MG	
+LUBIC CREAM 20GM	
+DISPOVAN NEEDLE 0.25 (1X100)	
+PEROBAR 2.5% SOAP 75GM	Perobar
+KETOKEM CREAM 15GM	
+MELACARE GLOW FACE WASH 100ML	
+BOLDAMAXX 400 MG 1ML INJ	Boldamaxx
+DEXA INJ 2ML	
+QUOTOX 200 MG	Quotox
+QUNIL 200 MG INJ	Qunil
+FEBUTOP 80 MG	Febutop
+LACONEXT 100 MG (1X15)	Laconext
+LACONEXT 150 MG (1X10)	Laconext
+LACONEXT 50 MG (1X15)	Laconext
+TROPICACYL 1% DROPS 5ML	Tropicacyl
+FERIUM XT TAB	
+MAXTRA O NASAL SPRAY 10ML	
+KERA FM LOTION 5% 60ML	
+NATAMET 5% DROPS 3ML	Natamet
+LABMOX 250 MG	Labmox
+ME - 12 FORTE INJ 1ML	
+ANDRE I-KUL EYE DROP 10ML	
+LIPIDZ CREAM 50GM	
+LACONEXT 200 MG (1X10)	Laconext
+TESTOBLESS 40 MG	Testobless
+MOXIBOLIC CV 1000 MG DUO (1X6)	
+TOFISTRIP 50 MG	Tofistrip
+LOSATAN 25 MG	Losatan
+FREELAX 5 MG	Freelax
+HISTAKEM 120 MG	Histakem
+EFADERM CREAM 60GM	
+SETOXLIN CR 25MG	
+LORINOL 10 MG	Lorinol
+RETHRO 250 MG	Rethro
+ZOCON AS KIT	
+DEZLORID 5 MG	Dezlorid
+AIR 180 MG	
+SUMOCOLD TAB	
+H-VIT TAB	
+PULMOFIB 267 MG	Pulmofib
+ATEN 50 MG	
+TOFISTRIP 100 MG	Tofistrip
+IGURATI 25 MG	Igurati
+LENEL 10 MG	Lenel
+DAPANTA 10 MG	Dapanta
+TESTOBOL 50MG INJ 1ML	Testobol
+STIMUCOR 5 MG	Stimucor
+BEMPETOL 180 MG	Bempetol
+DERMIFORD CREAM 25GM	
+KETOMAC SHAMPOO 110ML	
+M-SYS OINT 10GM	
+PANLIPASE CAPS	
+LETROZ 2.5 MG (1X5)	Letroz
+SERTA 100 MG	Serta
+FEMILON TAB	
+ZOFER 8 MG	Zofer
+OPTINEURON INJ 3ML	
+VILATIN 50 MG	Vilatin
+LEVOCET 5MG	Levocet
+LEFON 10 MG	Lefon
+CEFOPAL 200 MG	Cefopal
+DIAMICRON XR 60 MG (1X15)	
+FORACORT ROTACAPS 100 MG (1X30)	Formoterol + Budesonide
+NASO B12 NASAL SPRAY 2.3ML	
+CANTHEX CAPS	
+BETASALIC OINT 20GM	
+MAXIRICH GOLD CAPS	
+CASTOR NF 15GM	
+CASTOR NF 25GM	
+CEFOPROX 200 MG	Cefoprox
+CEPODEM XP 325 MG	
+VOMIVOKE MD 4 MG	
+AQUREA HF CREAM GEL 40% 50GM	
+TOUJEO SOLOSTAR 300 IU INJ	
+SUSTEN SR 200 MG	
+OLIZA 2.5 MG	Oliza
+FOLLIHAIR AMPM TAB	
+BIOSIA 1000 MG	Biosia
+ARPIZOL 5 MG	Arpizol
+JUNIOR LANZOL 30 MG	
+GLYCIPHAGE 500 MG (1X20)	Metformin
+TOPAZ 100 MG (1X15)	Topaz
+ARPIZOL 2 MG (1X10)	Arpizol
+PNOLOL 10MG	Pnolol
+REVITAL H CAPS (1x10)	
+PROGUHEAL TAB	
+BISELECT 5MG	Biselect
+MISOPROST 200 MG (1X4)	Misoprost
+DARGEN 40 MG INJ 4ML	Dargen
+PACROMA CREAM 10GM	
+TORTHROCIN 500 MG	Torthrocin
+ZATURA 500 MG (1X3)	Zatura
+ACTHROCIN 500 MG	Acthrocin
+CEFREDROX DT 200 MG	
+CEFAPRIME 500 MG (1X4)	Cefaprime
+SIBASTIN TAB	
+EVIMECTIN A TAB (1X1)	
+NEVIBLOC 5 MG	Nevibloc
+P QUIN 7.5 MG	
+SUSTAMIX 250 INJ 10ML	Sustamix
+MINOZ OD 100 MG	
+ACEFILE P TAB	
+NORFLOX T.Z TAB	
+FOLLIHAIR NEW TAB (1X15)	
+SUSTEN 300 MG	Susten
+AZIVENTIS 500 MG	Aziventis
+CLOFI 50 MG	Clofi
+ARIFINE 2.5 MG	Arifine
+TAPAL ER 50 MG (1X15)	
+FOLVITE TAB (1X45)	
+VILAZINE 20 MG	Vilazine
+ARPIZOL 10 MG	Arpizol
+SALICURE 17% OINT 20GM	Salicure
+ASERT D TAB	
+TRYPTOMER 75 MG	Tryptomer
+ARPIZOL 15 MG	Arpizol
+SOLUMEDROL 500 MG INJ 4ML	Solumedrol
+KETOROL INJ 1ML	
+NEXPRO FAST 40 MG	
+XTRACLAVE 625 MG	Xtraclave
+CLENASH 40 MG	Clenash
+ENSHINE GEL 15GM	
+C-ONE SB INJ	
+CEFIX-O TAB	Cefixime
+TRAZALON 50 MG	Trazalon
+BRITE CREAM 30GM	
+SUHAGRA 100 MG (1X10)	Suhagra
+VOLNAPAR GEL 30GM	
+ALKEMCORT 40 MG INJ 1ML	Alkemcort
+ACEMIZ MR TAB	
+BETNOVATE GM CREAM 20GM	
+ALPHAGAN-Z DROP 5ML	
+FEMOSTON 2/10 MG	Femoston
+YEMETIL 25 MG	Yemetil
+NEXPRO FAST 20 MG	
+LOBATE GN CREAM 15GM	
+EPLEHEF 25 MG	Eplehef
+TYPENDOL 100 MG RED	Typendol
+A-MOX 500 MG	
+SITOR 20 MG	Sitor
+TADYOG PLUS TAB	
+CLAVPET 500 MG	Clavpet
+AMROCAD CREAM 30GM	
+TERBICAD 250 MG	Terbicad
+OMNIGEL OINT 20GM	
+SIZOPIN 25 MG	Sizopin
+ENAPRIL 5 MG	Enapril
+CANDID B LOTION 30ML	
+VORTICA 5 MG (1X10)	Vortica
+DEXONA SOLUTAB (1X30)	
+XYZAL 10 MG	Xyzal
+OMEZ DSR TAB (1X15)	
+MINTOP GAIN SOLUTION 10% 60ML	Minoxidil
+CARVEJOHN 6.25 MG	Carvejohn
+MELA WASH 100ML	
+GABAPIN SR 450 MG	
+TELMA 20 MG	Telma
+CATAGON EYE DROP 10ML	
+FINTOP AF CREAM 30GM	
+VENUSIA  DERM CREAM 75GM	
+CANDEVAC 8MG	Candevac
+DOVERIN 80 MG	Doverin
+VALNEB CR 300 MG	
+RIDAZIN 25MG	Ridazin
+CALPSOR LOTION 15ML	
+LIRAFIT INJ	
+RTSUNATE 100 MG	Rtsunate
+TESTOBOON CP 250 MG INJ 20ML	
+AQUREA 20 CREAM 100GM	Aqurea
+RAMSPIN 5 MG	Ramspin
+HUMINSULIN-N 100IU INJ	
+PRAMIROL SR 2.1 MG	
+EZANIC 20% CREAM 15GM	Ezanic
+EZANIC 20% GEL 15GM	Ezanic
+ROSU-HDL 40 MG	
+LIPRIL 2.5 MG	Lipril
+TENORIC 50 MG	Tenoric
+COVERSYL PLUS 4/1.25 MG	
+TRICORT INJ 40MG	
+PHEXIN DRY SYP 30ML	
+VASOCON INJ 1ML	
+FILDENA CT 50 MG	Sildenafil
+PICSOLONE 10 MG	Picsolone
+SUNBLESS SPF GEL 60GM	
+XTRALITE MILD CREAM 20GM	
+NOTA PREG KIT (1KIT)	
+DUOVA INHALER	
+FIASP FLXITOUCH INJ 3ML	
+MOXPHAR 500 MG	Moxphar
+TESTOBOON DEPOT 250MG INJ 20ML	
+KOLCHISMART 0.6 MG	Kolchismart
+DERMA KT CREAM 15 GM	
+NEO TAB (1X75)	
+CLOMIFORD 50 MG	Clomiford
+DONECT 5 MG	Donect
+DAPANTA 5 MG	Dapanta
+HEVOBET CREAM 10GM	
+TENACID 500 MG	Tenacid
+DUOPULES RESPULES 2.5ML	
+TRUDERMA C SERUM 20ML	
+MEDROL 8 MG (1x14)	Medrol
+AZEE 250 MG (1x6)	Azithromycin
+NITRO-G 2.6 MG	
+LORSAID SD 8 MG	
+CLOBETA GM CREAM 20GM	
+ZYZOLIDE 600 MG (1X10)	Zyzolide
+NEOMYCIN CREAM 10GM	
+TRIQUILAR TAB	
+FEMIVIN WASH 100 ML	
+CRESTOR 40 MG (1X15)	Crestor
+CLENASH 80 MG	Clenash
+PRONIR 300 MG	Pronir
+APRECAST 30 MG	Aprecast
+CEBERMORE 0.5 MG	Cebermore
+TACROZ FORTE 1% OINT 10GM	
+DANARIX TAB (1X25)	
+TETRACYN 500 MG	Tetracyn
+NISE TAB	
+HYDE CREAM 30GM	
+SALICURE 6% OINT 30GM	Salicure
+TOPLAP GEL 30GM	
+OXOZEP DT 150 MG	
+BRAHMI MIND WELLNESS (1X60 TAB)	
+LOSAR 50 MG (1X15)	Losar
+EBERFINE CREAM 15GM	
+CENFORCE ORAL JELLY 100MG (1X5GM)	Sildenafil
+NAFTIFAST CREAM 30GM	
+MINYM GEL 15GM	
+GAMASCAB LOTION 100ML	
+PRUGO 10 MG	Prugo
+SCARCLIN CREAM 40GM	
+ETHIGLO FACE WASH 70GM	
+MAXIZONE 500 MG INJ	Maxizone
+PRAZINEC 600 MG	Prazinec
+KOZILITE LOTION 100ML	
+MEBENTEL 100 MG (1X10)	Mebendazole
+ALLEGRA 120 MG	Allegra
+EVECARE FORTE TAB	
+TELISMART BETA XL 50 MG	
+OCULAN INJ 2ML	
+LENVA 10 MG	Lenva
+OPEXA GEL 10GM	
+LOVAX 150 MG	Lovax
+SUSTEN SR 300 MG (1X10)	
+TADARISE 20MG EFFERVESCENT	Tadalafil
+MEBENTEL 500 MG (1X3)	Mebendazole
+J.S. CYNO 30ML	
+RAZEL 5 MG	Razel
+CERTICAN 0.75 MG	Certican
+TACROLIUS 0.1% OINT 10GM	Tacrolius
+TESTOMAXX 400 MG INJ 1ML	Testomaxx
+RTSUNATE 50 MG	Rtsunate
+PANLIPASE -UC 200 MG	
+FLUR DROP 10ML	
+PROLOMET XL 25 MG (1X15)	
+TAZLOC AM TAB	
+ECOSPRIN AV 75 MG	
+UNICONTIN-E 400 MG	
+AMARYL -M 2 MG	Glimepiride
+PREGTEST CARD MAMAXPERT (1 KIT)	
+OLUMIANT 4 MG	Olumiant
+KOLCHISMART 0.5 MG	Kolchismart
+IVERHUMAN 3 MG	Iverhuman
+PASITREX OINT 15GM	
+ECOSPRIN AV 75/20 MG	
+REMOQUEEN 7.5 MG	Remoqueen
+MIRTAZ 15 MG	Mirtaz
+MIRTAZ 30 MG	Mirtaz
+CLENBUT 40 MCG (1X5)	Clenbut
+ZIFI DT 50 MG	
+TOFAJAK 5 MG	Tofajak
+HIMALAYA FAIRNESS CREAM 25GM	
+NICOGUM TRANSD PATCH 21GM	
+REDNISOL -A 40 MG INJ	
+DEXALAB INJ 30ML	
+ATORVA 10 MG (1X15)	Atorva
+MET XL 25 MG (1x20)	
+MET XL 50 MG (1X20)	
+SILOFAST 8 MG (1X15)	Silofast
+ISOKEY 40 MG	Isokey
+VALMATA 50 MG	Valmata
+METGY 200 MG	Metgy
+GABAFRESH 800 MG	Gabafresh
+D-RISE 2000 MG	
+PROANAGEN SOLUTION 100ML	
+PROTHIADEN 75 MG	Prothiaden
+PALBOREST 125 MG	Palborest
+VIGORE JELLY(1X5 SACHET)	Sildenafil
+DANFREE 2% SHAMPOO 100ML	Danfree
+CIPLOX TZ TAB	Ciprofloxacin
+DYNAPAR AQ INJ 1ML	
+EXTRA SUPER M FORCE	
+STAPHONEX 500 MG	Staphonex
+PROLAVIR LR TAB	
+NOVAMOX 250 MG	Novamox
+KOJIGLOW FORTE CREAM 20GM	
+MUCOMIX TAB	
+SIZODON 1 MG	Sizodon
+THERMOKIND COOL MINT MOUTH WASH 150ML	
+EPIDOSIN INJ 1ML	
+LOBET 20 MG INJ 4ML	Lobet
+VOMIKIND INJ 10ML	
+ERYTHRO 250 MG	Erythro
+TAKFA CREAM 10GM	
+PARAMET TAB	
+TADASIVA 20 MG	Tadasiva
+ROSULIP 40 MG	Rosulip
+HEMOLIT CREAM 30GM	
+LOCERYL CREAM 30GM	
+CARVEJOHN 12.5MG	Carvejohn
+METROPRIN 500 MG	Metroprin
+BILASTIHEAL 20 MG	Bilastiheal
+GLUTADEE 1200 MG INJ 20ML	Glutadee
+GP-METRO 400 MG	
+ZOPIMAXX 20 MG	Zopimaxx
+HYDRONOL 25 MG	Hydronol
+DAFLON 500 MG	Daflon
+THYROSE 100 MG	Thyrose
+TRANESMA GEL 5% 30GM	
+SOLIAN 50MG	Solian
+ARICEP 10 MG	Aricep
+FURAZOLIDONE 100 MG	Furazolidone
+ASTYMIN M FORTE TAB	
+CELEBREX 100 MG	Celebrex
+PILOMAX 5 MG	Pilomax
+PLANEP 50 MG	Planep
+NANDROLIN 100 MG INJ 10ML	Nandrolin
+TRENABOL 100 MG INJ 10ML	Trenabol
+THYROACTIVE 125 MG	Thyroactive
+TIMOLEN 0.5% EYE DROP 5ML	Timolen
+UDAFORCE 200 MG	Udaforce
+TIZARO 2.5 MG INJ	Tizaro
+TIZARO 5 MG INJ	Tizaro
+TIZARO 7.5 MG INJ	Tizaro
+CLOBETAMIL G CREAM 30GM	
+EXCELA MOISTURIZER 50GM	
+ERYXIA 250 MG	Eryxia
+DUVANTA 40 MG	Duvanta
+DANOGEN 50 MG (1X10)	Danogen
+DEPIWHITE MASQUE 40ML	
+STAMLO 2.5 MG	Stamlo
+NUROKIND GOLD INJ 2ML	
+METROGYL SUSPENSION 60ML	
+CEFASYN 250 MG	Cefasyn
+SUPHACID SYRUP 100ML	
+LEVERATAM 750 MG	Leveratam
+NEXITO 20 MG	Nexito
+B RHEUMARTHO GOLD PLUS	
+SCAREND GEL 15GM	
+MEGLOW CREAM 30GM (MEN)	
+MEGLOW CREAM 30GM (WOMEN)	
+REESHAPE 60 MG	Reeshape
+AMOXYCLAV DRY SYRUP 30ML	
+AZICIP 200 MG ORAL SUSPENTION 15ML	Azithromycin
+CEFUBROOK 500 MG	Cefubrook
+OROFER S INJ 2.5ML	
+ELTROXIN 25 MG	Levothyroxine
+ELTROXIN 75 MG (1X120)	Levothyroxine
+FORCAN 50 MG	Forcan
+ITRATUF SOLUTION 100ML	
+SORANIB 200 MG	Soranib
+CENFORCE LD	Sildenafil
+LEVORID 5 MG	Levorid
+KARELA CAP	
+VORIJOHN 200 MG	Vorijohn
+MOXICIP KT EYE DROP 5ML	
+GEMFOS TAB	
+TRIPHALA TAB	
+HALIXIR HAIR OIL 100ML	
+CABERMORE 0.5 MG	Cabermore
+AXCER 90 MG	Axcer
+CRESTOR 10 MG (1X15)	Crestor
+CARNOTOL 500 MG	Carnotol
+CLOBENATE CREAM 20GM	
+HCQS 300 MG (1X15)	
+GANFORT EYE DROP 3ML	
+DISTINON TAB	
+FLORICOT 100 MG	Floricot
+DROTIN TAB (1X15)	
+QUTAN 300 MG	Qutan
+QUTIPIN 200 MG	Qutipin
+ATARAX SR 50 MG	
+KONAQUEEN 150 MG	Konaqueen
+SILODERM OINT 20GM	
+CEFTECH 200 MG	Ceftech
+CLARIGARD 250 MG	Clarigard
+DEEP SENZ OINT 50GM	
+KOMBIGLYZE XR 5/1000 MG	
+IMXIA F LOTION 60ML	
+BACTERIOSTATIC WATER 10ML	
+FOSFOE SACHET 8GM	
+MONTAHEAL 10 MG	Montaheal
+CYNOCAN 12 MG INJ 2ML	Cynocan
+BD INSULIN 40IU SYRINGES (1X10)	
+PACEBEAT 100 MG	Pacebeat
+ALFAKIM 500 MG INJ	Alfakim
+AMITONE 75 MG	Amitone
+OZIM 15 MG	
+CARITHROTIC 250 MG	Carithrotic
+HERBOLAX TAB	
+CADITRIL 6.4 MG (1X30)	Caditril
+LARIAGO SUSPENSION 120ML	
+MYCOSPOR CREAM 30GM	
+SEBOR BAR 100GM	
+LULICAN CREAM 20GM	
+BETNI INJ 1ML	
+BEXOL DT TAB (1X50)	
+PTU TAB (1X100)	
+ZISPER PLUS TAB	
+ALKEPIN ODT 12.5 MG	
+SERENACE 5 MG (1X20)	Serenace
+OBRIL CREAM 20GM	
+FERZEN CAPS (1X15)	
+THIOPTA 15 MG INJ	Thiopta
+TOPAMAC 50 MG	Topamac
+FOLITRAX 50 MG INJ 2ML	Folitrax
+PROVANOL SR 80 MG	
+TRICLABEND 250 MG (1X4)	Triclabend
+LARETOL CAPS (1X10)	
+METHYCOBAL TAB (1X15)	
+REJOINT TAB (1X15)	
+TACROZ 0.03% OINT 10GM	Tacroz
+KERALIN OINT 15GM	
+CRISBO 2% OINT 15GM	Crisbo
+ZOFORM SR 500 MG	
+DANOGEN 200 MG (1X10)	Danogen
+LULICAN CREAM 30GM	
+CUTISOFT LOTION 50ML	
+ZYRTEC 10 MG (1X10)	Zyrtec
+SOTALAR 40 MG	Sotalar
+NADIBACT GEL 10GM	
+PAUSE 500MG	Pause
+NEOSPORIN OINT10GM	
+KETOMASTER SHAMPOO 100ML	
+ROSUBEST 40 MG	Rosuvastatin
+NARON CREAM 100GM	
+SITOR 40 MG	Sitor
+LETPRO 2.5 MG (1X5)	Letpro
+CANDID SOAP 125GM	
+MEGAMENTIN 375 MG	Megamentin
+ZIFI O 200 MG (1X10)	
+MOMOZ CREAM 30GM	
+ANABOL TAB	
+GONIN 5000 MG INJ 1ML	Gonin
+ITONE EYE DROPS 10ML	
+ROCALTROL 0.25 MG	Rocaltrol
+DACLAHEP TAB (1X28)	
+SOFOVIR TAB (1X28)	
+BRACANAT 150 MG TAB (1X30)	Bracanat
+COSART 25 MG	Cosart
+NEXIPRIDE 50 MG	Nexipride
+ESOMAC 40 MG (1X15)	Esomac
+OLMO AM TAB	Olmesartan
+KAYMEDOROL 16 MG	Kaymedorol
+KAYMEDOROL 4 MG	Kaymedorol
+MUCINAC 600 MG	Mucinac
+URIDER D TAB	
+LUPISOZ-D CAPS	
+MINOSUN 2.5 MG	Minosun
+SUHAGRA FORCE 50 MG	
+CEPHAVET 300 MG	Cephavet
+REVITAL H CAPS (1X30)	
+THYROX 50 MG (1X120)	Levothyroxine
+TESTOBOON-PP 100 MG 20ML	
+SARIL TAB	
+LOBG 0.5 MG	
+APDROPS EYE DROP 5ML	
+I-CAN PREG.TEST KIT (1KIT)	
+ZONISEP 100 MG	Zonisep
+TELMILIX 40 MG	Telmilix
+LIPIROSE MD 10 MG	
+XIGDUO XR 10/500 MG	
+GINETTE 35 MG (1X21)	Ginette
+VILDAMAC M 50/500 MG (1X15)	
+BD INSULIN 100IU SYRINGES (1X10)	
+TIGATEL 20 MG	Tigatel
+BISOACE 5 MG	Bisoace
+THIAKLIN INJ 10ML	
+CLIFACE LOTION 25ML	
+PEROCLIN 2.5% GEL 15GM	Peroclin
+ADLENE GEL 0.1% 15GM	
+PENTALOC 40 MG (1X15)	Pentaloc
+CRESAR 80 MG (1X10)	Cresar
+ACOTINOL 100 MG (1X15)	Acotinol
+CARODYL 100 MG (1X6)	Carodyl
+AZTOR 20 MG	Aztor
+EURELAX 0.25 MG INJ	Eurelax
+PANCREOTE 25000 MG	Pancreote
+FOOTCARE CREAM 20GM	
+VOLIBO 0.2 MG	Volibo
+OPTIVE DROP 10ML	
+ISORDIL 5 MG	Isordil
+ZYLORIC 300 MG	Zyloric
+RIFAYES 550 MG	Rifayes
+FORACORT G INHALER 120MD	Formoterol + Budesonide
+ACNELAK 4IN1 FACE WASH 100ML	Acnelak
+ITASPOR 100 MG	Itaspor
+THYRONORM 112 MG	Levothyroxine
+TADARISE BLACK 80 MG	Tadalafil
+SERENACE 0.5 MG (1X20)	Serenace
+XET 10 MG (1X10)	
+ENDROPET 150 MG	Endropet
+STR STERILE WATER (15ML)	
+DAFLON 1000 MG (1X20)	Daflon
+FOLICS INJ 1ML	
+TETRACYN 250 MG	Tetracyn
+LASUNA TAB (1X60)	
+BUDENOL-F INHALER 200 MG	
+VALPARIN 200 MG ALKALETS (1X15)	Valparin
+BUDEZ OD 9 MG (1X15)	
+FLUBLOCK AZ NASAL SPRAY 7ML	
+ENDOBLOC 5 MG	Endobloc
+ALLEGRA 180 MG	Allegra
+CHRONOL 500 MG (1X4)	Chronol
+D-VENIZ 100 MG	
+CAPTOPRIL 25 MG	Captopril
+GONAL F 900 MG INJ	
+LEUCORIN INJ 5ML	
+FOLLIHAIR NEW TAB (1X30)	
+FERCEE INJ 5ML	
+MECOFOL OD TAB (1X10)	
+THEOMOX CLV 1000 MG	
+PENIDURE LA 6 MG INJ	
+METOPAR TAB (1X15)	
+COZYRICH Q 10 MG	
+ROLITEN OD 4 MG	
+SYMBAL 40 MG	Symbal
+VORTIXET 20 MG (1X10)	Vortixet
+UPRISE D3 60K (1X12 CAPS)	
+TRENBOLON 200 MG INJ 10ML	Trenbolon
+LINACIP 5 MG (1X15)	Linacip
+VENUSIA CREAM 100GM	
+ROMY 250 MCG INJ	
+CEFACLASS TAZO INJ	
+OMEECAN 40 MG INJ	Omeecan
+S CITADEP 5 MG	
+DERIVA BPO GEL 20GM	
+TALKET TAB (1X60)	
+DILTANOL 60 MG	Diltanol
+TERBINAFORCE 250 MG	Terbinaforce
+SEBOWASH SHAMPOO 125ML	
+SIROBOON 5 MG	Siroboon
+TOFATAS OINT 15GM	
+BINAFIDE 1 MG RESPULES (5X2ML)	Binafide
+WOXXAKEM 100 MG	Woxxakem
+AZICLEAR SERUM 30ML	
+OFRAMAX FORTE INJ	
+TAGARA CAP (1X60)	
+FLOTRAL TAB (1X30)	
+METOLAR XR 25 MG (1X15)	
+OCUVIR EYE OINT 5GM	
+NEKSIUM 20 MG (1X15)	Neksium
+RELIPOTIN 2K INJ	Relipotin
+RENOCEL 4000 IU INJ	Renocel
+APIXATOR 5 MG	Apixator
+TIOVA INHALER 120MD	
+SOLINE -5 EYE DROP 10ML	
+CLINSOL FACE WASH 70GM	
+MINOBURY 5% SOLUTION 60ML	Minobury
+TELMA AM TAB (1X15)	
+MEDERMA GEL 20GM	
+CANDID V6 TAB (1X6)	
+CUCHEL 250 MG (1X30)	Cuchel
+BIOSTERONE DEPOT 250 MG INJ 1ML	
+LACOSET 150 MG	Lacoset
+AZYMO STAR 250 MG (1X6)	
+GLUTA FIT 1200 MG INJ	
+GEOMAX 4G CAPS	Geomax
+MUPIHEAL -F OINT 10GM	
+MUPIHEAL OINT 15GM	
+NANDRIX 100 MG INJ 1ML	Nandrix
+VIGOMAX FORTE TAB (1X20)	
+BEIPOS EYE DROP 5ML	
+AMINOFIT TAB (1X15)	
+DROTIN -M TAB	
+ZOPIMINI 3.75 MG	Zopimini
+TELTAN 40 MG	Teltan
+TELTAN 80 MG	Teltan
+PENTAB 20 MG (1X15)	Pentab
+APRECAP CAP (1X3)	
+KETOL OINT 10GM	
+VOMINIL MD TAB	
+MEGABROM EYE DROP 5ML	
+LISTRIL 10 MG (1X15)	Listril
+PIRFENEX 200 MG (1X15)	Pirfenex
+CITINOVA 500 MG	Citinova
+ZONIMID 100 MG	Zonimid
+BRILLO EZ TAB (1X10)	
+IMEGLYN 1000MG	Imeglyn
+OMNIGEL 100GM	Omnigel
+RISCAN 2 MG	Riscan
+EXITRACE 1 MG	Exitrace
+GABAPAX OINT 50GM	
+TINFAL -F 10% LOTION 60ML	
+GEMWELL D3 INJ 1ML	
+BENZYL BENZOATE 100ML	
+TRIAMACIN CREAM 15GM	
+NIVEA CREAM 100GM	
+ES -MATINIB 400 MG	
+DIGYTON PLUS LIQ 100ML	
+SIEZTA 100 MG ODS (1X10)	Siezta
+NEBQUEST 5 MG	Nebquest
+SILOFAST 4 MG (1X15)	Silofast
+EPTOHEAL 100 MG (1X120)	Eptoheal
+THYROX 100 MG (1X120)	Levothyroxine
+ULTRAVEX CREAM 30GM	
+RAZO 20 MG (1X15)	
+IV SET ROMSONS	
+OCUMOIST MAX EYE DROPS 10ML	
+BETACAP 10 MG	Betacap
+THIOFORD AP TAB	
+NEUROBION FORTE INJ 2ML (2ML*5 AMP)	
+DISTACLOR CD 375 MG	
+ASPRITO 2 MG	Asprito
+LYRIKARE 500 MG	Lyrikare
+PROLUTON DEPOT 250 MG 1ML	
+ES -MISTRAL 160 MG	
+ALSARTAN AM TAB	
+METRON K 400 MG	
+CABERSMART 0.25 MG	Cabersmart
+DABUR MUSLI GOLD (1X10)	
+ACILOC 150MG (1X30)	Aciloc
+ADRIHAL 50 MG INJ 2ML	Adrihal
+ETOPOGEN 100 MG INJ	Etopogen
+THYROX 25 MG (1X120)	Levothyroxine
+AZIWOK 500 MG	Aziwok
+MALIRID TAB (1X7)	
+TELROSE TAB (1X15)	
+CEFTAS 200 MG	Ceftas
+TADOVAS 20 MG (1X10)	Tadovas
+LEVERA SYRUP 100ML	
+TYZA CREAM 30GM	
+PRAMIPEX 0.125 MG	Pramipex
+HALO 10 MG	
+HALO 5 MG	
+KOJIVIT GEL 15GM	
+SULPHUR SAOP 75GM	
+QUTIPIN SR 300 MG	
+SANDA OIL 15ML	
+CALPOL 500 MG (1X15)	Calpol
+BIOZOCIN XL 2.5 MG (1X15)	
+D -SOL 60K TAB (1X4)	
+HUMINSULIN 30/70 INJ 40IU 10ML	Huminsulin
+MECOEDGE 2500 MG INJ 1ML	Mecoedge
+BETAMIL GM CREAM 30GM	
+APOQUEL FCT 5.4MG (1X10)	
+LIOFEN XL 20 MG	
+OLEX 2.5 MG	
+LACSOFT CREAM 50GM	
+FLONIDA 1% CREAM 10GM	Flonida
+MOISTUREX CREAM 100GM	
+TRETOIN GEL 0.1% 20GM	
+BUDECORT ROTACAPS 200 MG (1X30)	Budesonide
+FML -T EYE DROP 5ML	
+FLUCORT C CREAM 20GM	
+KETOKEM SOAP 75GM	
+GLUTAJEC 600 MG INJ	Glutajec
+RISDONE 2 MG	Risdone
+DABUR SHILAJIT GOLD CAP (1X12)	
+ARGIHOPE SACHET 5GM	
+DA SUTRA 30X TAB (1X4)	
+LOBUN FORTE CAP (1X10)	
+POSID 100 MG INJ	Posid
+IVERHUMAN 12 MG	Iverhuman
+BLOOMASTRA INTIMATE LUBE (1X14)	
+BLOOMASTRA TINGLING GEL (1X14)	
+BLOOMASTRA FOMO GEL (1X14)	
+TCYPION 250 MG INJ (1X5)	Tcypion
+TRICLEAR CLEANSER 100ML	
+VALPROL CR 500 MG (1X15)	
+PICLIB 125 MG (1X21)	Piclib
+FINABATE 145 MG (1X10)	Finabate
+PUNARNAVA TAB (1X60)	
+VRIKSHAMLA TAB (1X60)	
+OLIMELT 10 MG	Olimelt
+RIVAMER 1.5 MG	Rivamer
+MYELOSTAT 500 MG	Myelostat
+PEXEP 40 MG	Pexep
+ELTROXIN 125 MG (1X60)	Levothyroxine
+QUADRIDERM RF CREAM 5GM	
+ENOCIN B 250 MG	
+NIVEA CREAM 50GM	
+ASSURANS INJ 10 MG	Sildenafil
+LEFUHEAL 10 MG	Lefuheal
+LAMEZ OD 150 MG	
+FLUCOS GEL 0.5% 15GM	
+SIROMINE 1 MG	Siromine
+POLYBCOM 2ML INJ	Polybcom
+TOLVAT 15 MG	Tolvat
+ISPER 2 MG	Isper
+ISPER 3 MG	Isper
+FEBUZA 40 MG	Febuza
+CONCOR 5MG	Concor
+EPLEBLESS 50 MG	Eplebless
+CELODATE 20 MG INJ 10ML	Celodate
+ZOPIDAILY 10 MG	Zopidaily
+CANESTEN S CREAM 15GM	
+VESCA GLUTATHIONE CAPS (1X60)	
+DECAPEPTYL 0.1 MG INJ (1PACK*7)	Decapeptyl
+VALZAAR 40 MG	Valzaar
+MANKIND PLACIDA TAB	
+TRYPTOMER 25 MG (1X30)	Tryptomer
+NITRO-G 6.4 MG	
+THIORIL 25 MG	Thioril
+FORACORT FORTE INHALER 120MD	Formoterol + Budesonide
+ESPERAL 250 MG	Esperal
+AMITONE 25 MG	Amitone
+ZOFER MD 8 MG	
+KETOSCALP PLUS CREAM 15GM	
+EFIL 5 MG	
+KAMINI VIDRAWAN RAS 5GM	
+DR. ORTHO OIL 120ML	
+DEPSOL 25 MG	Depsol
+NIFTRAN 100 MG	Niftran
+PRIMOBOL 100 MG INJ 10ML	Primobol
+ZAPSIGN 10 MG	Zapsign
+NIFTRAN CP 100 MG	
+DULCOLFLEX 5 MG	Dulcolflex
+CEFLOX EYE DROP 10ML	
+LENANAMO 25 MG (1X30)	Lenanamo
+NEBICARD 2.5 MG	Nebicard
+CREMALAX TAB (1X6)	
+CREMALAX TAB (1X18)	
+ATAM 400 MG	
+WINVOL 100 MG INJ 10ML	Winvol
+RIFACLEAN 550 MG	Rifaclean
+GENRYZON 24 MG INJ	Genryzon
+REXIPRA 20 MG	Rexipra
+MIRTAZ 7.5 MG	Mirtaz
+NS IV 100ML	
+TROPICACYL PLUS DROPS 5ML	
+DECA INTABOLIN 100 MG INJ	
+STAYLONG SPRAY 20GM	
+PREGAGESIC 300 MG	Pregagesic
+RASALECT 0.5 MG	Rasalect
+LUPIAQUA LOTION 150GM	
+MODUSEB FOAM GEL FACE 75GM	
+ALFUZZ 10 MG	Alfuzz
+DAPAVEL 10 MG	Dapavel
+MINIPRESS XL 5 MG	
+BRAVECTO CHEWABLE TAB 1000 MG	
+CINCALTH 30 MG	Cincalth
+VENLOR XR 150 MG	
+THEO ASTHALIN TAB (1X30)	
+FLUNARIN 5 MG	Flunarin
+CABLIZ 0.50 MG (1X2)	Cabliz
+TELKONOL TRIO TAB	
+RAMSPIN 2.5 MG	Ramspin
+SETOXLIN CR 12.5 MG	
+DROXYL 500 MG	Droxyl
+SLOANS LINIMENT OIL 71ML	
+ZOPIDAILY 7.5 MG	Zopidaily
+FOLITRAX 10 MG	Folitrax
+LACOSOFT 100 MG	Lacosoft
+LOTEL EYE GEL 5ML	
+VILDASMART M 50/1000 MG	
+FAIR EYE CREAM 15GM	
+ALFUFAST 10 MG	Alfufast
+MYHEP 400 MG (1X28)	Myhep
+LORVAS TAB	
+ANDROTAS GEL 75GM	
+TOPAZ 50 MG	Topaz
+TAPANDA 200 MG	Tapanda
+THIAMINE INJ 10ML	
+CYSTONE TAB (1X60)	
+HIMPLASIA TAB (1X30)	
+HYOCIMAX-S TAB	
+ACETAMIDE 250 MG	Acetamide
+MELONEX 5MG INJ 30ML	Melonex
+NIVEA CREAM 200GM	
+L -PRED DROP 5ML	
+FOLITRAX 2.5MG	Folitrax
+HYLAZINE 25 MG	Hylazine
+LOBULA 0.5 MG	Lobula
+TESTO C 250 MG INJ 10ML	
+SUSTAWIN 250 MG INJ 10ML	Sustawin
+TESTO P 100 MG INJ 10ML	
+DECA 250 MG INJ 10ML	
+OLEX 15 MG	
+PRANOVIR 500 MG	Pranovir
+TOVAXO EYE DROP 2.5ML	
+SIMVASTAT 10 MG	Simvastat
+ATONIDE GEL 20GM	
+LACOSET 100 MG	Lacoset
+MASTERON 100 MG INJ 10ML	Masteron
+LEVOCETRIZEN 10 MG	Levocetrizen
+PULMOCLEAR SYRUP 100ML	
+L -MONTUS TAB (1X15)	
+FENSAFE 222 MG	Fensafe
+LUMENAC 600 MG	Lumenac
+L-CIN 500 MG	
+DABUR SHILAJIT CAP (1X30)	
+GLYBOVIN 5 MG	Glybovin
+PROZOLE -P TAB	
+RAMIPRES 2.5 MG	Ramipril
+CILACAR 5 MG	Cilacar
+GLYCINORM M 40 MG (1X15)	
+APIDINE PLUS EYE DROP 5ML	
+DENSITA MF SOLUTION 60ML	
+ONGLYZA 2.5 MG (1X14)	Onglyza
+VERTIFORD 8 MG	Vertiford
+DRONIS -P 4 MG (1X24)	
+OLIMELT 2.5 MG	Olimelt
+IBRUNAT 140 MG (1X30)	Ibrunat
+NITIB 140 MG (1X30)	Nitib
+LETROVAC 2.5 MG	Letrovac
+PRAPEXOLE 0.5 MG	Prapexole
+ROPARK 0.25 MG	Ropark
+PAZOM DSR CAP	
+FAROSPECT ER 300 MG (1X6)	
+D-VENTODEP XR 50 MG	
+ISOFLUD INJ 10ML	
+ACNEDAP PLUS CREAM 15GM	
+TRISOLON 40MG INJ 1ML	Trisolon
+GLYCINORM 40 MG (1X15)	Glycinorm
+URIMAX -D TAB (1X30)	
+THIORIL 50 MG	Thioril
+CELDACH 100 MG INJ	Celdach
+ETIBO 250 MG (1X30)	Etibo
+ERLOTERO 150 MG (1X30)	Erlotero
+NOOTROPIL 200 MG INJ 15ML	Nootropil
+TEXAKIND 500 MG	Texakind
+ANU TAILA NASAL DROP 10ML	
+VINTOR 10000 MG INJ	Vintor
+ORTHOBOON SACHET 12GM	
+GABADON NTP TAB	
+ELTROPAG 25 MG (1X7)	Eltropag
+MESTERONUM 25MG	Mesteronum
+MENOSAN TAB (1X30)	
+CLINSODENT TAB (1X4)	
+LETRIOVAC 2.5 MG	Letriovac
+C SHINE 1000 MG	
+HD QUEST 200 MG	
+FELIGEN CRP Vaccine INJ 1ML	
+RAKSHARAB VACCINE INJ 10ML	
+PIRMOBOLON 100 MG INJ 10ML	Pirmobolon
+LYVELSA 20 MG	Lyvelsa
+PIRASMART 800 MG	Pirasmart
+ALCOHOL SWAB	
+ORS PCI POWDER	
+TEROL LA 4 MG	
+DANZOX 200 MG	Danzox
+IVASMART 5 MG	Ivasmart
+QUTIPIN 100 MG	Qutipin
+VABCARD 5 MG	Vabcard
+SILDOEASE 4 MG	Sildoease
+REACTINE PLUS TAB	
+TOPISAL 6% LOTION 30GM	Topisal
+KIVZOLE B LOTION 30ML	
+TELMIKIND -AMH TAB	
+DEFCORT 6 MG	Defcort
+LEVIKEM 250 MG	Levikem
+SUPRACAL TAB (1X15)	
+TADAFIRE 20 MG	Tadafire
+SUPER BEGMA	
+RIFAGUT 200 MG	Rifagut
+TERBINAFORCE CREAM 10GM	
+ZEN RETARD 200 MG	
+LIPIDATOR 5 MG	Atorvastatin
+CEFAXONE 1GM INJ 10ML	Cefaxone
+MOX -D EYE DROP 10ML	
+WORMENTAL 1000 MG	Wormental
+GLUTAFINE FACE WASH 70GM	
+HQTOR 400 MG	Hqtor
+SEROQUIT 75 MG	Seroquit
+VINCIHAL 1 MG INJ	Vincihal
+PYZINA 1000 MG	Pyzina
+VINLON 1 MG INJ	Vinlon
+REPACE 25 MG	Repace
+DURASHER 30 MG	Durasher
+ALASTIN 10 MG	Alastin
+TELMIKIND H 40 MG	
+IBUGESIC PLUS TAB (1X20)	
+GRAVITOR TAB	
+TEEVIR TAB (1X30)	
+GODREJ EXPART DARK BROWN 20ML	
+IVEPRED 8 MG	Ivepred
+OPTICULAR EYE DROP 2.5ML	
+RISDONE MT 0.5 MG	
+PUNARNAV ASTAK KWATH SACHET (20X2GM)	
+DETOXHILLS TAB (1X60)	
+TERBICIP CREAM 10GM	
+LOTEFLAM EYE DROP 5ML	
+MINTOP GAIN SOLUTION 5% 60ML	Minoxidil
+STENAGRA SUPER POWER TAB	
+SULSEAS DS TAB (1X15)	
+MERCUROCHROME SOLUTION 2% 100ML	
+RABALKEM DSR CAPS	
+POWER 7 PLUS TAB	Power
+TOFATAS 5 MG (1X14)	Tofatas
+TREN-A 100 MG INJ 10ML	
+EMIPRIDE 300 MG	Emipride
+MOX REDIMIX SYRUP 250MG 30ML	
+BUDENASE AQ 150 MD NASAL SPRAY	
+SUSTEN VT 200 MG	
+ARNX 50 MG	
+SUSTANON 100 MG INJ 1ML	Sustanon
+NICARDIA RETARD 10 MG	Tretinoin
+MIGDITAN 100 MG	Migditan
+EMESET 2 MG INJ 4ML	Emeset
+PSYCOMER 10 MG	Psycomer
+SIMVASTAT 20 MG	Simvastat
+D-VENTEZ 100 MG	
+THIACAN 200 MG INJ 2ML	Thiacan
+MINOCYCLONE 50 MG	Minocyclone
+CIPCOZ NF CREAM 15GM	
+DICRYSTICIN DS 5GM	
+TINIBA INFUSION 400ML	
+SONKOLAR TAB	
+JAKURA XR 11 MG	
+POMALID 1 MG	Pomalid
+RIBASURE CAPS (1X140)	
+HYALUGEL PLUS 30GM	
+BOLDABOL 250 MG INJ 10ML	Boldabol
+DOXOSIGN 400 MG	Doxosign
+CARDIOROSTIN 20 MG	Cardiorostin
+DASANAT 20 MG (1X60)	Dasanat
+ESTRABET 1 MG	Estrabet
+LULIFIN CREAM 20GM	
+SPENZO 1 MG	Spenzo
+WORMCHRIST 444 MG	Wormchrist
+OPSUTAN 10 MG (1X10)	Opsutan
+TREN-E 200 MG INJ 10ML	
+GLIMDA 2 MG	Glimda
+ARNICOR 50 MG	Arnicor
+T-PANDA 200 MG	
+ISOZIP 20 MG	Isozip
+TESTO-E 250 MG INJ 10ML	
+VC 15 SERUM 15ML	
+LEVETRANOL 750 MG	Levetranol
+FLOMON EYE DROP 5ML	
+AMPHOLIP 10 MG INJ 2ML	Ampholip
+CAPSY 500 MG	Capsy
+TOFASOOTH 5 MG	Tofasooth
+SCALPE LOTION 60ML	
+ADVAN CREAM 20GM	
+ALAFEVIR DE TAB (1X30)	
+VIRSON GEL 5GM	
+PSORID 50 MG (1X5)	Psorid
+MONTAIR FX TAB (1X15)	
+EMESET MD 4 MG	
+THYROX 112 MG (1X100)	Levothyroxine
+ZONIMID 50 MG	Zonimid
+PROGYDOL 2 MG (1X28)	Progydol
+PREGARICA 50 MG	Pregabalin
+LINASMART 5 MG	Linasmart
+PRIMOBOLON 100 MG INJ 10ML	Primobolon
+DHOTIYOG CHURNA 90GM	
+BIOCLAN 150 MG	Bioclan
+INTAGESIC INJ 1ML	Aceclofenac + Paracetamol + Chlorzoxazone
+DAPASMART M 10/1000 MG	
+MANJISHTA TAB (1X60)	
+SILJUV D ORAL JELLY (1X9)	
+SPASMONIL TAB (1X10)	
+QL 50 MG (1X10)	
+GABANYL GEL 30GM	
+LAMIGINE 50 MG (1X10)	Lamigine
+SUPER ZINC 50 MG (1X14)	
+FLUNIL SYRUP 60ML	Fluoxetine
+CLINGEN 7 VAGINAL/SUPPOSITORIES (1X7)	Clingen
+PAXIDEP CR 25 MG (1X10)	
+DONEP 5 MG (1X15)	Donep
+THYRONORM 200 MG (1X100)	Levothyroxine
+ZIFI 100 MG READYMIX 30ML	
+THYROX 88 MG (1X120)	Levothyroxine
+RYALTRIS MONO NASAL SPARY 120MD	
+TERAPRESS 1 MG (1X7)	Terapress
+HYDROTAG 4% CREAM 20GM	Hydrotag
+METAGARD 20 MG (1X10)	Metagard
+EMROK O 500 MG (1X4)	
+MCBM 69 MG (1X15)	
+KOJIMED CREAM 15GM	
+FERINJECT 500 MG INJ 10ML	Ferinject
+NOVAMOX 250 MG REDIUSE 30ML	Novamox
+SIMBRINZA EYE DROP 5ML	
+VIBACT DS CAPS (1X10)	
+SUNBLESS 60K CAPS (1X4)	Sunbless
+HEXIMAR B OINT 15GM	
+LIPOCUT 120 MG (1X10)	Lipocut
+TRIOPTAL 300 MG (1X10)	Trioptal
+DUTAFOX 0.5 MG	Dutafox
+TRIDON 25 MG	Tridon
+NOVAMOX 250 MG REDIUSE 60ML	Novamox
+TAMSUHEAL-D TAB (1x15)	
+MIDOSMART 2.5 MG	Midosmart
+LACTOMED SYRUP 100ML	
+ZAD G CREAM 15GM	
+KERACYLIC FACE WASH 70GM	
+FUNGICIDE TAB (1X10)	
+URIFON 100 MG	Urifon
+GLUFORMIN 500 MG	Gluformin
+RELIPOIETIN 4000 IU INJ	Relipoietin
+FLURIDEX 100 MG	Fluridex
+INFEN GEL 30GM	
+PHEXIN BD 375 MG	
+NALTRUST 25 MG	Naltrust
+LOPAMIDE 2 MG	Lopamide
+METAFLAM 2.5 MG	Metaflam
+CROTOREX HC CREAM 10GM	
+DECA INSTABOLIN 50 MG INJ	
+TRIOPLAST PASTE 5GM	
+PREVOGEST SR 200 MG	
+THYRORISE 200 MG (1X120)	Thyrorise
+FLUOXYBOL 5 MG (1X10)	Fluoxybol
+FENZA 600 MG (1X2)	Fenza
+ALGREE 180 MG	Algree
+RAMIGO 10 MG (1X10)	Ramigo
+MYGESTERON 300 MG (1X10)	Mygesteron
+TOFATAS OINT 30GM	
+MONTAIR 4 MG (1X15)	Montair
+CLEARZ PLUS CREAM 15GM	
+SHUDDHA GUGGUL TAB	
+IVERHUMAN 6 MG	Iverhuman
+TESTON 250 MG INJ 1ML	Teston
+ROLON 250 MG INJ 1ML	Rolon
+PRIMBOL 100 MG INJ 1ML	Primbol
+SUPER SILDAMAX	
+MULTIVITE GOLD CAPS (1X15)	
+TELMAHEAL BETA 25 MG	Telmisartan
+SALBAIR-B TRANSHALER 200MD	
+MOLNUVIR 200 MG (1X40)	Molnuvir
+SUPIROCIN CREAM 10GM	
+METHOTREX 5 MG	Methotrex
+LATINA RT EYE DROP 5ML	
+HIFORCE FM TAB	Sildenafil + Dapoxetine
+EXTREME LEVIFIL POWER TAB	
+THYRORISE 88 MG (1X120)	Thyrorise
+MAHACEF-CV 200 MG (1X6)	
+TESS CREAM 0.1% 5GM	
+MOMATE XL CREAM 40GM	
+PRAZICORS 600 MG (1X4)	Prazicors
+RELIFERON 3MIU INJ	Reliferon
+ZYRTEC 10 MG (1X15)	Zyrtec
+TORSINOL 40 MG	Torsinol
+DUPHACAD 10 MG	Duphacad
+LIOFEN XL 40 MG	
+HYTRIN 2 MG (1X10)	Hytrin
+YUGARD UNDER EYE CREAM 15GM	
+BETADINE 10% OINT 20GM	Betadine
+HYQ 400 MG (1X10)	
+ZINCSHOT INJ 10ML	
+PANGRAF 0.5 MG (1X10)	Pangraf
+TERBINADOC 500 MG (1X7)	Terbinadoc
+SUPATRET C 0.1% CREAM 15GM	
+EXTRA SUPER KRRISTA (1X10)	
+VICTOFOL CAPS (1X30)	
+MYORIL 4 MG INJ 2ML	Myoril
+UDILIV 300 MG (1x15)	Udiliv
+KENACORT HEXA 20MG INJ 1ML	
+CHYMOMERG TAB (1x10)	
+HEPAMERZ -OA SYRUP 100ML	
+METROGYL 400 MG (1X20)	Metrogyl
+ZEEBEE SYRUP 10ML	
+HUMALOG KWIKPEN 200 IU/3ML	
+OSTOVIT DM TAB (1X10)	
+AWS 200 MG INJ 2ML	
+KAYAM TAB (1X30)	
+DROSTAWIN 100 MG INJ 10ML	Drostawin
+ACLOVEER 400 MG	Acloveer
+COTARYL CREAM 75GM	
+Q-SERA HAIR SERUM 60ML	
+ZENNAVAIL 10 MG	Zennavail
+ZENNAVAIL DS TAB	
+MUSLI POWER-X CAPS (1X30)	
+DYTOR 10 MG (1X15)	Torasemide
+MINTOP FORTE 10% SOLUTION 60ML	Minoxidil
+NANO LEO CAP (1X15)	
+VALEMBIC 80 MG (1X10)	Valembic
+SOBISIS 500 MG (1X15)	Sobisis
+BACLOF 25 MG	Baclof
+AMFY V GEL 15GM	
+LOGIFEEL IMF 50GM	
+PILORUTE CREAM 30GM	
+CYRA TAB (1X10)	
+K-BIND POWDER 15GM	
+RABIUM DSR CAPS (1X15)	
+CORSIGERMINA SUSPENSION 5ML	
+MEDISALIC OINT 20GM	
+MOLSUN 200 MG (1X40)	Molsun
+PLAKONTA GEL 20GM	
+HOLYBION INJ 2ML	
+RISDONE 1 MG	Risdone
+QUTAN 25 MG	Qutan
+SYMBAL 20 MG	Symbal
+ERYXIA 500 MG	Eryxia
+NITROCONTIN 6.4 MG (1X30)	Nitrocontin
+MINWIN-D TAB	
+FUCIDIN- H CREAM 15GM	
+TENVIR AF TAB (1X30)	
+STANO 50 MG INJ 10ML	Stano
+BOLDEBOL 250 MG INJ 1ML	Boldebol
+SUSTAMAXX INJ 1ML	
+RIVAMER 3 MG	Rivamer
+SCRABIC CREAM 30GM	
+FERROGEN XT TAB (1X10)	
+VIPASANA 100 MG (1X4)	Vipasana
+DONECT 10 MG	Donect
+LACSOFT-C CREAM 30GM	
+CRESAR 40 MG (1X15)	Cresar
+VORIFAST 200 MG (1X10)	Vorifast
+OLESOFT MAX CREAM 150GM	
+PANTODAC 40 MG (1X15)	Pantodac
+SALICURE 12% OINT 30GM	Salicure
+MONOTRATE 10 MG	Monotrate
+IVABRAD 5 MG (1X15)	Ivabrad
+MELANO-TX OD TAB (1X15)	
+TESTO C 250 MG INJ 1ML	
+8X SHAMPOO 120ML	
+CALAPURE-A LOTION 100ML	
+DURAPLUS TAB (1X4)	
+LACTOMED SYRUP 200ML	
+AMFY GEL 30GM	
+CEFHOLD TZ 562.50 MG INJ 5ML	
+RAMIHART 2.5 MG (1X10)	Ramihart
+KICK TAPE EQUINE ORAL PASTE	
+VOVERAN AQ INJ 1ML	Diclofenac
+AEROTROP 9MCG INHALER 180MD	Aerotrop
+RESPIDON 4 MG TAB (1X10)	Respidon
+CANDID POWDER 120GM	
+NIDDMOSE 50 MG TAB (1X10)	Niddmose
+ORNI 500 MG TAB (1X10)	
+SETOXLIN CR 37.5 MG	
+BOLDEN 250 MG INJ (5X1ML)	Bolden
+AQUABOL 100 MG INJ (5X2ML)	Aquabol
+TESTOP 100 MG INJ (5X1ML)	Testop
+ROLONABOL 100 MG INJ (5X1ML)	Rolonabol
+SHREEGOLIN 0.5 MG (1X10)	Shreegolin
+TREBOL 100 MG INJ (5X1ML)	Trebol
+MYGESTERON 200 MG (1X10)	Mygesteron
+MP DOC 16 MG (1X10)	
+VORTIDIF 5 MG (1X10)	Vortidif
+VORTIDIF 10 MG (1X10)	Vortidif
+SHREETROPIN 10 IU INJ (1X5 INJ)	Shreetropin
+PRAZOCIN 5XL TAB (1X15)	Prazocin
+MINOSIGN 100 MG (1X10)	Minosign
+INDULEKHA SHAMPOO 100ML	
+LIFTAGE SERUM 20ML	
+DERIPHYLLIN RETARD 150 MG (1X30)	
+HCQS 400 MG (1X15)	
+CLENFIT 40 MG (1X10)	Clenfit
+CLENFIT 60 MG (1X10)	Clenfit
+STANOFIT 50 MG INJ 10ML	Stanofit
+DEPLATT 75 MG (1X15)	Deplatt
+CORBIS 2.5 MG (1X15)	Corbis
+LEVIPIL 500 MG (1X15)	Levipil
+DIVAA OD 500 MG (1X10)	
+PRAZOPRESS XL 5 MG (1X30)	
+DEPAKOTE 500 MG (1X15)	Depakote
+VONO 20 MG (1X10)	
+LEE BIOTIC CAPS (1X10)	
+PSORID ORAL SOLUTION 50ML	
+ERYPEG 75 MCG INJ	Erypeg
+ADDKAY 750 MG (1X10)	Addkay
+TOBRAZA 5 MG (1X10)	Tobraza
+CEFUBROOK 250 MG (1X10)	Cefubrook
+QUITIN 50 MG (1X10)	Quitin
+FLUOXECARE 60 MG	Fluoxecare
+CEFLOX 500 MG (1X10)	Ceflox
+DIAPER RASH CREAM 20GM	
+ANTOXID CAPS (1X30)	
+VOVERAN D TAB (1X10)	Diclofenac
+DKGEL DUSTING POWDER 100GM	
+SMPTRIO 10-20 KG (1X3)	Smptrio
+NEEM CAPS (1X60)	
+CANESTEN CREAM 30GM	
+SUPRACAL PRO PLUS TAB (1X15)	
+WILD ALSKAN FISH OIL (1X60)	
+GP DEX 0.5 MG (1X40)	
+OBESAVE 120 MG (1X10)	Obesave
+RIXMIN 550 MG (1X10)	Rixmin
+CLOFF 250 MG DRY SYRUP 30ML	Cloff
+ZOCON DT 50 MG (1X4)	
+EXTRA SUPER ENJOFIL TAB (1X10)	
+TADAJUV 40 MG	Tadajuv
+HYDRONCO 500 MG (1X10)	Hydronco
+TOXO MOX 250 MG (1X10)	
+MELONEX PLUS INJ 100ML	
+BOLDEBOL 250 MG INJ 10ML	Boldebol
+CLINGEN 3 VAGINAL/SUPPOSITORIES (1X3)	Clingen
+TOPINATE SOLUTION 30ML	
+HITEK INJ 100ML	
+NORSUNATE 100 MG (1X10)	Norsunate
+CYTOFLU 500 MG (1X10)	Cytoflu
+DR. ORTHO OIL 60ML	
+ELOSONE HT OINT 25GM	
+MESTROVA TAB (1X10)	
+ATORVA 20 MG (1X15)	Atorva
+RAMCOR 2.5 MG (1X10)	Ramcor
+ASCORCAN C 1.5 MG INJ 6ML	
+ESTRAPAUSE 2 MG (1X28)	Estrapause
+CLOMIBOL 50 MG (1X10)	Clomibol
+PRETIBENZYL CREAM 20GM	
+OZEWID CREAM 5GM	
+ESZOP 2 MG (1X10)	Eszop
+MET XL 12.5 MG (1X20)	
+LIV 52 SYRUP 100ML	
+LUTIDERM CREAM 10GM	
+DOXINATE 10 MG (1X30)	Doxinate
+TAMOX 20 MG (1X10)	Tamox
+NODON 2.5 MG (1X15)	Nodon
+COSART H TAB (1X10)	
+AKNAY BAR 100GM	
+TOXO MOX DRY SYRUP 30ML	
+EMIKIND PET SYRUP 30ML	
+CEPHAVET DRY SYRUP 60ML	
+VRKSHAMLA CAPS (1X60)	
+DEPSONIL 25 MG	Depsonil
+SUNCROS AQUAGEL 26SPF 100GM	
+TRAZINE -H TAB (1X10)	
+HEPCINAT PLUS TAB (1X28)	
+AZACAN 50 MG (1X10)	Azacan
+OMEZ INSTA SACHET 5.9GM	
+ELINIDE 500 MG (1X10)	Elinide
+MESLACARE 1200 MG	Meslacare
+AZEFLO NASAL SPRAY 70MD	
+PRASUEDGE 10 MG (1X10)	Prasuedge
+FAMCIMAC 500 MG (1X3)	Famcimac
+TENEXX CP 250 MG INJ 10ML	
+TRINEXX -A 100 MG INJ 1ML	
+TRINEXX -ET 200 MG INJ 1ML	
+MONOGEE 1 GM INJ	Monogee
+LINABITE 5 MG (1X10)	Linabite
+EPOSIS 4K INJ	Eposis
+DABIGO 150 MG	Dabigo
+LAMEZ OD 200 MG	
+UVOX CR 100 MG	
+TADADAY 40 MG	Tadaday
+LADY EVA 10 MG TAB (1X1)	
+TORSINOL 100 MG	Torsinol
+SILVEREX SSD CREAM 240GM	
+GUFIGEST SR 400 MG	
+TEFROLIV FORTE TAB (1X20)	
+HYDROZEST 500 MG	Hydrozest
+JALRA M 50/500 MG (1X15)	
+BASAGLAR KWIK PEN 3ML	
+CRESTOR 20 MG (1X15)	Crestor
+KENADION 1 MG INJ 0.5ML	Kenadion
+SYNDOPA CR 250 MG (1X10)	
+CURENEXT ORAL GEL 50GM	
+ANAVAR MAXX 10 MG TAB	
+AURAGLOW SUNSCREEN LOTION 50GM	
+SMPTRIO 5-10 KG (1X3)	Smptrio
+TRENAXA 500 MG INJ 5ML	Trenaxa
+AURIKO EAR DROP 15ML	
+DICLOWIN PLUS TAB (1X10)	
+ICHMUNE C 50 MG (1X6)	
+GANATON 50 MG (1X10)	Ganaton
+VICTOFOL INJ 10ML	
+POMIDE 1 MG	Pomide
+SKIN FINE ISO 20 MG	
+MASTERBOL 100 MG INJ (1X5)	Masterbol
+LYCODOC PLUS CAPS (1X10)	
+BISONOL 2.5 MG	Bisonol
+LYSIPRIN 500 MG	Lysiprin
+MUCIZID EFF 600 MG TAB	
+MELAGLOW NEW CREAM 15GM	
+PIRFENEX 801 MG (1X10)	Pirfenex
+MEMORIN 270 MG (1X30)	Memorin
+EXTRA SUPER VEGA FORCE 200 MG	Sildenafil
+ANDROFAST GEL 1% 80GM	
+CINALOC 20 MG	Cinaloc
+AMLODAC 5 MG (1X30)	Amlodac
+TRESIVAC NF INJ 0.5ML	
+ANGISPAN TR 6.5 MG (1X30)	
+ELTHROCIN 500 MG	Elthrocin
+MANITOL IV 20% 100ML	
+VALCUBIT 200 MG	Valcubit
+DIOVAAL 80 MG	Diovaal
+TRAZOKEM 25 MG	Trazokem
+TAPFREE ER 100 MG	
+VAJRRA OIL 100 ML	
+EPLERENOL 50 MG	Eplerenol
+CARBIMAX 0.5 MG	Carbimax
+UVOX CR 150 MG	
+R-CIN 600 MG (1X3)	
+VARNITRIL 200 MG (1X14)	Varnitril
+VENUSMIN 300 MG (1X15)	Venusmin
+FLUTIHEAL NASAL SPRAY 10ML	
+TPREXADOL 100 MG	Tprexadol
+DR. ORTHO OINT 15GM	
+ENCORATE 300 MG	Encorate
+DAPASMART M 10/500 MG	
+GLUCRETA 10 MG	Glucreta
+ENCORATE 100 MG INJ 5ML	Encorate
+AURAGLOW MOISTURIZING LOTION 150ML	
+MUVERA 15 MG	Muvera
+TWINAQT TAB (1X30)	
+ESZOPIMAXX 6 MG	Eszopimaxx
+AYUR SHAMPOO 100ML	
+DONAMEM 10 MG	Donamem
+EMPACON 25 MG	Empacon
+TOFANOL 11 MG	Tofanol
+APRICOT EXTRACT VITAMIN 17 CAPS	
+MINOXYTOP 2% SOLUTION 60ML	Minoxidil
+GA 6 CREAM 30GM	
+LEVOFLOX 250 MG	Levoflox
+TRENRA MIX 150 IU INJ 1ML	
+TADAJUV -D (1X10)	
+SIMPARICA CHEWABLE (1X6)	
+IVERCHRIST 12 MG (1X10)	Iverchrist
+Foley Catheter M12 2 way 30ML	
+TALEKT TAB (1X60)	
+LUKOL TAB (1X60)	
+HUMOG HP 150 MG INJ	
+LEETREXATE 7.5 MG	Leetrexate
+DESOADD CREAM 15GM	
+PREVENT N TAB	
+NEPTAZ 200 MG (1X7)	Neptaz
+KLACID 500 MG INJ	Klacid
+DAFLOHEAL 500 MG	Dafloheal
+PREDNISOLONE 10 MG INJ 10ML	Prednisolone
+MICOGEL F CREAM 15GM	
+PRAMIPEX ER 1.5 MG	
+PICSPOT GEL 15GM	
+VISIOCARE OINT 5GM	
+BILUMA CREAM 15GM	
+MELASURE EMULGEL 20GM	
+TAPRISE 225 MG NASAL SPRAY	Taprise
+TERBEST CREAM 30GM	
+TERBEST 500 MG	Terbest
+GALVUS MET 50/1000 MG	
+EMILDAP TRIO FORTE TAB	
+LEFRA 20 MG	Lefra
+HZD 25 MG	
+SODAC INJ 25ML	
+CALMAC LOTION 120ML	
+ARKAMIN H TAB	
+VIROPIL TAB (1X30)	
+LUMIA 60K CAPS (1X8)	Lumia
+GLUCOMETER	
+GLUCO STRIPS (1X50)	
+KEPPRA 500 MG	Keppra
+NITROLONG 2.6 MG (1X30)	Nitrolong
+FEBUTAZ 40 MG	Febutaz
+RESTANON 250 MG INJ 1ML (1X5)	Restanon
+VBOL 10 MG	
+VOGS 0.2 MG (1X30)	
+OFLOMAC M SYRUP 60ML	
+PERINORM CD CAP (1X10)	
+MAXIRICH CAP (1X10)	
+KEROSITE-MX EYE DROP 5ML	
+TOXO MOX 500 MG (1X10)	
+SUNSHADE LOTION SPF 50 (50ML)	
+KEZOPET SHAMPOO 200ML	
+TORVOX 10 MG	Torvox
+FORACORT ROTACAPS 400 MG (1X30)	Formoterol + Budesonide
+DRONIS 20 MG (1X24)	Dronis
+CARDACE 2.5 MG (1X15)	Cardace
+CARDACE 1.25 MG (1X15)	Cardace
+HARIDRA CAPS (1X60)	
+LIV 52 SYRUP 200ML	
+LOGIHAIR TAB (1X10)	
+GEMCIUM CAP (1X10)	
+CLEARWAX EAR DROP 10ML	
+TESTO-E 250 MG INJ 1ML	
+BELOC TR 80 MG	
+PRIMOBOLON 100 MG INJ 1ML	Primobolon
+TOFASE 5 MG	Tofase
+AERO MUST (ADULT)	
+HISAKA 2 MG	Hisaka
+RALMAC 400 MG (1X60)	Ralmac
+AVARTA CREAM 50GM	
+DEZLORID 10 MG	Dezlorid
+PICSPOT CREAM 15GM	
+RAZEL EZ 10 MG	
+DIANABOL TAB (1X10)	
+HAIR O TIN KIT (1 KIT)	
+SIRLOFAST 1 MG	Sirlofast
+EVECARE CAPS (1X30)	
+BENCID 500 MG	Bencid
+TAPWHITE DIAMOND 250 MG	
+CEFAPRIME 500 MG (1X10)	Cefaprime
+NEX 400 MG INJ 1ML	
+FERITAS INJ 10ML	
+BENOQUINE CREAM 100GM	
+ANOBLISS CREAM 30GM	
+LEVOLIN SYNCHRO BREATHE INHALER 120MD	
+FEMLIB 100 MG (1X5)	Femlib
+SINAREST NEW TAB (1X15)	
+MEFTAL 250 MG	Meftal
+ABD PLUS SYRUP 10ML	
+QUELIDERM CREAM 5GM	
+TOP AVANA TAB	
+TIATAN 50 MG	Tiatan
+NICLOBEST 500 MG	Niclobest
+VETACHLOR -M SPRAY 100ML	
+IVERTIFF CREAM 30GM	
+EXTRATIME SYRUP 200ML	
+COGNIFAST TAB (1X10)	
+TRUSTRETIN 10 MG	Trustretin
+ATTENTROL 10 MG	Attentrol
+DROXYL DT 250 MG	
+APIDRA SOLOSTAR 100IU 3ML	
+DAPAFORD 10 MG (1X15)	Dapaford
+LENMID 10 MG	Lenmid
+UPRISE D3 DROPS 15ML	
+TAPANDA MAX 250 MG	
+CANDID CL GEL 30GM	
+PRIMSOOTH 1000 MG (1X15)	Primsooth
+TCA 25 %	
+NIZRAL 2% SOLUTION 50ML	Nizral
+TENEXX ET 250 MG INJ 10ML	
+FENSAFE 500 MG	Fensafe
+FEBENTEL 1000 MG	Febentel
+FEBENTEL 444 MG	Febentel
+VORTISIGN 10 MG	Vortisign
+RESTICLIN 250 MG	Resticlin
+GLEZ 2.5 MG	
+BRUTAFLAM MR 4MG	
+ESLIZEN 800 MG	Eslizen
+MITOMYCIN 2 MG INJ	Mitomycin
+GLYCOHALE FB 400 MG	
+EMBETA XR 25 MG (1X30)	
+PRAMIPEX ER 0.375 MG	
+PRAMIPEX ER 0.75 MG	
+PRIMRA 100 MG INJ 1ML	Primra
+PHOSGOOD 800 MG	Phosgood
+ZYDIP C LOTION 30ML	
+KETOKEM SHAMPOO 110ML	
+METAFLAM 1 MG	Metaflam
+LOX VISCOUS 2% TOPICAL 100ML	
+MINTOP FORTE 2% LOTION 60ML	Minoxidil
+ZOPANDA 20 MG	Zopanda
+LIOFEN 5 MG	Liofen
+VICCO TURMARIC CREAM 50GM	
+PRIMORIX 25 MG INJ 1ML	Primorix
+ZENOXA 150 MG	Zenoxa
+AMAZEO 100 MG	Amazeo
+RESYNC EYE DROPS 10ML	
+CLOPILET 75 MG (1X15)	Clopilet
+IVERSAFE 12 MG	Iversafe
+GENRYZON 60 MG INJ	Genryzon
+FLUNIL 60 MG	Fluoxetine
+HYPNODATE INJ 10ML	
+LEGESTRO GEL	
+BAYROCIN 10% INJ 100ML	Bayrocin
+ATAXIN 150 MG	Ataxin
+ATAXIN 50 MG	Ataxin
+TOBACIN 80 MG INJ 2ML	Tobacin
+TESTOLIDO 250 MG INJ 4ML	Testolido
+MUPICIP OINT 10GM	
+NEBULISER MACHINE	
+CREMAGEL 30GM	Cremagel
+WELHART 150 MG	Welhart
+THYMORIK 1.6 MG INJ 1ML	Thymorik
+DECA INTABOLIN 25MG INJ 1ML	
+RESTICLIN 500 MG	Resticlin
+CARITAP 225 MG	Caritap
+CARITAP DS 450 MG	
+SUNHEAL PURE CREAM 30GM	
+OMNI GEL 20GM	
+CANJOCAL ALFA 0.5MG	
+UPHOLD TAB (1X4)	
+MOXON 0.2 MG	Moxon
+KISKIN SKIN CREAM 20GM	
+VALZ 20 MG	
+KOLCHISMART 1.2 MG	Kolchismart
+SUCROCAN 20MG INJ 5ML	Sucrocan
+BERBESHINE TAB	
+FOUR DERM CREAM 20GM	
+CEFYDOC - O 400 MG	
+DUVANTA 30 MG	Duvanta
+LYCOGOLD CAP	
+ARCOLANE 2% SCALP SOLU	Arcolane
+FERONIA HP TAB	
+ALDIGESIC P TAB (1X15)	
+TUGAIN 10% FOAM 60GM	Minoxidil
+PYLOKIT (1X6)	
+CETAPIN XR 500 MG (1X20)	
+SUCRAFIL 1GM (1X10)	Sucrafil
+BORO PLUS CREAM 80GM	
+MORR 7.5% LOTION 60ML	Minoxidil
+TRONIN MS GEL 20GM	
+PANTODICE 40 MG (1X15)	Pantodice
+RISDONE MT 1 MG (1X10)	
+FERAVIR 200 MG (1X34)	Feravir
+ACROTAC 25 MG (1X20)	Acrotac
+VARNISMART 1 MG	Varnismart
+POLYPOD 200 MG	Polypod
+CEPHAGRAINE NASALS DROP 15ML	
+AMLOPIN 5 MG	Amlopin
+EXTREME VEGA FORCE 250 MG	Sildenafil
+EXTREAM SUPER FILANA	
+BEMPESTA EZ TAB	
+TRAZONIL 50 MG (1X15)	Trazonil
+DK GEL 30GM	
+TREMIDON 50 MG	Tremidon
+ALLSTAR INSULIN REUSABLE PEN	
+KETOFLY SHAMPOO 100ML	
+CEFADROX 125 MG KID TAB	Cefadrox
+DR GLUTA LIV 600 MG 5ML INJ	
+TACMOD FORTE 0.1% OINT 30GM	
+LULILOK CREAM 30GM	
+LEVOCETRIZEN 5 MG	Levocetrizen
+PRAMIPEX ER 3 MG	
+VIROASH 25 MG	Viroash
+MINOSTAR 2.5 MG	Minostar
+DABITOR 150 MG	Dabitor
+DEFLOVEIN 500 MG	Deflovein
+BICATERO 50 MG	Bicatero
+DERIVA CMS GEL 20GM	
+OXETOL 450 MG	Oxetol
+RIDINOX EYE DROP 10ML	
+FLUTROL 25/125 MCG INHALER	Flutrol
+OXANDROLONE 10 MG (1X25)	Oxandrolone
+DECA 250 MG INJ 1ML	
+ETOFORD MR TAB	
+ENTEHEP 1 MG (1X30)	Entehep
+ANA-ASH 1 MG	
+DIZOMAP TAB (1X10)	
+SILYBON 140 MG	Silybon
+OLTEF-M SYP 30ML	
+LUPISULIN R CATRIDGE 3ML	
+SIZOPIN 200 MG	Sizopin
+OMNICEF PLUS TAB	
+TENOFOSHIV EM TAB (1X30)	
+BEMEZY TAB	
+MONTINA-L TAB	
+FERTYL -M TAB (1X30)	
+KIWOF PUPPY ORAL SUSPENSION 15ML	
+METAFLAM ORAL SUSPENSION 15ML	
+DESOWEN LOTION 30ML	
+PURIFYING NEEM SCRUB 100GM	
+CABSHER 1 MG	Cabsher
+OMNIPRES AM 40 MG	
+MORNING COMES 450MG	
+DONEP 10 MG (1X15)	Donep
+LUKOSKIN ORAL LIQUID 100ML	
+LUKOSKIN OINTMENT 40GM	
+OSIMERT 80 MG (1X30)	Osimert
+HALOVATE OINT 30GM	
+LENALID 25 MG (1X30)	Lenalid
+DUPHALAC SYRUP 150ML	
+LEVIFIL 20 MG	Levifil
+ESZOP 1 MG (1X10)	Eszop
+HIFORCE 25K DELAY SPRAY	Sildenafil + Dapoxetine
+HAIRBLESS TAB (1X15)	
+GABANYL NT 400 MG	
+BDBRUT 140 MG (1X30)	Bdbrut
+MODANIL 200 MG	Modanil
+APIXAVAC 2.5 MG	Apixavac
+MYGESTERON 400 MG (1x10)	Mygesteron
+MINOSTAR 5 MG	Minostar
+METROPIN 250 MG	Metropin
+ENROGEN ORAL LIQUID 100ML	
+KETOFLY SOAP 75GM	
+VORTIXET 5 MG (1X10)	Vortixet
+MIKACIN 500 MG INJ 2ML	Mikacin
+EVION 600 MG	Evion
+ELDAPRIL 2.5 MG	Eldapril
+ERLY PEN INJ 3ML	
+SKIN FINE ISO 10 MG	
+T3 CYTOMEL TAB	
+REDENSER PLUS HAIR SERUM 60ML	
+TACROHEAL 1 MG	Tacroheal
+PICLIB 100 MG (1X21)	Piclib
+TOPAZ 25 MG (1X15)	Topaz
+ALGREAT- M TAB	
+OTSKI IV INJ 3ML	
+VITAMIN C INJ 5ML	
+SENSIBIO FORTE CREAM 40ML	
+VILDADER MET 1000 MG (1X15)	
+KRRISTA BLUE P TAB (1X10)	
+GLUTAFINE SOAP 75GM	
+ROXID 150 MG	Roxid
+TAP-ASH GOLD 250 MG	
+KLM C-20 SERUM 15ML	
+PERINORM INJ 2ML	
+RENOCRIT 10000 MG INJ	Renocrit
+NUCOXIA EMUGEL 30 GM	
+GABANEURON 6% GEL 30GM	Gabaneuron
+FLURASTED 250 MG INJ 5ML	Flurasted
+VALGAN 450 MG (1X4)	Valgan
+HYDREO 500 MG	Hydreo
+BURNFINE ULTRA CREAM	
+PREDPLUS EYE DROP 10ML	
+CANSHIELD 70 MG INJ 10ML	Canshield
+PUREGRAF XXL 600 MG INJ	Urofollitropin
+TERBIEDGE 250 MG (1X7)	Terbiedge
+CYSTEO CREAM 15 GM	
+SHINGRIX INJ	
+TELMIKIND 20 MG	Telmikind
+PIOLON 15 MG	Piolon
+ZOPANDA MAX 25 MG	
+NEBIMAX 2.5 MG	Nebimax
+SITACIP 100 MG	Sitacip
+DASAMED 50 MG (1X60)	Dasamed
+FINAST 1 MG	Finast
+DIAMICRON MR 30 MG	
+PRAX 5 MG	
+BOOSTRIX INJ 0.5ML	
+PREGAGESIC 450 MG	Pregagesic
+THERMOSEAL RA PASTE 100GM	
+GUFITRIG 5000 IU INJ	Gufitrig
+DROTIN INJ 2ML	
+IVF-M 150 IU INJ	
+FLUPIRTIN MALATE POWDER 100MG	
+ESENTRA 120 MG INJ	Esentra
+CA ATRA 10 MG (1X100)	
+OSELTAFLU 30 MG	Oseltaflu
+LEVOCETZIME 10 MG	Levocetzime
+OSICENT 80 MG (1X30)	Osicent
+ORLIJOHN 60 MG	Orlijohn
+MAXGUN 12.5 MG SPRAY	Maxgun
+ISTAVEL D 5/50 MG (1X15)	
+NEFROSAVE TAB (1X15)	
+CARVISMART 3.125 MG	Carvismart
+PRAZIQUIN 600 MG (1X4)	Praziquin
+5 MONO 20 MG	
+SUPERMET XL 50 MG (1X15)	
+KETOSCALP 200 MG	Ketoscalp
+DROSTAWIN 100 MG INJ 1ML	Drostawin
+APPLE-ASH 450 MG	
+BUSCOHEAL 10 MG TAB	Buscoheal
+MONOCEF SB 1GM INJ	
+TELKONOL AM TAB	
+ATARAX 25 MG INJ (6X2ML)	Atarax
+CIPMIDO 2.5 MG (1X20)	Cipmido
+EMPACON 10 MG	Empacon
+UDILIV 600 MG TAB	Udiliv
+FIASP FLEXTOUCH 100U/3ML	
+PANDERM++ CREAM 15GM	
+CEPHAVET 600 MG	Cephavet
+VICYL 6-0 NW2670	Vicyl
+ESGIPYRIN-DS INJ 3ML	
+MOXCLAV DROP 10ML	
+ZEN 100MG	
+OMNACORTIL SOLU 60ML	
+CARVEFORD 12.5 MG	Carveford
+TELMIKIND 80 MG	Telmikind
+ZENOXA OD 450MG	
+ISOMIN 20 MG	Isomin
+CORDARONE 100 MG (1X15)	Cordarone
+SERENACE INJ (5X1ML)	
+BETNOVATE C CREAM 30GM	
+OLMESMART H 40 MG	
+WORMISTAR 444 MG	Wormistar
+WORMISTAR 222 MG	Wormistar
+IMATIB 100 MG	Imatib
+RET GROW-A 0.05% 20GM	
+RET GROW-A 0.025% 20GM	
+LYORTAM 1GM INJ	Lyortam
+OXETOL-XR 450 MG	
+CARDIFINE 6.25 MG	Cardifine
+VIGAMOX DROP 5ML	
+DICLOLAB INJ 1ML	
+DOXYMUST 300 MG	Doxymust
+TAP-ASH 100 MG	
+ALZIL 5 MG	Alzil
+CLINDAKEM -A GEL 20GM	
+PRIDOST 60 MG	Pridost
+SYNOPTOPHORE WITH H.B  MACHINE	
+HAIR 4U SHAMPOO 100ML	Minoxidil
+JAKAUTO OINT 20GM	
+OPINE MD 10 MG	
+ZOLADEX LA 10.80 MG INJ	
+PICICLIB 100 MG	Piciclib
+ZOLDONAT 4 MG INJ	Zoldonat
+NICOSIN ATP INJ 50ML	
+ONABET CREAM 30GM	
+SUSTEN 200 MG INJ 2ML	Susten
+TESTO-P 100 MG 1ML	
+METHOTREX 2.5 MG	Methotrex
+JURICA 300 MG	Jurica
+MIMOD 25 MG (1X15)	Mimod
+ZYPLON 20 MG	Zyplon
+OLIMELT 5 MG	Olimelt
+OLEANZ RT 5 MG	
+DAONIL TAB (1X30)	
+COPELLOR AUTOINJEC PEN	
+MITOMYCIN 10MG INJ	Mitomycin
+ACTHROCIN 250 MG	Acthrocin
+CO-TRIMOXAZOLE SS TAB	
+LEEMEDRO 10 MG	Leemedro
+TOBRAZA 2% OINT 30GM	Tobraza
+EVION FORT CAPS	
+EVION CREAM 60GM	
+MINOSUN 10 MG	Minosun
+LULIFORD CREAM 30GM	
+MINOXYQURE 10% SOLUTION 60ML	Minoxyqure
+ACEMIZ S TAB	
+TELMIGEN AM TAB	
+TARGOCID 200 MG INJ	Targocid
+LONIFIN 2 MG	Lonifin
+BD NEEDLE 27 G	
+VONO 10 MG (1X10)	
+MINOLAST LC TAB	
+GLUGON 1 MG INJ	Glugon
+TAPDOL 200 MG	Tapdol
+LAMEZ OD 100 MG	
+NEFIDINOL RETARD 10 MG	
+VOXITIN 20 MG	Voxitin
+ONABET 2% CREAM 30GM	Onabet
+EPTUS 50 MG	Eptus
+LAMEZ 25 MG	Lamez
+SUMO PLUS GEL 30GM	
+OFLOKIND M LIQUID 30ML	
+OTISOOTHE SOLUTION 50ML	
+MELONEX 2.5 MG	Melonex
+ORDELYRE PET SACHET (1 SACHET)	
+TAKFA PET SPRAY 50ML	
+ICHMUNE C 100 MG (1X6)	
+APTIQUIK SYRUP 200ML	
+EPILEX ORAL SOLUTION 200ML	
+STAHA 5 MG	Staha
+VENIZ XR 37.5 MG	
+PROGRAF 0.5 MG	Prograf
+PROGRAF 1 MG	Prograf
+NODON T TAB	
+LACOSET 200 MG	Lacoset
+REBEZ DSR CAPS	
+ISOFAIR 40 MG	Isofair
+GUFIGEST SR 200 MG	
+RPIGAT 20 MG	Rpigat
+BETALOC 25 MG (1X30)	Betaloc
+PIVASTA 1 MG	Pivasta
+AMLOHEAL AT TAB	
+TADANOVA BLACK 80 MG	
+ALDONIL OD TAB	
+BONTRESS PRO HAIR SERUM 60ML	
+COMBIMIST-L INHALER	
+FLEXABENZ GEL 30GM	
+DARK HORSE FORCE TAB (1X4)	
+POTACHLORIDE PR 750 MG (1X10)	
+THYROXINOL 25 MG (1X120)	Levothyroxine
+OXALONE 10 MG	Oxalone
+JINZOL 10 MG	Jinzol
+CURABLESS CREAM VET 15GM	
+HYLORIC 100 MG	Hyloric
+STALOPAM 20 MG	Stalopam
+CLOFERT 100 MG (1X5)	Clofert
+LENVAT 10 MG (1X30)	Lenvat
+VERTIHIST 16 MG (1X15)	Vertihist
+REZIZ TAB (1X2)	
+L-FOLININE TAB (1X15)	
+FLUNIL 10 MG	Fluoxetine
+MALEGRA EFFERVESCENT 100 MG	Sildenafil
+ZINCA 20 MG	Zinca
+KOZILITE H OINT 20GM	
+MOLNULEE 200 MG (1X40)	Molnulee
+FREELEX TAB	
+BLUCAN INJ 10ML	
+SANTIA MET 100 MG (1X7)	
+DAPADER 10 MG (1X14)	Dapader
+ANADROL MAXX 50MG	
+CANDIDERMA + CREAM 20GM	
+KETOFORD CREAM 15GM	
+TAZZLE 5 MG	Tazzle
+GESTOSERV 200 MG	Gestoserv
+TRETIJON 0.025% CREAM 30GM	Tretijon
+SPAS SLIMON 25 MG (1X8)	
+METROZIDE GEL 20GM	
+IVERQUEST STAR DT 12MG	
+TAP-ASH 200 MG	
+MEBENTEL 500 MG (1X10)	Mebendazole
+KETOPLAST PATCH (1X7)	
+MOMENTA 5 MG	Momenta
+NS IV 500ML	
+LETHYROX 125 MCG (1X120)	Levothyroxine
+DECANEXX 250MG INJ 10ML	Decanexx
+GIBTULIO 25MG	Gibtulio
+CLINMISKIN GEL 20GM	
+SYNAPTOL 150MG	Synaptol
+ARRENO CAP (1X10)	
+LORATOR 10 MG	Lorator
+BACLOHEAL 25 MG	Bacloheal
+XAPAVIR 50MG (1X30)	Xapavir
+LORNIT 500MG	Lornit
+TREN-E 200 MG INJ 1ML	
+SCABOMA LOTION 50ML	
+GARNIER COLOUR 60ML	
+SOLVIN COLD TAB	
+KETOMOON K5 CREAM 15GM	
+HITEK ORAL SOL VET 100ML	
+FUNGICROS NAIL LACQUER 2.5ML	
+CO-DIOVAN 160/25 MG (1X14)	
+DERMIFORD CREAM 15GM	
+METHANDIENONE 10 MG (1X25)	Methandienone
+NAPROZEN 250MG (1X15)	Naprozen
+NAPROZEN 500MG (1X15)	Naprozen
+MINOZ BPO GEL 15GM	
+ASVS LYPHO INJ 10ML	
+OMNICEF-O 200MG	
+SIM-HDL 40MG	
+FESTIVE E/E DROP 10ML	
+SILVEREX IONIC 2% GEL 10GM	
+2B 12 TAB (1X15)	
+VOMISTOP DT 10MG	
+FEBENTEL 222 MG	Febentel
+TEGRITAL 400MG	Tegrital
+TESTOBOON 1% GEL 5GM	Testoboon
+ZAHA 1% EYE DROP 3ML	
+CALCIMUST VET INJ 30ML	
+PANACUR VET 150 MG	Fenbendazole
+OLMEZEST 20 MG	Olmezest
+SALISIA KT SHAMPOO 75ML	
+OXYSPRAY 10ML	Oxyspray
+MOMEFLO NASAL SPRAY 10ML	
+LORVAS SR TAB	
+ZYWET EYE DROP 10ML	
+BORTENAT 3.5 MG INJ	Bortenat
+LANSOTEZ 30 MG	Lansotez
+MELAGLOW RICH CREAM 20GM	
+EJ 30 MG	
+BRAVECTO CHEWABLE 500 MG	
+SHILAJIT TAB LEEFORD (1X60)	
+MECOFOL PLUS D3 CAPS	
+LOMELA CREAM 18GM	
+SUSTAMIX 250 MG INJ 1ML (AMERICAN)	Sustamix
+CLOBETA GM CREAM 10GM	
+FIBROEASE 10 MG	Fibroease
+LURAMAX 40 MG	Luramax
+SALAZAR TAB	
+PRAZICHRIST 600 MG	Prazichrist
+PARADISE XR 25 MG	
+RENOPRESS XL 5 MG	
+DEXAFLOX PET DROP 10ML	
+FURQUIN DROP GEL 5ML	
+EPIOTIC EAR CLEANSER 100ML	
+LOREXANE CREAM 30GM	
+MOX REDIMIX SUS 250MG 60ML	
+BRAVECTO CHEWABLE 1400 MG	
+ARSENAM 10 MG INJ 10ML	Arsenam
+ASCORCAN 500 MG INJ 5ML	Ascorcan
+ARNIV 50 MG (1X15)	Arniv
+CLARIFOD 500 MG (KNOLL)	Clarifod
+POVIFORCE TRIO OINT 15GM	
+FEBENTEL 444 MG (1X100)	Febentel
+TEST E PRO 250 MG 1ML	
+MONARGAN 5 MG SYRUP 100ML	Monargan
+OCUVIR DT 200 MG	
+ELKETO K5 CREAM 15GM	
+DEPIN RETARD TAB (1X15)	
+ELMOGIN OD 100 MG	
+HEPALAIR TAB	
+STANOFIT TAB	
+AQUASOL-A CAP (1X30)	
+VIATRAN 1.5 MG INJ	Viatran
+TINFAL PLUS TAB	
+ZANOCIN 100 MG	Zanocin
+AUGPEN 600 MG INJ 10ML	Augpen
+CLAVAM INJ 1.2GM 20ML	
+RIBASHIV 200 MG (1X140)	Ribashiv
+CLINSOL GEL 15GM	
+LMWX 40MG INJ	
+IVER-ASH 12 MG	
+MINOXIHEAD F TAB	
+LUPIVON 20 MG	Lupivon
+CRESP 40 MG INJ	Cresp
+OLMETIME AM 40MG	
+MEBECHRIST 500 MG	Mebechrist
+BD NEEDLE 25 G	
+OXALO CAPSULE	
+CIRQ 2 MG	
+TIPANAT 20 MG (1X20)	Tipanat
+NAXDOM 500MG (1X15)	Naxdom
+COSCILIN 500MG INJ 2ML	Coscilin
+MILBITRAZ 12.5% LIQ. VET 15ML	Milbitraz
+MEGAVAC-7 VACC. 1ML	
+PIBIRON INJ 30ML	
+CURE-STRESS 10MG	
+FCN 150 MG	
+CAPRIN 25K IU INJ 5ML	Caprin
+HYORTH 20MG INJ 2ML	Hyorth
+XYLOCAINE NF CREAM 30GM	
+BASALOG 100MG INJ 5ML	Basalog
+ALFANIL TAB (1X2)	
+APGEL GEL 10GM	
+URSODEC 150 MG (1X15)	Ursodec
+5 FLUCEL 500 MG INJ 10ML	
+NEMOCID 250 MG SUSPENTION 10ML	Nemocid
+BAYROCIN SHOT INJ 30ML	
+TACMOD OINT 30GM	
+MAHAPOD DT 100 MG	
+SKINSHINE OINT 30GM	
+BOCAINE 2% INJ 30ML	Bocaine
+FIBROEASE 25 MG	Fibroease
+SOLASAFE SPF 50+ SUNSCREEN GEL 50GM	
+BOTANICA ANTI-AGEING CREAM 50GM	
+TRANEXACAN INJ 5ML	
+NUMBON 2% INJ 30ML	Numbon
+POMISOL EAR DROP VET. 15ML	
+RECHARJ OMEGA-3 (1X30)	
+SAT ISABGOL 100GM	
+THYROXINOL 75 MG (1X120)	Levothyroxine
+SUCEE TAB (1X15)	
+IVAENORM 12MG	Ivaenorm
+ZENOXA 600 MG	Zenoxa
+CARCA 6.25 MG (1X15)	Carca
+CRISAFREE 2% OINT 10GM	Crisafree
+DISPO VAN NEEDLES 22 G	
+LODONAK 4.5 MG	Lodonak
+PIMOBEN 1.25/2.5MG	Pimoben
+IVF-HMG 150 IU INJ 1ML	
+RAMLAREN 5 MG (1X15)	Ramlaren
+MINTOP 2% LOTION 60ML	Minoxidil
+ARIZOLE 15 MG	Arizole
+ALAFEVIR EM TAB (1X30)	
+OTOFLU EYE DROP 5ML	
+ZOVIRAX SUSPENTION 100ML	
+HALOX CREAM 30GM	
+A-MOX 250 MG	
+CALTIVE 0.25 MG	Caltive
+LAMOSYN 50 MG	Lamosyn
+CANSHIELD 50 MG INJ 10ML	Canshield
+CHLORAMBUCIL 2 MG (1X30)	Chlorambucil
+CAMYDA 300 MG	Camyda
+PERIZON ER 6 MG	
+EXTRA SUPER I COT TAB	
+MALEGRA PRO 50 MG	Sildenafil
+DEPIN 10 MG (1X30)	Depin
+AUVELIA TAB	
+PAZOM 40 MG	Pazom
+ESZOP 3 MG (1x10)	Eszop
+WORMCHRIST 500 MG	Wormchrist
+EZEMORE 10 MG	Ezemore
+GLIMIMORE 2 MG	Glimimore
+MELBILD XL SOLUTION 10ML	
+ENAPRIL 2.5 MG (1X15)	Enapril
+METROHEX PLUS GEL 20GM	
+VIDOFIL SUPER POWER	
+TRANCODOL DT 10 MG	
+SCLERIFUMA DR 240 MG	
+CASTOR OIL 100ML	
+ENZANAMO 40 MG (1X28)	Enzanamo
+PREGABANYL NTM TAB	
+TENEXX -E 250 MG INJ 1ML	
+TLS-AM TAB	
+AMRIT KALASH SUGAR FREE (1X60)	
+NORSUNATE 200 MG (1X10)	Norsunate
+MINWIN-F TAB	
+PRURIGO SPRAY 50ML	
+ELDEGININE SACHET 6.5GM	
+CALCIQUICK D3 NANO SHORT INJ 5ML	
+ETHIGLO SOAP 75GM	
+TRINEUROSOL HP INJ 5ML	
+SOMANDA MAX 1000MG	
+GESTOFORD SR 300 MG	
+L-HIST MONT JUNIOR TAB	
+FEBENTEL 500 MG	Febentel
+TRETIGEL 0.025% GEL 20GM	Tretigel
+CLARIFACE 250 MG (1X4)	Clariface
+FENZE 222 MG	Fenze
+DUOLIN FORTE INHALER 200MD	
+HUMAPEN ERGO II INJ (1PEN)	
+LEETREXATE 15 MG	Leetrexate
+NALTISON 50 MG	Naltison
+AGEFINE FACE WASH 60ML	
+CANDID V GEL 30GM	
+LULICAN FORTE 5% LOTION 15ML	
+SOLINE 6% OINT 3GM	Soline
+PIDOTIMUNE 400 MG	Pidotimune
+BETACARD 50 MG (1X14)	Betacard
+DIPROBATE PLUS-G CREAM 30GM	
+CALCIDOC D3 60K (1X4)	
+IVERTEC CREAM 1% 30GM	
+VERQUVO 10 MG (1X14)	Verquvo
+TRI-O-BLOC CREAM 25GM	
+OSTALMIV 75MG	Ostalmiv
+EXTREME TADABLAZE TAB	
+HEPA-MERZ TAB	
+TOBAMIST RESPULES 5ML	
+WORMCHRIST 222 MG	Wormchrist
+SOTRET 30 MG	Sotret
+RIFAXISIGN 550 MG	Rifaxisign
+ESTRAVAL DEPOT INJ 1ML	
+COSMELITE CREAM 25GM	
+CREON 10000 MG (1X15)	Creon
+CREON 25000 MG (1X10)	Creon
+AMANTREL ER 129 MG	
+CELETOIN 100 MG (1X100)	Celetoin
+TENOF 300 MG (1X30)	Tenof
+KETOSCALP SHAMPOO 100ML	
+KAMAJOY 100 MG	Kamajoy
+DESIROX 250 MG (1X30)	Desirox
+TASTYLIA SUPER ACTIVE 20 MG	
+DISPO VAN NEEDLES 27 G	
+SIZODON 3 MG	Sizodon
+LABEBET 100 MG	Labebet
+AZATHRON 50 MG	Azathron
+DUTASPOR 0.5 MG (1X30)	Dutasteride
+KZ PLUS SOAP 75GM	
+SUPPOL SUPP 250 MG (1X7)	
+PRIMOXX 100 MG INJ 1ML	Primoxx
+TEST C PRO 250 MG INJ 1ML	
+IVANORM 6 MG	Ivanorm
+HALONIX ONE INJ 6ML	
+METODER XL 25 MG	
+BECOSULES Z CAP (1X20)	
+MINOPEP SOLUTION 90ML	
+FURAMET HF TAB	
+AMLONG 2.5 MG (1X15)	Amlong
+AQUAVIRON CAP	
+GARDASIL 9 MG INJ	Gardasil
+CPZ 100 MG	
+HERPERAX 5% CREAM 5GM	Herperax
+TERBINAFORCE-M CREAM 10GM	
+SELSUN SHAMPOO 120ML	
+IVERHEAL 1% CREAM 30GM	Ivermectin
+ZAVICEFTA 2.5 GM INJ	Zavicefta
+TOPISAL 6% LOTION 50ML	Topisal
+ZIPRAL 20 MG (1X10)	Zipral
+TOPISAL 3% OINT 30GM	Topisal
+ANTIFLU SYRUP 12MG 75ML	
+ROOP MANTRA CREAM 15GM	
+EXEMPTIA 40MG INJ	Exemptia
+POTRATE MB6 TAB	
+VALENT 160 MG	Valent
+FENZE 444 MG	Fenze
+TAXIM-O 200 MG	
+TADACT 20 MG	Tadact
+LEUTERO 50 MG INJ 5ML	Leutero
+ZYROP 4000 IU INJ COMBIPACK	Zyrop
+LIVAFIN CREAM 30GM	
+TETBENZ 25 MG	Tetbenz
+SYNDOPA CR 125 MG	
+TIMOLET EYE DROP 5ML	
+ZYROP 4000 IU INJ	Zyrop
+SUMO GEL 30GM	
+LOSAR 25 MG (1X15)	Losar
+AEROTROP-F INHALER 180MD	
+CHLORPROMAZINE 100 MG (1X10)	Chlorpromazine
+CADIXIME CV TAB (1X6)	
+TRANXIETY 50 MG	Tranxiety
+PIGMENTO TAB (1X60)	
+STANOBIX 100 MG INJ 1ML	Stanobix
+FEMARA 2.5 MG	Femara
+RECEPTAL INJ 10ML	
+ACTOID 10 MG	Actoid
+INDULEKHA OIL 100ML	
+EYEBLISS UNDER EYE CREAM 15GM	
+MARBOMET 50 MG (1X5)	Marbomet
+STECLIN BOLUS TAB (1X4)	
+WORMCHRIST 150 MG	Wormchrist
+SETFRAC PLUS TAB (1X15)	
+LORAVIL 10 MG	Loravil
+OMINIL INJ 30ML	
+NUTRINOL OMEGA-3 FISH OIL CAPS (1X60)	
+KLOTIN 100 MG INJ 5ML	Klotin
+G-ONE 1200 MG INJ	
+DEXBE TAB	
+TESTOBIX-E INJ 10ML	
+GLUDEC 600 MG INJ	Gludec
+NAXDOM 250 MG (1X15)	Naxdom
+R-CIN 150 MG	
+R-CIN 450 MG	
+GLU-CELL 2000 MG INJ 10ML	
+HUMINSULIN R 100IU INJ 10ML	
+ZOP 7.5 MG (WHITE PILLS)	
+UNOLOCK 2.5ML SYRINGE 26GE 1ML	Unolock
+MELOXVET ORAL SUSPENSION 100ML	
+GABAWIN 25 MG	Gabawin
+PEXEP CR 25 MG (1X15)	
+DEMISONE 0.5 MG	Demisone
+CANDID DUSTING POWDER 250GM	
+MONCLAV 625 MG	Monclav
+AMIJECT 250 MG INJ	Amiject
+GLOEYE TAB (1X10)	
+NIDRA NATURALS TAB	
+ZENTEL ORAL SUSPENTION 10ML	Albendazole
+IPRAZ PALATAB (1X2)	
+NIMCO SULPHUR SOAP 75GM	
+POWERCORT 0.05% CREAM 30GM	Powercort
+WATER FOR INJ 1ML	
+DITIM 40 MG	Ditim
+IMATIN 400 MG	Imatin
+PROGYDOL 35 MG (1X21)	Progydol
+PET SAFFA TAB (1X30)	
+ZERODOL MR TAB	
+NEEDLE 21 NO.	Needle
+BAYROCIN 50 MG	Bayrocin
+ZYPLON 10 MG	Zyplon
+CREVAST EZ 20 MG	
+SOFTVISC DROP 10ML	
+PAXIDEP CR 12.5 MG (1X10)	
+MICRONAC PF EYE DROP 5ML	
+BAYTICOL POUR-ON SOLUTION 40ML	
+CALCIQUICK D3 60K CAPS (1X4)	
+RABIUM 20 MG (1X15)	Rabium
+BILVA TEL 25ML	
+MYONIT INSTA TAB (1X30)	
+VIVETA CREAM 5GM	
+TERAJET 500 MG	Terajet
+MEBECHRIST 100 MG	Mebechrist
+SPEAR OINT 30GM	
+FOLITRAX 15MG INJ 1ML	Folitrax
+FORECOX TAB (1X6)	
+TRETIMAXX 0.05 CREAM 20GM	Tretimaxx
+PROSTAGARD 4 MG	Prostagard
+ROSUVAS 5 MG (1X15)	Rosuvas
+EMSAFE 25 MG	Emsafe
+TESTOBIX-C 250 MG INJ 10ML	
+HD QUEST 300 MG	
+L-CARNIBIX INJ 5ML	
+MYOSPAS TAB	
+ALBENDAZOL TAB (1X1)	
+BRAVECTO CHEWABLE 100 MG	
+INTALITH CR 450 MG	
+ISMO 20 MG (1X30)	
+VALSABROOK 160 MG	Valsabrook
+WINOLAP DS 0.2% DROP 2.5ML	
+AZORAN 50 MG (1X20)	Azoran
+LAMINO PLUS 10% 500ML	
+CERTICAN 0.5 MG	Certican
+HEY FORTE PLUS CAPS	
+MIRABEST ER 50 MG	
+RABIACE 20 MG (1X15)	Rabiace
+SMPTRO 40-60 KG (1X3)	Smptro
+BRIVERATAM 100 MG	Briveratam
+BOLDABOL PRO 250 MG INJ 1ML	
+NANDROLIN PRO INJ 1ML	
+SUPER TADASH	
+PETMECTIN 10 MG INJ 100ML	Petmectin
+TLS 40 MG	
+HISTAKEM 180 MG	Histakem
+ROYAL FENBEND 444 MG (1X100)	
+FOLITRAX 15 MG	Folitrax
+BENZAC AC 5% GEL WASH 100ML	Benzoyl Peroxide
+VOLIBO 0.3 MG	Volibo
+PARAMET-M TAB	
+DEPIWHITE EYE CONTOUR GEL 15GM	
+BIDIN LS EYE DROP 5ML	
+FLURISONE EYE DROPS 5ML	
+CANDIFORCE 100MG (1X10)	Candiforce
+OLMEZEST AM TAB	
+PUREGRAF 300 IU PFS	Urofollitropin
+HYHIST 25 MG (1X15)	Hyhist
+ANDROTAS GEL 37.5GM	
+REDNISOL 8 MG	Rednisol
+TRAZONIL 25 MG (1X15)	Trazonil
+PARTYSMART GUMMIES (2 GUMMIES X 5N)	
+VIROLFI 450 MG	Virolfi
+NUFORCE PET 100 MG	
+HITEK INJ VET 10ML	
+CARTAIL VET 100 MG (1X6)	
+GOUTNIL 0.5 MG	Goutnil
+ZIPRAL 40 MG	Zipral
+DORSUN T EYE DROP 5ML	
+TABLODEP 25 MG	Tablodep
+MILBITRAZ 12.5% LIQ. VET 50ML	Milbitraz
+ELOVERA IMF LOTION 150ML	
+BENZO 5% GEL 30GM	Benzo
+PRIMOXX 100 MG INJ 10ML	Primoxx
+PAN 20 MG (1X15)	
+LVATE NEO CAP	
+STECLIN VET 50 MG INJ 30ML	
+FULL-B12 INJ 2ML	
+OBIMET SR 500 MG (1X15)	
+CALCIROL SACHET 1GM	
+LENEL 25 MG	Lenel
+PARKIDRIN 5 MG	Parkidrin
+HIFORCE 100 MG ODS	Sildenafil + Dapoxetine
+ROVAMYCIN FORTE TAB	
+REXIGO 120 MG	Rexigo
+CLINRED-B 5% CREAM 15GM	
+PREGABANYL-M SR 75 MG	
+OPTIVIRAL EYE OINT 5GM	
+TIDOMET PLUS TAB	
+GATIQUIN-P EYE DROPS 10ML	
+ISOFAIR 20 MG	Isofair
+ROSUVAS 20 MG	Rosuvas
+TESTOBIX-E INJ 1ML	
+NASOCLEAR GEL 15GM	
+MYORIL 4 MG CAPS	Myoril
+FLEXABENZ SPRAY 55GM	
+BLUMOX PLUS CAPS (1X15)	
+GLUTAENORM 1200 MG INJ 20ML	Glutaenorm
+OXCARB 600 MG	Oxcarb
+ACNE UV SPF50 GEL 50GM	
+ATROPINE SULPHATE INJ 1ML	
+MASTERON PRO 100 MG INJ 1ML	
+BETASTAL BD INJ 2ML	
+BEXOL 2 MG	Bexol
+MEGALIS-D TAB	
+URSODEC 300 MG (1X15)	Ursodec
+STUD 10000	
+VPRESS INJ 1ML	
+METZOK PR 50 MG	
+TERAJET 250 MG	Terajet
+POSATRAL 100 MG	Posatral
+COLOSIG 135 MG	Colosig
+ZOVICLOVIR 5% CREAM 10GM	Zoviclovir
+NUCOXIA 120 MG	Nucoxia
+ACESTINE 600 MG	Acestine
+OMEE-D TAB (1X20)	
+AMOXYCLAV 1 GM	Amoxyclav
+MEFTAL FORTE TOPICAL CREAM 50GM	
+CLOP-G CREAM 30GM	
+CATAREST EYE DROP 10ML	
+NEEM & TURMERIC SOAP 125GM	
+ARYTHMIC 200 MG	Arythmic
+RIZAFINE 10 MG	Rizafine
+KDION 10MG INJ 1ML	Kdion
+ENTOFOAM 10% FOAM	Entofoam
+DIOVAN 160 MG (1X14)	Diovan
+ZITHROKEM 500 MG (1X3)	Zithrokem
+SUPIROCIN OINT 5GM	
+TESTOBOON 250 MG INJ 1ML	Testoboon
+NEWCITA 10 MG (1X15)	Newcita
+TIZARO 10 MG INJ	Tizaro
+TESTOBIX-C INJ 1ML	
+ASCORBIC ACID INJ 2ML	
+IVASMART 7.5 MG	Ivasmart
+SOMATOREL 50MG INJ	Somatorel
+NOLTREXATE 10 MG	Noltrexate
+DEXORANGE CAPS (1X30)	
+NICARDIA XL 30MG (1X15)	
+BICAHAL 50 MG	Bicahal
+AVADAFORCE 100 MG (1X4)	Avadaforce
+ZILARBI CT 12.5 MG	
+LANCET (1X100)	
+BUTTERFLY IV SET 22G (TOP)	
+RELIPOTIN 4K INJ	Relipotin
+DABUR GULABARI WATER 120ML	
+PARACHUTE COCONUT OIL 100ML	
+STAZNOR 10MG (1x50)	Staznor
+D25 IV 100ML	
+IVERCIAA 1% CREAM 30GM	Iverciaa
+ANDROANAGEN TAB	
+ETOTAG GEL 30GM	
+LOMAC 20 MG (1X15)	Lomac
+LAVETA 10 MG (1X15)	Laveta
+LINID 600 MG (1X10)	Linid
+REBAGEN 100 MG (1X15)	Rebagen
+CEPODEM 200 MG	Cepodem
+METRON 400 MG (1X15)	Metron
+CLINDINOL 20 MG	Clindinol
+TENEXX CP INJ 1ML	
+VOLINI SPRAY 15GM	
+ABARIS I.V.N.S 100ML	
+FUNGICROS CREAM 10GM	
+D-SOL 60K TAB (1X4)	
+COVILIFE 20 MG	Covilife
+PREBEL 300 MG	Prebel
+ZOPIASH 20 MG	Zopiash
+MINWIN 2.5 MG	Minwin
+WORMCHRIST 1000 MG	Wormchrist
+DONAMEM 5MG	Donamem
+ENAPRIL-HT TAB (1X15)	
+KISKIN LOTION 100ML	
+VERTIFORD 16 MG	Vertiford
+PIOGLIT 15 MG	Pioglit
+LIPICURE 80 MG	Lipicure
+FYCOMPA 2 MG (1X14)	Fycompa
+FYCOMPA 6 MG (1X14)	Fycompa
+TESVOLT-U INJ 10ML	
+C-ONE 500 MG INJ	
+DEEP TBR TAB	
+INDONESS 75 MG	Indoness
+COBACTAN 2.5% INJ 50ML	Cobactan
+LOREXANE OINT 100GM	
+EUGON HP 150 IU INJ	
+DOSTRABIX 100 MG INJ 1ML	Dostrabix
+FYCOMPA 4 MG (1X14)	Fycompa
+ALZIL 10 MG	Alzil
+CHANDRAPRABHA BATI (1X80)	
+OZIM 20 MG	
+EVERGRAF 0.5 MG	Evergraf
+IVERGUARD 3 MG	Iverguard
+FENZE 500 MG	Fenze
+NOVOPEN FLEXPEN 4	
+CEPODOL 200 MG	Cepodol
+AGROLIV 450 MG	Agroliv
+COSMELITE CREAM 20GM	
+TYZA CREAM 15GM	
+RITUXIREL 100MG INJ	Rituxirel
+CEFAXONE 0.5GM INJ	Cefaxone
+CIRROSAM 400 MG (1X15)	Cirrosam
+ONE TOUCH ULTRA STRIPS (1X50)	
+CAREFORCE 100MG ODS (1X10STP)	Careforce
+CYTOPOINT 10MG INJ 1ML	Cytopoint
+CYTOPOINT 40MG INJ 1ML	Cytopoint
+DISPO VAN INJ (20ML)	
+MEGA FREE FLEX TAB	
+PRIMOBIX 100 MG INJ 1ML	Primobix
+TRETICORS OINT 30GM	
+NOVAMOX 125 MG REDIUSE 30ML	Novamox
+SIMPONI 50 MG INJ	Simponi
+PANTODICE 20 MG (1X15)	Pantodice
+STECLIN VET INJ 100ML	
+CYCLOSTED 1000 MG INJ	Cyclosted
+NEBISTAR 5 MG (1X15)	Nebistar
+PERNEX AC 2.5% GEL 20GM	
+BDPOSA 100 MG	Bdposa
+SALYTAR OINT 15GM	
+SYCOMIN 75 MG	Sycomin
+DECABIX 100MG INJ 1ML	Decabix
+CANDIBIOTIC PLUS EAR DROP 5ML	
+LYRICA 75 MG (1X14)	Pregabalin
+LAMETEC DT 25 MG	
+HERDUO 250MG (1X30)	Herduo
+LISTRIL PLUS TAB (1X15)	
+ANATERO 1 MG	Anatero
+HANSEPRAN 100 MG	Hansepran
+PRACTIN 4 MG (1X15)	Practin
+KOJIGLO GEL 20GM	
+LENRIS 4 MG	Lenris
+MOSI EYE ONIT 5GM	
+MIGRANEX 10 MG	Migranex
+DANABIX 10 MG	Danabix
+FULNITE 2MG	Fulnite
+CLOTRIHEAL CREAM 30GM	
+FPP 4000000 UNIT INJ VET	
+ONDANAUS INJ 2ML	
+TRYPTOMER 50 MG (1X15)	Tryptomer
+TROXONE 1GM INJ	Troxone
+CLENBIX 40 MCG	Clenbix
+TRENABIX-A 100MG INJ 1ML	
+ZOPIASH 25 MG	Zopiash
+STANOBIX 10 MG	Stanobix
+FEBENTEL 222 MG (1X100)	Febentel
+DERIVA MS GEL 15GM	
+ZIFI CV 200 MG	
+NEO-MERCAZOLE 10 MG (1X130)	
+TENDRONE 5% CREAM 15GM	Tendrone
+TAYO 60K TAB (1X8)	
+CCM 250 MG (1X40)	
+PIOSYS 30 MG (1X30)	Piosys
+DEWSOFT PREMIA CREAM 50GM	
+UPRISE D3 2 K (1X15)	
+BEMDAC EZ TAB	
+Q METH 125 MG INJ	
+FLUTAS 400 MG (1X1)	Flutas
+AMLIP AT TAB	
+MISOPOST 200 MG	Misopost
+LUPIRIGHT XL CREAM 50GM	
+HIMPLASIA TAB (1X60)	
+NORFLOX 200 MG	Norflox
+TRETIGEL 0.1% 20GM	Tretigel
+V-MEET GEL 20GM	
+DEXTROSE 25% IV 100ML	Dextrose
+ALERE G1 TEST STRIPS (1X100 STRIPS)	
+BEMDEC TAB	
+DECABIX 100MG INJ 10ML	Decabix
+ZUBIVOLT 100 MG	Zubivolt
+SILVI-ASH TAB	
+ATODER 40 MG	Atoder
+NITROGLYCERIN OINT 30GM	
+SUMASELF NASAL SPRAY	
+PET JOINT TAB	
+XYZAL 5 MG (1X15)	Xyzal
+PICON CREAM 10GM	
+NICOTEX 2 MG (1X40GUMS)	Nicotex
+CARNOTOL 500 MG (1X10)	Carnotol
+FUCIDIN CREAM 5GM	
+SALYTAR SCALP SOLUTION 100ML	
+SORVATE C OINT 20GM	
+MESNA INJ	
+DERMI 5% CREAM 15GM	Dermi
+EMPANEO 25 MG	Empaneo
+SORIFIX OINTMENT 30GM	
+PRIMOBIX 100 MG INJ 10ML	Primobix
+NATZOLD 5 MG INJ 100ML	Natzold
+MONTAZ 1 GM INJ	Montaz
+AIRZ FB 120MD	
+PRODEP 20 MG	Prodep
+ZIDIFOS 4 GM INJ	Zidifos
+PERCIN 600 MG (1X5)	Percin
+VARIMAX 10 MG (1X4)	Varimax
+BIOCLAN 300 MG	Bioclan
+EASOTIC SUSPENSION 10ML	
+ALIDES 5 MG	Alides
+MEGALIS 5 MG	Megalis
+GEFE MAX 1GM 125 MG INJ	
+FANBJOY 500 MG	Fanbjoy
+CALADRYL LOTION 125ML	
+BISOJOY 10 MG	Bisojoy
+FLOATIN 20MG	Floatin
+LIPZLITE CREAM 15GM	
+TRETIMAXX 0.025% CREAM 20GM	Tretimaxx
+HYLA EYE DROP 10ML	
+MOXIKIND CV FORTE SYRUP 30ML	Amoxicillin + Clavulanate
+EYEMIST EYE DROP 10ML	
+RABEMAC 10 MG	Rabemac
+ABIRANAMO 250 MG (1X120)	Abiranamo
+ARVAST 10 MG (1X15)	Arvast
+SHIGRU CAPS (1X60)	
+APREZO 20 MG (1X4)	Aprezo
+QUTAN SR 50 MG	
+SODARC INJ 10ML	
+OMNIGEL SPRAY 55GM	
+TRYPTOMER 10 MG (1X30)	Tryptomer
+OMNIHOT GEL 30GM	
+CREMAFFIN FRESH TAB	
+MODAMOOD 200 MG	Modamood
+INDULEKHA BRINGHA OIL 100ML	
+TICASMART 90MG	Ticasmart
+MONCREW 10 MG	Moncrew
+CETRIHEAL TAB (1X15)	
+GANCIGEL EYE GEL 5GM	
+TRIMECORT GEL 5GM	
+ISOTRENOL 20 MG	Isotrenol
+JGLUT 2000 MG INJ 30ML	Jglut
+SULPH 50% INJ 2ML	Sulph
+CYPON SYRUP 200ML	
+CAPTOGUARD 25 MG	Captoguard
+LACTIC ACID TC 30%	
+SALICYCLIC TC 25%	
+TCA TA 20%	
+TCA TA 70%	
+GLYCOLIC 30%+LACTIC 20%+KOJIC 12%	Glycolic
+CEFOXIM 500 MG	Cefoxim
+VOXAMIN 100 MG	Voxamin
+CHLOROCOL EYE DROP 10ML	
+CALCUBIT 100 MG (1X14)	Calcubit
+SORAFENAT 200 MG (1X30)	Sorafenat
+SUTINAT 50 MG (1X28)	Sutinat
+RCIN 600 MG (1X3)	
+BIGOMET 850 MG	Bigomet
+GONNAPRO 25 MG	Gonnapro
+OCUPOL EYE OINT 5GM	
+TAMOXOL 10 MG	Tamoxol
+BIOVAS EZ TAB	
+TRENABIX-A 100MG INJ 10ML	
+NOSCAR CREAM 20GM	
+HEALTHRICH CAPS	
+SAFEHEART 10 MG (1X30)	Safeheart
+LOMOVEX TAB	
+HEALTROXIN 25 MG (1X120)	Healtroxin
+OPTIHIST AZ EYE DROP 5ML	
+PROLOMET-T 50 MG	
+EMPGLOSS 10 MG	Empgloss
+PICOLEX TAB	
+THROMBOPHOB OINT 30GM	
+ADIFF GEL 15GM	
+TAMOBIX 20 MG	Tamobix
+ZOPMINI 3.75 MG	Zopmini
+MESATIS 500 MG	Mesatis
+NORTROP 10 MG	Nortrop
+IVERZOOM 12 MG	Iverzoom
+ALKACEL 2MG (1X25)	Alkacel
+TESTOBOON NATURAL GUMMIES (1X60)	
+CREMAGEL-L GEL 30GM	
+TRIMIUM INHALER 1MDI	
+BRIMOLOL DROP 5ML	
+CARDIPEN RETARD TAB	
+DEMISONE 5 MG	Demisone
+PIROX GEL 30GM	
+TENOLOL 50 MG (1X14)	Tenolol
+DIAPER RASH CREAM 50GM	
+BOLDANEXX 250 MG 1ML	Boldanexx
+LEUCORIN 15 MG	Leucorin
+XYLAXIN VET INJ 10ML	
+RAMIWICK 5 MG	Ramiwick
+VERTIRON TAB (1X25)	
+AZAC SOAP 75GM	
+K-ARC INJ 10ML	
+TACROZ FORTE SOLN 20ML	
+JOGREN 5MG (1X60)	Jogren
+EMPACIP 25MG	Empacip
+ADAKLEEN 0.1% GEL 15GM	Adakleen
+GLIZID 40 MG	Glizid
+ZENOXA ORAL SUSPENSION 100ML	
+OFLOKEM 400 MG	Oflokem
+BLACK HORSE ROYAL HONEY (1X24 SACH)	
+ZINCOHEAL TAB (1X15)	
+PIOZ 7.5 MG	
+TABI 50 MG (1X30)	
+ZINCORBIA INJ 10ML	
+TARGOCID 400 MG INJ	Targocid
+DUPHALAC SYRUP 450ML	
+EMGLOBULIN 5GM 100ML	Emglobulin
+ORASORE DENTAL GEL 10GM	
+REPATHA SURECLIK PEN	
+MOUNJARO 2.5 MG/0.5ML	Mounjaro
+BOLDABIX 250 MG INJ 10ML	Boldabix
+SIZODON 2 MG	Sizodon
+PRUGO 25 MG (1X15)	Prugo
+MA-DHA CAP	
+SORVATE OINT 20GM	
+FENBENZIL 222 MG	Fenbenzil
+FENBENZIL 500 MG	Fenbenzil
+FENBENZIL 444 MG	Fenbenzil
+GLUTAENORM 600 MG INJ	Glutaenorm
+MAGOHIN 500 MG INJ 2ML	Magohin

@@ -1,0 +1,239 @@
+	Compound Name	Dose	
+51Q10	5-Amino-1-methylquinolinium	10mg	
+
+
+51Q50	5-Amino-1-methylquinolinium	50mg	
+
+
+A05	AOD-9604	5mg	
+
+
+AR16	ARA-290	16mg	
+
+
+ARA16	ARA-290	16mg	
+
+
+BP10	BPC-157	10mg	
+
+
+BP20	BPC-157	20mg	
+
+
+CAG10	Cagrilintide	10mg	
+
+
+CAG5	Cagrilintide	5mg	
+
+
+CI1010	CJC DAC/Ipamorelin	10/10mg	
+
+
+CJD5	CJC-1295 DAC	5mg	
+
+
+CJND	CJC no DAC/Ipamorelin	5/5mg	
+
+
+DS10	DSIP	10mg	
+
+
+DS5	DSIP	5mg	
+
+
+EP10	Epithalon	10mg	
+
+
+EP50	Epithalon	50mg	
+
+
+FOX10	Fox-04	10mg	
+
+
+G210	GHRP-2	10mg	
+
+
+G610	GHRP-6	10mg	
+
+
+GLO80	GLOW blend	80mg	
+
+
+H10	Human Growth Hormone	10mg	
+
+
+HK/KP50/20	GHK-Cu2+/KPV	50/20mg	
+
+
+HK100	GHK-Cu	100mg	
+
+
+HK50	GHK-Cu	50mg	
+
+
+IG1	IGF-1 LR3	1mg	
+
+
+ILLUM	illumineeuro		
+
+
+IP10	Ipamorelin	10mg	
+
+
+KL080	GHK-Cu/BPC-157/TB-500/KPV	80mg total	
+
+
+KLO80	KLOW blend	80mg	
+
+
+KP10	KPV	10mg	
+
+
+KP30	KPV	30mg	
+
+
+M010	MOTS-C	10mg	
+
+
+M040	MOTS-C	40mg	
+
+
+MO10	MOTS-C	10mg	
+
+
+MO20	MOTS-C	20mg	
+
+
+MT1	Melanotan I	10mg	
+
+
+MT2	Melanotan II	10mg	
+
+
+MT210	Melanotan 2	10mg	
+
+
+NA500	NAD+	500mg	
+
+
+NASK10	N-Acetyl Selank Amidate	10mg	
+
+
+NASK50	N-Acetyl Selank	50mg	
+
+
+NASX10	N-Acetyl Semax	10mg	
+
+
+NASX50	N-Acetyl Semax	50mg	
+
+
+OZ10	Semaglutide	10mg	
+
+
+OZ20	Semaglutide	20mg	
+
+
+OZ5	Semaglutide	5mg	
+
+
+PE10	PE-22-28	10mg	
+
+
+PT10	PT-141	10mg	
+
+
+RE10	Retatrutide	10mg	
+
+
+RE20	Retatrutide	20mg	
+
+
+RE30	Retatrutide	30mg	
+
+
+RE40	Retatrutide	40mg	
+
+
+RE50	Retatrutide	50mg	
+
+
+RE60	Retatrutide	60mg	
+
+
+SK10	Selank	10mg	
+
+
+SN10	Snap-8	10mg	
+
+
+SR5	Sermorelin	5mg	
+
+
+SS10	SS-31	10mg	
+
+
+SS30	SS-31	30mg	
+
+
+SS50	Elamipretide (SS-31)	50mg	
+
+
+SUR10	Survotide	10mg	
+
+
+SX10	Semax	10mg	
+
+
+T/155	Tesamorelin/Ipamorelin	15/5mg	
+
+
+T/B1010	BPC-157/TB-500 (TB4)	10/10mg	
+
+
+T/B55	BPC-157/TB-500	5/5mg	
+
+
+TA110	Thymosin Alpha-1	10mg	
+
+
+TB10	TB-500	10mg	
+
+
+TB20	TB-500	20mg	
+
+
+TB410	TB-500 (TB4)	10mg	
+
+
+TBF10	TB-500 Fragment	10mg	
+
+
+TE10	Tesamorelin	10mg	
+
+
+TE20	Tesamorelin	20mg	
+
+
+VIP	VIP	10mg	
+
+
+ZE10	Tirzepatide	10mg	
+
+
+ZE100	Tirzepatide	100mg	
+
+
+ZE15	Tirzepatide	15mg	
+
+
+ZE20	Tirzepatide	20mg	
+
+
+ZE30	Tirzepatide	30mg	
+
+
+ZE45	Tirzepatide	45mg	
+
+
+ZE60	Tirzepatide	60mg

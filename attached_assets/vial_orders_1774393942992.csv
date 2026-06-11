@@ -1,0 +1,5 @@
+"id","code","telegram_username","shipping_name","shipping_address","email","notes","status","subtotal","discount_amount","total","discount_code_id","discount_code_used","payment_status","payment_tx_hash","wallet_address","admin_notes","created_at","order_status"
+"02d51266-4249-478a-8703-f0b6ceebecbb","LV-BZ6ASX","efew","efwe","ewfefef",,,"pending","15.00","0.00","15.00",,,"unpaid",,"0x3B5670Fe10369082297f29eB6dB950C2db7d3659",,"""2026-03-21T21:18:36.963Z""","accepted"
+"341c31e0-dbea-415e-bc1c-bd2a2d2402f9","LV-JBEPD5","urbanblend789",,,,,"pending","15.00","0.00","15.00",,,"unpaid",,"0x3B5670Fe10369082297f29eB6dB950C2db7d3659",,"""2026-03-21T22:06:27.895Z""","accepted"
+"c1f69ef9-daa6-41d7-95cf-b61046650212","LV-UY6LWS","test","affe","fwefewf",,,"pending","10.00","0.00","10.00",,,"unpaid",,"0x3B5670Fe10369082297f29eB6dB950C2db7d3659",,"""2026-03-20T00:38:48.941Z""","accepted"
+"f3632415-6a4b-48b2-a8c7-6140e5b1ef29","LV-TCAUES","ee","dscds","csdcd",,,"pending","40.00","0.00","40.00",,,"unpaid",,"0x3B5670Fe10369082297f29eB6dB950C2db7d3659",,"""2026-03-20T01:48:12.893Z""","accepted"

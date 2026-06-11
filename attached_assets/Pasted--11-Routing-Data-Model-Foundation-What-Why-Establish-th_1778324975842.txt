@@ -1,0 +1,51 @@
+#11 - Routing & Data Model Foundation
+What & Why
+Establish the database and backend foundation that all other parts of this overhaul depend on. Introduces explicit routing state, reshipper codes, dynamic vendor shipping calculation from the wholesale rate table, per-leg payment blocking, a full routing audit trail, and error logging — while fully protecting all existing paid orders from any financial change.
+Done looks like
+* Every order has a routing_type field (direct, reshipper, unrouted) readable and writable via the API
+* Existing paid orders are untouched — their financial fields are read-only unless an admin explicitly overrides with a logged reason
+* Existing orders have routing_type = NULL (legacy mode) — they appear in a separate legacy section on the board
+* Each reshipper in a GB has a unique reshipper_code per GB, stored in gb_reshippers
+* Vendor shipping is calculated dynamically from the wholesale rate table by reshipper hub and kit count, not from a manually entered fixed cost
+* Both reshipper batches recalculate automatically when an order is moved between them
+* When all reshippers for a country are at capacity, admin receives a system alert
+* Payment blocking can be toggled per country leg (in addition to existing GB-level block)
+* Every routing change, cost recalculation, financial override, and system error is written to routing_history and audit_logs
+* Warnings surface in the admin panel for: legacy orders needing backfill, unresolved balance dues, orders amended after batch lock, missing wholesale prices, and capacity breaches
+* Old fields (vendorShippingCost on legs, vendorShippingAmount/Mode/EqualPct on GBs, allowVendorShippingSplit on reshippers) remain in the database untouched but are flagged as legacy — existing GBs continue reading them unchanged
+* sharedShippingCountries field is hidden from all admin UI (data preserved, feature retired)
+* All schema changes are additive and nullable — safe for drizzle-kit push --force on startup
+Out of scope
+* UI for the fulfillment board (Task 2)
+* FS3 vendor order UI changes (Task 3)
+* Admin orders page UI changes (Task 4)
+* Customer portal UI changes (Task 4)
+* Removing legacy fields from the database (deferred until all GBs migrated)
+* Reshipper capacity limits (removed from scope — admin manages workload manually)
+Steps
+1. Add routing_type enum and column to orders — Add a Postgres enum routing_type_enum with values direct, reshipper, unrouted. Add nullable column routing_type to ordersTable. Add legacy_mode boolean (default false for new orders, set true during backfill for pre-migration orders). No default value — existing rows stay NULL, treated as legacy by all application logic.
+2. Add routing_history table — New table capturing: orderId, changedBy (admin username), changeType (routing_assigned, reshipper_changed, leg_corrected, cost_recalculated, financial_override, batch_locked, batch_unlocked, error), previousValue (jsonb), newValue (jsonb), reason (text, required for financial overrides), timestamp. Every routing or financial mutation writes here before returning a response.
+3. Add reshipper_code to gb_reshippers — Nullable unique-per-GB text field. Admin sets it when configuring a reshipper for a GB. Add a reshipper_code_active boolean so codes can be rotated without affecting existing assignments. Add code_capacity nullable integer (null = unlimited). When capacity is reached, a system alert is written to audit_logs and the code rejects new assignments until admin intervenes.
+4. Add payment_blocked boolean to gb_country_legs — Defaults false. When true, the payment submission route for orders in that leg rejects with a clear user-facing message. Works independently of the existing GB-level payments_enabled flag and the reshipper-level allow_payments flag — all three must pass for payment to proceed.
+5. Build dynamic vendor shipping calculator — New shared utility calculateVendorShipping(gbId, reshipperUsername, orderIds). Looks up the wholesale vendor linked to the GB, counts total kits across the given orders, finds the correct tier from the wholesale rate table, returns the total cost and per-order share. Handles multi-package scenarios: if kit count exceeds the maximum package size (25), splits into multiple packages and sums the cost. Per-order share is proportional to each order's kit count, not equal split. Fires after any order routing change and writes results to vendor_shipping on each affected order — only if those orders do not have payment_status = confirmed or if legacy_mode = true. Confirmed-payment orders are skipped and flagged in routing_history as needing admin review.
+6. Add reshipper_hub_country to orders — Nullable text field storing the ISO country code of the reshipper the order is assigned to at the time of calculation. Used by the calculator to determine which rate region applies. Separate from shipping_country (the customer's destination). Updated whenever reshipper assignment changes.
+7. Update order creation route to handle reshipper codes — In orders.ts, when an order is submitted with a reshipperCode in the request body: validate the code against gb_reshippers for the relevant GB, check reshipper_code_active and capacity, assign reshipper_username and set routing_type = reshipper if valid. If no code provided and the leg has any active reshippers with codes, set routing_type = direct. If no code provided and no coded reshippers exist for the leg, fall through to existing assignment logic. Log the code-matching result to routing_history.
+8. Build routing mutation API endpoints — New or updated endpoints: PATCH /admin/orders/:id/routing (sets routing_type, reshipper_username, country_leg_id; triggers recalculation; writes history; returns updated cost breakdown). POST /admin/orders/bulk-routing (same but for multiple orders). POST /admin/orders/:id/financial-override (allows changing financial fields on a confirmed-payment order; requires reason in body; writes to routing_history with override flag). All endpoints validate that confirmed-payment orders cannot have financial fields changed without the explicit override endpoint.
+9. Build warning aggregation endpoint — GET /admin/group-buys/:gbId/routing-warnings returns a structured list of warnings for the GB: legacy orders needing backfill (count + list), orders with unresolved balance dues, orders with missing wholesale prices, orders amended after batch lock, capacity breach alerts. Used by the fulfillment board and FS3 to display the warning panel.
+10. Add batch_locked boolean and batch_locked_at timestamp to orders — Set by FS3 when a vendor order is generated. When batch_locked = true, the routing mutation endpoint rejects changes unless the request includes force_override: true with a reason. Writes unlock event to routing_history.
+11. Add error logging middleware for routing operations — All routing and calculation errors are caught, written to audit_logs with severity level, and returned to the frontend with a structured error shape ({ code, message, affectedOrders, canRetry }). Silent failures are not permitted — every calculation failure surfaces visibly.
+12. Update the apply-leg-shipping endpoint — Modify gb-country-legs.ts to call the new dynamic calculator instead of applying a fixed cost. Preserve the endpoint for backward compatibility with existing GBs that have legacy_mode orders — those continue using the fixed vendorShippingCost field. New GBs use the dynamic path.
+13. Write integration tests for the financial protection rules — Verify: confirmed-payment orders cannot have vendor_shipping changed by a routing move; legacy orders with NULL routing_type are excluded from recalculation; override endpoint requires and logs reason; capacity breach creates audit log entry; reshipper code validation rejects inactive and over-capacity codes.
+Relevant files
+* Product-Landing-Page/lib/db/src/schema/orders.ts
+* Product-Landing-Page/lib/db/src/schema/group_buys.ts
+* Product-Landing-Page/lib/db/src/schema/accounts.ts
+* Product-Landing-Page/lib/db/src/schema/intl_shipping.ts
+* Product-Landing-Page/lib/db/src/schema/audit_logs.ts
+* Product-Landing-Page/lib/db/src/schema/index.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/orders.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/admin.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/payments.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/gb-country-legs.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/reshipper-admin.ts
+* Product-Landing-Page/artifacts/api-server/src/routes/organiser-reshippers.ts

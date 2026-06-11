@@ -1,0 +1,9 @@
+id,gb_id,reshipper_username,country,enabled_payment_methods,reshipper_payment_details,created_at,enabled,payment_target,reshipper_fee_enabled,reshipper_fee_type,reshipper_fee_amount,allow_payments,allow_vendor_shipping_split
+00383bc6-66f9-4396-99a5-3df15f08f7b2,93V4L,poochielagrande,NL,{},,2026-04-29 12:26:21.897517+00,t,admin,t,fixed,,f,t
+d0df2f0e-aba5-4e76-9841-cd61f19d0a07,93V4L,snptest,GB,{},,2026-05-02 22:11:29.596751+00,t,admin,f,custom,,f,f
+d6214c0d-c5bf-4daa-8781-b1396097b913,93V4L,nugget07,AU,{},,2026-04-29 12:26:02.565875+00,t,admin,t,fixed,,f,t
+3e561aad-b5d2-4e81-ad50-cf90b669ca05,93V4L,fazi28,IT,{},,2026-04-29 12:29:04.37337+00,t,admin,f,fixed,,f,f
+66ed8c8a-3af4-414f-99fa-68b94f0d0eb8,93V4L,tomte12,DE,{},,2026-04-29 12:28:33.625706+00,t,admin,f,fixed,,f,t
+8e3c1d49-e47e-43a1-9e1d-40c6e6087581,93V4L,insidethelaw,PT,{},,2026-04-29 12:27:08.098647+00,t,admin,f,fixed,,f,t
+3b92e3d2-4330-41e4-8641-e500184416e4,93V4L,donpatch0,FR,{},,2026-04-29 12:28:48.068007+00,t,admin,f,fixed,,f,t
+b9239421-1d86-45f9-9c97-42867cb89c2d,93V4L,curlyc2002,NL,{},,2026-04-29 13:33:39.278084+00,t,admin,f,fixed,,f,t
