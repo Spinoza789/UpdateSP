@@ -6962,7 +6962,35 @@ function OrdersSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
                       <div className="flex justify-between"><span>Delivery ({o.deliveryMethod})</span><span>{gb.currency} {o.deliveryPrice.toFixed(2)}</span></div>
                       {(o.directShippingCost ?? 0) > 0 && <div className="flex justify-between font-medium text-indigo-700"><span>🏠 Direct Shipping Cost</span><span>{gb.currency} {o.directShippingCost!.toFixed(2)}</span></div>}
                       {o.vendorShipping > 0 && <div className="flex justify-between"><span>Vendor shipping</span><span>{gb.currency} {o.vendorShipping.toFixed(2)}</span></div>}
-                      {(o.adminFee ?? 0) > 0 && <div className="flex justify-between text-amber-700"><span>{o.adminFeeLabel ?? "Admin Fee"}</span><span>{gb.currency} {(o.adminFee!).toFixed(2)}</span></div>}
+                      {(o.adminFee ?? 0) > 0 && (
+                        <div className="flex justify-between text-amber-700 items-center gap-2">
+                          <span>{o.adminFeeLabel ?? "Admin Fee"}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{gb.currency} {(o.adminFee!).toFixed(2)}</span>
+                            <button
+                              onClick={async () => {
+                                const res = await fetch(apiUrl(`/admin/orders/${o.id}`), {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+                                  body: JSON.stringify({ adminFee: 0, adminFeeLabel: null }),
+                                });
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  setOrders(prev => prev.map(ord => ord.id === o.id ? {
+                                    ...ord,
+                                    adminFee: 0,
+                                    adminFeeLabel: null,
+                                    grandTotal: data.grandTotal ?? ord.grandTotal,
+                                  } : ord));
+                                }
+                              }}
+                              className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      )}
                       {o.tip > 0 && <div className="flex justify-between"><span>Tip</span><span>{gb.currency} {o.tip.toFixed(2)}</span></div>}
                       {(o.creditsApplied ?? 0) > 0 && <div className="flex justify-between text-emerald-600 font-medium"><span>Store Credits Applied</span><span>−${o.creditsApplied!.toFixed(2)} USD</span></div>}
                       <div className="flex justify-between font-semibold text-foreground pt-0.5"><span>Total</span><span>{gb.currency} {o.grandTotal.toFixed(2)}</span></div>

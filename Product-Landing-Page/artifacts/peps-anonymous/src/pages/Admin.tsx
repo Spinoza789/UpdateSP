@@ -644,7 +644,8 @@ function OrdersTab({ secret }: { secret: string }) {
   const [bulkStatus, setBulkStatus] = useState("Processing");
   const [bulkApplying, setBulkApplying] = useState(false);
   const [editingItems, setEditingItems] = useState<string | null>(null); // orderId being line-item edited
-  const [draftItems, setDraftItems] = useState<{ productName: string; quantity: string; unitPrice: string; isCustom: boolean }[]>([]);
+  const [draftItems, setDraftItems] = useState<{ productName: string; quantity: string; unitPrice: string; isCustom: boolean; paid: boolean }[]>([]);
+  const [removingAdminFee, setRemovingAdminFee] = useState<Record<string, boolean>>({});
   const [savingItems, setSavingItems] = useState(false);
   const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
   const [gbFilter, setGbFilter] = useState("");
@@ -1246,7 +1247,7 @@ function OrdersTab({ secret }: { secret: string }) {
     }
     setDraftItems(order.lineItems.map(li => {
       const inCatalog = products.some(p => p.name === li.productName);
-      return { productName: li.productName, quantity: String(li.quantity), unitPrice: String(li.unitPrice), isCustom: !inCatalog };
+      return { productName: li.productName, quantity: String(li.quantity), unitPrice: String(li.unitPrice), isCustom: !inCatalog, paid: true };
     }));
     setEditingItems(order.id);
   };
@@ -1258,6 +1259,9 @@ function OrdersTab({ secret }: { secret: string }) {
       unitPrice: parseFloat(li.unitPrice) || 0,
     })).filter(li => li.productName.trim() && li.quantity > 0);
     if (items.length === 0) { setMsg("Add at least one item"); return; }
+    const unpaidTotal = draftItems
+      .filter(li => !li.paid && li.productName.trim())
+      .reduce((s, li) => s + (parseFloat(li.quantity) || 0) * (parseFloat(li.unitPrice) || 0), 0);
     setSavingItems(true);
     try {
       const res = await fetch(apiUrl(`/admin/orders/${orderId}/line-items`), {
@@ -1267,12 +1271,43 @@ function OrdersTab({ secret }: { secret: string }) {
       });
       if (!res.ok) { const e = await res.json().catch(() => ({})); setMsg(e.detail || e.error || "Failed"); setSavingItems(false); return; }
       const updated = await res.json();
-      setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
+      if (unpaidTotal > 0) {
+        const patchRes = await fetch(apiUrl(`/admin/orders/${orderId}`), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+          body: JSON.stringify({ amountDue: parseFloat(unpaidTotal.toFixed(2)) }),
+        });
+        if (patchRes.ok) {
+          const patched = await patchRes.json();
+          setOrders(prev => prev.map(o => o.id === orderId ? { ...updated, ...patched } : o));
+        } else {
+          setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
+        }
+      } else {
+        setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
+      }
       setEditingItems(null);
       setDraftItems([]);
-      setMsg("Items saved ✓"); setTimeout(() => setMsg(""), 2000);
+      setMsg(unpaidTotal > 0 ? `Items saved — $${unpaidTotal.toFixed(2)} added to balance owed ✓` : "Items saved ✓");
+      setTimeout(() => setMsg(""), 3000);
     } catch { setMsg("Network error"); }
     setSavingItems(false);
+  };
+
+  const removeAdminFee = async (orderId: string) => {
+    setRemovingAdminFee(prev => ({ ...prev, [orderId]: true }));
+    try {
+      const res = await fetch(apiUrl(`/admin/orders/${orderId}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+        body: JSON.stringify({ adminFee: 0, adminFeeLabel: null }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, adminFee: 0, adminFeeLabel: null, grandTotal: data.grandTotal ?? o.grandTotal } : o));
+      }
+    } catch { /* silent */ }
+    setRemovingAdminFee(prev => ({ ...prev, [orderId]: false }));
   };
 
   const deleteOrder = async (id: string) => {
@@ -2823,15 +2858,29 @@ function OrdersTab({ secret }: { secret: string }) {
                                     = {currSym(order.currency)}{((parseFloat(li.quantity) || 0) * (parseFloat(li.unitPrice) || 0)).toFixed(2)}
                                   </span>
                                 </div>
+                                <div className="flex items-center gap-2 pt-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => setDraftItems(prev => prev.map((x, idx) => idx === i ? { ...x, paid: !x.paid } : x))}
+                                    className={cn(
+                                      "flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border transition-colors",
+                                      li.paid
+                                        ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                                        : "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+                                    )}
+                                  >
+                                    {li.paid ? "✓ Paid" : "⚠ Not Paid — adds to balance owed"}
+                                  </button>
+                                </div>
                               </div>
                             ))}
                             <div className="flex gap-2 flex-wrap">
                               <button className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
-                                onClick={() => setDraftItems(prev => [...prev, { productName: "", quantity: "1", unitPrice: "", isCustom: false }])}>
+                                onClick={() => setDraftItems(prev => [...prev, { productName: "", quantity: "1", unitPrice: "", isCustom: false, paid: true }])}>
                                 <Plus className="w-3 h-3" />From catalog
                               </button>
                               <button className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
-                                onClick={() => setDraftItems(prev => [...prev, { productName: "", quantity: "1", unitPrice: "", isCustom: true }])}>
+                                onClick={() => setDraftItems(prev => [...prev, { productName: "", quantity: "1", unitPrice: "", isCustom: true, paid: true }])}>
                                 <Plus className="w-3 h-3" />Custom item
                               </button>
                             </div>
@@ -2869,12 +2918,21 @@ function OrdersTab({ secret }: { secret: string }) {
                         <div className="flex justify-between text-muted-foreground"><span>Products</span><span>{fmtC(order.productSubtotal, order.currency)}</span></div>
                         <div className="flex justify-between text-muted-foreground"><span>Delivery ({order.deliveryMethod})</span><span>{fmtC(order.deliveryPrice, order.currency)}</span></div>
                         {(order.adminFee ?? 0) > 0 && (
-                          <div className="flex justify-between text-amber-700 font-medium">
+                          <div className="flex justify-between text-amber-700 font-medium items-center gap-2">
                             <span>{order.adminFeeLabel ?? "Admin Fee"}</span>
-                            <span>{fmtC(order.adminFee!, order.currency)}</span>
+                            <div className="flex items-center gap-2">
+                              <span>{fmtC(order.adminFee!, order.currency)}</span>
+                              <button
+                                onClick={() => removeAdminFee(order.id)}
+                                disabled={removingAdminFee[order.id]}
+                                className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                              >
+                                {removingAdminFee[order.id] ? "…" : "Remove"}
+                              </button>
+                            </div>
                           </div>
                         )}
-                        {(order.directShippingCost ?? 0) > 0 && (
+                        {(order.directShippingCost ?? 0) > 0 && !order.directShippingRequested && (
                           <div className="flex justify-between text-indigo-700 font-medium">
                             <span>🏠 Direct Shipping Cost</span>
                             <span>{fmtC(order.directShippingCost!, order.currency)}</span>
