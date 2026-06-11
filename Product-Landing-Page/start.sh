@@ -37,6 +37,11 @@ node -e "
   }).listen(5000, '0.0.0.0', () => console.log('[proxy] Port 5000 → 21503 ready'));
 " &
 
+# Map GEMINI_API_KEY → AI_INTEGRATIONS_GEMINI_API_KEY when the Replit integration key is absent
+if [ -z "${AI_INTEGRATIONS_GEMINI_API_KEY}" ] && [ -n "${GEMINI_API_KEY}" ]; then
+  export AI_INTEGRATIONS_GEMINI_API_KEY="${GEMINI_API_KEY}"
+fi
+
 echo "[start] Starting API server on port ${API_PORT:-8080}..."
 NODE_ENV=development pnpm --filter @workspace/api-server run dev &
 
