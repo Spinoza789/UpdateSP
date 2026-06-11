@@ -125,6 +125,8 @@ interface Order {
   shippingCarrier?: string | null; carrierServiceRef?: string | null;
   directShippingRequested?: boolean;
   directShippingCost?: number | null;
+  adminFee?: number | null;
+  adminFeeLabel?: string | null;
   routingType?: string | null;
   batchLocked?: boolean;
   isWholesale?: boolean;
@@ -2861,6 +2863,12 @@ function OrdersTab({ secret }: { secret: string }) {
                       <div className="bg-muted/40 rounded-xl p-3 space-y-1.5 text-sm">
                         <div className="flex justify-between text-muted-foreground"><span>Products</span><span>{fmtC(order.productSubtotal, order.currency)}</span></div>
                         <div className="flex justify-between text-muted-foreground"><span>Delivery ({order.deliveryMethod})</span><span>{fmtC(order.deliveryPrice, order.currency)}</span></div>
+                        {(order.adminFee ?? 0) > 0 && (
+                          <div className="flex justify-between text-amber-700 font-medium">
+                            <span>{order.adminFeeLabel ?? "Admin Fee"}</span>
+                            <span>{fmtC(order.adminFee!, order.currency)}</span>
+                          </div>
+                        )}
                         {(order.directShippingCost ?? 0) > 0 && (
                           <div className="flex justify-between text-indigo-700 font-medium">
                             <span>🏠 Direct Shipping Cost</span>
