@@ -16,6 +16,9 @@ import {
   resetBatchJob,
   bulkImportJob,
   resetBulkImportJob,
+  isUzorakUrl,
+  resolveUzorakPreviewType,
+  resolveUzorakPreviewBytes,
 } from "../lib/gemini-lab-extract";
 
 const upload = multer({
@@ -614,6 +617,16 @@ router.get("/lab-tests/:id/preview", async (req, res) => {
       return;
     }
     if (!test.url) { res.status(422).json({ error: "This lab test has no external URL" }); return; }
+
+    // Uzorak: their server 302-redirects /verify/X.pdf back to the SPA hash,
+    // so a normal fetch won't retrieve embeddable content. Instead we query
+    // their public Supabase API to learn what media is available.
+    if (isUzorakUrl(test.url)) {
+      const uzorakType = await resolveUzorakPreviewType(test.url);
+      res.json({ type: uzorakType, originalUrl: test.url });
+      return;
+    }
+
     const preview = await resolvePreviewInfo(test.url, test.labName ?? undefined);
     res.json({ ...preview, originalUrl: test.url });
   } catch {
@@ -645,18 +658,40 @@ router.get("/lab-tests/:id/proxy", async (req, res) => {
       return;
     }
 
-    // For website URLs, resolve to an actual media URL first
     if (!test.url) { res.status(422).json({ error: "This lab test has no external URL" }); return; }
+
+    // Uzorak: fetch bytes via Supabase RPC (direct download is blocked by their SPA redirect)
+    if (isUzorakUrl(test.url)) {
+      const uzorakFile = await resolveUzorakPreviewBytes(test.url);
+      if (!uzorakFile) {
+        res.status(502).json({ error: "Failed to retrieve Uzorak report" });
+        return;
+      }
+      res.setHeader("Content-Type", uzorakFile.mimeType);
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.setHeader("Content-Disposition", "inline");
+      res.end(uzorakFile.bytes);
+      return;
+    }
+
+    // For all other website URLs, resolve to an actual media URL first
     const preview = await resolvePreviewInfo(test.url, test.labName ?? undefined);
-    let targetUrl = test.url;
-    if (preview.type === "image" && preview.images.length > 0) targetUrl = preview.images[0];
-    else if (preview.type === "pdf") targetUrl = preview.url;
-    else if (preview.type === "link") {
+    let candidateUrls: string[] = [];
+    if (preview.type === "image" && preview.images.length > 0) {
+      candidateUrls = preview.images;
+    } else if (preview.type === "pdf") {
+      candidateUrls = [preview.url];
+    } else {
       res.status(422).json({ error: "No embeddable media available for this report" });
       return;
     }
 
-    const file = await downloadLabFile(targetUrl);
+    // Try each candidate URL in order (handles Janoshik guessed URLs gracefully)
+    let file: Awaited<ReturnType<typeof downloadLabFile>> = null;
+    for (const url of candidateUrls) {
+      file = await downloadLabFile(url);
+      if (file) break;
+    }
     if (!file) {
       res.status(502).json({ error: "Failed to download report file" });
       return;

@@ -384,13 +384,29 @@ export async function fetchJanoshikImages(pageUrl: string): Promise<string[]> {
   const cached = IMAGE_CACHE.get(pageUrl);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.urls;
 
+  // Build a candidate list: try the canonical /tests/img/ID.png URL first so
+  // we don't depend on server-rendered HTML (Janoshik pages are JS-rendered).
+  const guessedUrls: string[] = [];
+  try {
+    const u = new URL(pageUrl);
+    const testId = u.pathname.split("/").filter(Boolean).pop() ?? "";
+    if (testId) {
+      guessedUrls.push(`https://janoshik.com/tests/img/${testId}.png`);
+      guessedUrls.push(`https://janoshik.com/tests/img/${testId}.jpg`);
+    }
+  } catch { /* ignore */ }
+
   try {
     const res = await fetch(pageUrl, {
       headers: DOWNLOAD_HEADERS,
       redirect: "follow",
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      // Even if page fetch fails, return guessed URLs — proxy will verify them
+      IMAGE_CACHE.set(pageUrl, { urls: guessedUrls, ts: Date.now() });
+      return guessedUrls;
+    }
 
     const finalUrl = res.url || pageUrl;
     const html = await res.text();
@@ -411,16 +427,93 @@ export async function fetchJanoshikImages(pageUrl: string): Promise<string[]> {
       if (/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url)) imageUrls.add(url);
     }
 
+    // Also check og:image / twitter:image meta tags (present even in SPA shells)
+    const ogPattern = /<meta[^>]+(?:property=["']og:image["']|name=["']twitter:image["'])[^>]+content=["']([^"']+)["']/gi;
+    const ogPattern2 = /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property=["']og:image["']|name=["']twitter:image["'])/gi;
+    for (const pat of [ogPattern, ogPattern2]) {
+      for (const m of html.matchAll(pat)) {
+        let src = m[1].trim();
+        if (src.startsWith("//")) src = "https:" + src;
+        if (isBulkImportAllowedUrl(src) && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(src)) {
+          imageUrls.add(src);
+        }
+      }
+    }
+
     // Prioritise /tests/img/ PNGs — these are the full portrait certificate (1600×2360).
     // jas.janoshik.com/images/ JPEGs are square 1000×1000 thumbnails, not the full report.
     const jasImages = [...imageUrls].filter(u => /jas\.janoshik\.com\/images\//i.test(u));
     const testImgPngs = [...imageUrls].filter(u => /janoshik\.com\/tests\/img\//i.test(u));
-    const final = [...new Set([...testImgPngs, ...jasImages])];
+    // Merge: prefer scraped /tests/img/ PNGs, then jas images, then guesses, then jas thumbnails
+    const final = [...new Set([...testImgPngs, ...guessedUrls, ...jasImages])];
     IMAGE_CACHE.set(pageUrl, { urls: final, ts: Date.now() });
     return final;
   } catch {
-    return [];
+    IMAGE_CACHE.set(pageUrl, { urls: guessedUrls, ts: Date.now() });
+    return guessedUrls;
   }
+}
+
+// ── Uzorak preview helpers ────────────────────────────────────────────────────
+
+export function isUzorakUrl(rawUrl: string): boolean {
+  try { return matchesDomain(new URL(rawUrl).hostname.toLowerCase(), ["uzorak.com"]); }
+  catch { return false; }
+}
+
+function extractUzorakPublicId(pageUrl: string): string | null {
+  try {
+    const rawU = new URL(pageUrl);
+    const hashPath = rawU.hash.length > 1 ? rawU.hash.slice(1) : rawU.pathname;
+    const filename = hashPath.split("/").filter(Boolean).pop() ?? "";
+    const publicId = filename.replace(/\.pdf$/i, "").split("_")[0].trim();
+    return publicId || null;
+  } catch { return null; }
+}
+
+/**
+ * Determine what type of embeddable preview Uzorak can provide for a URL.
+ * Uses the Supabase public API (same as data extraction) so no direct fetch.
+ */
+export async function resolveUzorakPreviewType(pageUrl: string): Promise<"image" | "pdf" | "link"> {
+  const publicId = extractUzorakPublicId(pageUrl);
+  if (!publicId) return "link";
+  const order = await fetchUzorakOrder(publicId);
+  if (!order) return "link";
+
+  const items = (order.order_items ?? order.orderItems) as unknown[] ?? [];
+
+  const topSnap = (order.snapshot_base64 ?? order.snapshotBase64) as string | undefined;
+  if (topSnap) return "image";
+  for (const item of items) {
+    if (typeof item !== "object" || !item) continue;
+    const snap = ((item as Record<string, unknown>).snapshot_base64 ?? (item as Record<string, unknown>).snapshotBase64) as string | undefined;
+    if (snap) return "image";
+  }
+
+  const topUrl = (order.report_url ?? order.reportUrl) as string | undefined;
+  if (topUrl) return "pdf";
+  for (const item of items) {
+    if (typeof item !== "object" || !item) continue;
+    const u = ((item as Record<string, unknown>).report_url ?? (item as Record<string, unknown>).reportUrl) as string | undefined;
+    if (u) return "pdf";
+  }
+
+  return "link";
+}
+
+/**
+ * Fetch Uzorak preview bytes via Supabase (bypasses their SPA redirect).
+ * Returns the snapshot JPEG or Google Drive PDF as a Buffer.
+ */
+export async function resolveUzorakPreviewBytes(pageUrl: string): Promise<{ bytes: Buffer; mimeType: string } | null> {
+  const publicId = extractUzorakPublicId(pageUrl);
+  if (!publicId) return null;
+  const order = await fetchUzorakOrder(publicId);
+  if (!order) return null;
+  const file = await resolveUzorakFile(order);
+  if (!file) return null;
+  return { bytes: Buffer.from(file.data, "base64"), mimeType: file.mimeType };
 }
 
 // ── Generic website image scraper ─────────────────────────────────────────────
