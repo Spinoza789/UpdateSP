@@ -213,42 +213,43 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
     const tgBare = tg.startsWith("@") ? tg.slice(1) : tg;
     const tgAt  = tg.startsWith("@") ? tg : `@${tg}`;
 
-    // In open mode any GB order qualifies; otherwise must have testingContribution > 0
-    const orderConditions = openMode
-      ? and(
-          eq(ordersTable.groupBuyId, gbId),
-          sql`lower(${ordersTable.telegramUsername}) IN (lower(${tgBare}), lower(${tgAt}))`
-        )
-      : and(
-          eq(ordersTable.groupBuyId, gbId),
-          gt(ordersTable.testingContribution, "0"),
-          sql`lower(${ordersTable.telegramUsername}) IN (lower(${tgBare}), lower(${tgAt}))`
-        );
-
+    // Find the user's order in this GB (any order — we'll check contribution separately)
     const [accountOrder] = await db
       .select({ id: ordersTable.id, testingContribution: ordersTable.testingContribution })
       .from(ordersTable)
-      .where(orderConditions)
+      .where(and(
+        eq(ordersTable.groupBuyId, gbId),
+        sql`lower(${ordersTable.telegramUsername}) IN (lower(${tgBare}), lower(${tgAt}))`
+      ))
       .limit(1);
 
     if (accountOrder) {
-      isOptedIn = true;
-      const [vote] = await db
-        .select({
-          peptideName: gbTestingVotesTable.peptideName,
-          vialCount: gbTestingVotesTable.vialCount,
-          testSelections: gbTestingVotesTable.testSelections,
-        })
-        .from(gbTestingVotesTable)
-        .where(
-          and(
-            eq(gbTestingVotesTable.roundId, round.id),
-            eq(gbTestingVotesTable.orderId, accountOrder.id)
-          )
-        );
-      if (vote) {
-        hasVoted = true;
-        existingVote = vote as { peptideName: string; vialCount: number; testSelections: string[] };
+      const contribOnOrder = parseFloat(String(accountOrder.testingContribution ?? "0")) > 0;
+      // Opted in if:
+      //  - openMode (Janoshik external payment) → any order qualifies
+      //  - testingContribution > 0 on the order (standard / already verified)
+      //  - lateOptInEnabled → any GB order holder can vote and pay via late opt-in flow
+      const lateOptInOpen = !!(round.lateOptInEnabled);
+
+      if (openMode || contribOnOrder || lateOptInOpen) {
+        isOptedIn = true;
+        const [vote] = await db
+          .select({
+            peptideName: gbTestingVotesTable.peptideName,
+            vialCount: gbTestingVotesTable.vialCount,
+            testSelections: gbTestingVotesTable.testSelections,
+          })
+          .from(gbTestingVotesTable)
+          .where(
+            and(
+              eq(gbTestingVotesTable.roundId, round.id),
+              eq(gbTestingVotesTable.orderId, accountOrder.id)
+            )
+          );
+        if (vote) {
+          hasVoted = true;
+          existingVote = vote as { peptideName: string; vialCount: number; testSelections: string[] };
+        }
       }
     }
   }
@@ -409,6 +410,7 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
       testOptions: gbTestingRoundsTable.testOptions,
       janoshikPaymentUrl: gbTestingRoundsTable.janoshikPaymentUrl,
       anyContribution: gbTestingRoundsTable.anyContribution,
+      lateOptInEnabled: gbTestingRoundsTable.lateOptInEnabled,
     })
     .from(gbTestingRoundsTable)
     .where(eq(gbTestingRoundsTable.groupBuyId, gbId))
@@ -446,29 +448,34 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
     : DEFAULT_TEST_OPTIONS;
   const validTests = cleanTests.filter(t => allowedTests.includes(t));
 
-  // janoshikPaymentUrl = external payment not tracked on the order, so skip the contribution check.
-  // anyContribution = late opt-in that DOES write testingContribution on the order, so still require it.
+  // externalPaymentMode: Janoshik URL set → payment tracked externally, skip contribution check.
+  // lateOptInEnabled: late opt-in allowed → also skip testingContribution check on order;
+  //   instead verify the user has a non-rejected contribution in gb_testing_contributions.
   const externalPaymentMode = !!(round.janoshikPaymentUrl as string | null);
+  const lateOptInEnabled = !!(round.lateOptInEnabled);
 
-  const orderConditionsVote = externalPaymentMode
-    ? and(
-        eq(ordersTable.groupBuyId, gbId),
-        sql`lower(${ordersTable.telegramUsername}) IN (lower(${tgBare}), lower(${tgAt}))`
-      )
-    : and(
-        eq(ordersTable.groupBuyId, gbId),
-        gt(ordersTable.testingContribution, "0"),
-        sql`lower(${ordersTable.telegramUsername}) IN (lower(${tgBare}), lower(${tgAt}))`
-      );
-
+  // Always start by finding any order in this GB matching the user's telegram
   const [order] = await db
     .select({ id: ordersTable.id, groupBuyId: ordersTable.groupBuyId, testingContribution: ordersTable.testingContribution })
     .from(ordersTable)
-    .where(orderConditionsVote)
+    .where(and(
+      eq(ordersTable.groupBuyId, gbId),
+      sql`lower(${ordersTable.telegramUsername}) IN (lower(${tgBare}), lower(${tgAt}))`
+    ))
     .limit(1);
 
   if (!order) {
     res.status(403).json({ error: "You need an order in this group buy to vote." });
+    return;
+  }
+
+  // Check contribution eligibility — order found above. Now check if they're allowed to vote:
+  // - externalPaymentMode (Janoshik URL set): any order qualifies, payment tracked externally
+  // - lateOptInEnabled: any GB order holder can vote (they pay via the late opt-in flow)
+  // - otherwise: must have testingContribution > 0 on the order (paid during ordering or verified)
+  const hasContribOnOrder = parseFloat(String(order.testingContribution ?? "0")) > 0;
+  if (!externalPaymentMode && !lateOptInEnabled && !hasContribOnOrder) {
+    res.status(403).json({ error: "You need to contribute to this testing pool to vote." });
     return;
   }
 
