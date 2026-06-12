@@ -55,6 +55,7 @@ interface TestingData {
   contributorCount: number;
   totalVotes: number;
   isOptedIn: boolean;
+  isAdminView: boolean;
   hasGbOrder: boolean;
   hasVoted: boolean;
   existingVote: { peptideName: string; vialCount: number; testSelections: string[] } | null;
@@ -503,7 +504,7 @@ export default function GbTestingPool() {
 
   const {
     round, poolTotal, contributorCount, totalVotes, votes, testVotes,
-    milestones, isOptedIn, hasGbOrder, hasVoted, existingVote,
+    milestones, isOptedIn, isAdminView, hasGbOrder, hasVoted, existingVote,
     pendingContribution, peptideOptions,
   } = data;
 
@@ -740,9 +741,9 @@ export default function GbTestingPool() {
             {/* Pending contribution (late opt-in payment awaiting review) */}
             {pendingContribution && <PendingContributionCard pc={pendingContribution} />}
 
-            {/* Vote form — only for opted-in, non-closed, non-voted members */}
+            {/* Vote form — only for opted-in, non-closed, non-voted members (not admin view) */}
             <AnimatePresence>
-              {isOptedIn && !isClosed && !hasVoted && (
+              {isOptedIn && !isAdminView && !isClosed && !hasVoted && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                   <VoteForm
                     gbId={gbId}
@@ -759,7 +760,7 @@ export default function GbTestingPool() {
             {hasVoted && existingVote && <ExistingVoteCard vote={existingVote} />}
 
             {/* Late opt-in CTA */}
-            {!isOptedIn && hasGbOrder && round.lateOptInEnabled && !pendingContribution && !isClosed && (
+            {!isOptedIn && !isAdminView && hasGbOrder && round.lateOptInEnabled && !pendingContribution && !isClosed && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 className="p-4 sm:p-5"
                 style={{ borderRadius: 8, background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>

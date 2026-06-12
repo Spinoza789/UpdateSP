@@ -362,6 +362,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
     hasVoted,
     existingVote,
     isOptedIn,
+    isAdminView: isAdminRequest(req),
     hasGbOrder,
     pendingContribution,
     paymentMethods,
