@@ -675,6 +675,24 @@ router.get("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> =>
   const gbProductNames = gbProductRows.map(p => p.name).filter(Boolean);
   const allPeptideOptions = [...new Set([...PEPTIDE_NAMES, ...gbProductNames])].sort();
 
+  // Organiser payment methods (for late opt-in configuration)
+  const [gbPayInfo] = await db
+    .select({ organiserPayments: groupBuysTable.organiserPayments })
+    .from(groupBuysTable)
+    .where(eq(groupBuysTable.id, gbId));
+  const op = (gbPayInfo?.organiserPayments as Record<string, unknown> | null) ?? {};
+  const organiserPayments = {
+    cryptoWalletAddress: (op["cryptoWalletAddress"] as string | null) || null,
+    cryptoCurrency: (op["cryptoCurrency"] as string | null) || "USDT",
+    cryptoNetwork: (op["cryptoNetwork"] as string | null) || "ERC-20",
+    revolutHandle: (op["revolutHandle"] as string | null) || null,
+    paypalHandle: (op["paypalHandle"] as string | null) || null,
+    anonPayEnabled: !!(op["anonPayEnabled"]),
+    anonPayWallet: (op["anonPayWallet"] as string | null) || null,
+    anonPayTicker: (op["anonPayTicker"] as string | null) || "usdt",
+    anonPayNetwork: (op["anonPayNetwork"] as string | null) || "ERC20",
+  };
+
   // Sales by product — sum line item qty across all orders in this GB, sorted most → least sold
   const gbOrderIds = await db
     .select({ id: ordersTable.id })
@@ -727,6 +745,7 @@ router.get("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> =>
     gbProductsSortedBySales,
     testOptions: configuredTestOptions,
     allTestOptions: ALL_TEST_OPTION_NAMES,
+    organiserPayments,
   });
 });
 
