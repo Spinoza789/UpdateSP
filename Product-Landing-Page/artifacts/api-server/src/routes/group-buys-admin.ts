@@ -1679,6 +1679,9 @@ router.get("/admin/group-buys/:gbId/orders", async (req, res): Promise<void> => 
       amountDue: o.amountDue != null ? parseFloat(String(o.amountDue)) : 0,
       balancePaymentStatus: o.balancePaymentStatus ?? null,
       directShippingRequested: o.directShippingRequested ?? false,
+      reshipperUsername: o.reshipperUsername ?? null,
+      adminFee: o.adminFee != null ? parseFloat(String(o.adminFee)) : 0,
+      adminFeeLabel: o.adminFeeLabel ?? null,
       createdAt: o.createdAt instanceof Date ? o.createdAt.toISOString() : o.createdAt,
       updatedAt: o.updatedAt instanceof Date ? o.updatedAt.toISOString() : o.updatedAt,
       lineItems: (liByOrder.get(o.id) ?? []).map((li) => ({
