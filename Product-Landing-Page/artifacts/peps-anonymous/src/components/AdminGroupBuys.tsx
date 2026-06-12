@@ -7612,12 +7612,23 @@ interface TestingOrganiserPayments {
   anonPayEnabled?: boolean | null;
 }
 
+interface TestingContributor {
+  orderId: string;
+  code: string;
+  telegramUsername: string;
+  contribution: number;
+  paymentStatus: string;
+  hasVoted: boolean;
+  vote: { peptideName: string; vialCount: number; testSelections: string[] } | null;
+}
+
 interface TestingAdminData {
   round: TestingRound | null;
   poolTotal: number;
   contributorCount: number;
   gbProductsSortedBySales: GbProductSale[];
   organiserPayments: TestingOrganiserPayments | null;
+  contributors: TestingContributor[];
 }
 
 function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
@@ -7973,40 +7984,50 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
             {products.length === 0 ? (
               <p className="text-xs text-muted-foreground">No products linked to this GB yet. Add products first.</p>
             ) : (
-              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                {products.map(p => (
-                  <label key={p.name} className="flex items-center gap-2.5 cursor-pointer group py-0.5">
-                    <input
-                      type="checkbox"
-                      checked={selectedCompounds.includes(p.name)}
-                      onChange={e => toggleCompound(p.name, e.target.checked)}
-                      className="rounded shrink-0"
-                    />
-                    <span className="text-sm flex-1 leading-tight">{p.name}</span>
-                    <span className="text-[10px] text-muted-foreground shrink-0">
-                      {p.qtySold > 0 ? `${p.qtySold} sold` : "—"}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
-
-            {/* Batch number inputs */}
-            {selectedCompounds.length > 0 && (
-              <div className="space-y-2 border-t border-border pt-3">
-                <p className="text-xs font-medium text-muted-foreground">Batch numbers:</p>
-                {selectedCompounds.map(name => (
-                  <div key={name} className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-32 truncate shrink-0" title={name}>{name}</span>
-                    <Input
-                      placeholder="e.g. BPC-2401"
-                      value={batchNumbers[name] ?? ""}
-                      onChange={e => setBatchNumbers(prev => ({ ...prev, [name]: e.target.value }))}
-                      className="h-7 text-xs flex-1"
-                    />
-                  </div>
-                ))}
-              </div>
+              <>
+                {/* Column headers */}
+                <div className="grid grid-cols-[auto_1fr_56px_120px] gap-x-2 items-center px-0.5 mb-0.5">
+                  <span />
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Compound</span>
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Sold</span>
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Batch #</span>
+                </div>
+                <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
+                  {products.map(p => {
+                    const isChecked = selectedCompounds.includes(p.name);
+                    return (
+                      <div key={p.name} className="grid grid-cols-[auto_1fr_56px_120px] gap-x-2 items-center py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={e => toggleCompound(p.name, e.target.checked)}
+                          className="rounded shrink-0 mt-px"
+                        />
+                        <span
+                          className="text-sm leading-tight cursor-pointer truncate"
+                          onClick={() => toggleCompound(p.name, !isChecked)}
+                          title={p.name}
+                        >
+                          {p.name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground text-right tabular-nums">
+                          {p.qtySold > 0 ? p.qtySold : "—"}
+                        </span>
+                        {isChecked ? (
+                          <Input
+                            placeholder="e.g. BPC-2401"
+                            value={batchNumbers[p.name] ?? ""}
+                            onChange={e => setBatchNumbers(prev => ({ ...prev, [p.name]: e.target.value }))}
+                            className="h-6 text-xs px-2 font-mono"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/40">—</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
 
             {/* OCR drop zone */}
@@ -8131,6 +8152,51 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
                   : <Save className="w-3.5 h-3.5 mr-1.5" />}
               {ballotSaved ? "Saved!" : "Save Ballot"}
             </Button>
+          </div>
+
+          {/* Contributors */}
+          <div className="border border-border rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Contributors</p>
+              <span className="text-xs text-muted-foreground">
+                {(data?.contributors ?? []).filter(c => c.hasVoted).length} / {(data?.contributors ?? []).length} voted
+              </span>
+            </div>
+
+            {(data?.contributors ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">No confirmed contributions yet.</p>
+            ) : (
+              <div className="space-y-0 divide-y divide-border">
+                {(data?.contributors ?? []).map(c => (
+                  <div key={c.orderId} className="py-2 flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium truncate">{c.telegramUsername}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">#{c.code}</span>
+                      </div>
+                      {c.hasVoted && c.vote && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                          Voted: <span className="text-foreground">{c.vote.peptideName}</span>
+                          {c.vote.vialCount > 1 && ` · ${c.vote.vialCount} vials`}
+                          {c.vote.testSelections.length > 0 && ` · ${c.vote.testSelections.join(", ")}`}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className="text-xs font-medium tabular-nums">${c.contribution.toFixed(2)}</span>
+                      {c.hasVoted ? (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-green-600 dark:text-green-400 font-medium">
+                          <Check className="w-3 h-3" />
+                          Voted
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">Not voted</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}
