@@ -9595,6 +9595,9 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
   const [directApplying, setDirectApplying] = useState(false);
   const [directResult, setDirectResult] = useState<{ message: string; breakdown: { orderId: string; username: string; vendorShipping: number }[] } | null>(null);
 
+  // GB-assigned reshippers
+  const [gbReshippers, setGbReshippers] = useState<Array<{ reshipperUsername: string }>>([]);
+
   useEffect(() => {
     fetch(apiUrl(`/admin/group-buys/${gb.id}/orders`), { headers: { "x-admin-secret": secret } })
       .then(r => r.ok ? r.json() : [])
@@ -9605,20 +9608,35 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
       .catch(() => setLoading(false));
   }, [gb.id, secret]);
 
-  // Reset exclusions when reshipper filter or status changes
   useEffect(() => {
-    setExcludedIds(new Set());
+    fetch(apiUrl(`/admin/group-buys/${gb.id}/reshippers`), { headers: { "x-admin-secret": secret } })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Array<{ reshipperUsername: string }>) => setGbReshippers(data))
+      .catch(() => {});
+  }, [gb.id, secret]);
+
+  // Reset exclusions when reshipper filter, status, or loaded orders change;
+  // pre-exclude direct-to-home orders so they appear in the list but don't contribute to the split
+  useEffect(() => {
+    const dthIds = new Set(
+      allOrders
+        .filter(o =>
+          o.directShippingRequested &&
+          o.status === statusFilter &&
+          (selectedReshipper === "all" || o.reshipperUsername === selectedReshipper)
+        )
+        .map(o => o.id)
+    );
+    setExcludedIds(dthIds);
     setApplyResult(null);
     setDirectResult(null);
-  }, [selectedReshipper, statusFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedReshipper, statusFilter, allOrders]);
 
-  // Unique reshippers from orders (excluding direct-to-home)
-  const availableReshippers = Array.from(
-    new Set(allOrders.filter(o => o.reshipperUsername && !o.directShippingRequested).map(o => o.reshipperUsername!))
-  ).sort();
+  // Reshippers assigned to this GB
+  const availableReshippers = gbReshippers.map(r => r.reshipperUsername).filter(Boolean).sort() as string[];
 
   const legOrders = allOrders.filter(o =>
-    !o.directShippingRequested &&
     o.status === statusFilter &&
     (selectedReshipper === "all" ? true : o.reshipperUsername === selectedReshipper)
   );
@@ -9863,9 +9881,22 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
                         className="rounded mt-0.5" />
                       <div className="min-w-0">
                         <span className="text-sm truncate block">@{order.telegramUsername}</span>
-                        {order.notes && (
-                          <span className="text-[11px] text-amber-700 bg-amber-50 rounded px-1 py-0.5 mt-0.5 inline-block leading-tight">{order.notes}</span>
-                        )}
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {order.directShippingRequested && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 leading-tight">DTH</span>
+                          )}
+                          {order.paymentStatus === "confirmed" && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 leading-tight">Paid</span>
+                          )}
+                          {(order.adminFee ?? 0) > 0 && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 leading-tight">
+                              {order.adminFeeLabel ?? "Admin Fee"}
+                            </span>
+                          )}
+                          {order.notes && (
+                            <span className="text-[9px] text-amber-700 bg-amber-50 rounded-full px-1.5 py-0.5 border border-amber-200 leading-tight">{order.notes}</span>
+                          )}
+                        </div>
                       </div>
                       <span className="text-xs text-muted-foreground text-right pt-0.5">{kits}</span>
                       <span className={cn("text-sm font-semibold text-right tabular-nums w-16 pt-0.5",
@@ -9961,10 +9992,23 @@ function LegShippingCalcSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
                     <div key={order.id} className="grid grid-cols-[1fr_120px] gap-x-3 items-start px-1 py-1.5 rounded-lg hover:bg-muted/30">
                       <div className="min-w-0">
                         <span className="text-sm truncate block">@{order.telegramUsername}</span>
-                        <span className="text-[11px] text-muted-foreground">{kits} kit{kits !== 1 ? "s" : ""}</span>
-                        {order.notes && (
-                          <span className="text-[11px] text-amber-700 bg-amber-50 rounded px-1 py-0.5 mt-0.5 inline-block leading-tight">{order.notes}</span>
-                        )}
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {order.directShippingRequested && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 leading-tight">DTH</span>
+                          )}
+                          {order.paymentStatus === "confirmed" && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 leading-tight">Paid</span>
+                          )}
+                          {(order.adminFee ?? 0) > 0 && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 leading-tight">
+                              {order.adminFeeLabel ?? "Admin Fee"}
+                            </span>
+                          )}
+                          <span className="text-[9px] text-muted-foreground leading-tight">{kits} kit{kits !== 1 ? "s" : ""}</span>
+                          {order.notes && (
+                            <span className="text-[9px] text-amber-700 bg-amber-50 rounded-full px-1.5 py-0.5 border border-amber-200 leading-tight">{order.notes}</span>
+                          )}
+                        </div>
                       </div>
                       <input
                         type="number"
