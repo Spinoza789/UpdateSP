@@ -7590,12 +7590,34 @@ interface TestingRound {
   status: string;
   contributionAmount: number;
   anyContribution: boolean;
-  poolTotal: number;
-  contributorCount: number;
+  lateOptInEnabled: boolean;
+  lateOptInPaymentMethods: string[];
+  maxCompoundVotes: number;
+  maxTestVotes: number;
+  voteOptions: string[] | null;
+  peptideBatches: Record<string, string>;
+  testOptions: string[] | null;
+  janoshikPaymentUrl: string | null;
+  labShippingCost: number | null;
+  resultNotes: string | null;
+  resultPdfUrl: string | null;
+}
+
+interface GbProductSale { name: string; qtySold: number; }
+interface TestingOrganiserPayments {
+  paypalHandle?: string | null;
+  revolutHandle?: string | null;
+  cryptoWalletAddress?: string | null;
+  cryptoNetwork?: string | null;
+  anonPayEnabled?: boolean | null;
 }
 
 interface TestingAdminData {
   round: TestingRound | null;
+  poolTotal: number;
+  contributorCount: number;
+  gbProductsSortedBySales: GbProductSale[];
+  organiserPayments: TestingOrganiserPayments | null;
 }
 
 function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
@@ -7603,18 +7625,180 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Create round form
+  const [creating, setCreating] = useState(false);
+  const [createAmount, setCreateAmount] = useState("15");
+  const [createAny, setCreateAny] = useState(false);
+
+  // Settings panel
+  const [maxCompounds, setMaxCompounds] = useState(1);
+  const [maxTests, setMaxTests] = useState(1);
+  const [lateOptIn, setLateOptIn] = useState(false);
+  const [latePayMethods, setLatePayMethods] = useState<string[]>([]);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsSaved, setSettingsSaved] = useState(false);
+
+  // Ballot panel
+  const [selectedCompounds, setSelectedCompounds] = useState<string[]>([]);
+  const [batchNumbers, setBatchNumbers] = useState<Record<string, string>>({});
+  const [savingBallot, setSavingBallot] = useState(false);
+  const [ballotSaved, setBallotSaved] = useState(false);
+
+  // OCR
+  type OcrScanResult = { filename: string; extractedNumber: string; confidence: number };
+  const [ocrFiles, setOcrFiles] = useState<File[]>([]);
+  const [ocrRunning, setOcrRunning] = useState(false);
+  const [ocrResults, setOcrResults] = useState<OcrScanResult[]>([]);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const [pendingBatch, setPendingBatch] = useState<string | null>(null);
+  const ocrInputRef = useRef<HTMLInputElement>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing`), { headers: { "x-admin-secret": secret } });
       if (!r.ok) throw new Error("Failed to load");
-      setData(await r.json());
+      const d: TestingAdminData = await r.json();
+      setData(d);
+      if (d.round) {
+        setMaxCompounds(d.round.maxCompoundVotes ?? 1);
+        setMaxTests(d.round.maxTestVotes ?? 1);
+        setLateOptIn(d.round.lateOptInEnabled ?? false);
+        setLatePayMethods(d.round.lateOptInPaymentMethods ?? []);
+        const opts = d.round.voteOptions && d.round.voteOptions.length > 0
+          ? d.round.voteOptions
+          : (d.gbProductsSortedBySales ?? []).map(p => p.name);
+        setSelectedCompounds(opts);
+        setBatchNumbers(d.round.peptideBatches ?? {});
+      }
     } catch { setError("Failed to load testing data"); }
     finally { setLoading(false); }
   }, [secret, gb.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const availablePaymentMethods = React.useMemo(() => {
+    const op = data?.organiserPayments ?? {};
+    const methods: { key: string; label: string }[] = [];
+    if (op.paypalHandle) methods.push({ key: "paypal", label: "PayPal" });
+    if (op.revolutHandle) methods.push({ key: "revolut", label: "Revolut" });
+    if (op.cryptoWalletAddress) methods.push({ key: "crypto", label: `USDT ${op.cryptoNetwork || "ERC-20"}` });
+    if (op.anonPayEnabled) methods.push({ key: "anonpay", label: "AnonPay" });
+    return methods;
+  }, [data?.organiserPayments]);
+
+  async function handleCreate() {
+    setCreating(true);
+    try {
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing`), {
+        method: "POST",
+        headers: { "x-admin-secret": secret, "content-type": "application/json" },
+        body: JSON.stringify({ contributionAmount: parseFloat(createAmount) || 15, anyContribution: createAny }),
+      });
+      if (!r.ok) { const e = await r.json(); alert(e.error ?? "Failed to create round"); return; }
+      await load();
+    } finally { setCreating(false); }
+  }
+
+  async function handleSaveSettings() {
+    setSavingSettings(true);
+    setSettingsSaved(false);
+    try {
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing`), {
+        method: "PATCH",
+        headers: { "x-admin-secret": secret, "content-type": "application/json" },
+        body: JSON.stringify({
+          maxCompoundVotes: maxCompounds,
+          maxTestVotes: maxTests,
+          lateOptInEnabled: lateOptIn,
+          lateOptInPaymentMethods: lateOptIn ? latePayMethods : [],
+        }),
+      });
+      if (!r.ok) { const e = await r.json(); alert(e.error ?? "Failed to save settings"); return; }
+      setSettingsSaved(true);
+      setTimeout(() => setSettingsSaved(false), 3000);
+      await load();
+    } finally { setSavingSettings(false); }
+  }
+
+  async function handleSaveBallot() {
+    setSavingBallot(true);
+    setBallotSaved(false);
+    try {
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing`), {
+        method: "PATCH",
+        headers: { "x-admin-secret": secret, "content-type": "application/json" },
+        body: JSON.stringify({ voteOptions: selectedCompounds, peptideBatches: batchNumbers }),
+      });
+      if (!r.ok) { const e = await r.json(); alert(e.error ?? "Failed to save ballot"); return; }
+      setBallotSaved(true);
+      setTimeout(() => setBallotSaved(false), 3000);
+      await load();
+    } finally { setSavingBallot(false); }
+  }
+
+  async function handleRunOcr() {
+    if (ocrFiles.length === 0) return;
+    setOcrRunning(true);
+    setOcrError(null);
+    setOcrResults([]);
+    setPendingBatch(null);
+    try {
+      const formData = new FormData();
+      ocrFiles.forEach(f => formData.append("images", f));
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing/scan-batches`), {
+        method: "POST",
+        headers: { "x-admin-secret": secret },
+        body: formData,
+      });
+      if (!r.ok) { const e = await r.json(); setOcrError(e.error ?? "OCR failed"); return; }
+      const d = await r.json();
+      setOcrResults(d.results ?? []);
+    } finally { setOcrRunning(false); }
+  }
+
+  function nameSimilarityScore(compoundName: string, batchNumber: string): number {
+    const bn = batchNumber.toLowerCase();
+    const cn = compoundName.toLowerCase();
+    const tokens = cn.split(/[\s\-_()[\]]+/).filter(t => t.length >= 2);
+    let best = 0;
+    for (const tok of tokens) {
+      if (bn.startsWith(tok)) { best = Math.max(best, tok.length * 2); continue; }
+      if (bn.includes(tok)) { best = Math.max(best, tok.length); }
+    }
+    return best;
+  }
+
+  function handleClickOcrResult(batchNumber: string) {
+    const unassigned = selectedCompounds.filter(c => !batchNumbers[c]);
+    if (unassigned.length === 0) return;
+    if (unassigned.length === 1) {
+      setBatchNumbers(prev => ({ ...prev, [unassigned[0]]: batchNumber }));
+      return;
+    }
+    const scored = unassigned
+      .map(c => ({ compound: c, score: nameSimilarityScore(c, batchNumber) }))
+      .sort((a, b) => b.score - a.score);
+    const top = scored[0];
+    const second = scored[1];
+    if (top.score > 0 && top.score > second.score * 2) {
+      setBatchNumbers(prev => ({ ...prev, [top.compound]: batchNumber }));
+    } else {
+      setPendingBatch(batchNumber);
+    }
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const files = [...e.dataTransfer.files].filter(f => f.type.startsWith("image/")).slice(0, 30);
+    setOcrFiles(prev => [...prev, ...files].slice(0, 30));
+  }
+
+  function toggleCompound(name: string, checked: boolean) {
+    setSelectedCompounds(prev => checked ? [...prev, name] : prev.filter(n => n !== name));
+    if (!checked) setBatchNumbers(prev => { const next = { ...prev }; delete next[name]; return next; });
+  }
 
   if (loading) {
     return (
@@ -7628,15 +7812,20 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
     return <p className="text-xs text-red-500 py-4">{error}</p>;
   }
 
+  const round = data?.round ?? null;
+  const products = data?.gbProductsSortedBySales ?? [];
+
   return (
-    <div className="space-y-4 py-2">
+    <div className="space-y-5 py-2">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold">Testing Pool</p>
-          {data?.round ? (
+          {round ? (
             <p className="text-xs text-muted-foreground mt-0.5">
-              Status: {data.round.status} · ${data.round.poolTotal ?? 0} raised · {data.round.contributorCount ?? 0} contributors
+              Status: <span className="font-medium capitalize">{round.status.replace(/_/g, " ")}</span>
+              {" · "}${(data?.poolTotal ?? 0).toFixed(2)} raised
+              {" · "}{data?.contributorCount ?? 0} contributor{(data?.contributorCount ?? 0) !== 1 ? "s" : ""}
             </p>
           ) : (
             <p className="text-xs text-muted-foreground mt-0.5">No round set up yet</p>
@@ -7653,10 +7842,298 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
         </a>
       </div>
 
-      {/* Content goes here */}
-      <div className="py-8 text-center border border-dashed border-border rounded-lg">
-        <p className="text-xs text-muted-foreground">Testing admin content coming soon</p>
-      </div>
+      {/* No round: create form */}
+      {!round && (
+        <div className="border border-border rounded-lg p-4 space-y-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Create Testing Round</p>
+          <div className="space-y-3">
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={createAny}
+                onChange={e => setCreateAny(e.target.checked)}
+                className="rounded"
+              />
+              <span className="text-sm">Accept any contribution amount</span>
+            </label>
+            {!createAny && (
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-muted-foreground shrink-0">Fixed amount (USD):</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={createAmount}
+                  onChange={e => setCreateAmount(e.target.value)}
+                  className="w-24 h-8 text-sm"
+                />
+              </div>
+            )}
+            <Button size="sm" onClick={handleCreate} disabled={creating} className="w-full">
+              {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
+              Create Round
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Round exists: settings + ballot */}
+      {round && (
+        <>
+          {/* Round Settings */}
+          <div className="border border-border rounded-lg p-4 space-y-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Round Settings</p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Max compounds per vote</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={maxCompounds}
+                  onChange={e => setMaxCompounds(Math.min(20, Math.max(1, parseInt(e.target.value) || 1)))}
+                  className="h-8 text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground">How many compounds each voter can pick</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Max test types per vote</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={maxTests}
+                  onChange={e => setMaxTests(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                  className="h-8 text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground">How many test types each voter can pick</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t border-border pt-3">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={lateOptIn}
+                  onChange={e => setLateOptIn(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-sm font-medium">Allow late contributions</span>
+              </label>
+
+              {lateOptIn && (
+                <div className="pl-6 space-y-2">
+                  <p className="text-xs text-muted-foreground">Payment methods offered to late contributors:</p>
+                  {availablePaymentMethods.length === 0 ? (
+                    <p className="text-xs text-orange-500">
+                      No payment methods configured on this GB. Add them under the Payments tab first.
+                    </p>
+                  ) : (
+                    availablePaymentMethods.map(m => (
+                      <label key={m.key} className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={latePayMethods.includes(m.key)}
+                          onChange={e =>
+                            setLatePayMethods(prev =>
+                              e.target.checked ? [...prev, m.key] : prev.filter(k => k !== m.key)
+                            )
+                          }
+                          className="rounded"
+                        />
+                        <span className="text-sm">{m.label}</span>
+                      </label>
+                    ))
+                  )}
+                  {lateOptIn && latePayMethods.length === 0 && availablePaymentMethods.length > 0 && (
+                    <p className="text-xs text-orange-500">Select at least one payment method, or no late contributions will be accepted.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings} className="w-full">
+              {savingSettings
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                : settingsSaved
+                  ? <Check className="w-3.5 h-3.5 mr-1.5" />
+                  : <Save className="w-3.5 h-3.5 mr-1.5" />}
+              {settingsSaved ? "Saved!" : "Save Settings"}
+            </Button>
+          </div>
+
+          {/* Compound Ballot */}
+          <div className="border border-border rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Compound Ballot</p>
+              <span className="text-xs text-muted-foreground">{selectedCompounds.length} on ballot</span>
+            </div>
+
+            {products.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No products linked to this GB yet. Add products first.</p>
+            ) : (
+              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                {products.map(p => (
+                  <label key={p.name} className="flex items-center gap-2.5 cursor-pointer group py-0.5">
+                    <input
+                      type="checkbox"
+                      checked={selectedCompounds.includes(p.name)}
+                      onChange={e => toggleCompound(p.name, e.target.checked)}
+                      className="rounded shrink-0"
+                    />
+                    <span className="text-sm flex-1 leading-tight">{p.name}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {p.qtySold > 0 ? `${p.qtySold} sold` : "—"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {/* Batch number inputs */}
+            {selectedCompounds.length > 0 && (
+              <div className="space-y-2 border-t border-border pt-3">
+                <p className="text-xs font-medium text-muted-foreground">Batch numbers:</p>
+                {selectedCompounds.map(name => (
+                  <div key={name} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-32 truncate shrink-0" title={name}>{name}</span>
+                    <Input
+                      placeholder="e.g. BPC-2401"
+                      value={batchNumbers[name] ?? ""}
+                      onChange={e => setBatchNumbers(prev => ({ ...prev, [name]: e.target.value }))}
+                      className="h-7 text-xs flex-1"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* OCR drop zone */}
+            <div className="border-t border-border pt-3 space-y-3">
+              <p className="text-xs font-medium">Batch OCR — extract from label photos</p>
+              <div
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleDrop}
+                onClick={() => ocrInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-lg p-5 text-center cursor-pointer hover:border-blue-400 transition-colors"
+              >
+                <Upload className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  {ocrFiles.length === 0
+                    ? "Drop up to 30 label photos or click to select"
+                    : `${ocrFiles.length} image${ocrFiles.length !== 1 ? "s" : ""} queued`}
+                </p>
+              </div>
+              <input
+                ref={ocrInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={e => {
+                  const files = [...(e.target.files ?? [])].filter(f => f.type.startsWith("image/")).slice(0, 30);
+                  setOcrFiles(prev => [...prev, ...files].slice(0, 30));
+                  e.target.value = "";
+                }}
+              />
+
+              {ocrFiles.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={handleRunOcr} disabled={ocrRunning} className="flex-1">
+                    {ocrRunning
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                      : <TestTube className="w-3.5 h-3.5 mr-1.5" />}
+                    {ocrRunning ? "Extracting…" : "Extract Batch Numbers"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="px-2"
+                    onClick={() => { setOcrFiles([]); setOcrResults([]); setOcrError(null); setPendingBatch(null); }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
+
+              {ocrError && <p className="text-xs text-red-500">{ocrError}</p>}
+
+              {ocrResults.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-muted-foreground">
+                    Click a number to assign — best match auto-selects; picker opens if ambiguous:
+                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    {ocrResults.map((result, i) => {
+                      const pct = Math.round(result.confidence * 100);
+                      const confColor = result.confidence >= 0.8
+                        ? "text-green-600 dark:text-green-400"
+                        : result.confidence >= 0.5
+                          ? "text-yellow-600 dark:text-yellow-400"
+                          : "text-red-500";
+                      return (
+                        <div key={i} className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleClickOcrResult(result.extractedNumber)}
+                            className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-md text-xs border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors font-mono"
+                          >
+                            {result.extractedNumber}
+                          </button>
+                          <span className={`text-[10px] font-medium tabular-nums ${confColor}`}>{pct}%</span>
+                          <span className="text-[10px] text-muted-foreground truncate max-w-[120px]" title={result.filename}>
+                            {result.filename}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {pendingBatch && (
+                    <div className="border border-blue-200 dark:border-blue-800 rounded-lg p-3 bg-blue-50 dark:bg-blue-950 space-y-2">
+                      <p className="text-xs font-medium">
+                        Assign <span className="font-mono">{pendingBatch}</span> to:
+                      </p>
+                      <div className="space-y-1">
+                        {selectedCompounds.filter(c => !batchNumbers[c]).map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => {
+                              setBatchNumbers(prev => ({ ...prev, [c]: pendingBatch! }));
+                              setPendingBatch(null);
+                            }}
+                            className="block w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPendingBatch(null)}
+                        className="text-[10px] text-muted-foreground hover:text-foreground"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <Button size="sm" onClick={handleSaveBallot} disabled={savingBallot} className="w-full">
+              {savingBallot
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                : ballotSaved
+                  ? <Check className="w-3.5 h-3.5 mr-1.5" />
+                  : <Save className="w-3.5 h-3.5 mr-1.5" />}
+              {ballotSaved ? "Saved!" : "Save Ballot"}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
