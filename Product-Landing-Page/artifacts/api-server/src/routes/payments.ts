@@ -1389,6 +1389,31 @@ router.post("/orders/:id/confirm-anonpay-initiation", async (req, res): Promise<
   res.json({ ok: true, paymentStatus: "pending_confirmation" });
 });
 
+// ─── PUBLIC: Cancel AnonPay session ────────────────────────────
+// Customer can cancel an in-progress AnonPay session (not yet confirmed
+// by Trocador) so they can switch to another payment method.
+router.post("/orders/:id/cancel-anonpay", async (req, res): Promise<void> => {
+  const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, req.params.id));
+  if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+
+  if (order.paymentStatus === "confirmed") {
+    res.status(400).json({ error: "Payment is already confirmed and cannot be cancelled." }); return;
+  }
+
+  if (!order.paymentTxHash?.startsWith("anonpay:")) {
+    res.status(400).json({ error: "No active AnonPay session found." }); return;
+  }
+
+  await db
+    .update(ordersTable)
+    .set({ paymentTxHash: null, paymentStatus: "unpaid" })
+    .where(eq(ordersTable.id, req.params.id));
+
+  writeLog("payment", "info", "anonpay_cancelled", `Customer cancelled AnonPay session for order ${order.code}`, { orderId: order.id, code: order.code, username: order.telegramUsername }, req.ip).catch(() => {});
+
+  res.json({ ok: true });
+});
+
 // ─── PUBLIC: Poll AnonPay status from Trocador ─────────────────
 // Called by the frontend after the customer initiates AnonPay.
 // If Trocador reports "finished" we auto-confirm the order.

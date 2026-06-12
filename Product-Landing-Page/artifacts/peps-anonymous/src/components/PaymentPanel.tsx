@@ -372,6 +372,7 @@ export default function PaymentPanel({
   const [anonPayStatusChecking, setAnonPayStatusChecking] = useState(false);
   const [anonPayStatusMsg, setAnonPayStatusMsg] = useState("");
   const [anonPayRetryCount, setAnonPayRetryCount] = useState(0);
+  const [cancellingAnonPay, setCancellingAnonPay] = useState(false);
   const anonPayCalledRef = useRef(false);
 
   const [status, setStatus] = useState(initStatus);
@@ -575,6 +576,30 @@ export default function PaymentPanel({
   const multiMethod = availableMethods.length > 1;
 
   const goToMethodPicker = () => { setStep("method"); setError(""); };
+
+  const cancelAnonPay = async () => {
+    setCancellingAnonPay(true);
+    try {
+      const r = await fetch(`/api/orders/${orderId}/cancel-anonpay`, { method: "POST" });
+      if (r.ok) {
+        anonPayCalledRef.current = false;
+        setAnonPayIframeUrl(null);
+        setAnonPayInitiated(false);
+        setAnonPayError("");
+        setAnonPayStatusMsg("");
+        setAnonPayInitializing(false);
+        setStatus("unpaid");
+        onStatusChange?.("unpaid");
+        goToMethodPicker();
+      } else {
+        const d = await r.json().catch(() => ({}));
+        setAnonPayError((d as { error?: string }).error || "Could not cancel. Please contact support.");
+      }
+    } catch {
+      setAnonPayError("Network error. Please try again.");
+    }
+    setCancellingAnonPay(false);
+  };
 
   const updateStatus = (s: string, tx?: string) => {
     setStatus(s);
@@ -1378,6 +1403,19 @@ export default function PaymentPanel({
               </button>
             )}
 
+            {/* Cancel before confirming initiation */}
+            {!anonPayInitiated && (
+              <button
+                onClick={cancelAnonPay}
+                disabled={cancellingAnonPay}
+                className="w-full flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-medium transition-colors disabled:opacity-50"
+                style={{ background: "rgba(220,38,38,0.07)", border: "1px solid rgba(220,38,38,0.2)", color: "#dc2626" }}
+              >
+                {cancellingAnonPay ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                {cancellingAnonPay ? "Cancelling…" : "Cancel — use a different payment method"}
+              </button>
+            )}
+
             {/* Status-check panel — shown after initiation confirmed */}
             {anonPayInitiated && (
               <div className="space-y-4">
@@ -1447,6 +1485,16 @@ export default function PaymentPanel({
                   style={{ color: "var(--anon-text-faint)" }}
                 >
                   ← Back to payment widget
+                </button>
+
+                <button
+                  onClick={cancelAnonPay}
+                  disabled={cancellingAnonPay}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-medium transition-colors disabled:opacity-50"
+                  style={{ background: "rgba(220,38,38,0.07)", border: "1px solid rgba(220,38,38,0.2)", color: "#dc2626" }}
+                >
+                  {cancellingAnonPay ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                  {cancellingAnonPay ? "Cancelling…" : "I didn't send payment — cancel and use a different method"}
                 </button>
               </div>
             )}
