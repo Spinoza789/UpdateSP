@@ -1625,6 +1625,8 @@ export function LabTestsTab({ secret }: { secret: string }) {
   const [exporting, setExporting] = useState<"lab" | "blood" | null>(null);
   const [previewStates, setPreviewStates] = useState<Record<number, "loading" | "image" | "pdf" | "iframe" | "link" | "error">>({});
   const [showMassApplyPanel, setShowMassApplyPanel] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillResult, setBackfillResult] = useState<string | null>(null);
 
   const loadPending = useCallback(() => {
     fetch(apiUrl("/admin/lab-tests/pending"), { headers: { "x-admin-secret": secret } })
@@ -1724,6 +1726,27 @@ export function LabTestsTab({ secret }: { secret: string }) {
       t.sterilityPass === false ||
       (t.endotoxinEuMg != null && t.endotoxinEuMg > 5)
     );
+  };
+
+  const handleBackfillCerts = async () => {
+    setBackfilling(true);
+    setBackfillResult(null);
+    try {
+      const res = await fetch(apiUrl("/admin/lab-tests/backfill-certs"), {
+        method: "POST",
+        headers: { "x-admin-secret": secret },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBackfillResult(data.message ?? `Backfilling ${data.total} certificates in background`);
+      } else {
+        setBackfillResult(data.error ?? "Failed to start backfill");
+      }
+    } catch {
+      setBackfillResult("Network error");
+    } finally {
+      setBackfilling(false);
+    }
   };
 
   const handleExportCsv = async (type: "lab" | "blood") => {
@@ -1893,6 +1916,25 @@ export function LabTestsTab({ secret }: { secret: string }) {
 
       {/* Bulk Import Panel */}
       <BulkImportPanel secret={secret} onImported={load} />
+
+      {/* Certificate Backfill */}
+      <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ border: "1px solid rgba(14,165,233,0.25)", background: "rgba(14,165,233,0.05)" }}>
+        <Download className="w-4 h-4 text-sky-400 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-sky-300">Store Certificates Locally</p>
+          <p className="text-xs text-slate-400">Fetch & store certificate images/PDFs for all tests that don't have one saved yet. Uzorak tests with a snapshot or PDF will be stored automatically. Runs in the background.</p>
+          {backfillResult && <p className="text-xs mt-1 text-sky-400">{backfillResult}</p>}
+        </div>
+        <button
+          onClick={handleBackfillCerts}
+          disabled={backfilling}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          style={{ background: "linear-gradient(135deg, #0369a1, #0284c7)" }}
+        >
+          {backfilling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+          {backfilling ? "Starting…" : "Run Backfill"}
+        </button>
+      </div>
 
       {/* Batch Code Prefix Table */}
       <BatchPrefixesPanel secret={secret} />

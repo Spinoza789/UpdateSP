@@ -848,6 +848,11 @@ router.post("/admin/lab-tests/:id/approve", async (req, res) => {
         console.error(`[approve auto-extract] id=${id}`, err);
       }
     });
+
+    // Also try to store the certificate bytes for instant future previews
+    if (row.url) {
+      setImmediate(() => { tryFetchAndStoreCertificate(id, row.url!).catch(() => {}); });
+    }
   } catch {
     res.status(500).json({ error: "Failed to approve test" });
   }
@@ -1000,6 +1005,62 @@ router.post("/admin/lab-tests/with-pdf", upload.single("file"), async (req, res)
   }
 });
 
+// ── Certificate auto-fetch helper ─────────────────────────────────────────────
+// Fire-and-forget after a lab test record is created/updated with a URL.
+// Tries to download and store the certificate bytes into pdf_blob so future
+// previews load instantly from the DB instead of hitting external servers.
+// Silently no-ops if: record already has a blob, URL is not Uzorak, fetch fails.
+async function tryFetchAndStoreCertificate(id: number, url: string): Promise<void> {
+  try {
+    // Only attempt if the record doesn't already have stored bytes
+    const [existing] = await db
+      .select({ pdfBlob: labTestsTable.pdfBlob })
+      .from(labTestsTable)
+      .where(eq(labTestsTable.id, id))
+      .limit(1);
+    if (!existing || existing.pdfBlob) return;
+
+    let blob: string | null = null;
+
+    if (isUzorakUrl(url)) {
+      // Uzorak: query their Supabase API — gives us a JPEG snapshot or PDF
+      const result = await resolveUzorakPreviewBytes(url);
+      if (result) {
+        blob = result.bytes.toString("base64");
+      }
+    } else {
+      // Other labs (Peptidetest, Analiza Bialek etc.) — try a direct image fetch.
+      // Janoshik will 403 here which is fine; it's caught silently below.
+      const preview = await resolvePreviewInfo(url);
+      if (preview.type === "image" && preview.images.length > 0) {
+        const imgRes = await fetch(preview.images[0], { signal: AbortSignal.timeout(15000) });
+        if (imgRes.ok) {
+          const buf = Buffer.from(await imgRes.arrayBuffer());
+          blob = buf.toString("base64");
+        }
+      } else if (preview.type === "pdf") {
+        const pdfRes = await fetch(preview.url, { signal: AbortSignal.timeout(15000) });
+        if (pdfRes.ok) {
+          const buf = Buffer.from(await pdfRes.arrayBuffer());
+          blob = buf.toString("base64");
+        }
+      }
+    }
+
+    if (!blob) return;
+
+    await db
+      .update(labTestsTable)
+      .set({ pdfBlob: blob })
+      .where(eq(labTestsTable.id, id));
+
+    console.log(`[cert-fetch] Stored certificate for lab test #${id} (${url.slice(0, 60)})`);
+  } catch (err) {
+    // Never propagate — this is best-effort background work
+    console.warn(`[cert-fetch] Failed for lab test #${id}:`, String(err).slice(0, 120));
+  }
+}
+
 // ── POST /api/admin/lab-tests — admin add test ────────────────────────────────
 router.post("/admin/lab-tests", async (req, res) => {
   if (!requireAdmin(req, res)) return;
@@ -1061,6 +1122,9 @@ router.post("/admin/lab-tests", async (req, res) => {
     };
     const [row] = await db.insert(labTestsTable).values(values).returning();
     res.json(row);
+
+    // Fire-and-forget: try to store the certificate bytes for instant future previews
+    setImmediate(() => { tryFetchAndStoreCertificate(row.id, row.url!).catch(() => {}); });
   } catch (e: unknown) {
     const err = e as { code?: string };
     if (err?.code === "23505") {
@@ -1481,6 +1545,9 @@ router.post("/admin/lab-tests/bulk-import", async (req, res) => {
           peptideName: inserted.peptideName,
           purityPct: inserted.purityPct,
         });
+
+        // Fire-and-forget certificate fetch for instant future previews
+        tryFetchAndStoreCertificate(inserted.id, url).catch(() => {});
       } catch (err) {
         bulkImportJob.failed++;
         bulkImportJob.errors.push({ url, reason: String(err) });
@@ -1497,6 +1564,52 @@ router.post("/admin/lab-tests/bulk-import", async (req, res) => {
     bulkImportJob.status = "error";
     bulkImportJob.finishedAt = Date.now();
   });
+});
+
+// ── POST /api/admin/lab-tests/backfill-certs — fetch & store missing certs ────
+// One-time background job: for every test that has a URL but no pdf_blob,
+// try to download and store the certificate. Fire-and-forget, returns immediately.
+let certBackfillRunning = false;
+router.post("/admin/lab-tests/backfill-certs", async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  if (certBackfillRunning) {
+    res.status(409).json({ error: "Backfill already running" });
+    return;
+  }
+  // Find all tests with a URL but no stored blob
+  const missing = await db
+    .select({ id: labTestsTable.id, url: labTestsTable.url })
+    .from(labTestsTable)
+    .where(and(isNotNull(labTestsTable.url), isNull(labTestsTable.pdfBlob)));
+
+  res.json({ ok: true, total: missing.length, message: `Backfilling ${missing.length} certificates in background` });
+
+  certBackfillRunning = true;
+  (async () => {
+    let stored = 0;
+    for (const { id, url } of missing) {
+      if (!url) continue;
+      await tryFetchAndStoreCertificate(id, url);
+      stored++;
+      // Small delay to avoid hammering external servers
+      await new Promise(r => setTimeout(r, 500));
+    }
+    console.log(`[cert-backfill] Done — attempted ${missing.length}, stored ${stored}`);
+    certBackfillRunning = false;
+  })().catch(err => {
+    console.error("[cert-backfill] Error:", err);
+    certBackfillRunning = false;
+  });
+});
+
+// ── GET /api/admin/lab-tests/backfill-certs — check backfill status ───────────
+router.get("/admin/lab-tests/backfill-certs", async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(labTestsTable)
+    .where(and(isNotNull(labTestsTable.url), isNull(labTestsTable.pdfBlob)));
+  res.json({ running: certBackfillRunning, missingCount: count });
 });
 
 // ── POST /api/admin/lab-tests/bulk-import-stop — cancel running import ────────
