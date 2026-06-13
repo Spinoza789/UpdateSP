@@ -350,6 +350,7 @@ export function ReportModal({
   type PreviewState =
     | { type: "image"; url: string }
     | { type: "pdf"; proxyUrl: string; originalUrl: string }
+    | { type: "iframe"; url: string }
     | { type: "link"; originalUrl: string }
     | null;
 
@@ -370,6 +371,8 @@ export function ReportModal({
           setPreview({ type: "image", url: apiUrl(`/lab-tests/${test.id}/proxy`) });
         } else if (d.type === "pdf") {
           setPreview({ type: "pdf", proxyUrl: apiUrl(`/lab-tests/${test.id}/proxy`), originalUrl: d.originalUrl ?? test.url });
+        } else if (d.type === "iframe") {
+          setPreview({ type: "iframe", url: d.originalUrl ?? test.url });
         } else {
           setPreview({ type: "link", originalUrl: d.originalUrl ?? test.url });
         }
@@ -668,6 +671,21 @@ export function ReportModal({
                   transition={{ duration: 0.2 }}
                   src={preview.proxyUrl}
                   title={`Lab report PDF for ${test.peptideName}`}
+                  className="rounded-xl shadow-lg"
+                  style={{ width: "100%", height: "100%", minHeight: "400px", border: "none" }}
+                />
+              </AnimatePresence>
+            )}
+            {!loading && preview?.type === "iframe" && (
+              <AnimatePresence mode="wait">
+                <motion.iframe
+                  key={test.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  src={preview.url}
+                  title={`Lab report for ${test.peptideName}`}
                   className="rounded-xl shadow-lg"
                   style={{ width: "100%", height: "100%", minHeight: "400px", border: "none" }}
                 />

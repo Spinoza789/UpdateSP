@@ -1623,7 +1623,7 @@ export function LabTestsTab({ secret }: { secret: string }) {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [exporting, setExporting] = useState<"lab" | "blood" | null>(null);
-  const [previewStates, setPreviewStates] = useState<Record<number, "loading" | "image" | "pdf" | "link" | "error">>({});
+  const [previewStates, setPreviewStates] = useState<Record<number, "loading" | "image" | "pdf" | "iframe" | "link" | "error">>({});
   const [showMassApplyPanel, setShowMassApplyPanel] = useState(false);
 
   const loadPending = useCallback(() => {
@@ -1750,9 +1750,10 @@ export function LabTestsTab({ secret }: { secret: string }) {
       const res = await fetch(apiUrl(`/lab-tests/${id}/preview`));
       if (!res.ok) { setPreviewStates(p => ({ ...p, [id]: "error" })); return; }
       const data = await res.json();
-      const type: "image" | "pdf" | "link" | "error" =
+      const type: "image" | "pdf" | "iframe" | "link" | "error" =
         data.type === "image" ? "image" :
         data.type === "pdf" ? "pdf" :
+        data.type === "iframe" ? "iframe" :
         "link";
       setPreviewStates(p => ({ ...p, [id]: type }));
     } catch {
@@ -2177,6 +2178,14 @@ export function LabTestsTab({ secret }: { secret: string }) {
                       {previewStates[t.id] === "pdf" && (
                         <iframe
                           src={apiUrl(`/lab-tests/${t.id}/proxy`)}
+                          title={`${t.peptideName} lab report`}
+                          className="w-full rounded-lg shadow-sm"
+                          style={{ height: "420px", border: "none" }}
+                        />
+                      )}
+                      {previewStates[t.id] === "iframe" && (
+                        <iframe
+                          src={t.url}
                           title={`${t.peptideName} lab report`}
                           className="w-full rounded-lg shadow-sm"
                           style={{ height: "420px", border: "none" }}

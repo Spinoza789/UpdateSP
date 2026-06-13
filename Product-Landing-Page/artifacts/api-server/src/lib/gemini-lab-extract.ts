@@ -384,18 +384,11 @@ export async function fetchJanoshikImages(pageUrl: string): Promise<string[]> {
   const cached = IMAGE_CACHE.get(pageUrl);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.urls;
 
-  // Build a candidate list: try the canonical /tests/img/ID.png URL first so
-  // we don't depend on server-rendered HTML (Janoshik pages are JS-rendered).
-  const guessedUrls: string[] = [];
-  try {
-    const u = new URL(pageUrl);
-    const testId = u.pathname.split("/").filter(Boolean).pop() ?? "";
-    if (testId) {
-      guessedUrls.push(`https://janoshik.com/tests/img/${testId}.png`);
-      guessedUrls.push(`https://janoshik.com/tests/img/${testId}.jpg`);
-    }
-  } catch { /* ignore */ }
-
+  // NOTE: verify.janoshik.com is behind Cloudflare Bot Management which blocks
+  // server-side fetch (returns 403 challenge page). Image endpoints also require
+  // authentication. If the page fetch fails or returns non-OK, return [] so the
+  // caller falls through to type:"link" — a clean "Open Report" button is better
+  // than a broken image from a guessed URL.
   try {
     const res = await fetch(pageUrl, {
       headers: DOWNLOAD_HEADERS,
@@ -403,9 +396,8 @@ export async function fetchJanoshikImages(pageUrl: string): Promise<string[]> {
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
-      // Even if page fetch fails, return guessed URLs — proxy will verify them
-      IMAGE_CACHE.set(pageUrl, { urls: guessedUrls, ts: Date.now() });
-      return guessedUrls;
+      IMAGE_CACHE.set(pageUrl, { urls: [], ts: Date.now() });
+      return [];
     }
 
     const finalUrl = res.url || pageUrl;
@@ -444,13 +436,12 @@ export async function fetchJanoshikImages(pageUrl: string): Promise<string[]> {
     // jas.janoshik.com/images/ JPEGs are square 1000×1000 thumbnails, not the full report.
     const jasImages = [...imageUrls].filter(u => /jas\.janoshik\.com\/images\//i.test(u));
     const testImgPngs = [...imageUrls].filter(u => /janoshik\.com\/tests\/img\//i.test(u));
-    // Merge: prefer scraped /tests/img/ PNGs, then jas images, then guesses, then jas thumbnails
-    const final = [...new Set([...testImgPngs, ...guessedUrls, ...jasImages])];
+    const final = [...new Set([...testImgPngs, ...jasImages])];
     IMAGE_CACHE.set(pageUrl, { urls: final, ts: Date.now() });
     return final;
   } catch {
-    IMAGE_CACHE.set(pageUrl, { urls: guessedUrls, ts: Date.now() });
-    return guessedUrls;
+    IMAGE_CACHE.set(pageUrl, { urls: [], ts: Date.now() });
+    return [];
   }
 }
 
@@ -474,12 +465,18 @@ function extractUzorakPublicId(pageUrl: string): string | null {
 /**
  * Determine what type of embeddable preview Uzorak can provide for a URL.
  * Uses the Supabase public API (same as data extraction) so no direct fetch.
+ *
+ * Returns:
+ *  "image" — snapshot_base64 JPEG available (proxy serves it)
+ *  "pdf"   — Google Drive PDF available (proxy serves it)
+ *  "iframe" — no static file but Uzorak has no X-Frame-Options, so the verify
+ *             page can be embedded directly in an iframe in the browser
  */
-export async function resolveUzorakPreviewType(pageUrl: string): Promise<"image" | "pdf" | "link"> {
+export async function resolveUzorakPreviewType(pageUrl: string): Promise<"image" | "pdf" | "iframe"> {
   const publicId = extractUzorakPublicId(pageUrl);
-  if (!publicId) return "link";
+  if (!publicId) return "iframe";
   const order = await fetchUzorakOrder(publicId);
-  if (!order) return "link";
+  if (!order) return "iframe";
 
   const items = (order.order_items ?? order.orderItems) as unknown[] ?? [];
 
@@ -499,7 +496,10 @@ export async function resolveUzorakPreviewType(pageUrl: string): Promise<"image"
     if (u) return "pdf";
   }
 
-  return "link";
+  // Uzorak HPLC-UV / LCMS certs are rendered client-side from structured data
+  // not exposed by the public API — no static file to proxy. However, Uzorak
+  // sets no X-Frame-Options, so we can iframe the verify URL directly.
+  return "iframe";
 }
 
 /**
