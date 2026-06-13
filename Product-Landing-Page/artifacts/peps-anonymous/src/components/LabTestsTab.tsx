@@ -2183,28 +2183,65 @@ export function LabTestsTab({ secret }: { secret: string }) {
                           style={{ height: "420px", border: "none" }}
                         />
                       )}
-                      {previewStates[t.id] === "iframe" && (
-                        <iframe
-                          src={t.url}
-                          title={`${t.peptideName} lab report`}
-                          className="w-full rounded-lg shadow-sm"
-                          style={{ height: "420px", border: "none" }}
-                        />
-                      )}
-                      {previewStates[t.id] === "link" && (
-                        <div className="flex flex-col items-center gap-2 py-4 text-center">
-                          <FileText className="w-8 h-8 text-slate-300" />
-                          <p className="text-xs text-slate-500">Report is hosted on the lab's website.</p>
-                          <a
-                            href={t.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 transition-colors"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" /> Open Report
-                          </a>
-                        </div>
-                      )}
+                      {(previewStates[t.id] === "iframe" || previewStates[t.id] === "link") && (() => {
+                        const purityColor = t.purityPct != null ? (t.purityPct >= 99 ? "#059669" : "#DC2626") : null;
+                        const purityBg   = t.purityPct != null ? (t.purityPct >= 99 ? "rgba(5,150,105,0.10)" : "rgba(220,38,38,0.10)") : null;
+                        const purityBorder = t.purityPct != null ? (t.purityPct >= 99 ? "rgba(5,150,105,0.28)" : "rgba(220,38,38,0.28)") : null;
+                        const purityLabel  = t.purityPct != null ? (t.purityPct >= 99 ? "Good" : "Low") : null;
+                        return (
+                          <div className="w-full flex flex-col gap-2 py-1">
+                            {/* Metrics row */}
+                            <div className="grid grid-cols-2 gap-2">
+                              {t.purityPct != null && (
+                                <div className="rounded-xl p-2.5 flex flex-col gap-0.5" style={{ background: purityBg!, border: `1px solid ${purityBorder}` }}>
+                                  <span className="text-[9px] font-black tracking-wider uppercase" style={{ color: purityColor! }}>Purity</span>
+                                  <span className="text-lg font-black leading-none" style={{ color: purityColor! }}>{Number(t.purityPct).toFixed(2)}%</span>
+                                  <span className="text-[10px] font-semibold" style={{ color: purityColor! }}>{purityLabel}</span>
+                                </div>
+                              )}
+                              {t.mgAmount != null && (
+                                <div className="rounded-xl p-2.5 flex flex-col gap-0.5" style={{ background: "rgba(59,130,246,0.07)", border: "1px solid rgba(96,165,250,0.22)" }}>
+                                  <span className="text-[9px] font-black tracking-wider uppercase" style={{ color: "rgba(96,165,250,0.9)" }}>Actual Mass</span>
+                                  <span className="text-lg font-black leading-none" style={{ color: "#1e3a5f" }}>{t.mgAmount}</span>
+                                  <span className="text-[10px] font-semibold text-slate-400">{t.massUnit ?? "mg"}</span>
+                                </div>
+                              )}
+                            </div>
+                            {/* Endotoxin + sterility */}
+                            {(t.endotoxinEuMg != null || t.sterilityPass != null) && (
+                              <div className="rounded-xl border divide-y overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
+                                {t.endotoxinEuMg != null && (
+                                  <div className="flex items-center justify-between px-3 py-1.5 bg-white text-xs">
+                                    <span className="text-slate-500">Endotoxin</span>
+                                    <span className="font-bold" style={{ color: t.endotoxinEuMg <= 1 ? "#059669" : t.endotoxinEuMg <= 5 ? "#2563EB" : "#DC2626" }}>
+                                      {t.endotoxinEuMg} EU/mg
+                                    </span>
+                                  </div>
+                                )}
+                                {t.sterilityPass != null && (
+                                  <div className="flex items-center justify-between px-3 py-1.5 bg-white text-xs">
+                                    <span className="text-slate-500">Sterility</span>
+                                    {t.sterilityPass
+                                      ? <span className="font-bold text-emerald-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Pass</span>
+                                      : <span className="font-bold text-red-500 flex items-center gap-1"><XCircle className="w-3 h-3" />Fail</span>
+                                    }
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {/* Link to original */}
+                            <a
+                              href={t.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-xl text-xs font-semibold border transition-colors"
+                              style={{ color: "#2563EB", borderColor: "rgba(96,165,250,0.35)", background: "rgba(59,130,246,0.07)" }}
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" /> View on {t.labName}
+                            </a>
+                          </div>
+                        );
+                      })()}
                       {previewStates[t.id] === "error" && (
                         <div className="flex flex-col items-center gap-2 py-4 text-center">
                           <AlertCircle className="w-7 h-7 text-slate-300" />

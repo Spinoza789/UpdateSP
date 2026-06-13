@@ -628,25 +628,11 @@ export function ReportModal({
             On mobile: this is the main content and takes ~70% of the screen.
             On desktop: right side of the flex row. */}
         <div className="flex-1 flex flex-col min-h-0 bg-slate-50 overflow-hidden">
-          {/* Image area — flex-1 means it fills the remaining space (≥70dvh on mobile) */}
+          {/* Content area */}
           <div className="flex-1 overflow-auto flex items-center justify-center p-4 min-h-0">
-            {loading && (
-              <div className="flex flex-col items-center gap-3 text-slate-400">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <span className="text-sm">Loading report…</span>
-              </div>
-            )}
-            {!loading && error && (
-              <div className="flex flex-col items-center gap-4 text-center px-6">
-                <AlertTriangle className="w-7 h-7 text-amber-500" />
-                <p className="text-slate-500 text-sm">{error}</p>
-                <a href={test.url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ background: "var(--t-blue)" }}>
-                  <ExternalLink className="w-4 h-4" /> Open Report
-                </a>
-              </div>
-            )}
-            {!loading && preview?.type === "image" && (
+
+            {/* Actual certificate image when the proxy successfully returns one */}
+            {preview?.type === "image" && (
               <AnimatePresence mode="wait">
                 <motion.img
                   key={test.id}
@@ -661,7 +647,9 @@ export function ReportModal({
                 />
               </AnimatePresence>
             )}
-            {!loading && preview?.type === "pdf" && (
+
+            {/* PDF viewer when available */}
+            {preview?.type === "pdf" && (
               <AnimatePresence mode="wait">
                 <motion.iframe
                   key={test.id}
@@ -676,33 +664,141 @@ export function ReportModal({
                 />
               </AnimatePresence>
             )}
-            {!loading && preview?.type === "iframe" && (
-              <AnimatePresence mode="wait">
-                <motion.iframe
+
+            {/* Certificate data card — shown immediately for all other states.
+                Renders from already-extracted test data with no external dependencies. */}
+            {preview?.type !== "image" && preview?.type !== "pdf" && (() => {
+              const tier = test.purityPct != null ? purityTier(test.purityPct, test.peptideName) : null;
+              const blend = parseBlendComponents(test.blendComponents);
+              const hasHeavy = test.heavyMetalAs != null || test.heavyMetalCd != null || test.heavyMetalPb != null || test.heavyMetalHg != null;
+              const heavyMetals = [
+                { sym: "As", val: test.heavyMetalAs },
+                { sym: "Cd", val: test.heavyMetalCd },
+                { sym: "Pb", val: test.heavyMetalPb },
+                { sym: "Hg", val: test.heavyMetalHg },
+              ].filter(m => m.val != null);
+              return (
+                <motion.div
                   key={test.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  src={preview.url}
-                  title={`Lab report for ${test.peptideName}`}
-                  className="rounded-xl shadow-lg"
-                  style={{ width: "100%", height: "100%", minHeight: "400px", border: "none" }}
-                />
-              </AnimatePresence>
-            )}
-            {!loading && preview?.type === "link" && (
-              <div className="flex flex-col items-center gap-4 text-center px-6">
-                <FlaskConical className="w-10 h-10" style={{ color: "var(--t-blue)" }} />
-                <p className="text-sm font-medium" style={{ color: "var(--t-text)" }}>
-                  Preview not available for this report format.
-                </p>
-                <a href={preview.originalUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ background: "var(--t-blue)" }}>
-                  <ExternalLink className="w-4 h-4" /> Open Report
-                </a>
-              </div>
-            )}
+                  transition={{ duration: 0.18 }}
+                  className="w-full max-w-sm mx-auto flex flex-col gap-3"
+                >
+                  {/* CoA header */}
+                  <div className="rounded-2xl border bg-white p-4 flex flex-col gap-3" style={{ borderColor: "var(--t-border)" }}>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--t-blue-10)", border: "1px solid var(--t-blue-25)" }}>
+                        <FlaskConical className="w-4.5 h-4.5" style={{ color: "var(--t-blue)" }} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black tracking-[0.12em] uppercase" style={{ color: "var(--t-muted)" }}>Certificate of Analysis</p>
+                        <p className="text-sm font-bold leading-tight truncate" style={{ color: "var(--t-text)" }}>{test.labName}</p>
+                      </div>
+                      {loading && <Loader2 className="w-3.5 h-3.5 animate-spin ml-auto shrink-0" style={{ color: "var(--t-muted)" }} />}
+                    </div>
+
+                    {/* Primary metrics row */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {tier && test.purityPct != null && (
+                        <div className="rounded-xl p-3 flex flex-col gap-0.5" style={{ background: tier.bg, border: `1px solid ${tier.border}` }}>
+                          <span className="text-[9px] font-black tracking-wider uppercase" style={{ color: tier.color }}>Purity</span>
+                          <span className="text-2xl font-black leading-none" style={{ color: tier.color }}>{formatPurity(test.purityPct)}%</span>
+                          <span className="text-[10px] font-semibold mt-0.5" style={{ color: tier.color }}>{tier.label}</span>
+                        </div>
+                      )}
+                      {test.mgAmount != null && (
+                        <div className="rounded-xl p-3 flex flex-col gap-0.5" style={{ background: "rgba(59,130,246,0.07)", border: "1px solid rgba(96,165,250,0.22)" }}>
+                          <span className="text-[9px] font-black tracking-wider uppercase" style={{ color: "rgba(96,165,250,0.9)" }}>Actual Mass</span>
+                          <span className="text-2xl font-black leading-none" style={{ color: "var(--t-text)" }}>{test.mgAmount}</span>
+                          <span className="text-[10px] font-semibold mt-0.5" style={{ color: "var(--t-muted)" }}>{test.massUnit ?? "mg"}</span>
+                        </div>
+                      )}
+                      {/* If only one metric, fill with test type */}
+                      {(tier == null || test.purityPct == null) && test.mgAmount == null && (
+                        <div className="col-span-2 rounded-xl p-3 flex items-center gap-2" style={{ background: "var(--t-surface2)", border: "1px solid var(--t-border)" }}>
+                          <Beaker className="w-5 h-5 shrink-0" style={{ color: "var(--t-muted)" }} />
+                          <div>
+                            <p className="text-[9px] font-black tracking-wider uppercase" style={{ color: "var(--t-muted)" }}>Test Type</p>
+                            <p className="text-sm font-bold" style={{ color: "var(--t-text)" }}>{test.testType?.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) ?? "Analysis"}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Secondary metrics: endotoxin + sterility */}
+                    {(test.endotoxinEuMg != null || test.sterilityPass != null) && (
+                      <div className="rounded-xl border divide-y overflow-hidden" style={{ borderColor: "var(--t-border)" }}>
+                        {test.endotoxinEuMg != null && (() => {
+                          const etier = endotoxinTier(test.endotoxinEuMg);
+                          return (
+                            <div className="flex items-center justify-between px-3 py-2 bg-white">
+                              <span className="text-xs" style={{ color: "var(--t-muted)" }}>Endotoxin</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm font-bold" style={{ color: etier.color }}>{test.endotoxinEuMg} EU/mg</span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ color: etier.color, background: "rgba(0,0,0,0.05)" }}>{etier.label}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        {test.sterilityPass != null && (
+                          <div className="flex items-center justify-between px-3 py-2 bg-white">
+                            <span className="text-xs" style={{ color: "var(--t-muted)" }}>Sterility</span>
+                            {test.sterilityPass
+                              ? <span className="flex items-center gap-1 text-sm font-bold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" />Pass</span>
+                              : <span className="flex items-center gap-1 text-sm font-bold text-red-500"><XCircle className="w-3.5 h-3.5" />Fail</span>
+                            }
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Heavy metals */}
+                    {hasHeavy && (
+                      <div className="rounded-xl border p-3" style={{ borderColor: "var(--t-border)" }}>
+                        <p className="text-[9px] font-black tracking-wider uppercase mb-2" style={{ color: "var(--t-muted)" }}>Heavy Metals (ppm)</p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                          {heavyMetals.map(({ sym, val }) => (
+                            <div key={sym} className="flex items-center justify-between">
+                              <span className="text-xs font-mono" style={{ color: "var(--t-subtle)" }}>{sym}</span>
+                              <span className="text-xs font-bold" style={{ color: "var(--t-text)" }}>{val}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Blend components */}
+                    {blend && blend.length > 0 && (
+                      <div className="rounded-xl border p-3" style={{ borderColor: "var(--t-border)" }}>
+                        <p className="text-[9px] font-black tracking-wider uppercase mb-2" style={{ color: "var(--t-muted)" }}>Blend Components</p>
+                        <div className="flex flex-col gap-1.5">
+                          {blend.map((c, i) => (
+                            <div key={i} className="flex items-center justify-between gap-2">
+                              <span className="text-xs" style={{ color: "var(--t-muted)" }}>{c.name}</span>
+                              <span className="text-xs font-bold" style={{ color: "var(--t-text)" }}>{c.mg}{c.unit ?? "mg"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer: original report link */}
+                  <a
+                    href={test.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors"
+                    style={{ color: "var(--t-blue)", borderColor: "var(--t-blue-25)", background: "var(--t-blue-10)" }}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View on {test.labName}
+                  </a>
+                </motion.div>
+              );
+            })()}
           </div>
 
           {/* Desktop nav buttons */}
