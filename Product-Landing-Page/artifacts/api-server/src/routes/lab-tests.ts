@@ -19,7 +19,6 @@ import {
   isUzorakUrl,
   resolveUzorakPreviewType,
   resolveUzorakPreviewBytes,
-  buildScreenshotUrl,
 } from "../lib/gemini-lab-extract";
 
 const upload = multer({
@@ -624,8 +623,7 @@ router.get("/lab-tests/:id/preview", async (req, res) => {
     // their public Supabase API to learn what media is available.
     if (isUzorakUrl(test.url)) {
       const uzorakType = await resolveUzorakPreviewType(test.url);
-      const screenshotUrl = uzorakType === "screenshot" ? buildScreenshotUrl(test.url) : undefined;
-      res.json({ type: uzorakType, originalUrl: test.url, ...(screenshotUrl ? { screenshotUrl } : {}) });
+      res.json({ type: uzorakType, originalUrl: test.url });
       return;
     }
 

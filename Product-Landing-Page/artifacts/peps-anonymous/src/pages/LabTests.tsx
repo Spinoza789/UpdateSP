@@ -350,7 +350,6 @@ export function ReportModal({
   type PreviewState =
     | { type: "image"; url: string }
     | { type: "pdf"; proxyUrl: string; originalUrl: string }
-    | { type: "screenshot"; screenshotUrl: string; originalUrl: string }
     | { type: "link"; originalUrl: string }
     | null;
 
@@ -371,8 +370,6 @@ export function ReportModal({
           setPreview({ type: "image", url: apiUrl(`/lab-tests/${test.id}/proxy`) });
         } else if (d.type === "pdf") {
           setPreview({ type: "pdf", proxyUrl: apiUrl(`/lab-tests/${test.id}/proxy`), originalUrl: d.originalUrl ?? test.url });
-        } else if (d.type === "screenshot" && d.screenshotUrl) {
-          setPreview({ type: "screenshot", screenshotUrl: d.screenshotUrl, originalUrl: d.originalUrl ?? test.url });
         } else {
           setPreview({ type: "link", originalUrl: d.originalUrl ?? test.url });
         }
@@ -665,26 +662,9 @@ export function ReportModal({
               </AnimatePresence>
             )}
 
-            {/* thum.io screenshot — browser loads directly, bypasses CF/CORS */}
-            {preview?.type === "screenshot" && (
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={test.id}
-                  initial={{ opacity: 0, scale: 0.97 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.97 }}
-                  transition={{ duration: 0.18 }}
-                  src={preview.screenshotUrl}
-                  alt={`Lab certificate for ${test.peptideName}`}
-                  className="rounded-xl shadow-lg"
-                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", width: "auto" }}
-                  onError={() => setPreview({ type: "link", originalUrl: preview.originalUrl })}
-                />
-              </AnimatePresence>
-            )}
-
-            {/* Certificate data card — shown for link/null states (screenshot replaces this when available) */}
-            {preview?.type !== "image" && preview?.type !== "pdf" && preview?.type !== "screenshot" && (() => {
+            {/* Certificate data card — shown immediately for all other states.
+                Renders from already-extracted test data with no external dependencies. */}
+            {preview?.type !== "image" && preview?.type !== "pdf" && (() => {
               const tier = test.purityPct != null ? purityTier(test.purityPct, test.peptideName) : null;
               const blend = parseBlendComponents(test.blendComponents);
               const hasHeavy = test.heavyMetalAs != null || test.heavyMetalCd != null || test.heavyMetalPb != null || test.heavyMetalHg != null;

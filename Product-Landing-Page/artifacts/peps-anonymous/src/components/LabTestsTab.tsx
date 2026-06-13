@@ -1623,8 +1623,7 @@ export function LabTestsTab({ secret }: { secret: string }) {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [exporting, setExporting] = useState<"lab" | "blood" | null>(null);
-  const [previewStates, setPreviewStates] = useState<Record<number, "loading" | "image" | "pdf" | "screenshot" | "link" | "error">>({});
-  const [previewScreenshots, setPreviewScreenshots] = useState<Record<number, string>>({});
+  const [previewStates, setPreviewStates] = useState<Record<number, "loading" | "image" | "pdf" | "iframe" | "link" | "error">>({});
   const [showMassApplyPanel, setShowMassApplyPanel] = useState(false);
 
   const loadPending = useCallback(() => {
@@ -1751,14 +1750,11 @@ export function LabTestsTab({ secret }: { secret: string }) {
       const res = await fetch(apiUrl(`/lab-tests/${id}/preview`));
       if (!res.ok) { setPreviewStates(p => ({ ...p, [id]: "error" })); return; }
       const data = await res.json();
-      const type: "image" | "pdf" | "screenshot" | "link" | "error" =
+      const type: "image" | "pdf" | "iframe" | "link" | "error" =
         data.type === "image" ? "image" :
         data.type === "pdf" ? "pdf" :
-        data.type === "screenshot" ? "screenshot" :
+        data.type === "iframe" ? "iframe" :
         "link";
-      if (type === "screenshot" && data.screenshotUrl) {
-        setPreviewScreenshots(p => ({ ...p, [id]: data.screenshotUrl }));
-      }
       setPreviewStates(p => ({ ...p, [id]: type }));
     } catch {
       setPreviewStates(p => ({ ...p, [id]: "error" }));
@@ -2187,18 +2183,7 @@ export function LabTestsTab({ secret }: { secret: string }) {
                           style={{ height: "420px", border: "none" }}
                         />
                       )}
-                      {previewStates[t.id] === "screenshot" && previewScreenshots[t.id] && (
-                        <img
-                          src={previewScreenshots[t.id]}
-                          alt={`${t.peptideName} lab certificate`}
-                          className="max-h-96 max-w-full rounded-lg shadow-sm object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = "none";
-                            setPreviewStates(p => ({ ...p, [t.id]: "link" }));
-                          }}
-                        />
-                      )}
-                      {(previewStates[t.id] === "link") && (() => {
+                      {(previewStates[t.id] === "iframe" || previewStates[t.id] === "link") && (() => {
                         const purityColor = t.purityPct != null ? (t.purityPct >= 99 ? "#059669" : "#DC2626") : null;
                         const purityBg   = t.purityPct != null ? (t.purityPct >= 99 ? "rgba(5,150,105,0.10)" : "rgba(220,38,38,0.10)") : null;
                         const purityBorder = t.purityPct != null ? (t.purityPct >= 99 ? "rgba(5,150,105,0.28)" : "rgba(220,38,38,0.28)") : null;

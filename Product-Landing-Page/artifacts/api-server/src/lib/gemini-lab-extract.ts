@@ -467,16 +467,16 @@ function extractUzorakPublicId(pageUrl: string): string | null {
  * Uses the Supabase public API (same as data extraction) so no direct fetch.
  *
  * Returns:
- *  "image" — snapshot_base64 JPEG available (proxy serves it)
- *  "pdf"   — Google Drive PDF available (proxy serves it)
- *  "iframe" — no static file but Uzorak has no X-Frame-Options, so the verify
+ *  "image"  — snapshot_base64 JPEG available (proxy serves it)
+ *  "pdf"    — Google Drive PDF available (proxy serves it)
+ *  "iframe" — no static file; Uzorak sets no X-Frame-Options so the verify
  *             page can be embedded directly in an iframe in the browser
  */
-export async function resolveUzorakPreviewType(pageUrl: string): Promise<"image" | "pdf" | "screenshot"> {
+export async function resolveUzorakPreviewType(pageUrl: string): Promise<"image" | "pdf" | "iframe"> {
   const publicId = extractUzorakPublicId(pageUrl);
-  if (!publicId) return "screenshot";
+  if (!publicId) return "iframe";
   const order = await fetchUzorakOrder(publicId);
-  if (!order) return "screenshot";
+  if (!order) return "iframe";
 
   const items = (order.order_items ?? order.orderItems) as unknown[] ?? [];
 
@@ -496,9 +496,10 @@ export async function resolveUzorakPreviewType(pageUrl: string): Promise<"image"
     if (u) return "pdf";
   }
 
-  // Uzorak HPLC-UV / LCMS certs are rendered client-side — no static file
-  // available. Use thum.io to capture the verify page as a real screenshot.
-  return "screenshot";
+  // Uzorak HPLC-UV / LCMS certs are rendered client-side from structured data
+  // not exposed by the public API — no static file to proxy. However, Uzorak
+  // sets no X-Frame-Options, so we can iframe the verify URL directly.
+  return "iframe";
 }
 
 /**
@@ -551,23 +552,12 @@ async function fetchWebsiteImages(pageUrl: string): Promise<string[]> {
 // Returns structured info the frontend uses to render a report preview.
 // - type "image": array of image URLs (server will proxy them)
 // - type "pdf": the PDF URL (server will proxy it)
-// - type "screenshot": thum.io screenshot URL — browser loads directly (no proxy needed)
 // - type "link": no embeddable preview, just a link to the original URL
 
 export type PreviewInfo =
   | { type: "image"; images: string[] }
   | { type: "pdf"; url: string }
-  | { type: "screenshot"; screenshotUrl: string }
   | { type: "link"; url: string };
-
-/**
- * Build a thum.io screenshot URL for any public page.
- * thum.io renders with a real Chromium browser — bypasses CF Bot Management.
- * Free tier, no API key required. Width 1200px for certificate quality.
- */
-export function buildScreenshotUrl(pageUrl: string): string {
-  return `https://image.thum.io/get/width/1200/${pageUrl}`;
-}
 
 export async function resolvePreviewInfo(pageUrl: string, labName?: string): Promise<PreviewInfo> {
   pageUrl = resolveCanonicalLabUrl(pageUrl);
@@ -581,15 +571,10 @@ export async function resolvePreviewInfo(pageUrl: string, labName?: string): Pro
     return { type: "image", images: [pageUrl] };
   }
 
-  // Website — try lab-specific scrapers first (server-side image proxy)
+  // Website — try lab-specific scrapers
   if (isAllowedUrl(pageUrl)) {
     const imgs = await fetchJanoshikImages(pageUrl);
-    // If server-side scrape succeeds return proxied images; otherwise fall
-    // through to the screenshot service which uses a real browser.
     if (imgs.length > 0) return { type: "image", images: imgs };
-    // Janoshik is CF-protected — return a thum.io screenshot so the browser
-    // can load the certificate image directly without a server proxy.
-    return { type: "screenshot", screenshotUrl: buildScreenshotUrl(pageUrl) };
   }
 
   const imgs = await fetchWebsiteImages(pageUrl);
