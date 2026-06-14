@@ -1010,7 +1010,7 @@ export default function GbTestingPool() {
             {hasVoted && existingVote && <ExistingVoteCard vote={existingVote} />}
 
             {/* Late opt-in CTA */}
-            {!isOptedIn && !isAdminView && hasGbOrder && round.lateOptInEnabled && !pendingContribution && !isClosed && (
+            {!isOptedIn && !isAdminView && hasGbOrder && round.lateOptInEnabled && !pendingContribution && !isClosed && contributorCount > 0 && totalVotes >= contributorCount * 0.75 && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 className="p-4 sm:p-5"
                 style={{ borderRadius: 8, background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
