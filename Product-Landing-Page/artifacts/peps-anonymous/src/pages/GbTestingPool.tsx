@@ -455,24 +455,47 @@ function PendingContributionCard({ pc }: { pc: PendingContribution }) {
 
 // ── Late Contribution Form ────────────────────────────────────────────────────
 
+type PayMethod = { key: string; label: string; sublabel: string; address: string; trocadorUrl?: string; externalUrl?: string };
+
 function LateContributionForm({ gbId, round, paymentMethods, onDone }: {
   gbId: string;
   round: TestingRound;
   paymentMethods: PaymentMethods;
   onDone: () => void;
 }) {
-  const methods: { key: string; label: string; address: string }[] = [];
+  const methods: PayMethod[] = [];
   if (paymentMethods.cryptoWalletAddress) {
-    methods.push({ key: "crypto", label: `${paymentMethods.cryptoCurrency} (${paymentMethods.cryptoNetwork})`, address: paymentMethods.cryptoWalletAddress });
+    methods.push({
+      key: "crypto",
+      label: `${paymentMethods.cryptoCurrency} Crypto`,
+      sublabel: `${paymentMethods.cryptoNetwork} · Verified automatically on-chain`,
+      address: paymentMethods.cryptoWalletAddress,
+    });
   }
   if (paymentMethods.revolutHandle) {
-    methods.push({ key: "revolut", label: "Revolut", address: paymentMethods.revolutHandle });
+    methods.push({ key: "revolut", label: "Revolut", sublabel: paymentMethods.revolutHandle, address: paymentMethods.revolutHandle });
   }
   if (paymentMethods.paypalHandle) {
-    methods.push({ key: "paypal", label: "PayPal", address: paymentMethods.paypalHandle });
+    methods.push({ key: "paypal", label: "PayPal", sublabel: `paypal.me/${paymentMethods.paypalHandle}`, address: paymentMethods.paypalHandle });
   }
   if (paymentMethods.anonPayEnabled && paymentMethods.anonPayWallet) {
-    methods.push({ key: "anonpay", label: `AnonPay (${paymentMethods.anonPayTicker?.toUpperCase()})`, address: paymentMethods.anonPayWallet });
+    const trocadorUrl = `https://trocador.app/anonpay/?ticker_to=${encodeURIComponent(paymentMethods.anonPayTicker)}&network_to=${encodeURIComponent(paymentMethods.anonPayNetwork)}&address=${encodeURIComponent(paymentMethods.anonPayWallet)}&name=Peps%20Anonymous`;
+    methods.push({
+      key: "anonpay",
+      label: "AnonPay (Any Crypto)",
+      sublabel: "Pay with BTC, ETH, XMR & 100+ coins — auto-converted, no account needed",
+      address: paymentMethods.anonPayWallet,
+      trocadorUrl,
+    });
+  }
+  if (round.janoshikPaymentUrl) {
+    methods.push({
+      key: "janoshik",
+      label: "Janoshik",
+      sublabel: "Pay via Janoshik — opens their secure payment page",
+      address: "",
+      externalUrl: round.janoshikPaymentUrl,
+    });
   }
 
   const [open, setOpen] = useState(false);
@@ -487,18 +510,34 @@ function LateContributionForm({ gbId, round, paymentMethods, onDone }: {
   const fixedAmount = round.anyContribution ? null : round.contributionAmount;
 
   function copyAddress() {
-    if (!selectedDef) return;
+    if (!selectedDef?.address) return;
     navigator.clipboard.writeText(selectedDef.address).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   }
 
+  const txHashLabel = selectedMethod === "anonpay"
+    ? "Trocador Order ID (from your confirmation page)"
+    : selectedMethod === "janoshik"
+      ? "Payment reference (optional)"
+      : "Transaction ID / reference";
+  const txHashPlaceholder = selectedMethod === "anonpay"
+    ? "Paste the Trocador order ID"
+    : selectedMethod === "janoshik"
+      ? "Order ref from Janoshik (optional)"
+      : "Paste your tx hash or payment ref";
+  const txHashRequired = selectedMethod !== "janoshik";
+
   async function handleSubmit() {
     if (!selectedMethod) { setErr("Select a payment method"); return; }
     const amount = fixedAmount ?? parseFloat(customAmount);
     if (!amount || amount <= 0) { setErr("Enter a valid amount"); return; }
-    if (!txHash.trim()) { setErr("Enter your transaction ID / reference"); return; }
+    if (txHashRequired && !txHash.trim()) { setErr("Enter your transaction ID / reference"); return; }
+    let finalTxHash = txHash.trim() || null;
+    if (selectedMethod === "anonpay" && finalTxHash && !finalTxHash.startsWith("anonpay:")) {
+      finalTxHash = `anonpay:${finalTxHash}`;
+    }
     setSubmitting(true);
     setErr(null);
     try {
@@ -506,22 +545,12 @@ function LateContributionForm({ gbId, round, paymentMethods, onDone }: {
         method: "POST",
         headers: { "content-type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ paymentMethod: selectedMethod, txHash: txHash.trim(), amount }),
+        body: JSON.stringify({ paymentMethod: selectedMethod, txHash: finalTxHash, amount }),
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "Failed to submit"); return; }
       onDone();
     } finally { setSubmitting(false); }
-  }
-
-  if (round.janoshikPaymentUrl && methods.length === 0) {
-    return (
-      <a href={round.janoshikPaymentUrl} target="_blank" rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2.5 rounded-lg"
-        style={{ background: "var(--t-blue)", color: "white" }}>
-        Pay via Janoshik <ExternalLink className="w-3.5 h-3.5" />
-      </a>
-    );
   }
 
   if (methods.length === 0) return null;
@@ -539,72 +568,116 @@ function LateContributionForm({ gbId, round, paymentMethods, onDone }: {
 
   return (
     <div className="space-y-3 pt-3 border-t" style={{ borderColor: "var(--t-border)" }}>
-      {/* Method selector */}
-      <div className="flex flex-wrap gap-2">
+      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--t-muted)" }}>
+        How would you like to pay?
+        {fixedAmount && <span className="ml-2 normal-case font-normal">Total: {fmtUsd(fixedAmount)}</span>}
+      </p>
+
+      {/* Method cards */}
+      <div className="space-y-2">
         {methods.map(m => (
           <button key={m.key} onClick={() => setSelectedMethod(m.key)}
-            className="text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 text-left transition-all"
             style={{
-              background: selectedMethod === m.key ? "var(--t-blue)" : "transparent",
-              color: selectedMethod === m.key ? "white" : "var(--t-muted)",
               borderColor: selectedMethod === m.key ? "var(--t-blue)" : "var(--t-border)",
+              background: selectedMethod === m.key ? "color-mix(in srgb, var(--t-blue) 8%, transparent)" : "var(--t-surface)",
             }}>
-            {m.label}
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-[9px] font-extrabold leading-tight text-center"
+              style={{ background: m.key === "anonpay" ? "#1a1a2e" : "var(--t-blue)", color: "white" }}>
+              {m.key === "anonpay" ? "ANON\nPAY" : m.key === "janoshik" ? "JAN" : m.key === "revolut" ? "REV" : m.key === "paypal" ? "PP" : m.label.slice(0, 4).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold" style={{ color: "var(--t-text)" }}>{m.label}</p>
+              <p className="text-[11px] leading-snug" style={{ color: "var(--t-muted)" }}>{m.sublabel}</p>
+            </div>
+            <span style={{ color: "var(--t-muted)" }}>›</span>
           </button>
         ))}
-        {round.janoshikPaymentUrl && (
-          <a href={round.janoshikPaymentUrl} target="_blank" rel="noopener noreferrer"
-            className="text-[12px] font-semibold px-3 py-1.5 rounded-full border"
-            style={{ borderColor: "var(--t-border)", color: "var(--t-muted)" }}>
-            Janoshik <ExternalLink className="w-3 h-3 inline ml-0.5" />
-          </a>
-        )}
       </div>
 
-      {/* Address / handle */}
       {selectedDef && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)" }}>
-          <span className="text-[12px] font-mono truncate flex-1" style={{ color: "var(--t-text)" }}>{selectedDef.address}</span>
-          <button onClick={copyAddress} className="text-[11px] font-semibold shrink-0" style={{ color: "var(--t-blue)" }}>
-            {copied ? "Copied!" : "Copy"}
+        <>
+          {/* AnonPay — Trocador link */}
+          {selectedDef.trocadorUrl && (
+            <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)" }}>
+              <p className="text-[11px]" style={{ color: "var(--t-muted)" }}>
+                AnonPay is powered by <strong>Trocador.app</strong> — pay with any crypto, auto-converted. No account or KYC required.
+              </p>
+              <a href={selectedDef.trocadorUrl} target="_blank" rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 text-[13px] font-bold py-2.5 px-4 rounded-lg"
+                style={{ background: "#f97316", color: "white" }}>
+                <ExternalLink className="w-4 h-4" />
+                Open Payment Page on Trocador
+              </a>
+              <p className="text-[10px] text-center" style={{ color: "var(--t-muted)" }}>Opens securely on trocador.app in a new tab</p>
+            </div>
+          )}
+
+          {/* Janoshik — external link only */}
+          {selectedDef.externalUrl && !selectedDef.trocadorUrl && (
+            <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)" }}>
+              <a href={selectedDef.externalUrl} target="_blank" rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 text-[13px] font-bold py-2.5 px-4 rounded-lg"
+                style={{ background: "var(--t-blue)", color: "white" }}>
+                <ExternalLink className="w-4 h-4" />
+                Open Janoshik Payment Page
+              </a>
+            </div>
+          )}
+
+          {/* Direct wallet / handle — copy address */}
+          {!selectedDef.trocadorUrl && !selectedDef.externalUrl && selectedDef.address && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)" }}>
+              <span className="text-[12px] font-mono truncate flex-1" style={{ color: "var(--t-text)" }}>{selectedDef.address}</span>
+              <button onClick={copyAddress} className="text-[11px] font-semibold shrink-0" style={{ color: "var(--t-blue)" }}>
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          )}
+
+          {/* Amount (only if anyContribution) */}
+          {!fixedAmount && (
+            <div>
+              <label className="text-[10px] font-bold tracking-wide uppercase mb-1 block" style={{ color: "var(--t-muted)" }}>Amount (USD)</label>
+              <input type="number" min="1" step="1" value={customAmount}
+                onChange={e => setCustomAmount(e.target.value)}
+                placeholder="e.g. 20"
+                className="w-full text-sm px-3 py-2 rounded-lg"
+                style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)", color: "var(--t-text)" }} />
+            </div>
+          )}
+
+          {/* Tx hash / reference */}
+          <div>
+            <label className="text-[10px] font-bold tracking-wide uppercase mb-1 block" style={{ color: "var(--t-muted)" }}>
+              {txHashLabel}
+            </label>
+            <input type="text" value={txHash} onChange={e => setTxHash(e.target.value)}
+              placeholder={txHashPlaceholder}
+              className="w-full text-sm px-3 py-2 rounded-lg"
+              style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)", color: "var(--t-text)" }} />
+            {selectedMethod === "anonpay" && (
+              <p className="text-[10px] mt-1" style={{ color: "var(--t-muted)" }}>
+                After paying on Trocador, paste the order ID from your confirmation page here.
+              </p>
+            )}
+          </div>
+
+          {err && <p className="text-[12px]" style={{ color: "#EF4444" }}>{err}</p>}
+
+          <button onClick={handleSubmit} disabled={submitting}
+            className="w-full text-[13px] font-bold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2"
+            style={{ background: "var(--t-blue)", color: "white", opacity: submitting ? 0.7 : 1 }}>
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            {selectedMethod === "janoshik" ? "I've paid — notify admin" : "Submit for review"}
           </button>
-        </div>
+          <p className="text-[11px] text-center" style={{ color: "var(--t-muted)" }}>
+            {selectedMethod === "anonpay"
+              ? "AnonPay can take up to 15 minutes to process and confirm."
+              : "Your payment will be verified before voting is unlocked."}
+          </p>
+        </>
       )}
-
-      {/* Amount (only if anyContribution) */}
-      {!fixedAmount && (
-        <div>
-          <label className="text-[10px] font-bold tracking-wide uppercase mb-1 block" style={{ color: "var(--t-muted)" }}>Amount (USD)</label>
-          <input type="number" min="1" step="1" value={customAmount}
-            onChange={e => setCustomAmount(e.target.value)}
-            placeholder="e.g. 20"
-            className="w-full text-sm px-3 py-2 rounded-lg"
-            style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)", color: "var(--t-text)" }} />
-        </div>
-      )}
-
-      {/* Tx hash / reference */}
-      <div>
-        <label className="text-[10px] font-bold tracking-wide uppercase mb-1 block" style={{ color: "var(--t-muted)" }}>
-          Transaction ID / reference
-        </label>
-        <input type="text" value={txHash} onChange={e => setTxHash(e.target.value)}
-          placeholder="Paste your tx hash or payment ref"
-          className="w-full text-sm px-3 py-2 rounded-lg"
-          style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)", color: "var(--t-text)" }} />
-      </div>
-
-      {err && <p className="text-[12px]" style={{ color: "#EF4444" }}>{err}</p>}
-
-      <button onClick={handleSubmit} disabled={submitting}
-        className="w-full text-[13px] font-bold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2"
-        style={{ background: "var(--t-blue)", color: "white", opacity: submitting ? 0.7 : 1 }}>
-        {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-        Submit for review
-      </button>
-      <p className="text-[11px] text-center" style={{ color: "var(--t-muted)" }}>
-        Your payment will be verified before voting is unlocked.
-      </p>
     </div>
   );
 }

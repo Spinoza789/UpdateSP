@@ -7658,6 +7658,7 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
   const [editContribAmount, setEditContribAmount] = useState("15");
   const [lateOptIn, setLateOptIn] = useState(false);
   const [latePayMethods, setLatePayMethods] = useState<string[]>([]);
+  const [editJanoshikUrl, setEditJanoshikUrl] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
 
@@ -7696,6 +7697,7 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
         setEditContribAmount(String(d.round.contributionAmount ?? 15));
         setLateOptIn(d.round.lateOptInEnabled ?? false);
         setLatePayMethods(d.round.lateOptInPaymentMethods ?? []);
+        setEditJanoshikUrl(d.round.janoshikPaymentUrl ?? "");
         const opts = d.round.voteOptions && d.round.voteOptions.length > 0
           ? d.round.voteOptions
           : (d.gbProductsSortedBySales ?? []).map(p => p.name);
@@ -7746,6 +7748,7 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
           ...(editAnyContrib ? {} : { contributionAmount: parseFloat(editContribAmount) || 15 }),
           lateOptInEnabled: lateOptIn,
           lateOptInPaymentMethods: lateOptIn ? latePayMethods : [],
+          janoshikPaymentUrl: editJanoshikUrl.trim() || null,
         }),
       });
       if (!r.ok) { const e = await r.json(); alert(e.error ?? "Failed to save settings"); return; }
@@ -8044,6 +8047,18 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
                   )}
                 </div>
               )}
+            </div>
+
+            <div className="space-y-1.5 border-t border-border pt-3">
+              <label className="text-xs font-semibold text-muted-foreground">Janoshik Payment URL <span className="font-normal">(optional)</span></label>
+              <input
+                type="url"
+                value={editJanoshikUrl}
+                onChange={e => setEditJanoshikUrl(e.target.value)}
+                placeholder="https://janoshik.com/..."
+                className="w-full text-xs px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <p className="text-[10px] text-muted-foreground">If set, a &ldquo;Pay via Janoshik&rdquo; button will appear in the late contribution form.</p>
             </div>
 
             <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings} className="w-full">
