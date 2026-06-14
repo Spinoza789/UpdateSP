@@ -49,6 +49,19 @@ interface PendingContribution {
   rejectionReason: string | null;
 }
 
+interface PaymentMethods {
+  cryptoWalletAddress: string | null;
+  cryptoCurrency: string;
+  cryptoNetwork: string;
+  revolutHandle: string | null;
+  paypalHandle: string | null;
+  anonPayEnabled: boolean;
+  anonPayWallet: string | null;
+  anonPayTicker: string;
+  anonPayNetwork: string;
+  janoshikPaymentUrl: string | null;
+}
+
 interface TestingData {
   round: TestingRound | null;
   poolTotal: number;
@@ -67,6 +80,7 @@ interface TestingData {
   vialVotes: Record<string, number>;
   pendingContribution: PendingContribution | null;
   peptideOptions: string[];
+  paymentMethods: PaymentMethods;
   endotoxinPrice: number;
   vialPrice: number;
   maxVials: number;
@@ -210,12 +224,12 @@ function PoolGauge({ raisedUsd, segments, contributorCount }: { raisedUsd: numbe
 
 // ── Milestone Step Card ───────────────────────────────────────────────────────
 
-function MilestoneCard({ step, milestone, raisedUsd, accentColor }: {
-  step: number; milestone: Milestone; raisedUsd: number; accentColor: string;
+function MilestoneCard({ step, milestone, prevAmount, raisedUsd, accentColor }: {
+  step: number; milestone: Milestone; prevAmount: number; raisedUsd: number; accentColor: string;
 }) {
   const hit = raisedUsd >= milestone.amount;
   const stepNum = String(step).padStart(2, "0");
-  const incrementalCost = milestone.amount; // shown as cumulative target
+  const stepCost = milestone.amount - prevAmount;
 
   return (
     <motion.div
@@ -243,15 +257,20 @@ function MilestoneCard({ step, milestone, raisedUsd, accentColor }: {
             Step {stepNum} · {hit ? "Unlocked" : "Locked"}
           </span>
         </div>
-        <p className="font-extrabold leading-none mb-1.5"
+        <p className="font-extrabold leading-none mb-0.5"
           style={{ fontSize: 22, color: hit ? HIT : "var(--t-text)", fontFamily: "ui-monospace,SFMono-Regular,monospace", letterSpacing: "-0.02em" }}>
-          {fmtUsd(incrementalCost)}
+          {fmtUsd(stepCost)}
         </p>
+        {prevAmount > 0 && (
+          <p className="text-[10px] mb-1.5" style={{ color: "var(--t-muted)" }}>
+            Cumulative: {fmtUsd(milestone.amount)}
+          </p>
+        )}
         <p className="text-[13px] font-semibold leading-tight mb-1" style={{ color: "var(--t-text)" }}>
           {milestone.label}
         </p>
         <p className="text-[11px]" style={{ color: "var(--t-muted)" }}>
-          {milestone.type === "vial" ? `Vial #${milestone.vialNum ?? step}` : "Cumulative target"}
+          {milestone.type === "vial" ? `Vial #${milestone.vialNum ?? step}` : "This step"}
         </p>
       </div>
     </motion.div>
@@ -434,6 +453,162 @@ function PendingContributionCard({ pc }: { pc: PendingContribution }) {
   );
 }
 
+// ── Late Contribution Form ────────────────────────────────────────────────────
+
+function LateContributionForm({ gbId, round, paymentMethods, onDone }: {
+  gbId: string;
+  round: TestingRound;
+  paymentMethods: PaymentMethods;
+  onDone: () => void;
+}) {
+  const methods: { key: string; label: string; address: string }[] = [];
+  if (paymentMethods.cryptoWalletAddress) {
+    methods.push({ key: "crypto", label: `${paymentMethods.cryptoCurrency} (${paymentMethods.cryptoNetwork})`, address: paymentMethods.cryptoWalletAddress });
+  }
+  if (paymentMethods.revolutHandle) {
+    methods.push({ key: "revolut", label: "Revolut", address: paymentMethods.revolutHandle });
+  }
+  if (paymentMethods.paypalHandle) {
+    methods.push({ key: "paypal", label: "PayPal", address: paymentMethods.paypalHandle });
+  }
+  if (paymentMethods.anonPayEnabled && paymentMethods.anonPayWallet) {
+    methods.push({ key: "anonpay", label: `AnonPay (${paymentMethods.anonPayTicker?.toUpperCase()})`, address: paymentMethods.anonPayWallet });
+  }
+
+  const [open, setOpen] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState(methods[0]?.key ?? "");
+  const [txHash, setTxHash] = useState("");
+  const [customAmount, setCustomAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const selectedDef = methods.find(m => m.key === selectedMethod);
+  const fixedAmount = round.anyContribution ? null : round.contributionAmount;
+
+  function copyAddress() {
+    if (!selectedDef) return;
+    navigator.clipboard.writeText(selectedDef.address).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  async function handleSubmit() {
+    if (!selectedMethod) { setErr("Select a payment method"); return; }
+    const amount = fixedAmount ?? parseFloat(customAmount);
+    if (!amount || amount <= 0) { setErr("Enter a valid amount"); return; }
+    if (!txHash.trim()) { setErr("Enter your transaction ID / reference"); return; }
+    setSubmitting(true);
+    setErr(null);
+    try {
+      const r = await fetch(`/api/group-buys/${gbId}/testing/contribute`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ paymentMethod: selectedMethod, txHash: txHash.trim(), amount }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setErr(d.error ?? "Failed to submit"); return; }
+      onDone();
+    } finally { setSubmitting(false); }
+  }
+
+  if (round.janoshikPaymentUrl && methods.length === 0) {
+    return (
+      <a href={round.janoshikPaymentUrl} target="_blank" rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2.5 rounded-lg"
+        style={{ background: "var(--t-blue)", color: "white" }}>
+        Pay via Janoshik <ExternalLink className="w-3.5 h-3.5" />
+      </a>
+    );
+  }
+
+  if (methods.length === 0) return null;
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full text-[13px] font-bold px-4 py-2.5 rounded-lg text-left"
+        style={{ background: "var(--t-blue)", color: "white" }}>
+        {fixedAmount ? `Pay ${fmtUsd(fixedAmount)} to join` : "Submit payment"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-3 pt-3 border-t" style={{ borderColor: "var(--t-border)" }}>
+      {/* Method selector */}
+      <div className="flex flex-wrap gap-2">
+        {methods.map(m => (
+          <button key={m.key} onClick={() => setSelectedMethod(m.key)}
+            className="text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-colors"
+            style={{
+              background: selectedMethod === m.key ? "var(--t-blue)" : "transparent",
+              color: selectedMethod === m.key ? "white" : "var(--t-muted)",
+              borderColor: selectedMethod === m.key ? "var(--t-blue)" : "var(--t-border)",
+            }}>
+            {m.label}
+          </button>
+        ))}
+        {round.janoshikPaymentUrl && (
+          <a href={round.janoshikPaymentUrl} target="_blank" rel="noopener noreferrer"
+            className="text-[12px] font-semibold px-3 py-1.5 rounded-full border"
+            style={{ borderColor: "var(--t-border)", color: "var(--t-muted)" }}>
+            Janoshik <ExternalLink className="w-3 h-3 inline ml-0.5" />
+          </a>
+        )}
+      </div>
+
+      {/* Address / handle */}
+      {selectedDef && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)" }}>
+          <span className="text-[12px] font-mono truncate flex-1" style={{ color: "var(--t-text)" }}>{selectedDef.address}</span>
+          <button onClick={copyAddress} className="text-[11px] font-semibold shrink-0" style={{ color: "var(--t-blue)" }}>
+            {copied ? "Copied!" : "Copy"}
+          </button>
+        </div>
+      )}
+
+      {/* Amount (only if anyContribution) */}
+      {!fixedAmount && (
+        <div>
+          <label className="text-[10px] font-bold tracking-wide uppercase mb-1 block" style={{ color: "var(--t-muted)" }}>Amount (USD)</label>
+          <input type="number" min="1" step="1" value={customAmount}
+            onChange={e => setCustomAmount(e.target.value)}
+            placeholder="e.g. 20"
+            className="w-full text-sm px-3 py-2 rounded-lg"
+            style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)", color: "var(--t-text)" }} />
+        </div>
+      )}
+
+      {/* Tx hash / reference */}
+      <div>
+        <label className="text-[10px] font-bold tracking-wide uppercase mb-1 block" style={{ color: "var(--t-muted)" }}>
+          Transaction ID / reference
+        </label>
+        <input type="text" value={txHash} onChange={e => setTxHash(e.target.value)}
+          placeholder="Paste your tx hash or payment ref"
+          className="w-full text-sm px-3 py-2 rounded-lg"
+          style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)", color: "var(--t-text)" }} />
+      </div>
+
+      {err && <p className="text-[12px]" style={{ color: "#EF4444" }}>{err}</p>}
+
+      <button onClick={handleSubmit} disabled={submitting}
+        className="w-full text-[13px] font-bold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2"
+        style={{ background: "var(--t-blue)", color: "white", opacity: submitting ? 0.7 : 1 }}>
+        {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+        Submit for review
+      </button>
+      <p className="text-[11px] text-center" style={{ color: "var(--t-muted)" }}>
+        Your payment will be verified before voting is unlocked.
+      </p>
+    </div>
+  );
+}
+
 // ── main page ─────────────────────────────────────────────────────────────────
 
 export default function GbTestingPool() {
@@ -506,7 +681,7 @@ export default function GbTestingPool() {
   const {
     round, poolTotal, contributorCount, totalVotes, votes, testVotes,
     milestones, isOptedIn, isAdminView, hasGbOrder, hasVoted, existingVote,
-    pendingContribution, peptideOptions, publicVotes,
+    pendingContribution, peptideOptions, publicVotes, paymentMethods,
   } = data;
 
   const isClosed = round.status === "closed" || round.status === "sent_to_lab" || round.status === "results_received";
@@ -639,6 +814,7 @@ export default function GbTestingPool() {
                 key={i}
                 step={i + 1}
                 milestone={m}
+                prevAmount={i > 0 ? milestones[i - 1].amount : 0}
                 raisedUsd={poolTotal}
                 accentColor={STEP_COLORS[i % STEP_COLORS.length]}
               />
@@ -771,13 +947,12 @@ export default function GbTestingPool() {
                 <p className="text-[12px] mb-3" style={{ color: "var(--t-muted)" }}>
                   Contribute {round.anyContribution ? "any amount" : fmtUsd(round.contributionAmount)} to unlock voting.
                 </p>
-                {round.janoshikPaymentUrl && (
-                  <a href={round.janoshikPaymentUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2.5 rounded-lg"
-                    style={{ background: "var(--t-blue)", color: "white" }}>
-                    Pay via Janoshik <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
+                <LateContributionForm
+                  gbId={gbId}
+                  round={round}
+                  paymentMethods={paymentMethods}
+                  onDone={() => { setLoading(true); load(); }}
+                />
               </motion.div>
             )}
 

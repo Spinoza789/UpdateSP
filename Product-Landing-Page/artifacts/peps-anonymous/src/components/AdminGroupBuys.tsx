@@ -7654,6 +7654,8 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
   const [maxCompounds, setMaxCompounds] = useState(1);
   const [maxTests, setMaxTests] = useState(1);
   const [selectedTestOptions, setSelectedTestOptions] = useState<string[]>(["Endotoxin", "Mass/Purity"]);
+  const [editAnyContrib, setEditAnyContrib] = useState(false);
+  const [editContribAmount, setEditContribAmount] = useState("15");
   const [lateOptIn, setLateOptIn] = useState(false);
   const [latePayMethods, setLatePayMethods] = useState<string[]>([]);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -7690,6 +7692,8 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
             ? d.round.testOptions
             : ["Endotoxin", "Mass/Purity"]
         );
+        setEditAnyContrib(d.round.anyContribution ?? false);
+        setEditContribAmount(String(d.round.contributionAmount ?? 15));
         setLateOptIn(d.round.lateOptInEnabled ?? false);
         setLatePayMethods(d.round.lateOptInPaymentMethods ?? []);
         const opts = d.round.voteOptions && d.round.voteOptions.length > 0
@@ -7738,6 +7742,8 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
           maxCompoundVotes: maxCompounds,
           maxTestVotes: maxTests,
           testOptions: selectedTestOptions,
+          anyContribution: editAnyContrib,
+          ...(editAnyContrib ? {} : { contributionAmount: parseFloat(editContribAmount) || 15 }),
           lateOptInEnabled: lateOptIn,
           lateOptInPaymentMethods: lateOptIn ? latePayMethods : [],
         }),
@@ -7910,6 +7916,33 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
           {/* Round Settings */}
           <div className="border border-border rounded-lg p-4 space-y-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Round Settings</p>
+
+            {/* Contribution amount */}
+            <div className="space-y-2 pb-3 border-b border-border">
+              <Label className="text-xs">Opt-in contribution</Label>
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editAnyContrib}
+                  onChange={e => setEditAnyContrib(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-sm">Accept any amount</span>
+              </label>
+              {!editAnyContrib && (
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm text-muted-foreground shrink-0">Fixed amount (USD):</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={editContribAmount}
+                    onChange={e => setEditContribAmount(e.target.value)}
+                    className="w-24 h-8 text-sm"
+                  />
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
