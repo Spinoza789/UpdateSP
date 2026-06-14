@@ -433,7 +433,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
     testOptions: configuredTestOptions,
     testVotes,
     vialVotes,
-    endotoxinPrice: ENDOTOXIN_PRICE,
+    endotoxinPrice: pubOverrides.testPrices?.["Endotoxin"] ?? ENDOTOXIN_PRICE,
     vialPrice: VIAL_PRICE,
     maxVials: MAX_VIALS,
   });
