@@ -4682,15 +4682,27 @@ router.put("/admin/customers/:username/password", async (req: any, res: any): Pr
 
 // ─── GET /api/admin/customers ─────────────────────────────────
 // Paginated account list with per-customer order stats.
-// ?q=search  ?page=0  ?limit=50
+// ?q=search  ?page=0  ?limit=50  ?gbId=<groupBuyId>  ?wholesale=true
 router.get("/admin/customers", async (req: any, res: any): Promise<void> => {
   if (!requireAdmin(req, res)) return;
   const q = typeof req.query.q === "string" ? req.query.q.trim().toLowerCase() : "";
   const page = Math.max(0, parseInt(String(req.query.page ?? "0"), 10) || 0);
   const limit = Math.min(200, Math.max(1, parseInt(String(req.query.limit ?? "50"), 10) || 50));
   const offset = page * limit;
+  const gbIdFilter = typeof req.query.gbId === "string" ? req.query.gbId.trim() : null;
+  const wholesaleOnly = req.query.wholesale === "true";
 
   try {
+    // If filtering by group buy, resolve the set of member accountIds first
+    let gbMemberUsernames: Set<string> | null = null;
+    if (gbIdFilter) {
+      const memberships = await db
+        .select({ accountId: accountGroupBuysTable.accountId })
+        .from(accountGroupBuysTable)
+        .where(eq(accountGroupBuysTable.groupBuyId, gbIdFilter));
+      gbMemberUsernames = new Set(memberships.map(m => m.accountId));
+    }
+
     // Aggregate order stats per telegram username from orders table
     const orderStats = await db
       .select({
@@ -4748,17 +4760,24 @@ router.get("/admin/customers", async (req: any, res: any): Promise<void> => {
       poolLeaderStatus: a.poolLeaderStatus ?? null,
       reshipperStatus: a.reshipperStatus ?? null,
       credits: a.credits ?? 0,
+      isWholesale: a.isWholesale ?? false,
       ...(statsMap.get(a.telegramUsername ?? "") ?? zeroStats),
     }));
 
-    const filtered = q
-      ? merged.filter(c =>
-          c.telegramUsername.toLowerCase().includes(q) ||
-          (c.email ?? "").toLowerCase().includes(q) ||
-          (c.country ?? "").toLowerCase().includes(q) ||
-          (c.lastLoginIp ?? "").toLowerCase().includes(q)
-        )
-      : merged;
+    const filtered = merged
+      .filter(c => !q || (
+        c.telegramUsername.toLowerCase().includes(q) ||
+        (c.email ?? "").toLowerCase().includes(q) ||
+        (c.country ?? "").toLowerCase().includes(q) ||
+        (c.lastLoginIp ?? "").toLowerCase().includes(q)
+      ))
+      .filter(c => {
+        if (!gbMemberUsernames) return true;
+        const u = c.telegramUsername ?? "";
+        const alt = u.startsWith("@") ? u.slice(1) : `@${u}`;
+        return gbMemberUsernames.has(u) || gbMemberUsernames.has(alt);
+      })
+      .filter(c => !wholesaleOnly || c.isWholesale);
 
     const total = filtered.length;
     const page_data = filtered.slice(offset, offset + limit);

@@ -9685,6 +9685,7 @@ interface UsernameRow {
   credits?: number;
   country?: string | null;
   lastLoginIp?: string | null;
+  isWholesale?: boolean;
 }
 
 interface CustomerLog {
@@ -11370,6 +11371,21 @@ function UsernamesTab({ secret }: { secret: string }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [kpi, setKpi] = useState<AccountsKpi | null>(null);
+  const [gbFilter, setGbFilter] = useState("");
+  const [wholesaleFilter, setWholesaleFilter] = useState(false);
+  const [allGroupBuys, setAllGroupBuys] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    fetch(apiUrl("/admin/group-buys"), { headers: { "x-admin-secret": secret } })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setAllGroupBuys(
+        (Array.isArray(data) ? data : [])
+          .filter(g => g.status !== "draft")
+          .map(g => ({ id: g.id, name: g.name }))
+          .sort((a: any, b: any) => a.name.localeCompare(b.name))
+      ))
+      .catch(() => {});
+  }, [secret]);
 
   useEffect(() => {
     const t = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
@@ -11381,6 +11397,8 @@ function UsernamesTab({ secret }: { secret: string }) {
     try {
       const params = new URLSearchParams();
       if (searchQuery) params.set("q", searchQuery);
+      if (gbFilter) params.set("gbId", gbFilter);
+      if (wholesaleFilter) params.set("wholesale", "true");
       params.set("limit", "200");
       const r = await fetch(apiUrl(`/admin/customers?${params}`), { headers: { "x-admin-secret": secret } });
       const data = await r.json();
@@ -11388,7 +11406,7 @@ function UsernamesTab({ secret }: { secret: string }) {
       setRows(Array.isArray(data) ? data : (data.customers ?? []));
     } catch { /* ignore */ }
     setLoading(false);
-  }, [secret, searchQuery]);
+  }, [secret, searchQuery, gbFilter, wholesaleFilter]);
 
   useEffect(() => { fetch$(); }, [fetch$]);
 
@@ -11561,6 +11579,28 @@ function UsernamesTab({ secret }: { secret: string }) {
             <X className="w-3.5 h-3.5" />
           </button>
         )}
+      </div>
+
+      {/* Group buy + wholesale filter row */}
+      <div className="flex gap-2 flex-wrap">
+        <select
+          className="h-9 rounded-lg border bg-background px-3 text-xs font-medium text-foreground flex-1 min-w-[180px]"
+          value={gbFilter}
+          onChange={e => setGbFilter(e.target.value)}
+        >
+          <option value="">All group buys</option>
+          {allGroupBuys.map(gb => (
+            <option key={gb.id} value={gb.id}>{gb.name}</option>
+          ))}
+        </select>
+        <select
+          className="h-9 rounded-lg border bg-background px-3 text-xs font-medium text-foreground flex-1 min-w-[140px]"
+          value={wholesaleFilter ? "wholesale" : "all"}
+          onChange={e => setWholesaleFilter(e.target.value === "wholesale")}
+        >
+          <option value="all">All order types</option>
+          <option value="wholesale">Wholesale only</option>
+        </select>
       </div>
 
       {/* Status filter + tag filter + sort */}
