@@ -47,6 +47,7 @@ import GbLegViewer from "@/pages/GbLegViewer";
 import GbLegKits from "@/pages/GbLegKits";
 import TrackingPage from "@/pages/TrackingPage";
 import GbTestingPool from "@/pages/GbTestingPool";
+import GbTestingResults from "@/pages/GbTestingResults";
 import TestingPool from "@/pages/TestingPool";
 import GuestContribution from "@/pages/GuestContribution";
 import ReshipperPage from "@/pages/Reshipper";
@@ -143,6 +144,7 @@ function Router() {
       <Route path="/track/gb/:gbId/member/:memberUsername" component={TrackingPage} />
       <Route path="/track/parcel/:parcelId" component={TrackingPage} />
       <Route path="/track/:slug" component={TrackingPage} />
+      <Route path="/testing/:gbId/results" component={GbTestingResults} />
       <Route path="/testing/:gbId" component={GbTestingPool} />
       <Route path="/pool/:slug/contribution/:participantId" component={GuestContribution} />
       <Route path="/testing-pools" component={PublicTestingPools} />

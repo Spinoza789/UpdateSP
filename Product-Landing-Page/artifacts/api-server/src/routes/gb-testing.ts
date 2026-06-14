@@ -404,15 +404,17 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
     : allKnownPeptides;
 
   res.json({
+    resultsAvailable: round.status === "results_received" && !!(round.resultNotes || round.resultPdfUrl),
     round: {
       id: round.id,
       status: round.status,
       contributionAmount: parseFloat(round.contributionAmount as string),
       anyContribution: !!(round.anyContribution),
       lateOptInEnabled: !!(round.lateOptInEnabled),
-      resultNotes: round.resultNotes,
-      resultPdfUrl: round.resultPdfUrl,
+      resultNotes: isOptedIn ? round.resultNotes : null,
+      resultPdfUrl: isOptedIn ? round.resultPdfUrl : null,
       resultPostedAt: round.resultPostedAt,
+      fundingNote: isOptedIn ? ((round as any).fundingNote ?? null) : null,
       voteOptions: round.voteOptions ?? null,
       testOptions: configuredTestOptions,
       janoshikPaymentUrl: (round.janoshikPaymentUrl as string | null) ?? null,
@@ -958,7 +960,7 @@ router.post(
 router.patch("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
   const { gbId } = req.params;
-  const { status, resultNotes, resultPdfUrl, voteOptions, peptideBatches, testOptions, janoshikPaymentUrl, anyContribution, lateOptInEnabled, lateOptInPaymentMethods, maxCompoundVotes, maxTestVotes, labShippingCost } = req.body;
+  const { status, resultNotes, resultPdfUrl, fundingNote, voteOptions, peptideBatches, testOptions, janoshikPaymentUrl, anyContribution, lateOptInEnabled, lateOptInPaymentMethods, maxCompoundVotes, maxTestVotes, labShippingCost } = req.body;
 
   const [round] = await db
     .select()
@@ -979,6 +981,7 @@ router.patch("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> 
   }
   if (resultNotes !== undefined) updates.resultNotes = resultNotes || null;
   if (resultPdfUrl !== undefined) updates.resultPdfUrl = resultPdfUrl || null;
+  if (fundingNote !== undefined) updates.fundingNote = fundingNote || null;
   if (status === "results_received" && !round.resultPostedAt) {
     updates.resultPostedAt = new Date();
   }
@@ -1304,8 +1307,10 @@ router.get("/account/testing/gb-pools", async (req, res): Promise<void> => {
   res.json(result);
 });
 
-// ── GET /api/testing/results — public: all completed GB tests ─
-router.get("/testing/results", async (_req, res): Promise<void> => {
+// ── GET /api/testing/results — admin-only: all completed GB tests ─
+// Results are private to contributors, so this aggregate feed is gated to admins.
+router.get("/testing/results", async (req, res): Promise<void> => {
+  if (!isAdminRequest(req)) { res.json([]); return; }
   const results = await db
     .select({
       roundId: gbTestingRoundsTable.id,

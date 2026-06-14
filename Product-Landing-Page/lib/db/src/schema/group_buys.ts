@@ -268,6 +268,7 @@ export const gbTestingRoundsTable = pgTable("gb_testing_rounds", {
   resultNotes: text("result_notes"),
   resultPdfUrl: text("result_pdf_url"),
   resultPostedAt: timestamp("result_posted_at", { withTimezone: true }),
+  fundingNote: text("funding_note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

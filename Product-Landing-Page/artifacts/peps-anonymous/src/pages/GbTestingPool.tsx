@@ -28,6 +28,7 @@ interface TestingRound {
   resultNotes: string | null;
   resultPdfUrl: string | null;
   resultPostedAt: string | null;
+  fundingNote: string | null;
   testOptions: string[];
   janoshikPaymentUrl: string | null;
   labShippingCost: number | null;
@@ -66,6 +67,7 @@ interface PaymentMethods {
 
 interface TestingData {
   round: TestingRound | null;
+  resultsAvailable: boolean;
   poolTotal: number;
   contributorCount: number;
   totalVotes: number;
@@ -124,7 +126,7 @@ function describeArc(cx: number, cy: number, r: number, startDeg: number, endDeg
 
 // ── layout wrapper ─────────────────────────────────────────────────────────────
 
-function GbPoolLayout({ title, children }: { title?: string; children: React.ReactNode }) {
+export function GbPoolLayout({ title, children }: { title?: string; children: React.ReactNode }) {
   const [, setLocation] = useLocation();
   return (
     <PageLayout title={title}>
@@ -824,7 +826,7 @@ export default function GbTestingPool() {
   }
 
   const {
-    round, poolTotal, contributorCount, totalVotes, votes, testVotes,
+    round, resultsAvailable, poolTotal, contributorCount, totalVotes, votes, testVotes,
     milestones, isOptedIn, isAdminView, hasGbOrder, hasVoted, existingVote,
     pendingContribution, peptideOptions, publicVotes, paymentMethods,
   } = data;
@@ -1266,8 +1268,8 @@ export default function GbTestingPool() {
               )}
             </motion.div>
 
-            {/* Lab Results */}
-            {isResults && hasResults && (
+            {/* Lab Results — private, on a separate contributors-only page */}
+            {isResults && resultsAvailable && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1281,18 +1283,24 @@ export default function GbTestingPool() {
                   </div>
                   <p className="text-[9px] font-bold tracking-[0.14em] uppercase" style={{ color: "var(--t-muted)" }}>Lab Results</p>
                 </div>
-                {round.resultNotes && (
-                  <div className="text-sm whitespace-pre-wrap rounded-lg p-4"
-                    style={{ background: "var(--t-bg)", color: "var(--t-text)", border: "1px solid var(--t-border)" }}>
-                    {round.resultNotes}
+                {isOptedIn ? (
+                  <>
+                    <p className="text-sm" style={{ color: "var(--t-muted)" }}>
+                      The lab results for this round are ready — private to contributors.
+                    </p>
+                    <button
+                      onClick={() => setLocation(`/testing/${gbId}/results`)}
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-lg transition-opacity hover:opacity-90"
+                      style={{ background: "var(--t-blue)", color: "#fff" }}
+                    >
+                      View Results <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex items-start gap-2 text-sm" style={{ color: "var(--t-muted)" }}>
+                    <Lock className="w-4 h-4 mt-0.5 shrink-0" />
+                    <p>Results are in, but they&rsquo;re private to people who chipped in for this round.</p>
                   </div>
-                )}
-                {round.resultPdfUrl && (
-                  <a href={round.resultPdfUrl} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold hover:opacity-75 transition-opacity"
-                    style={{ color: "var(--t-blue)" }}>
-                    View PDF Report <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
                 )}
               </motion.div>
             )}

@@ -9,7 +9,7 @@ import {
   Upload, FileText, DollarSign, Copy, MapPin, CheckCircle2,
   AlertCircle, AlertTriangle, Clock, Navigation, Box, TestTube, BarChart3,
   CreditCard, Send, MessageSquare, ShoppingCart, Wallet, QrCode, UserCheck, ExternalLink,
-  Download, SendHorizonal, Ship, TrendingUp, Settings, Lock, Calculator, PenLine, Home,
+  Download, SendHorizonal, Ship, TrendingUp, Settings, Lock, Unlock, Calculator, PenLine, Home,
 } from "lucide-react";
 import { Button, Card, Input, Label, cn } from "@/components/ui";
 import { ImageLightbox } from "@/components/ImageLightbox";
@@ -7608,6 +7608,7 @@ interface TestingRound {
   labShippingCost: number | null;
   resultNotes: string | null;
   resultPdfUrl: string | null;
+  fundingNote: string | null;
 }
 
 interface GbProductSale { name: string; qtySold: number; }
@@ -7633,6 +7634,7 @@ interface TestingAdminData {
   round: TestingRound | null;
   poolTotal: number;
   contributorCount: number;
+  milestones?: { label: string; amount: number; type?: string }[];
   gbProductsSortedBySales: GbProductSale[];
   organiserPayments: TestingOrganiserPayments | null;
   contributors: TestingContributor[];
@@ -7677,6 +7679,16 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
   const [pendingBatch, setPendingBatch] = useState<string | null>(null);
   const ocrInputRef = useRef<HTMLInputElement>(null);
 
+  // Status / funding / results
+  const [savingStatus, setSavingStatus] = useState<string | null>(null);
+  const [fundingNote, setFundingNote] = useState("");
+  const [savingFunding, setSavingFunding] = useState(false);
+  const [fundingSaved, setFundingSaved] = useState(false);
+  const [editResultNotes, setEditResultNotes] = useState("");
+  const [editResultPdfUrl, setEditResultPdfUrl] = useState("");
+  const [savingResults, setSavingResults] = useState(false);
+  const [resultsSaved, setResultsSaved] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -7703,6 +7715,9 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
           : (d.gbProductsSortedBySales ?? []).map(p => p.name);
         setSelectedCompounds(opts);
         setBatchNumbers(d.round.peptideBatches ?? {});
+        setFundingNote(d.round.fundingNote ?? "");
+        setEditResultNotes(d.round.resultNotes ?? "");
+        setEditResultPdfUrl(d.round.resultPdfUrl ?? "");
       }
     } catch { setError("Failed to load testing data"); }
     finally { setLoading(false); }
@@ -7772,6 +7787,54 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
       setTimeout(() => setBallotSaved(false), 3000);
       await load();
     } finally { setSavingBallot(false); }
+  }
+
+  async function handleSetStatus(status: string) {
+    setSavingStatus(status);
+    try {
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing`), {
+        method: "PATCH",
+        headers: { "x-admin-secret": secret, "content-type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!r.ok) { const e = await r.json(); alert(e.error ?? "Failed to update status"); return; }
+      await load();
+    } finally { setSavingStatus(null); }
+  }
+
+  async function handleSaveFunding() {
+    setSavingFunding(true);
+    setFundingSaved(false);
+    try {
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing`), {
+        method: "PATCH",
+        headers: { "x-admin-secret": secret, "content-type": "application/json" },
+        body: JSON.stringify({ fundingNote: fundingNote.trim() || null }),
+      });
+      if (!r.ok) { const e = await r.json(); alert(e.error ?? "Failed to save note"); return; }
+      setFundingSaved(true);
+      setTimeout(() => setFundingSaved(false), 3000);
+      await load();
+    } finally { setSavingFunding(false); }
+  }
+
+  async function handleSaveResults() {
+    setSavingResults(true);
+    setResultsSaved(false);
+    try {
+      const r = await fetch(apiUrl(`/admin/group-buys/${gb.id}/testing`), {
+        method: "PATCH",
+        headers: { "x-admin-secret": secret, "content-type": "application/json" },
+        body: JSON.stringify({
+          resultNotes: editResultNotes.trim() || null,
+          resultPdfUrl: editResultPdfUrl.trim() || null,
+        }),
+      });
+      if (!r.ok) { const e = await r.json(); alert(e.error ?? "Failed to save results"); return; }
+      setResultsSaved(true);
+      setTimeout(() => setResultsSaved(false), 3000);
+      await load();
+    } finally { setSavingResults(false); }
   }
 
   async function handleRunOcr() {
@@ -7916,6 +7979,193 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
       {/* Round exists: settings + ballot */}
       {round && (
         <>
+          {/* Round Status */}
+          <div className="border border-border rounded-lg p-4 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Round Status</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleSetStatus("active")}
+                disabled={savingStatus !== null}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold border transition-colors disabled:opacity-60",
+                  round.status === "active"
+                    ? "bg-green-600 text-white border-green-600"
+                    : "bg-background text-foreground border-border hover:bg-muted"
+                )}
+              >
+                {savingStatus === "active" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unlock className="w-4 h-4" />}
+                Open
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetStatus("closed")}
+                disabled={savingStatus !== null}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold border transition-colors disabled:opacity-60",
+                  round.status === "closed"
+                    ? "bg-red-600 text-white border-red-600"
+                    : "bg-background text-foreground border-border hover:bg-muted"
+                )}
+              >
+                {savingStatus === "closed" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                Closed
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              {([
+                { key: "sent_to_lab", label: "Sent to lab" },
+                { key: "results_received", label: "Results in" },
+              ] as const).map(s => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => handleSetStatus(s.key)}
+                  disabled={savingStatus !== null}
+                  className={cn(
+                    "flex-1 rounded-md py-1.5 text-xs font-medium border transition-colors disabled:opacity-60",
+                    round.status === s.key
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  {savingStatus === s.key ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : s.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Open = members can opt in &amp; vote. Closed = locked. Set &ldquo;Results in&rdquo; once you&rsquo;ve added results below to share them with contributors.
+            </p>
+          </div>
+
+          {/* Funding Reconciliation */}
+          <div className="border border-border rounded-lg p-4 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Funding Reconciliation</p>
+            {(() => {
+              const ms = data?.milestones ?? [];
+              const pool = data?.poolTotal ?? 0;
+              const funded = ms.filter(m => pool >= m.amount);
+              const highestFunded = funded.length > 0 ? Math.max(...funded.map(m => m.amount)) : 0;
+              const next = ms.find(m => m.amount > pool) ?? null;
+              const surplus = pool - highestFunded;
+              const shortfall = next ? next.amount - pool : 0;
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Raised</span>
+                    <span className="font-semibold tabular-nums">${pool.toFixed(2)}</span>
+                  </div>
+                  {ms.length > 0 && (
+                    <div className="space-y-1">
+                      {ms.map((m, i) => {
+                        const isFunded = pool >= m.amount;
+                        return (
+                          <div key={i} className="flex items-center justify-between text-xs gap-2">
+                            <span className={cn("truncate", isFunded ? "text-foreground" : "text-muted-foreground")}>
+                              {isFunded ? "✓" : "○"} {m.label}
+                            </span>
+                            <span className="tabular-nums text-muted-foreground shrink-0">${m.amount.toFixed(2)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="pt-2 border-t border-border">
+                    {next ? (
+                      <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                        Short ${shortfall.toFixed(2)} to fund &ldquo;{next.label}&rdquo;.
+                        {surplus > 0 && ` (${"$" + surplus.toFixed(2)} over the last funded tier.)`}
+                      </p>
+                    ) : ms.length > 0 ? (
+                      <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                        All tiers funded · ${surplus.toFixed(2)} surplus.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No votes yet — milestones appear once members vote.</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="space-y-1.5 pt-1">
+              <Label className="text-xs">Member-facing funding note</Label>
+              <p className="text-[10px] text-muted-foreground -mt-0.5">
+                Shown to contributors on the private results page. Explain how any extra or shortfall was handled. No automatic changes are made to what members see.
+              </p>
+              <textarea
+                value={fundingNote}
+                onChange={e => setFundingNote(e.target.value)}
+                rows={3}
+                placeholder="e.g. We were $12 short on the heavy-metals test, so it was skipped this round."
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-y"
+              />
+              <Button size="sm" onClick={handleSaveFunding} disabled={savingFunding} className="gap-1.5">
+                {savingFunding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : fundingSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+                {fundingSaved ? "Saved!" : "Save note"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Lab Results */}
+          <div className="border border-border rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lab Results</p>
+              <a
+                href={`/testing/${gb.id}/results`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-500 underline flex items-center gap-1"
+              >
+                <Eye className="w-3 h-3" /> Results page
+              </a>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Result notes</Label>
+              <textarea
+                value={editResultNotes}
+                onChange={e => setEditResultNotes(e.target.value)}
+                rows={4}
+                placeholder="Summary of the lab findings…"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-y"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Report PDF link</Label>
+              <Input
+                type="url"
+                value={editResultPdfUrl}
+                onChange={e => setEditResultPdfUrl(e.target.value)}
+                placeholder="https://…"
+                className="h-8 text-sm"
+              />
+            </div>
+            <Button size="sm" onClick={handleSaveResults} disabled={savingResults} className="gap-1.5">
+              {savingResults ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : resultsSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+              {resultsSaved ? "Saved!" : "Save results"}
+            </Button>
+            {round.status !== "results_received" && (editResultNotes.trim() || editResultPdfUrl.trim()) ? (
+              <p className="text-[10px] text-orange-600 dark:text-orange-400">
+                Results are saved but hidden. Set status to &ldquo;Results in&rdquo; above to share them with contributors.
+              </p>
+            ) : null}
+            {(editResultNotes.trim() || editResultPdfUrl.trim() || fundingNote.trim()) ? (
+              <div className="rounded-lg border border-dashed border-border p-3 space-y-2 bg-muted/30">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Contributor preview</p>
+                {editResultNotes.trim() && <p className="text-sm whitespace-pre-wrap">{editResultNotes}</p>}
+                {editResultPdfUrl.trim() && (
+                  <a href={editResultPdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600">
+                    View PDF Report <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+                {fundingNote.trim() && (
+                  <p className="text-xs text-muted-foreground border-t border-border pt-2">
+                    <span className="font-medium">Funding note:</span> {fundingNote}
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
+
           {/* Round Settings */}
           <div className="border border-border rounded-lg p-4 space-y-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Round Settings</p>
