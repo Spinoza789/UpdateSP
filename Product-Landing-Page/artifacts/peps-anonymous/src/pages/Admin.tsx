@@ -721,6 +721,10 @@ function OrdersTab({ secret }: { secret: string }) {
   const [adminQrSaving, setAdminQrSaving] = useState<Record<string, boolean>>({});
   const [adminQrMsg, setAdminQrMsg] = useState<Record<string, { ok: boolean; text: string }>>({});
 
+  // View-as-member per order
+  const [impersonatingOrderId, setImpersonatingOrderId] = useState<string | null>(null);
+  const [impersonateOrderErr, setImpersonateOrderErr] = useState<Record<string, string>>({});
+
   // Auto-save draft state per order (T14)
   const [draftSavingId, setDraftSavingId] = useState<string | null>(null);
   const [lastDraftSave, setLastDraftSave] = useState<Record<string, string>>({});
@@ -1208,6 +1212,26 @@ function OrdersTab({ secret }: { secret: string }) {
       }
     } catch {}
     setSelectingAllPages(false);
+  };
+
+  const handleImpersonateOrder = async (orderId: string, telegramUsername: string) => {
+    setImpersonatingOrderId(orderId);
+    setImpersonateOrderErr(prev => ({ ...prev, [orderId]: "" }));
+    try {
+      const r = await fetch(apiUrl("/admin/impersonate"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+        body: JSON.stringify({ telegramUsername }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setImpersonateOrderErr(prev => ({ ...prev, [orderId]: data.error ?? "Failed" })); return; }
+      window.open(apiUrl(`/admin/impersonate-redirect?token=${encodeURIComponent(data.token)}`), "_blank");
+    } catch {
+      setImpersonateOrderErr(prev => ({ ...prev, [orderId]: "Network error" }));
+    } finally {
+      setImpersonatingOrderId(null);
+      setTimeout(() => setImpersonateOrderErr(prev => ({ ...prev, [orderId]: "" })), 4000);
+    }
   };
 
   const saveOrder = async (orderId: string) => {
@@ -2751,6 +2775,19 @@ function OrdersTab({ secret }: { secret: string }) {
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }} className="overflow-hidden">
                     <div className="border-t border-border">
+                      {/* ── View as member strip ── */}
+                      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-amber-50">
+                        <button
+                          onClick={() => handleImpersonateOrder(order.id, order.telegramUsername)}
+                          disabled={impersonatingOrderId === order.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 transition-colors"
+                        >
+                          {impersonatingOrderId === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
+                          View as {order.telegramUsername}
+                        </button>
+                        <span className="text-[10px] text-amber-700">Opens their account in a new tab</span>
+                        {impersonateOrderErr[order.id] && <span className="text-xs text-red-600 font-semibold ml-2">{impersonateOrderErr[order.id]}</span>}
+                      </div>
                       {/* ── Sub-tab bar ── */}
                       {(() => {
                         const curTab = orderTab[order.id] ?? "overview";
