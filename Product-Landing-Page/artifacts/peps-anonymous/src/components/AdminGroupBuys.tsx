@@ -7585,13 +7585,20 @@ function BroadcastDialog({ secret, gb, onClose }: { secret: string; gb: GroupBuy
 
 // ─── Testing Sub-tab ──────────────────────────────────────────
 
+const BALLOT_TEST_OPTIONS = [
+  { name: "Endotoxin",    price: "$120" },
+  { name: "Mass/Purity",  price: "per peptide" },
+  { name: "Sterility",    price: "$350" },
+  { name: "Heavy Metals", price: "$200" },
+] as const;
+
 interface TestingRound {
   id: string;
   status: string;
   contributionAmount: number;
   anyContribution: boolean;
   lateOptInEnabled: boolean;
-  lateOptInPaymentMethods: string[];
+  lateOptInPaymentMethods: string[] | null;
   maxCompoundVotes: number;
   maxTestVotes: number;
   voteOptions: string[] | null;
@@ -7644,6 +7651,7 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
   // Settings panel
   const [maxCompounds, setMaxCompounds] = useState(1);
   const [maxTests, setMaxTests] = useState(1);
+  const [selectedTestOptions, setSelectedTestOptions] = useState<string[]>(["Endotoxin", "Mass/Purity"]);
   const [lateOptIn, setLateOptIn] = useState(false);
   const [latePayMethods, setLatePayMethods] = useState<string[]>([]);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -7675,6 +7683,11 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
       if (d.round) {
         setMaxCompounds(d.round.maxCompoundVotes ?? 1);
         setMaxTests(d.round.maxTestVotes ?? 1);
+        setSelectedTestOptions(
+          d.round.testOptions && d.round.testOptions.length > 0
+            ? d.round.testOptions
+            : ["Endotoxin", "Mass/Purity"]
+        );
         setLateOptIn(d.round.lateOptInEnabled ?? false);
         setLatePayMethods(d.round.lateOptInPaymentMethods ?? []);
         const opts = d.round.voteOptions && d.round.voteOptions.length > 0
@@ -7722,6 +7735,7 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
         body: JSON.stringify({
           maxCompoundVotes: maxCompounds,
           maxTestVotes: maxTests,
+          testOptions: selectedTestOptions,
           lateOptInEnabled: lateOptIn,
           lateOptInPaymentMethods: lateOptIn ? latePayMethods : [],
         }),
@@ -7920,6 +7934,33 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
                 />
                 <p className="text-[10px] text-muted-foreground">How many test types each voter can pick</p>
               </div>
+            </div>
+
+            {/* Test types ballot */}
+            <div className="space-y-2 border-t border-border pt-3">
+              <p className="text-xs font-medium">Test types on ballot</p>
+              <p className="text-[10px] text-muted-foreground -mt-1">Which test types members can vote for</p>
+              <div className="grid grid-cols-2 gap-y-1.5 gap-x-3">
+                {BALLOT_TEST_OPTIONS.map(opt => (
+                  <label key={opt.name} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedTestOptions.includes(opt.name)}
+                      onChange={e =>
+                        setSelectedTestOptions(prev =>
+                          e.target.checked ? [...prev, opt.name] : prev.filter(n => n !== opt.name)
+                        )
+                      }
+                      className="rounded shrink-0"
+                    />
+                    <span className="text-sm leading-none">{opt.name}</span>
+                    <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{opt.price}</span>
+                  </label>
+                ))}
+              </div>
+              {selectedTestOptions.length === 0 && (
+                <p className="text-[10px] text-orange-500">Select at least one test type.</p>
+              )}
             </div>
 
             <div className="space-y-3 border-t border-border pt-3">

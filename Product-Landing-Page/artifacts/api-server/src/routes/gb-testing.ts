@@ -826,7 +826,7 @@ router.post(
 router.patch("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
   const { gbId } = req.params;
-  const { status, resultNotes, resultPdfUrl, voteOptions, peptideBatches, testOptions, janoshikPaymentUrl, anyContribution, lateOptInEnabled, labShippingCost } = req.body;
+  const { status, resultNotes, resultPdfUrl, voteOptions, peptideBatches, testOptions, janoshikPaymentUrl, anyContribution, lateOptInEnabled, lateOptInPaymentMethods, maxCompoundVotes, maxTestVotes, labShippingCost } = req.body;
 
   const [round] = await db
     .select()
@@ -872,6 +872,21 @@ router.patch("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> 
   }
   if (lateOptInEnabled !== undefined) {
     updates.lateOptInEnabled = Boolean(lateOptInEnabled);
+  }
+  if (lateOptInPaymentMethods !== undefined) {
+    if (lateOptInPaymentMethods === null || !Array.isArray(lateOptInPaymentMethods)) {
+      updates.lateOptInPaymentMethods = null;
+    } else {
+      updates.lateOptInPaymentMethods = lateOptInPaymentMethods.map(String).filter(Boolean);
+    }
+  }
+  if (maxCompoundVotes !== undefined) {
+    const v = parseInt(String(maxCompoundVotes), 10);
+    if (!isNaN(v) && v >= 1 && v <= 20) updates.maxCompoundVotes = v;
+  }
+  if (maxTestVotes !== undefined) {
+    const v = parseInt(String(maxTestVotes), 10);
+    if (!isNaN(v) && v >= 1 && v <= 10) updates.maxTestVotes = v;
   }
   if (peptideBatches !== undefined) {
     if (peptideBatches === null) {
