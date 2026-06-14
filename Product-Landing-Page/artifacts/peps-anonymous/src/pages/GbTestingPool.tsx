@@ -238,9 +238,8 @@ function MilestoneCard({ step, milestone, prevAmount, raisedUsd, accentColor }: 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: step * 0.1, type: "spring", stiffness: 280, damping: 24 }}
-      className="flex-1 min-w-[155px] sm:min-w-[175px] relative overflow-hidden"
+      className="relative overflow-hidden min-w-0"
       style={{
-        scrollSnapAlign: "start",
         borderRadius: 8,
         border: `1.5px solid ${hit ? HIT : "var(--t-border)"}`,
         background: hit ? "rgba(16,185,129,0.05)" : "var(--t-surface)",
@@ -269,7 +268,7 @@ function MilestoneCard({ step, milestone, prevAmount, raisedUsd, accentColor }: 
             Lab test Cost: {fmtUsd(stepCost)}
           </p>
         )}
-        <p className="text-[13px] font-semibold leading-tight mb-1" style={{ color: "var(--t-text)" }}>
+        <p className="text-[13px] font-semibold leading-tight mb-1 break-words" style={{ color: "var(--t-text)" }}>
           {milestone.label}
         </p>
         <p className="text-[11px]" style={{ color: "var(--t-muted)" }}>
@@ -939,10 +938,9 @@ export default function GbTestingPool() {
           </div>
         </motion.div>
 
-        {/* ── Milestone Step Cards (horizontal scroll, edge-to-edge on mobile) ── */}
+        {/* ── Milestone Step Cards (responsive grid — all visible, no horizontal scroll) ── */}
         {milestones.length > 0 && (
-          <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 mb-4 sm:mb-6"
-            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-4 sm:mb-6">
             {milestones.map((m, i) => (
               <MilestoneCard
                 key={i}
