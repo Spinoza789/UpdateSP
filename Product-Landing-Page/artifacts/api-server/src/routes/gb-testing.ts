@@ -113,10 +113,10 @@ async function fetchCatalogPriceOverrides(peptideName: string | null): Promise<{
   }
 
   const ballotTestPrices: Record<string, number | null> = {
-    "Endotoxin":    testPrices["Endotoxin"]    ?? ENDOTOXIN_PRICE,
+    "Endotoxin":    testPrices["Endotoxin"]    ?? null,
     "Mass/Purity":  null,                       // always per-compound
-    "Sterility":    testPrices["Sterility"]    ?? 350,
-    "Heavy Metals": testPrices["Heavy Metals"] ?? 200,
+    "Sterility":    testPrices["Sterility"]    ?? null,
+    "Heavy Metals": testPrices["Heavy Metals"] ?? null,
   };
 
   return {
@@ -433,7 +433,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
     testOptions: configuredTestOptions,
     testVotes,
     vialVotes,
-    endotoxinPrice: pubOverrides.testPrices?.["Endotoxin"] ?? ENDOTOXIN_PRICE,
+    endotoxinPrice: pubOverrides.testPrices?.["Endotoxin"] ?? 0,
     vialPrice: VIAL_PRICE,
     maxVials: MAX_VIALS,
   });
