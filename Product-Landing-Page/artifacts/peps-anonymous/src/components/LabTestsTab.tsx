@@ -1627,6 +1627,9 @@ export function LabTestsTab({ secret }: { secret: string }) {
   const [showMassApplyPanel, setShowMassApplyPanel] = useState(false);
   const [backfilling, setBackfilling] = useState(false);
   const [backfillResult, setBackfillResult] = useState<string | null>(null);
+  const [uploadingCertId, setUploadingCertId] = useState<number | null>(null);
+  const certUploadRef = useRef<HTMLInputElement>(null);
+  const certUploadTargetId = useRef<number | null>(null);
 
   const loadPending = useCallback(() => {
     fetch(apiUrl("/admin/lab-tests/pending"), { headers: { "x-admin-secret": secret } })
@@ -1726,6 +1729,51 @@ export function LabTestsTab({ secret }: { secret: string }) {
       t.sterilityPass === false ||
       (t.endotoxinEuMg != null && t.endotoxinEuMg > 5)
     );
+  };
+
+  const handleCertUploadClick = (id: number) => {
+    certUploadTargetId.current = id;
+    certUploadRef.current?.click();
+  };
+
+  const handleCertFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const id = certUploadTargetId.current;
+    if (!file || !id) return;
+    e.target.value = "";
+    setUploadingCertId(id);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(apiUrl(`/admin/lab-tests/${id}/upload-cert`), {
+        method: "POST",
+        headers: { "x-admin-secret": secret },
+        body: form,
+      });
+      if (res.ok) {
+        // Refresh preview for this test — now it has a stored blob
+        setPreviewStates(p => ({ ...p, [id]: "loading" }));
+        const pRes = await fetch(apiUrl(`/lab-tests/${id}/preview`));
+        if (pRes.ok) {
+          const data = await pRes.json();
+          const type: "image" | "pdf" | "iframe" | "link" | "error" =
+            data.type === "image" ? "image" :
+            data.type === "pdf" ? "pdf" :
+            data.type === "iframe" ? "iframe" :
+            "link";
+          setPreviewStates(p => ({ ...p, [id]: type }));
+        }
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "Upload failed");
+        setPreviewStates(p => { const n = { ...p }; delete n[id]; return n; });
+      }
+    } catch {
+      alert("Network error uploading certificate");
+      setPreviewStates(p => { const n = { ...p }; delete n[id]; return n; });
+    } finally {
+      setUploadingCertId(null);
+    }
   };
 
   const handleBackfillCerts = async () => {
@@ -1864,6 +1912,15 @@ export function LabTestsTab({ secret }: { secret: string }) {
             <Plus className="w-3.5 h-3.5" /> Add Test
           </button>
         </div>
+
+        {/* Hidden file input shared by all cert upload buttons */}
+        <input
+          ref={certUploadRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,application/pdf"
+          className="hidden"
+          onChange={handleCertFileChange}
+        />
       </div>
 
       {/* Lab Session Compare Panel */}
@@ -2176,6 +2233,14 @@ export function LabTestsTab({ secret }: { secret: string }) {
                     className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${previewStates[t.id] ? "text-indigo-600 bg-indigo-50" : "text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"}`}
                   >
                     {previewStates[t.id] === "loading" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => handleCertUploadClick(t.id)}
+                    disabled={uploadingCertId === t.id}
+                    title="Upload certificate (JPG / PNG / PDF)"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 disabled:opacity-40 transition-colors"
+                  >
+                    {uploadingCertId === t.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   </button>
                   <a href={t.url} target="_blank" rel="noopener noreferrer"
                     className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">

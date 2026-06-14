@@ -1227,6 +1227,29 @@ router.put("/admin/lab-tests/:id", async (req, res) => {
   }
 });
 
+// ── POST /api/admin/lab-tests/:id/upload-cert — store a certificate file ─────
+// Accepts an image (JPEG/PNG/WebP) or PDF uploaded by the admin.
+// Stored as base64 in pdf_blob; future /proxy calls serve it directly.
+router.post("/admin/lab-tests/:id/upload-cert", upload.single("file"), async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id) || id <= 0) { res.status(400).json({ error: "Invalid ID" }); return; }
+    if (!req.file) { res.status(400).json({ error: "No file provided" }); return; }
+    const blob = req.file.buffer.toString("base64");
+    const [row] = await db
+      .update(labTestsTable)
+      .set({ pdfBlob: blob })
+      .where(eq(labTestsTable.id, id))
+      .returning({ id: labTestsTable.id });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
+    console.log(`[cert-upload] Admin stored certificate for lab test #${id} (${req.file.mimetype}, ${Math.round(req.file.buffer.length / 1024)}KB)`);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Failed to store certificate" });
+  }
+});
+
 // ── DELETE /api/admin/lab-tests/:id ──────────────────────────────────────────
 router.delete("/admin/lab-tests/:id", async (req, res) => {
   if (!requireAdmin(req, res)) return;
