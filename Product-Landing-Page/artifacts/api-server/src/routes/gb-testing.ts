@@ -216,14 +216,17 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
 
   const poolTotal = parseFloat((poolRow?.total as string) ?? "0") || 0;
 
-  // Vote aggregation
+  // Vote aggregation — include orderId + telegramUsername for public vote list
   const voteRows = await db
     .select({
       peptideName: gbTestingVotesTable.peptideName,
       vialCount: gbTestingVotesTable.vialCount,
       testSelections: gbTestingVotesTable.testSelections,
+      orderId: gbTestingVotesTable.orderId,
+      telegramUsername: ordersTable.telegramUsername,
     })
     .from(gbTestingVotesTable)
+    .leftJoin(ordersTable, eq(gbTestingVotesTable.orderId, ordersTable.id))
     .where(eq(gbTestingVotesTable.roundId, round.id));
 
   const voteSummary: Record<string, { totalVotes: number; vials: Record<number, number> }> = {};
@@ -290,10 +293,19 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
       // Opted in if:
       //  - openMode (Janoshik external payment) → any order qualifies
       //  - testingContribution > 0 on the order (standard / already verified)
-      //  - lateOptInEnabled → any GB order holder can vote and pay via late opt-in flow
+      //  - lateOptInEnabled AND user has a verified contribution in gb_testing_contributions
       const lateOptInOpen = !!(round.lateOptInEnabled);
+      let hasVerifiedLateContrib = false;
+      if (lateOptInOpen && !contribOnOrder && !openMode) {
+        const lateContribResult = await db.execute(sql`
+          SELECT id FROM gb_testing_contributions
+          WHERE round_id = ${round.id} AND order_id = ${accountOrder.id} AND status = 'verified'
+          LIMIT 1
+        `);
+        hasVerifiedLateContrib = ((lateContribResult as any).rows ?? []).length > 0;
+      }
 
-      if (openMode || contribOnOrder || lateOptInOpen) {
+      if (openMode || contribOnOrder || hasVerifiedLateContrib) {
         isOptedIn = true;
         const [vote] = await db
           .select({
@@ -411,6 +423,13 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
         )
       ))[0]?.c ?? 0,
     votes,
+    publicVotes: voteRows.map(v => ({
+      username: v.telegramUsername
+        ? (v.telegramUsername.startsWith("@") ? v.telegramUsername : `@${v.telegramUsername}`)
+        : null,
+      peptideName: v.peptideName,
+      vialCount: v.vialCount,
+    })),
     totalVotes: voteRows.length,
     milestones,
     thresholds: {
@@ -534,12 +553,24 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
 
   // Check contribution eligibility — order found above. Now check if they're allowed to vote:
   // - externalPaymentMode (Janoshik URL set): any order qualifies, payment tracked externally
-  // - lateOptInEnabled: any GB order holder can vote (they pay via the late opt-in flow)
-  // - otherwise: must have testingContribution > 0 on the order (paid during ordering or verified)
+  // - testingContribution > 0 on the order: standard opt-in (paid during ordering)
+  // - lateOptInEnabled: allowed only if they have a verified row in gb_testing_contributions
   const hasContribOnOrder = parseFloat(String(order.testingContribution ?? "0")) > 0;
-  if (!externalPaymentMode && !lateOptInEnabled && !hasContribOnOrder) {
-    res.status(403).json({ error: "You need to contribute to this testing pool to vote." });
-    return;
+  if (!externalPaymentMode && !hasContribOnOrder) {
+    if (lateOptInEnabled) {
+      const lateContribResult = await db.execute(sql`
+        SELECT id FROM gb_testing_contributions
+        WHERE round_id = ${round.id} AND order_id = ${order.id} AND status = 'verified'
+        LIMIT 1
+      `);
+      if (((lateContribResult as any).rows ?? []).length === 0) {
+        res.status(403).json({ error: "Your late contribution needs to be verified before you can vote." });
+        return;
+      }
+    } else {
+      res.status(403).json({ error: "You need to contribute to this testing pool to vote." });
+      return;
+    }
   }
 
   const existing = await db

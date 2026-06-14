@@ -62,6 +62,7 @@ interface TestingData {
   milestones: Milestone[];
   thresholds: { tier1: number; tier2: number | null; leadingPeptide: string; leadingVials: number; testOrder: string[] };
   votes: VoteSummary[];
+  publicVotes: { username: string | null; peptideName: string; vialCount: number }[];
   testVotes: Record<string, number>;
   vialVotes: Record<string, number>;
   pendingContribution: PendingContribution | null;
@@ -505,7 +506,7 @@ export default function GbTestingPool() {
   const {
     round, poolTotal, contributorCount, totalVotes, votes, testVotes,
     milestones, isOptedIn, isAdminView, hasGbOrder, hasVoted, existingVote,
-    pendingContribution, peptideOptions,
+    pendingContribution, peptideOptions, publicVotes,
   } = data;
 
   const isClosed = round.status === "closed" || round.status === "sent_to_lab" || round.status === "results_received";
@@ -817,6 +818,25 @@ export default function GbTestingPool() {
                         transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} />
                     </div>
                   </div>
+
+                  {/* Public vote list */}
+                  {publicVotes && publicVotes.length > 0 && (
+                    <div className="pt-1 border-t" style={{ borderColor: "var(--t-border)" }}>
+                      <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--t-muted)" }}>Votes</p>
+                      <div className="space-y-1.5">
+                        {publicVotes.map((v, i) => (
+                          <div key={i} className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-medium truncate" style={{ color: "var(--t-muted)" }}>
+                              {v.username ?? "anonymous"}
+                            </span>
+                            <span className="text-[11px] font-semibold shrink-0" style={{ color: "var(--t-text)" }}>
+                              {v.peptideName} · {v.vialCount}v
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
