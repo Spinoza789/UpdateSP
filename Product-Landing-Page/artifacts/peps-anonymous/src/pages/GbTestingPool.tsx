@@ -265,7 +265,7 @@ function MilestoneCard({ step, milestone, prevAmount, raisedUsd, accentColor }: 
         </p>
         {prevAmount > 0 && (
           <p className="text-[10px] mb-1.5" style={{ color: "var(--t-muted)" }}>
-            This step: {fmtUsd(stepCost)}
+            Lab test Cost: {fmtUsd(stepCost)}
           </p>
         )}
         <p className="text-[13px] font-semibold leading-tight mb-1" style={{ color: "var(--t-text)" }}>
@@ -1071,7 +1071,7 @@ export default function GbTestingPool() {
             {hasVoted && existingVote && <ExistingVoteCard vote={existingVote} />}
 
             {/* Late opt-in CTA */}
-            {!isOptedIn && !isAdminView && hasGbOrder && round.lateOptInEnabled && !pendingContribution && !isClosed && contributorCount > 0 && totalVotes >= contributorCount * 0.75 && (
+            {!isOptedIn && !isAdminView && hasGbOrder && round.lateOptInEnabled && !pendingContribution && !isClosed && contributorCount > 0 && totalVotes >= contributorCount * 0.80 && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 className="p-4 sm:p-5"
                 style={{ borderRadius: 8, background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
@@ -1087,6 +1087,26 @@ export default function GbTestingPool() {
                   paymentMethods={paymentMethods}
                   onDone={() => { setLoading(true); load(); }}
                 />
+              </motion.div>
+            )}
+
+            {/* Late opt-in locked message — threshold not yet reached */}
+            {!isOptedIn && !isAdminView && hasGbOrder && round.lateOptInEnabled && !pendingContribution && !isClosed && contributorCount > 0 && totalVotes < contributorCount * 0.80 && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 px-4 py-3"
+                style={{ borderRadius: 8, background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.25)" }}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(245,158,11,0.15)" }}>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: "#F59E0B" }}>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[12px] font-semibold" style={{ color: "#F59E0B" }}>Opt-in unlocks at 80% votes</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--t-muted)" }}>
+                    {totalVotes} of {Math.ceil(contributorCount * 0.80)} votes needed to open late opt-in
+                  </p>
+                </div>
               </motion.div>
             )}
 
