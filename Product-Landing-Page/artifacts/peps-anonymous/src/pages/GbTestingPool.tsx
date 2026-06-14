@@ -963,8 +963,8 @@ export default function GbTestingPool() {
         {/* ── Two-column layout ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 lg:gap-6">
 
-          {/* ── LEFT: Gauge + vote leaderboard (shown second on mobile) ── */}
-          <div className="space-y-4 order-2 md:order-1">
+          {/* ── LEFT: Pool gauge + leaderboard ── */}
+          <div className="space-y-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1082,8 +1082,8 @@ export default function GbTestingPool() {
             </motion.div>
           </div>
 
-          {/* ── RIGHT: Vote form + standings + results (shown first on mobile) ── */}
-          <div className="space-y-4 order-1 md:order-2">
+          {/* ── RIGHT: Vote form + standings + results ── */}
+          <div className="space-y-4">
 
             {/* Pending contribution (late opt-in payment awaiting review) */}
             {pendingContribution && <PendingContributionCard pc={pendingContribution} />}
