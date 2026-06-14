@@ -283,6 +283,7 @@ export const gbTestingVotesTable = pgTable("gb_testing_votes", {
   orderId: text("order_id").notNull(),
   gbId: text("gb_id").notNull(),
   peptideName: text("peptide_name").notNull(),
+  peptideNames: jsonb("peptide_names").$type<string[]>(),
   vialCount: integer("vial_count").notNull().default(1),
   testSelections: jsonb("test_selections").$type<string[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -32,6 +32,8 @@ interface TestingRound {
   janoshikPaymentUrl: string | null;
   labShippingCost: number | null;
   voteOptions: string[] | null;
+  maxCompoundVotes: number;
+  maxTestVotes: number;
 }
 
 interface VoteSummary {
@@ -279,26 +281,45 @@ function MilestoneCard({ step, milestone, prevAmount, raisedUsd, accentColor }: 
 
 // ── Vote Form ─────────────────────────────────────────────────────────────────
 
-function VoteForm({ gbId, peptideOptions, testOptions, maxVials, onDone }: {
-  gbId: string; peptideOptions: string[]; testOptions: string[]; maxVials: number; onDone: () => void;
+function VoteForm({ gbId, peptideOptions, testOptions, maxVials, maxCompoundVotes, maxTestVotes, onDone }: {
+  gbId: string; peptideOptions: string[]; testOptions: string[]; maxVials: number;
+  maxCompoundVotes: number; maxTestVotes: number; onDone: () => void;
 }) {
-  const [compound, setCompound] = useState("");
+  const [compounds, setCompounds] = useState<string[]>([]);
   const [vialCount, setVialCount] = useState(1);
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [open, setOpen] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const toggle = (t: string) => setSelectedTests(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  const effectiveMaxCompounds = maxCompoundVotes ?? 1;
+  const effectiveMaxTests = maxTestVotes ?? 1;
+  const testsAtCap = selectedTests.length >= effectiveMaxTests;
+
+  const toggleCompound = (p: string) => {
+    setCompounds(prev => {
+      if (prev.includes(p)) return prev.filter(x => x !== p);
+      if (prev.length >= effectiveMaxCompounds) return prev;
+      return [...prev, p];
+    });
+  };
+
+  const toggleTest = (t: string) => {
+    setSelectedTests(prev => {
+      if (prev.includes(t)) return prev.filter(x => x !== t);
+      if (prev.length >= effectiveMaxTests) return prev;
+      return [...prev, t];
+    });
+  };
 
   const submit = async () => {
-    if (!compound) { setErr("Pick a compound first"); return; }
+    if (compounds.length === 0) { setErr("Pick a compound first"); return; }
     if (selectedTests.length === 0) { setErr("Pick at least one test type"); return; }
     setErr(null); setSubmitting(true);
     try {
       const r = await fetch(`/api/group-buys/${gbId}/testing/vote`, {
         method: "POST", headers: { "content-type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ peptideName: compound, vialCount, testSelections: selectedTests }),
+        body: JSON.stringify({ peptideNames: compounds, vialCount, testSelections: selectedTests }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error ?? "Failed to submit vote");
@@ -321,13 +342,37 @@ function VoteForm({ gbId, peptideOptions, testOptions, maxVials, onDone }: {
           style={{ color: "var(--t-muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
       <div className="px-4 sm:px-5 pt-4 pb-5 space-y-3" style={{ borderTop: "1px solid var(--t-border)", display: open ? "block" : "none" }}>
-        {/* Compound */}
+        {/* Compound — single select when cap=1, checkboxes when cap>1 */}
         <div>
-          <span className="text-[11px] font-semibold block mb-1" style={{ color: "var(--t-muted)" }}>Which compound?</span>
-          <select value={compound} onChange={e => setCompound(e.target.value)} className={inputCls} style={inputStyle}>
-            <option value="">— select compound —</option>
-            {peptideOptions.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[11px] font-semibold" style={{ color: "var(--t-muted)" }}>Which compound?</span>
+            {effectiveMaxCompounds > 1 && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={{ background: compounds.length >= effectiveMaxCompounds ? "rgba(239,68,68,0.12)" : "rgba(59,130,246,0.1)", color: compounds.length >= effectiveMaxCompounds ? "#EF4444" : "var(--t-blue)" }}>
+                {compounds.length}/{effectiveMaxCompounds}
+              </span>
+            )}
+          </div>
+          {effectiveMaxCompounds === 1 ? (
+            <select value={compounds[0] ?? ""} onChange={e => setCompounds(e.target.value ? [e.target.value] : [])} className={inputCls} style={inputStyle}>
+              <option value="">— select compound —</option>
+              {peptideOptions.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          ) : (
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+              {peptideOptions.map(p => {
+                const checked = compounds.includes(p);
+                const disabled = !checked && compounds.length >= effectiveMaxCompounds;
+                return (
+                  <label key={p} className={`flex items-center gap-2.5 ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleCompound(p)}
+                      className="rounded" style={{ accentColor: "var(--t-blue)" }} />
+                    <span className="text-[12px] font-medium" style={{ color: "var(--t-text)" }}>{p}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Vials */}
@@ -352,15 +397,27 @@ function VoteForm({ gbId, peptideOptions, testOptions, maxVials, onDone }: {
 
         {/* Test types */}
         <div>
-          <span className="text-[11px] font-semibold block mb-1.5" style={{ color: "var(--t-muted)" }}>Test types</span>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold" style={{ color: "var(--t-muted)" }}>Test types</span>
+            {effectiveMaxTests < testOptions.length && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={{ background: testsAtCap ? "rgba(239,68,68,0.12)" : "rgba(59,130,246,0.1)", color: testsAtCap ? "#EF4444" : "var(--t-blue)" }}>
+                {selectedTests.length}/{effectiveMaxTests}
+              </span>
+            )}
+          </div>
           <div className="space-y-2">
-            {testOptions.map(t => (
-              <label key={t} className="flex items-center gap-2.5 cursor-pointer">
-                <input type="checkbox" checked={selectedTests.includes(t)} onChange={() => toggle(t)}
-                  className="rounded" style={{ accentColor: "var(--t-blue)" }} />
-                <span className="text-[12px] font-medium" style={{ color: "var(--t-text)" }}>{t}</span>
-              </label>
-            ))}
+            {testOptions.map(t => {
+              const checked = selectedTests.includes(t);
+              const disabled = !checked && testsAtCap;
+              return (
+                <label key={t} className={`flex items-center gap-2.5 ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+                  <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleTest(t)}
+                    className="rounded" style={{ accentColor: "var(--t-blue)" }} />
+                  <span className="text-[12px] font-medium" style={{ color: "var(--t-text)" }}>{t}</span>
+                </label>
+              );
+            })}
           </div>
         </div>
 
@@ -400,7 +457,9 @@ function ExistingVoteCard({ vote }: { vote: { peptideName: string; vialCount: nu
         <div className="px-5 py-4 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: "var(--t-muted)" }}>Compound</span>
-            <span className="text-sm font-bold" style={{ color: "var(--t-text)" }}>{vote.peptideName}</span>
+            <span className="text-sm font-bold" style={{ color: "var(--t-text)" }}>
+              {(() => { try { const p = JSON.parse(vote.peptideName); return Array.isArray(p) ? p.join(", ") : vote.peptideName; } catch { return vote.peptideName; } })()}
+            </span>
           </div>
           <div className="border-t border-dashed" style={{ borderColor: "var(--t-border)" }} />
           <div className="flex items-center justify-between">
@@ -1000,6 +1059,8 @@ export default function GbTestingPool() {
                     peptideOptions={peptideOptions}
                     testOptions={round.testOptions}
                     maxVials={data.maxVials}
+                    maxCompoundVotes={round.maxCompoundVotes ?? 1}
+                    maxTestVotes={round.maxTestVotes ?? 1}
                     onDone={() => { setLoading(true); load(); }}
                   />
                 </motion.div>

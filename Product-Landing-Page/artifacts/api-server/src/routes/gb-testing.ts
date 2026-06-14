@@ -220,6 +220,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
   const voteRows = await db
     .select({
       peptideName: gbTestingVotesTable.peptideName,
+      peptideNames: gbTestingVotesTable.peptideNames,
       vialCount: gbTestingVotesTable.vialCount,
       testSelections: gbTestingVotesTable.testSelections,
       orderId: gbTestingVotesTable.orderId,
@@ -231,11 +232,14 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
 
   const voteSummary: Record<string, { totalVotes: number; vials: Record<number, number> }> = {};
   for (const v of voteRows) {
-    if (!voteSummary[v.peptideName]) {
-      voteSummary[v.peptideName] = { totalVotes: 0, vials: {} };
+    const compounds: string[] = (v.peptideNames && (v.peptideNames as string[]).length > 0)
+      ? (v.peptideNames as string[])
+      : [v.peptideName];
+    for (const compound of compounds) {
+      if (!voteSummary[compound]) voteSummary[compound] = { totalVotes: 0, vials: {} };
+      voteSummary[compound].totalVotes += 1;
+      voteSummary[compound].vials[v.vialCount] = (voteSummary[compound].vials[v.vialCount] ?? 0) + 1;
     }
-    voteSummary[v.peptideName].totalVotes += 1;
-    voteSummary[v.peptideName].vials[v.vialCount] = (voteSummary[v.peptideName].vials[v.vialCount] ?? 0) + 1;
   }
 
   const votes = Object.entries(voteSummary)
@@ -411,6 +415,8 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
       testOptions: configuredTestOptions,
       janoshikPaymentUrl: (round.janoshikPaymentUrl as string | null) ?? null,
       labShippingCost: (round as any).labShippingCost ? parseFloat((round as any).labShippingCost as string) : null,
+      maxCompoundVotes: (round as any).maxCompoundVotes ?? 1,
+      maxTestVotes: (round as any).maxTestVotes ?? 1,
     },
     poolTotal,
     contributorCount: (await db
@@ -427,7 +433,9 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
       username: v.telegramUsername
         ? (v.telegramUsername.startsWith("@") ? v.telegramUsername : `@${v.telegramUsername}`)
         : null,
-      peptideName: v.peptideName,
+      peptideName: (v.peptideNames && (v.peptideNames as string[]).length > 0)
+        ? (v.peptideNames as string[]).join(", ")
+        : v.peptideName,
       vialCount: v.vialCount,
     })),
     totalVotes: voteRows.length,
@@ -461,13 +469,17 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
 // ── POST /api/group-buys/:gbId/testing/vote ───────────────────
 router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> => {
   const { gbId } = req.params;
-  const { peptideName, vialCount, testSelections } = req.body;
+  const { peptideName, peptideNames, vialCount, testSelections } = req.body;
 
-  if (!peptideName || !vialCount) {
+  // Accept either a single peptideName or an array of peptideNames
+  const rawPeptides: string[] = Array.isArray(peptideNames)
+    ? peptideNames.map(String).filter(Boolean)
+    : (peptideName ? [String(peptideName).trim()] : []);
+
+  if (rawPeptides.length === 0 || !vialCount) {
     res.status(400).json({ error: "peptideName and vialCount are required" });
     return;
   }
-  const cleanPeptide = String(peptideName).trim();
   const cleanVials = Math.max(1, Math.min(MAX_VIALS, parseInt(String(vialCount), 10) || 1));
   const cleanTests: string[] = Array.isArray(testSelections)
     ? testSelections.map(String).filter(Boolean)
@@ -493,6 +505,8 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
       janoshikPaymentUrl: gbTestingRoundsTable.janoshikPaymentUrl,
       anyContribution: gbTestingRoundsTable.anyContribution,
       lateOptInEnabled: gbTestingRoundsTable.lateOptInEnabled,
+      maxCompoundVotes: gbTestingRoundsTable.maxCompoundVotes,
+      maxTestVotes: gbTestingRoundsTable.maxTestVotes,
     })
     .from(gbTestingRoundsTable)
     .where(eq(gbTestingRoundsTable.groupBuyId, gbId))
@@ -520,15 +534,31 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
   const allowedPeptides = (round.voteOptions && Array.isArray(round.voteOptions) && round.voteOptions.length > 0)
     ? round.voteOptions as string[]
     : allKnownPeptidesVote;
-  if (!allowedPeptides.includes(cleanPeptide)) {
-    res.status(400).json({ error: "Invalid peptide selection" });
+
+  const maxCompounds = round.maxCompoundVotes ?? 1;
+  const maxTests = round.maxTestVotes ?? 1;
+
+  if (rawPeptides.length > maxCompounds) {
+    res.status(400).json({ error: `You can vote for at most ${maxCompounds} compound(s)` });
     return;
   }
+  for (const p of rawPeptides) {
+    if (!allowedPeptides.includes(p)) {
+      res.status(400).json({ error: "Invalid peptide selection" });
+      return;
+    }
+  }
+  const cleanPeptide = rawPeptides[0];
 
   const allowedTests = (round.testOptions && Array.isArray(round.testOptions) && round.testOptions.length > 0)
     ? round.testOptions as string[]
     : DEFAULT_TEST_OPTIONS;
   const validTests = cleanTests.filter(t => allowedTests.includes(t));
+
+  if (validTests.length > maxTests) {
+    res.status(400).json({ error: `You can select at most ${maxTests} test type(s)` });
+    return;
+  }
 
   // externalPaymentMode: Janoshik URL set → payment tracked externally, skip contribution check.
   // lateOptInEnabled: late opt-in allowed → also skip testingContribution check on order;
@@ -586,7 +616,7 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
   if (existing.length > 0) {
     await db
       .update(gbTestingVotesTable)
-      .set({ peptideName: cleanPeptide, vialCount: cleanVials, testSelections: validTests })
+      .set({ peptideName: cleanPeptide, peptideNames: rawPeptides, vialCount: cleanVials, testSelections: validTests })
       .where(
         and(
           eq(gbTestingVotesTable.roundId, round.id),
@@ -599,6 +629,7 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
       orderId: order.id,
       gbId,
       peptideName: cleanPeptide,
+      peptideNames: rawPeptides,
       vialCount: cleanVials,
       testSelections: validTests,
     });
