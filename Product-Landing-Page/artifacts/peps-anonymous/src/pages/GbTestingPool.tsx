@@ -987,14 +987,14 @@ export default function GbTestingPool() {
               <PoolGauge raisedUsd={poolTotal} segments={gaugeSegments} contributorCount={contributorCount} />
 
               {/* Milestone legend */}
-              <div className="flex items-center justify-center gap-5 mt-2 flex-wrap">
+              <div className="flex flex-col items-stretch gap-1.5 mt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-5 sm:gap-y-1.5">
                 {milestones.map((m, i) => {
                   const hit = poolTotal >= m.amount;
                   const color = STEP_COLORS[i % STEP_COLORS.length];
                   return (
-                    <div key={i} className="flex items-center gap-1.5">
+                    <div key={i} className="flex items-center gap-1.5 min-w-0 max-w-full">
                       <span className="w-3 h-2 inline-block shrink-0" style={{ background: color, borderRadius: 1 }} />
-                      <span className="text-[10px] font-semibold" style={{ color: hit ? "var(--t-text)" : "var(--t-muted)" }}>
+                      <span className="text-[10px] font-semibold min-w-0 break-words" style={{ color: hit ? "var(--t-text)" : "var(--t-muted)" }}>
                         {m.label} · {fmtUsd(m.amount)}
                       </span>
                       {hit && <CheckCircle2 className="w-3 h-3 shrink-0" style={{ color: HIT }} />}
