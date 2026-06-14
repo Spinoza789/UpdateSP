@@ -259,11 +259,11 @@ function MilestoneCard({ step, milestone, prevAmount, raisedUsd, accentColor }: 
         </div>
         <p className="font-extrabold leading-none mb-0.5"
           style={{ fontSize: 22, color: hit ? HIT : "var(--t-text)", fontFamily: "ui-monospace,SFMono-Regular,monospace", letterSpacing: "-0.02em" }}>
-          {fmtUsd(stepCost)}
+          {fmtUsd(milestone.amount)}
         </p>
         {prevAmount > 0 && (
           <p className="text-[10px] mb-1.5" style={{ color: "var(--t-muted)" }}>
-            Cumulative: {fmtUsd(milestone.amount)}
+            This step: {fmtUsd(stepCost)}
           </p>
         )}
         <p className="text-[13px] font-semibold leading-tight mb-1" style={{ color: "var(--t-text)" }}>
