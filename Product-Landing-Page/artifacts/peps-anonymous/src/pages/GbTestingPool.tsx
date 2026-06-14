@@ -846,7 +846,7 @@ export default function GbTestingPool() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6"
+        className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 overflow-x-hidden"
       >
         {/* ── Branded Header ── */}
         <motion.div
@@ -941,22 +941,18 @@ export default function GbTestingPool() {
 
         {/* ── Milestone Step Cards (horizontal scroll, edge-to-edge on mobile) ── */}
         {milestones.length > 0 && (
-          <div className="-mx-3 sm:mx-0 mb-4 sm:mb-6">
-            <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 px-3 sm:px-0"
-              style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
-              {milestones.map((m, i) => (
-                <MilestoneCard
-                  key={i}
-                  step={i + 1}
-                  milestone={m}
-                  prevAmount={i > 0 ? milestones[i - 1].amount : 0}
-                  raisedUsd={poolTotal}
-                  accentColor={STEP_COLORS[i % STEP_COLORS.length]}
-                />
-              ))}
-              {/* Invisible end-spacer so last card clears on mobile */}
-              <div className="w-3 sm:hidden shrink-0" />
-            </div>
+          <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 mb-4 sm:mb-6"
+            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
+            {milestones.map((m, i) => (
+              <MilestoneCard
+                key={i}
+                step={i + 1}
+                milestone={m}
+                prevAmount={i > 0 ? milestones[i - 1].amount : 0}
+                raisedUsd={poolTotal}
+                accentColor={STEP_COLORS[i % STEP_COLORS.length]}
+              />
+            ))}
           </div>
         )}
 
