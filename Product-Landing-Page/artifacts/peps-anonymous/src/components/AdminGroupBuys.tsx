@@ -7636,6 +7636,8 @@ interface TestingAdminData {
   gbProductsSortedBySales: GbProductSale[];
   organiserPayments: TestingOrganiserPayments | null;
   contributors: TestingContributor[];
+  ballotTestPrices?: Record<string, number | null>;
+  allTestOptions?: string[];
 }
 
 function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
@@ -7941,22 +7943,28 @@ function TestingSubTab({ secret, gb }: { secret: string; gb: GroupBuy }) {
               <p className="text-xs font-medium">Test types on ballot</p>
               <p className="text-[10px] text-muted-foreground -mt-1">Which test types members can vote for</p>
               <div className="grid grid-cols-2 gap-y-1.5 gap-x-3">
-                {BALLOT_TEST_OPTIONS.map(opt => (
-                  <label key={opt.name} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedTestOptions.includes(opt.name)}
-                      onChange={e =>
-                        setSelectedTestOptions(prev =>
-                          e.target.checked ? [...prev, opt.name] : prev.filter(n => n !== opt.name)
-                        )
-                      }
-                      className="rounded shrink-0"
-                    />
-                    <span className="text-sm leading-none">{opt.name}</span>
-                    <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{opt.price}</span>
-                  </label>
-                ))}
+                {(data?.allTestOptions ?? BALLOT_TEST_OPTIONS.map(o => o.name)).map(optName => {
+                  const catalogPrice = data?.ballotTestPrices?.[optName];
+                  const priceLabel = catalogPrice == null
+                    ? (optName === "Mass/Purity" ? "per peptide" : "—")
+                    : `$${catalogPrice}`;
+                  return (
+                    <label key={optName} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedTestOptions.includes(optName)}
+                        onChange={e =>
+                          setSelectedTestOptions(prev =>
+                            e.target.checked ? [...prev, optName] : prev.filter(n => n !== optName)
+                          )
+                        }
+                        className="rounded shrink-0"
+                      />
+                      <span className="text-sm leading-none">{optName}</span>
+                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{priceLabel}</span>
+                    </label>
+                  );
+                })}
               </div>
               {selectedTestOptions.length === 0 && (
                 <p className="text-[10px] text-orange-500">Select at least one test type.</p>

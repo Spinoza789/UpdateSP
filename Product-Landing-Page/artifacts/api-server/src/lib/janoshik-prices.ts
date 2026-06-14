@@ -62,6 +62,18 @@ export const JANOSHIK_PEPTIDE_PRICES: Record<string, number> = {
 
 export const PEPTIDE_NAMES = Object.keys(JANOSHIK_PEPTIDE_PRICES).sort();
 
+// ── Price overrides (from test_catalog DB) ───────────────────────────────────
+//
+// Pass this to computeMilestones / computeThresholds so the calculations
+// reflect the current catalog prices rather than the hardcoded fallbacks above.
+
+export interface PriceOverrides {
+  /** Override for fixed test types, keyed by test name ("Endotoxin", "Sterility", etc.) */
+  testPrices?: Partial<Record<string, number>>;
+  /** Pre-resolved per-peptide price for the leading compound */
+  peptidePrice?: number | null;
+}
+
 // ── Progressive milestone computation ────────────────────────────────────────
 //
 // Milestones are generated in order:
@@ -81,9 +93,15 @@ export function computeMilestones(
   peptideName: string | null,
   vialCount: number,
   testOrder: string[],  // tests sorted by vote count (most-voted first)
+  overrides?: PriceOverrides,
 ): Milestone[] {
   const tests = testOrder.length > 0 ? testOrder : DEFAULT_TEST_OPTIONS;
-  const peptidePrice = peptideName ? (JANOSHIK_PEPTIDE_PRICES[peptideName] ?? null) : null;
+
+  // peptidePrice: prefer explicit override, then fallback map, then null
+  const peptidePrice =
+    overrides?.peptidePrice !== undefined
+      ? overrides.peptidePrice
+      : peptideName ? (JANOSHIK_PEPTIDE_PRICES[peptideName] ?? null) : null;
 
   const milestones: Milestone[] = [];
   let cumulative = 0;
@@ -94,10 +112,11 @@ export function computeMilestones(
 
     let cost: number;
     if (def.price === "per_peptide") {
-      if (peptidePrice === null) continue; // skip if no peptide known yet
+      if (peptidePrice === null || peptidePrice === undefined) continue; // skip if no peptide known yet
       cost = peptidePrice;
     } else {
-      cost = def.price;
+      // Use catalog price override if available, else hardcoded
+      cost = overrides?.testPrices?.[testName] ?? def.price;
     }
 
     cumulative += cost;
@@ -127,15 +146,24 @@ export function computeMilestones(
  * Legacy helper — kept for backward compat.
  * Returns tier1 = first milestone, tier2 = last milestone.
  */
-export function computeThresholds(peptideName: string | null, vialCount: number): {
+export function computeThresholds(
+  peptideName: string | null,
+  vialCount: number,
+  overrides?: PriceOverrides,
+): {
   tier1: number;
   tier2: number | null;
   peptidePrice: number | null;
 } {
-  const peptidePrice = peptideName ? (JANOSHIK_PEPTIDE_PRICES[peptideName] ?? null) : null;
-  const tier1 = ENDOTOXIN_PRICE;
-  const tier2 = peptidePrice !== null
-    ? peptidePrice + ENDOTOXIN_PRICE + Math.max(1, Math.min(MAX_VIALS, vialCount)) * VIAL_PRICE
+  const peptidePrice =
+    overrides?.peptidePrice !== undefined
+      ? overrides.peptidePrice
+      : peptideName ? (JANOSHIK_PEPTIDE_PRICES[peptideName] ?? null) : null;
+
+  const endotoxinPrice = overrides?.testPrices?.["Endotoxin"] ?? ENDOTOXIN_PRICE;
+  const tier1 = endotoxinPrice;
+  const tier2 = peptidePrice !== null && peptidePrice !== undefined
+    ? peptidePrice + endotoxinPrice + Math.max(1, Math.min(MAX_VIALS, vialCount)) * VIAL_PRICE
     : null;
-  return { tier1, tier2, peptidePrice };
+  return { tier1, tier2, peptidePrice: peptidePrice ?? null };
 }

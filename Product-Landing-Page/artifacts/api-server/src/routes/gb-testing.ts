@@ -10,6 +10,7 @@ import {
   orderLineItemsTable,
   groupBuyProductsTable,
   productsTable,
+  testCatalogTable,
 } from "@workspace/db";
 import { eq, and, gt, sum, count, sql, inArray } from "drizzle-orm";
 import { requireAdmin } from "../middleware/require-admin";
@@ -58,11 +59,71 @@ import {
   computeMilestones,
   ALL_TEST_OPTION_NAMES,
   DEFAULT_TEST_OPTIONS,
+  type PriceOverrides,
 } from "../lib/janoshik-prices";
 
 const router: IRouter = Router();
 
 // ── helpers ───────────────────────────────────────────────────
+
+/**
+ * Fetch active test_catalog entries and build PriceOverrides so that
+ * computeMilestones / computeThresholds use admin-managed prices.
+ *
+ * Fixed tests (Endotoxin, Sterility, Heavy Metals) are looked up by code.
+ * The per-compound price is matched by keyword scoring against compound analysis entries.
+ */
+async function fetchCatalogPriceOverrides(peptideName: string | null): Promise<{
+  overrides: PriceOverrides;
+  ballotTestPrices: Record<string, number | null>;
+}> {
+  const entries = await db
+    .select({
+      code: testCatalogTable.code,
+      name: testCatalogTable.name,
+      analysisSection: testCatalogTable.analysisSection,
+      defaultPriceUsd: testCatalogTable.defaultPriceUsd,
+    })
+    .from(testCatalogTable)
+    .where(eq(testCatalogTable.active, true));
+
+  const byCode: Record<string, number> = {};
+  for (const e of entries) {
+    byCode[e.code] = parseFloat(String(e.defaultPriceUsd)) || 0;
+  }
+
+  const testPrices: Record<string, number> = {};
+  if (byCode["endotoxin"] !== undefined) testPrices["Endotoxin"] = byCode["endotoxin"];
+  if (byCode["sterility"] !== undefined) testPrices["Sterility"] = byCode["sterility"];
+  if (byCode["heavy_metals"] !== undefined) testPrices["Heavy Metals"] = byCode["heavy_metals"];
+
+  // Per-compound price: score catalog compound entries against the peptide name
+  let peptidePrice: number | null = null;
+  if (peptideName) {
+    const compoundEntries = entries.filter(e => e.analysisSection === "compound");
+    const tokens = peptideName.toLowerCase().split(/[\s\-_\/()[\],]+/).filter(t => t.length >= 3);
+    let bestScore = 0;
+    for (const e of compoundEntries) {
+      const en = e.name.toLowerCase();
+      let score = 0;
+      for (const tok of tokens) { if (en.includes(tok)) score += tok.length; }
+      if (score > bestScore) { bestScore = score; peptidePrice = parseFloat(String(e.defaultPriceUsd)) || null; }
+    }
+    if (bestScore < 3) peptidePrice = null; // no meaningful match
+  }
+
+  const ballotTestPrices: Record<string, number | null> = {
+    "Endotoxin":    testPrices["Endotoxin"]    ?? ENDOTOXIN_PRICE,
+    "Mass/Purity":  null,                       // always per-compound
+    "Sterility":    testPrices["Sterility"]    ?? 350,
+    "Heavy Metals": testPrices["Heavy Metals"] ?? 200,
+  };
+
+  return {
+    overrides: { testPrices, ...(peptidePrice !== null ? { peptidePrice } : {}) },
+    ballotTestPrices,
+  };
+}
 
 function nanoid() {
   return Math.random().toString(36).substring(2, 12) +
@@ -200,8 +261,9 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
     ? leading.testOrder.filter(t => configuredTestOptions.includes(t))
     : configuredTestOptions;
 
-  const milestones = computeMilestones(leading.peptideName, leading.vialCount, testOrder);
-  const thresholds = computeThresholds(leading.peptideName, leading.vialCount);
+  const { overrides: pubOverrides } = await fetchCatalogPriceOverrides(leading.peptideName);
+  const milestones = computeMilestones(leading.peptideName, leading.vialCount, testOrder, pubOverrides);
+  const thresholds = computeThresholds(leading.peptideName, leading.vialCount, pubOverrides);
 
   // Resolve opt-in & vote status
   let hasVoted = false;
@@ -657,7 +719,6 @@ router.get("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> =>
 
   const typedVoteRows = voteRows as { peptideName: string; vialCount: number; testSelections: string[] }[];
   const leading = getLeadingVote(typedVoteRows);
-  const thresholds = computeThresholds(leading.peptideName, leading.vialCount);
 
   const configuredTestOptions = (round.testOptions && Array.isArray(round.testOptions) && round.testOptions.length > 0)
     ? round.testOptions as string[]
@@ -667,7 +728,9 @@ router.get("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> =>
     ? leading.testOrder.filter(t => configuredTestOptions.includes(t))
     : configuredTestOptions;
 
-  const milestones = computeMilestones(leading.peptideName, leading.vialCount, testOrder);
+  const { overrides: adminOverrides, ballotTestPrices } = await fetchCatalogPriceOverrides(leading.peptideName);
+  const thresholds = computeThresholds(leading.peptideName, leading.vialCount, adminOverrides);
+  const milestones = computeMilestones(leading.peptideName, leading.vialCount, testOrder, adminOverrides);
 
   const adminPeptideOptions = (round.voteOptions && Array.isArray(round.voteOptions) && round.voteOptions.length > 0)
     ? round.voteOptions as string[]
@@ -753,6 +816,7 @@ router.get("/admin/group-buys/:gbId/testing", async (req, res): Promise<void> =>
     gbProductsSortedBySales,
     testOptions: configuredTestOptions,
     allTestOptions: ALL_TEST_OPTION_NAMES,
+    ballotTestPrices,
     organiserPayments,
   });
 });

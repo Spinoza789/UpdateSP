@@ -430,7 +430,6 @@ async function runStartupMigrations(): Promise<void> {
           category         = EXCLUDED.category,
           analysis_section = EXCLUDED.analysis_section,
           sort_order       = EXCLUDED.sort_order,
-          default_price_usd = EXCLUDED.default_price_usd,
           active           = true
       `);
     }
