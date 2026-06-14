@@ -118,7 +118,7 @@ interface Order {
   refundStatus: string | null; refundReason: string | null; refundedAt: string | null;
   amountDue?: number; balancePaymentStatus?: string | null; balanceTxHash?: string | null; balanceConfirmedAt?: string | null;
   paymentUsdAmount?: number | null;
-  currency?: string | null; groupBuyId?: string | null;
+  currency?: string | null; groupBuyId?: string | null; groupBuyName?: string | null;
   shippingCountry?: string | null; ipAddress?: string | null; geoCity?: string | null; geoCountry?: string | null;
   accountCountry?: string | null;
   reshipperUsername?: string | null;
@@ -10526,6 +10526,13 @@ function CustomerProfile({ username, secret, onRename, onDelete }: { username: s
                   <span className="font-mono font-bold text-sm text-foreground">#{o.code}</span>
                   <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide", STATUS_COLORS[o.status] ?? "bg-muted text-muted-foreground")}>{o.status}</span>
                   <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-bold", PAYMENT_COLORS[o.paymentStatus] ?? "bg-muted text-muted-foreground")}>{PAYMENT_LABELS[o.paymentStatus] ?? o.paymentStatus}</span>
+                  {o.groupBuyId ? (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 truncate max-w-[120px]" title={o.groupBuyName ?? o.groupBuyId}>
+                      {o.groupBuyName ?? o.groupBuyId}
+                    </span>
+                  ) : o.isWholesale ? (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Wholesale</span>
+                  ) : null}
                   <span className="flex-1 text-xs text-muted-foreground truncate">{o.deliveryMethod}</span>
                   <span className="text-xs font-bold text-foreground shrink-0">{fmt(Number(o.grandTotal))}</span>
                   <span className="text-[10px] text-muted-foreground shrink-0">{new Date(o.createdAt).toLocaleDateString()}</span>

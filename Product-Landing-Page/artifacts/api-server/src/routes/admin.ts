@@ -4325,8 +4325,19 @@ router.get("/admin/customers/:username", async (req: any, res: any): Promise<voi
       ? await db.select().from(orderLineItemsTable).where(inArray(orderLineItemsTable.orderId, orders.map(o => o.id)))
       : [];
 
+    // Fetch group buy names for any GB orders
+    const gbIds = [...new Set(orders.map(o => o.groupBuyId).filter(Boolean))] as string[];
+    const gbNames: Record<string, string> = {};
+    if (gbIds.length > 0) {
+      const gbs = await db.select({ id: groupBuysTable.id, name: groupBuysTable.name })
+        .from(groupBuysTable)
+        .where(inArray(groupBuysTable.id, gbIds));
+      for (const gb of gbs) gbNames[gb.id] = gb.name;
+    }
+
     const ordersWithItems = orders.map(o => ({
       ...o,
+      groupBuyName: o.groupBuyId ? (gbNames[o.groupBuyId] ?? null) : null,
       lineItems: lineItems.filter(li => li.orderId === o.id),
     }));
 
