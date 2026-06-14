@@ -238,12 +238,13 @@ function MilestoneCard({ step, milestone, prevAmount, raisedUsd, accentColor }: 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: step * 0.1, type: "spring", stiffness: 280, damping: 24 }}
-      className="flex-1 min-w-[180px] relative overflow-hidden"
+      className="flex-1 min-w-[155px] sm:min-w-[175px] relative overflow-hidden"
       style={{
+        scrollSnapAlign: "start",
         borderRadius: 8,
         border: `1.5px solid ${hit ? HIT : "var(--t-border)"}`,
         background: hit ? "rgba(16,185,129,0.05)" : "var(--t-surface)",
-        padding: "16px 18px",
+        padding: "14px 16px",
       }}
     >
       <div className="absolute -bottom-2 -right-1 select-none pointer-events-none font-black"
@@ -938,27 +939,32 @@ export default function GbTestingPool() {
           </div>
         </motion.div>
 
-        {/* ── Milestone Step Cards (horizontal scroll) ── */}
+        {/* ── Milestone Step Cards (horizontal scroll, edge-to-edge on mobile) ── */}
         {milestones.length > 0 && (
-          <div className="flex gap-3 mb-4 sm:mb-6 overflow-x-auto pb-1">
-            {milestones.map((m, i) => (
-              <MilestoneCard
-                key={i}
-                step={i + 1}
-                milestone={m}
-                prevAmount={i > 0 ? milestones[i - 1].amount : 0}
-                raisedUsd={poolTotal}
-                accentColor={STEP_COLORS[i % STEP_COLORS.length]}
-              />
-            ))}
+          <div className="-mx-3 sm:mx-0 mb-4 sm:mb-6">
+            <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 px-3 sm:px-0"
+              style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
+              {milestones.map((m, i) => (
+                <MilestoneCard
+                  key={i}
+                  step={i + 1}
+                  milestone={m}
+                  prevAmount={i > 0 ? milestones[i - 1].amount : 0}
+                  raisedUsd={poolTotal}
+                  accentColor={STEP_COLORS[i % STEP_COLORS.length]}
+                />
+              ))}
+              {/* Invisible end-spacer so last card clears on mobile */}
+              <div className="w-3 sm:hidden shrink-0" />
+            </div>
           </div>
         )}
 
         {/* ── Two-column layout ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 lg:gap-6">
 
-          {/* ── LEFT: Gauge + vote leaderboard ── */}
-          <div className="space-y-4">
+          {/* ── LEFT: Gauge + vote leaderboard (shown second on mobile) ── */}
+          <div className="space-y-4 order-2 md:order-1">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1076,8 +1082,8 @@ export default function GbTestingPool() {
             </motion.div>
           </div>
 
-          {/* ── RIGHT: Vote form + standings + results ── */}
-          <div className="space-y-4">
+          {/* ── RIGHT: Vote form + standings + results (shown first on mobile) ── */}
+          <div className="space-y-4 order-1 md:order-2">
 
             {/* Pending contribution (late opt-in payment awaiting review) */}
             {pendingContribution && <PendingContributionCard pc={pendingContribution} />}
@@ -1147,51 +1153,72 @@ export default function GbTestingPool() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.22 }}
-              className="p-4 sm:p-5"
-              style={{ borderRadius: 8, background: "var(--t-surface)", border: "1px solid var(--t-border)" }}
+              style={{ borderRadius: 12, background: "var(--t-surface)", border: "1px solid var(--t-border)", overflow: "hidden" }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-[13px] font-bold" style={{ color: "var(--t-text)" }}>Current Standings</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "var(--t-muted)" }}>
-                    {contributorCount} contributor{contributorCount !== 1 ? "s" : ""} · {totalVotes} vote{totalVotes !== 1 ? "s" : ""} cast
-                  </p>
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 sm:px-5 py-3"
+                style={{ borderBottom: "1px solid var(--t-border)", background: "linear-gradient(90deg, rgba(16,185,129,0.04) 0%, transparent 100%)" }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center"
+                    style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                    <Users className="w-3.5 h-3.5" style={{ color: HIT }} />
+                  </div>
+                  <span className="text-[11px] font-bold tracking-[0.06em] uppercase" style={{ color: "var(--t-text)" }}>Standings</span>
                 </div>
-                <Users className="w-5 h-5 opacity-30" style={{ color: "var(--t-muted)" }} />
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--t-muted)" }}>
+                    <span className="font-bold" style={{ color: HIT }}>{contributorCount}</span> {contributorCount !== 1 ? "contributors" : "contributor"}
+                  </span>
+                  <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--t-muted)" }}>
+                    <span className="font-bold" style={{ color: "var(--t-blue)" }}>{totalVotes}</span> {totalVotes !== 1 ? "votes" : "vote"}
+                  </span>
+                </div>
               </div>
 
               {contributorCount === 0 ? (
-                <div className="text-center py-8">
-                  <TestTube className="w-8 h-8 mx-auto mb-2 opacity-20" style={{ color: "var(--t-muted)" }} />
-                  <p className="text-[12px]" style={{ color: "var(--t-muted)" }}>No contributors yet</p>
+                <div className="text-center py-10 px-4">
+                  <TestTube className="w-8 h-8 mx-auto mb-2 opacity-15" style={{ color: "var(--t-muted)" }} />
+                  <p className="text-[12px] font-medium" style={{ color: "var(--t-muted)" }}>No contributors yet</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--t-muted)", opacity: 0.6 }}>Be the first to join the pool</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="px-4 sm:px-5 py-4 space-y-4">
+                  {/* Pool progress bar */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-1.5">
-                      <span className="text-[12px] font-bold" style={{ color: "var(--t-text)" }}>{fmtUsd(poolTotal)} raised</span>
-                      {topAmount > 0 && <span className="text-[11px]" style={{ color: "var(--t-muted)" }}>of {fmtUsd(topAmount)}</span>}
+                    <div className="flex justify-between items-baseline mb-2">
+                      <span className="text-[13px] font-extrabold tabular-nums" style={{ color: "var(--t-text)", fontFamily: "ui-monospace,SFMono-Regular,monospace" }}>{fmtUsd(poolTotal)}</span>
+                      {topAmount > 0 && (
+                        <span className="text-[11px] font-semibold" style={{ color: "var(--t-muted)" }}>
+                          {progressPct.toFixed(0)}% of {fmtUsd(topAmount)}
+                        </span>
+                      )}
                     </div>
                     <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--t-border)" }}>
-                      <motion.div className="h-full rounded-full" style={{ background: "var(--t-blue)" }}
+                      <motion.div className="h-full rounded-full"
+                        style={{ background: `linear-gradient(90deg, var(--t-blue) 0%, ${HIT} 100%)` }}
                         initial={{ width: 0 }}
                         animate={{ width: `${progressPct}%` }}
-                        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} />
+                        transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }} />
                     </div>
                   </div>
 
                   {/* Public vote list */}
                   {publicVotes && publicVotes.length > 0 && (
-                    <div className="pt-1 border-t" style={{ borderColor: "var(--t-border)" }}>
-                      <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--t-muted)" }}>Votes</p>
-                      <div className="space-y-1.5">
+                    <div className="border-t pt-3" style={{ borderColor: "var(--t-border)" }}>
+                      <p className="text-[9px] font-bold tracking-[0.14em] uppercase mb-2.5" style={{ color: "var(--t-muted)" }}>Vote log</p>
+                      <div className="space-y-1">
                         {publicVotes.map((v, i) => (
-                          <div key={i} className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] font-medium truncate" style={{ color: "var(--t-muted)" }}>
+                          <div key={i} className="flex items-center gap-2 py-1 px-2 rounded-lg"
+                            style={{ background: i % 2 === 0 ? "rgba(0,0,0,0.02)" : "transparent" }}>
+                            <span className="text-[11px] font-semibold truncate flex-1" style={{ color: "var(--t-muted)" }}>
                               {v.username ?? "anonymous"}
                             </span>
-                            <span className="text-[11px] font-semibold shrink-0" style={{ color: "var(--t-text)" }}>
-                              {v.peptideName} · {v.vialCount}v
+                            <span className="text-[11px] font-semibold shrink-0 truncate max-w-[130px] sm:max-w-[160px]" style={{ color: "var(--t-text)" }}>
+                              {v.peptideName}
+                            </span>
+                            <span className="text-[10px] font-bold tabular-nums shrink-0 px-1.5 py-0.5 rounded-full"
+                              style={{ background: "rgba(59,130,246,0.08)", color: "var(--t-blue)" }}>
+                              {v.vialCount}v
                             </span>
                           </div>
                         ))}
