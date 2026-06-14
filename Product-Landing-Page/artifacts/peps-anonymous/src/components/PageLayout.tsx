@@ -274,9 +274,12 @@ function Sidebar({ location, expanded, onExpand, onCollapse }: {
   const enabledNavIds = useContext(PublicNavCtx);
   const sidebarUsername = account?.telegramUsername ? account.telegramUsername.replace(/^@/, "") : null;
   const isGbWorkflow = location === "/order" || location === "/review";
-  const isPortal = location.startsWith("/account") || location.startsWith("/gborganiser") || location.startsWith("/reshipper") || location.startsWith("/success") || location.startsWith("/wholesale") || isGbWorkflow;
+  // Lab testing pool detail (/pool/:slug) shows the Profile Hub nav on desktop too —
+  // but NOT the guest contribution sub-route (/pool/:slug/contribution/:participantId).
+  const isLabPool = location.startsWith("/pool/") && !location.includes("/contribution/");
+  const isPortal = location.startsWith("/account") || location.startsWith("/gborganiser") || location.startsWith("/reshipper") || location.startsWith("/success") || location.startsWith("/wholesale") || isGbWorkflow || isLabPool;
   const activeSection = isPortal
-    ? (isGbWorkflow ? "groups" : location.startsWith("/gborganiser") ? "gborganiser" : location.startsWith("/reshipper") ? "reshipper" : location.startsWith("/wholesale") ? "wholesale" : (new URLSearchParams(search).get("s") ?? "home"))
+    ? (isLabPool ? "community-testing" : isGbWorkflow ? "groups" : location.startsWith("/gborganiser") ? "gborganiser" : location.startsWith("/reshipper") ? "reshipper" : location.startsWith("/wholesale") ? "wholesale" : (new URLSearchParams(search).get("s") ?? "home"))
     : null;
 
   const navScrollRef = useRef<HTMLElement>(null);
