@@ -956,17 +956,14 @@ export default function GbTestingPool() {
           </div>
         )}
 
-        {/* ── Two-column layout ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 lg:gap-6">
-
-          {/* ── LEFT: Pool gauge + leaderboard ── */}
-          <div className="space-y-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              style={{ borderRadius: 12, background: "var(--t-surface)", border: "1px solid var(--t-border)", boxShadow: "0 4px 24px rgba(0,0,0,0.07)", overflow: "hidden" }}
-            >
+        {/* ── Pool Progress card (always first, full-width) ── */}
+        <div className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            style={{ borderRadius: 12, background: "var(--t-surface)", border: "1px solid var(--t-border)", boxShadow: "0 4px 24px rgba(0,0,0,0.07)", overflow: "hidden" }}
+          >
               {/* Header strip */}
               <div className="flex items-center justify-between px-4 sm:px-5 py-3"
                 style={{ borderBottom: "1px solid var(--t-border)", background: "linear-gradient(90deg, rgba(59,130,246,0.04) 0%, transparent 100%)" }}>
@@ -1075,11 +1072,9 @@ export default function GbTestingPool() {
                   )}
                 </div>
               )}
-            </motion.div>
-          </div>
+          </motion.div>
 
-          {/* ── RIGHT: Vote form + standings + results ── */}
-          <div className="space-y-4">
+          {/* ── Vote form + standings + results ── */}
 
             {/* Pending contribution (late opt-in payment awaiting review) */}
             {pendingContribution && <PendingContributionCard pc={pendingContribution} />}
@@ -1255,7 +1250,6 @@ export default function GbTestingPool() {
                 )}
               </motion.div>
             )}
-          </div>
         </div>
       </motion.div>
     </GbPoolLayout>
