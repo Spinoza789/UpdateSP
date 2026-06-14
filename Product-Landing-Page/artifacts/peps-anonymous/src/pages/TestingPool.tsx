@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/PageLayout";
+import { HubBottomNav, HubSection } from "@/components/HubBottomNav";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2, TestTube, Copy, CheckCircle2, Lock, Unlock, ExternalLink,
@@ -1285,6 +1286,23 @@ function GuestShareLink({ pool, participantId }: { pool: Pool; participantId: st
   );
 }
 
+// ── Layout wrapper (Profile Hub bottom nav) ──────────────────────────────────
+
+function PoolLayout({ title, children }: { title?: string; children: React.ReactNode }) {
+  const [, setLocation] = useLocation();
+  return (
+    <PageLayout title={title}>
+      {children}
+      <HubBottomNav
+        section={"lab-pool" as HubSection}
+        setSection={(s: HubSection) => setLocation(`/account?s=${s}`)}
+        hubMoreOpen={false}
+        setHubMoreOpen={() => {}}
+      />
+    </PageLayout>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function TestingPool() {
@@ -1479,19 +1497,19 @@ export default function TestingPool() {
   // ── Loading / error states ───────────────────────────────────────────────────
 
   const spinnerEl = (
-    <PageLayout title="Testing Pool">
+    <PoolLayout title="Testing Pool">
       <div className="flex items-center justify-center min-h-[40vh]">
         <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--t-blue)" }} />
       </div>
-    </PageLayout>
+    </PoolLayout>
   );
 
   if (isLoading) return spinnerEl;
   if (error || !data) {
     return (
-      <PageLayout title="Testing Pool">
+      <PoolLayout title="Testing Pool">
         <div className="p-8 text-center text-sm" style={{ color: "var(--t-muted)" }}>Pool not found.</div>
-      </PageLayout>
+      </PoolLayout>
     );
   }
 
@@ -1548,7 +1566,7 @@ export default function TestingPool() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <PageLayout title={pool.title}>
+    <PoolLayout title={pool.title}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -2578,6 +2596,6 @@ export default function TestingPool() {
           </button>
         </div>
       )}
-    </PageLayout>
+    </PoolLayout>
   );
 }

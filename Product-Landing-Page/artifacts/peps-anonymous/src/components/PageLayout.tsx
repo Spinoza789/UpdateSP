@@ -978,6 +978,10 @@ export function PageLayout({ children, bare }: PageLayoutProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [enabledNavIds, setEnabledNavIds] = useState<Set<string> | null>(null);
 
+  // Lab testing pool page (/pool/:slug) uses the Profile Hub bottom nav — but NOT
+  // the guest contribution sub-route (/pool/:slug/contribution/:participantId).
+  const isLabPool = location.startsWith("/pool/") && !location.includes("/contribution/");
+
   // On 16:9+ screens the sidebar stays permanently open; otherwise hover-to-expand.
   // Persist the expanded state across route changes (PageLayout remounts on navigation).
   const isWide = typeof window !== "undefined" && window.innerWidth / window.innerHeight >= 16 / 9;
@@ -1024,12 +1028,12 @@ export function PageLayout({ children, bare }: PageLayoutProps) {
         <MobileHeader />
         <DesktopHeader />
         <main
-          className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${location.startsWith("/gborganiser") ? "pb-0" : location.startsWith("/testing/") ? "pb-[calc(56px_+_env(safe-area-inset-bottom))] md:pb-0" : "pb-24 md:pb-0"}`}
+          className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${location.startsWith("/gborganiser") ? "pb-0" : (location.startsWith("/testing/") || isLabPool) ? "pb-[calc(56px_+_env(safe-area-inset-bottom))] md:pb-0" : "pb-24 md:pb-0"}`}
           style={{ overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
         >
           {children}
         </main>
-        {location !== "/order" && location !== "/review" && !location.startsWith("/account") && !location.startsWith("/gborganiser") && !location.startsWith("/reshipper") && !location.startsWith("/wholesale") && !location.startsWith("/testing/") && (
+        {location !== "/order" && location !== "/review" && !location.startsWith("/account") && !location.startsWith("/gborganiser") && !location.startsWith("/reshipper") && !location.startsWith("/wholesale") && !location.startsWith("/testing/") && !isLabPool && (
           <MobileBottomTabs location={location} onMore={() => setMoreOpen(true)} />
         )}
       </div>
