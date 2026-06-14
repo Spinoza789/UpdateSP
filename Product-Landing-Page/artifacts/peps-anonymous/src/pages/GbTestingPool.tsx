@@ -73,7 +73,7 @@ interface TestingData {
   isAdminView: boolean;
   hasGbOrder: boolean;
   hasVoted: boolean;
-  existingVote: { peptideName: string; vialCount: number; testSelections: string[] } | null;
+  existingVote: { peptideName: string; vialCount: number; testSelections: string[]; anonymous?: boolean } | null;
   milestones: Milestone[];
   thresholds: { tier1: number; tier2: number | null; leadingPeptide: string; leadingVials: number; testOrder: string[] };
   votes: VoteSummary[];
@@ -291,6 +291,7 @@ function VoteForm({ gbId, peptideOptions, testOptions, maxVials, maxCompoundVote
   const [open, setOpen] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [anonymous, setAnonymous] = useState(false);
 
   const effectiveMaxCompounds = maxCompoundVotes ?? 1;
   const effectiveMaxTests = maxTestVotes ?? 1;
@@ -319,7 +320,7 @@ function VoteForm({ gbId, peptideOptions, testOptions, maxVials, maxCompoundVote
     try {
       const r = await fetch(`/api/group-buys/${gbId}/testing/vote`, {
         method: "POST", headers: { "content-type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ peptideNames: compounds, vialCount, testSelections: selectedTests }),
+        body: JSON.stringify({ peptideNames: compounds, vialCount, testSelections: selectedTests, anonymous }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error ?? "Failed to submit vote");
@@ -421,6 +422,18 @@ function VoteForm({ gbId, peptideOptions, testOptions, maxVials, maxCompoundVote
           </div>
         </div>
 
+        {/* Anonymous toggle */}
+        <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+          <input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)}
+            className="rounded mt-0.5" style={{ accentColor: "var(--t-blue)" }} />
+          <span className="text-[12px] font-medium" style={{ color: "var(--t-text)" }}>
+            Vote anonymously
+            <span className="block text-[10px] font-normal mt-0.5" style={{ color: "var(--t-muted)" }}>
+              Hide my name from the public vote log
+            </span>
+          </span>
+        </label>
+
         {err && <p className="text-[12px]" style={{ color: "#EF4444" }}>{err}</p>}
 
         <button type="button" onClick={submit} disabled={submitting}
@@ -437,7 +450,7 @@ function VoteForm({ gbId, peptideOptions, testOptions, maxVials, maxCompoundVote
 
 // ── Existing Vote Card ────────────────────────────────────────────────────────
 
-function ExistingVoteCard({ vote }: { vote: { peptideName: string; vialCount: number; testSelections: string[] } }) {
+function ExistingVoteCard({ vote }: { vote: { peptideName: string; vialCount: number; testSelections: string[]; anonymous?: boolean } }) {
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 22 }}>
@@ -451,7 +464,7 @@ function ExistingVoteCard({ vote }: { vote: { peptideName: string; vialCount: nu
           </div>
           <div>
             <p className="text-sm font-extrabold" style={{ color: HIT }}>Vote submitted</p>
-            <p className="text-[11px]" style={{ color: "var(--t-muted)" }}>Your compound vote is locked in</p>
+            <p className="text-[11px]" style={{ color: "var(--t-muted)" }}>Your compound vote is locked in{vote.anonymous ? " · hidden from public" : ""}</p>
           </div>
         </div>
         <div className="px-5 py-4 space-y-3.5">
@@ -1031,7 +1044,7 @@ export default function GbTestingPool() {
 
                   {/* Test type chips */}
                   {Object.keys(testVotes).length > 0 && (
-                    <div className="pb-1 pt-2.5 border-t" style={{ borderColor: "var(--t-border)" }}>
+                    <div className="pb-4 pt-2.5 border-t" style={{ borderColor: "var(--t-border)" }}>
                       <span className="text-[9px] font-bold tracking-[0.14em] uppercase block mb-2" style={{ color: "var(--t-muted)" }}>Test Selections</span>
                       <div className="flex flex-wrap gap-1.5">
                         {Object.entries(testVotes).sort(([,a],[,b]) => b - a).map(([name, count], i) => {
@@ -1079,6 +1092,58 @@ export default function GbTestingPool() {
 
             {/* Existing vote */}
             {hasVoted && existingVote && <ExistingVoteCard vote={existingVote} />}
+
+            {/* Tests being done — shown once voting has closed */}
+            {isClosed && (() => {
+              const testMilestones = milestones.filter(m => m.type === "test");
+              if (testMilestones.length === 0) return null;
+              const fundedCount = testMilestones.filter(m => poolTotal >= m.amount).length;
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.12 }}
+                  style={{ borderRadius: 12, background: "var(--t-surface)", border: "1px solid var(--t-border)", overflow: "hidden" }}
+                >
+                  <div className="flex items-center justify-between px-4 sm:px-5 py-3"
+                    style={{ borderBottom: "1px solid var(--t-border)", background: "linear-gradient(90deg, rgba(16,185,129,0.06) 0%, transparent 100%)" }}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center"
+                        style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                        <FlaskConical className="w-3.5 h-3.5" style={{ color: HIT }} />
+                      </div>
+                      <span className="text-[11px] font-bold tracking-[0.06em] uppercase" style={{ color: "var(--t-text)" }}>Tests Being Done</span>
+                    </div>
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--t-muted)" }}>
+                      <span className="font-bold" style={{ color: HIT }}>{fundedCount}</span>/{testMilestones.length}
+                    </span>
+                  </div>
+                  <div className="px-4 sm:px-5 py-3 space-y-2">
+                    <p className="text-[11px] mb-1" style={{ color: "var(--t-muted)" }}>
+                      Voting has closed. These are the tests funded by the pool:
+                    </p>
+                    {testMilestones.map((m, i) => {
+                      const hit = poolTotal >= m.amount;
+                      return (
+                        <div key={i} className="flex items-center gap-2.5 py-1.5 px-2.5 rounded-lg"
+                          style={{ background: hit ? "rgba(16,185,129,0.06)" : "rgba(0,0,0,0.02)", border: `1px solid ${hit ? "rgba(16,185,129,0.2)" : "var(--t-border)"}` }}>
+                          {hit
+                            ? <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: HIT }} />
+                            : <span className="w-4 h-4 shrink-0 rounded-full" style={{ border: "1.5px solid var(--t-border)" }} />}
+                          <span className="text-[12px] font-semibold flex-1 min-w-0 break-words" style={{ color: hit ? "var(--t-text)" : "var(--t-muted)" }}>
+                            {m.label}
+                          </span>
+                          <span className="text-[10px] font-bold tabular-nums shrink-0 px-1.5 py-0.5 rounded-full"
+                            style={{ background: hit ? "rgba(16,185,129,0.1)" : "transparent", color: hit ? HIT : "var(--t-muted)" }}>
+                            {hit ? "Confirmed" : "Not funded"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              );
+            })()}
 
             {/* Late opt-in CTA */}
             {!isOptedIn && !isAdminView && hasGbOrder && round.lateOptInEnabled && !pendingContribution && !isClosed && contributorCount > 0 && totalVotes >= contributorCount * 0.80 && (

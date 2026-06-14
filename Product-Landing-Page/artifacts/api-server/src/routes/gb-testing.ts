@@ -224,6 +224,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
       vialCount: gbTestingVotesTable.vialCount,
       testSelections: gbTestingVotesTable.testSelections,
       orderId: gbTestingVotesTable.orderId,
+      anonymous: gbTestingVotesTable.anonymous,
       telegramUsername: ordersTable.telegramUsername,
     })
     .from(gbTestingVotesTable)
@@ -316,6 +317,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
             peptideName: gbTestingVotesTable.peptideName,
             vialCount: gbTestingVotesTable.vialCount,
             testSelections: gbTestingVotesTable.testSelections,
+            anonymous: gbTestingVotesTable.anonymous,
           })
           .from(gbTestingVotesTable)
           .where(
@@ -326,7 +328,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
           );
         if (vote) {
           hasVoted = true;
-          existingVote = vote as { peptideName: string; vialCount: number; testSelections: string[] };
+          existingVote = vote as { peptideName: string; vialCount: number; testSelections: string[]; anonymous: boolean };
         }
       }
     }
@@ -430,9 +432,11 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
       ))[0]?.c ?? 0,
     votes,
     publicVotes: voteRows.map(v => ({
-      username: v.telegramUsername
-        ? (v.telegramUsername.startsWith("@") ? v.telegramUsername : `@${v.telegramUsername}`)
-        : null,
+      username: v.anonymous
+        ? null
+        : (v.telegramUsername
+            ? (v.telegramUsername.startsWith("@") ? v.telegramUsername : `@${v.telegramUsername}`)
+            : null),
       peptideName: (v.peptideNames && (v.peptideNames as string[]).length > 0)
         ? (v.peptideNames as string[]).join(", ")
         : v.peptideName,
@@ -469,7 +473,7 @@ router.get("/group-buys/:gbId/testing", async (req, res): Promise<void> => {
 // ── POST /api/group-buys/:gbId/testing/vote ───────────────────
 router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> => {
   const { gbId } = req.params;
-  const { peptideName, peptideNames, vialCount, testSelections } = req.body;
+  const { peptideName, peptideNames, vialCount, testSelections, anonymous } = req.body;
 
   // Accept either a single peptideName or an array of peptideNames
   const rawPeptides: string[] = Array.isArray(peptideNames)
@@ -484,6 +488,7 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
   const cleanTests: string[] = Array.isArray(testSelections)
     ? testSelections.map(String).filter(Boolean)
     : [];
+  const cleanAnonymous = anonymous === true || anonymous === "true";
 
   loadOptionalAccount(req);
   if (!req.account) {
@@ -616,7 +621,7 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
   if (existing.length > 0) {
     await db
       .update(gbTestingVotesTable)
-      .set({ peptideName: cleanPeptide, peptideNames: rawPeptides, vialCount: cleanVials, testSelections: validTests })
+      .set({ peptideName: cleanPeptide, peptideNames: rawPeptides, vialCount: cleanVials, testSelections: validTests, anonymous: cleanAnonymous })
       .where(
         and(
           eq(gbTestingVotesTable.roundId, round.id),
@@ -632,6 +637,7 @@ router.post("/group-buys/:gbId/testing/vote", async (req, res): Promise<void> =>
       peptideNames: rawPeptides,
       vialCount: cleanVials,
       testSelections: validTests,
+      anonymous: cleanAnonymous,
     });
   }
 

@@ -286,6 +286,7 @@ export const gbTestingVotesTable = pgTable("gb_testing_votes", {
   peptideNames: jsonb("peptide_names").$type<string[]>(),
   vialCount: integer("vial_count").notNull().default(1),
   testSelections: jsonb("test_selections").$type<string[]>().notNull().default([]),
+  anonymous: boolean("anonymous").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique("gb_testing_votes_unique").on(t.roundId, t.orderId),

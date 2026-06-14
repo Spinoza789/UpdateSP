@@ -1024,12 +1024,12 @@ export function PageLayout({ children, bare }: PageLayoutProps) {
         <MobileHeader />
         <DesktopHeader />
         <main
-          className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${location.startsWith("/gborganiser") ? "pb-0" : "pb-24 md:pb-0"}`}
+          className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${location.startsWith("/gborganiser") ? "pb-0" : location.startsWith("/testing/") ? "pb-[calc(72px_+_env(safe-area-inset-bottom))] md:pb-0" : "pb-24 md:pb-0"}`}
           style={{ overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
         >
           {children}
         </main>
-        {location !== "/order" && location !== "/review" && !location.startsWith("/account") && !location.startsWith("/gborganiser") && !location.startsWith("/reshipper") && !location.startsWith("/wholesale") && (
+        {location !== "/order" && location !== "/review" && !location.startsWith("/account") && !location.startsWith("/gborganiser") && !location.startsWith("/reshipper") && !location.startsWith("/wholesale") && !location.startsWith("/testing/") && (
           <MobileBottomTabs location={location} onMore={() => setMoreOpen(true)} />
         )}
       </div>
