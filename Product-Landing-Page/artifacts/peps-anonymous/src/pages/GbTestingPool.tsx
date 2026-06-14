@@ -963,18 +963,23 @@ export default function GbTestingPool() {
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="p-4 sm:p-6"
-              style={{ borderRadius: 8, background: "var(--t-surface)", border: "1px solid var(--t-border)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}
+              style={{ borderRadius: 12, background: "var(--t-surface)", border: "1px solid var(--t-border)", boxShadow: "0 4px 24px rgba(0,0,0,0.07)", overflow: "hidden" }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[9px] font-bold tracking-[0.14em] uppercase" style={{ color: "var(--t-muted)" }}>
-                  Pool Progress
-                </span>
+              {/* Header strip */}
+              <div className="flex items-center justify-between px-4 sm:px-5 py-3"
+                style={{ borderBottom: "1px solid var(--t-border)", background: "linear-gradient(90deg, rgba(59,130,246,0.04) 0%, transparent 100%)" }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center"
+                    style={{ background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.2)" }}>
+                    <TestTube className="w-3.5 h-3.5" style={{ color: "var(--t-blue)" }} />
+                  </div>
+                  <span className="text-[11px] font-bold tracking-[0.06em] uppercase" style={{ color: "var(--t-text)" }}>Pool Progress</span>
+                </div>
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1"
-                  style={{ borderRadius: 4, background: "rgba(59,130,246,0.1)", color: "var(--t-blue)", border: "1px solid rgba(59,130,246,0.25)" }}>
+                  style={{ borderRadius: 6, background: round.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(59,130,246,0.1)", color: round.status === "active" ? HIT : "var(--t-blue)", border: `1px solid ${round.status === "active" ? "rgba(16,185,129,0.25)" : "rgba(59,130,246,0.25)"}` }}>
                   {round.status === "active" && (
                     <motion.span className="w-1.5 h-1.5 inline-block shrink-0"
-                      style={{ background: "#4ADE80", borderRadius: "50%" }}
+                      style={{ background: HIT, borderRadius: "50%" }}
                       animate={{ opacity: [1, 0.25, 1] }}
                       transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }} />
                   )}
@@ -982,60 +987,87 @@ export default function GbTestingPool() {
                 </span>
               </div>
 
-              <PoolGauge raisedUsd={poolTotal} segments={gaugeSegments} contributorCount={contributorCount} />
-
-              {/* Legend */}
-              <div className="flex items-center justify-center gap-4 mt-2 flex-wrap">
-                {milestones.map((m, i) => (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <span className="w-3 h-2 inline-block shrink-0" style={{ background: STEP_COLORS[i % STEP_COLORS.length], borderRadius: 1 }} />
-                    <span className="text-[10px] font-semibold" style={{ color: "var(--t-muted)" }}>
-                      {m.label} · {fmtUsd(m.amount)}
-                    </span>
-                  </div>
-                ))}
+              {/* Gauge */}
+              <div className="px-4 sm:px-5 pt-4 pb-2">
+                <PoolGauge raisedUsd={poolTotal} segments={gaugeSegments} contributorCount={contributorCount} />
               </div>
 
-              {/* Vote leaderboard — compact */}
+              {/* Milestone legend */}
+              <div className="px-4 sm:px-5 pb-4">
+                <div className="space-y-1.5">
+                  {milestones.map((m, i) => {
+                    const hit = poolTotal >= m.amount;
+                    const color = STEP_COLORS[i % STEP_COLORS.length];
+                    return (
+                      <div key={i} className="flex items-center gap-2.5 py-1.5 px-2.5 rounded-lg"
+                        style={{ background: hit ? `${color}12` : "transparent", border: `1px solid ${hit ? `${color}30` : "var(--t-border)"}` }}>
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color, boxShadow: hit ? `0 0 6px ${color}80` : "none" }} />
+                        <span className="text-[11px] font-semibold flex-1 truncate" style={{ color: hit ? "var(--t-text)" : "var(--t-muted)" }}>{m.label}</span>
+                        <span className="text-[11px] font-bold tabular-nums shrink-0"
+                          style={{ color: hit ? color : "var(--t-muted)", fontFamily: "ui-monospace,SFMono-Regular,monospace" }}>
+                          {fmtUsd(m.amount)}
+                        </span>
+                        {hit && <CheckCircle2 className="w-3 h-3 shrink-0" style={{ color: HIT }} />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Vote standings */}
               {votes.length > 0 && (
-                <div className="mt-3 pt-2.5 border-t" style={{ borderColor: "var(--t-border)" }}>
-                  <div className="flex items-center gap-1 mb-1.5">
-                    <FlaskConical className="w-2.5 h-2.5" style={{ color: "var(--t-blue)" }} />
-                    <span className="text-[8px] font-bold tracking-[0.12em] uppercase" style={{ color: "var(--t-blue)" }}>
-                      Compound Votes
-                    </span>
+                <div className="border-t" style={{ borderColor: "var(--t-border)" }}>
+                  <div className="px-4 sm:px-5 pt-3 pb-1 flex items-center gap-2">
+                    <FlaskConical className="w-3 h-3" style={{ color: "var(--t-blue)" }} />
+                    <span className="text-[9px] font-bold tracking-[0.14em] uppercase" style={{ color: "var(--t-blue)" }}>Compound Votes</span>
+                    <span className="text-[9px] font-semibold ml-auto tabular-nums" style={{ color: "var(--t-muted)" }}>{totalVotes} cast</span>
                   </div>
-                  <div className="space-y-1">
+                  <div className="px-4 sm:px-5 pb-3 space-y-2">
                     {votes.slice(0, 5).map((v, i) => {
                       const pct = totalVotes > 0 ? (v.totalVotes / totalVotes) * 100 : 0;
-                      const abbrev = v.peptideName.length > 22 ? v.peptideName.slice(0, 20).trimEnd() + "…" : v.peptideName;
+                      const color = i === 0 ? "var(--t-blue)" : i === 1 ? ARC2 : "var(--t-muted)";
+                      const barColor = i === 0 ? "rgba(59,130,246,0.7)" : i === 1 ? "rgba(139,92,246,0.55)" : "rgba(148,163,184,0.35)";
                       return (
-                        <div key={v.peptideName} className="flex items-center gap-2">
-                          <span className="text-[10px] shrink-0 w-28 truncate" style={{ color: "var(--t-muted)" }}>{abbrev}</span>
-                          <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(45,107,204,0.12)" }}>
+                        <div key={v.peptideName}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-[9px] font-bold tabular-nums w-4 shrink-0" style={{ color }}>{i + 1}</span>
+                              <span className="text-[11px] font-semibold truncate" style={{ color: "var(--t-text)" }}>{v.peptideName}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                              <span className="text-[10px] font-bold tabular-nums" style={{ color }}>{v.totalVotes}</span>
+                              <span className="text-[9px] tabular-nums" style={{ color: "var(--t-muted)" }}>{pct.toFixed(0)}%</span>
+                            </div>
+                          </div>
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(148,163,184,0.12)" }}>
                             <motion.div className="h-full rounded-full"
-                              style={{ background: i === 0 ? "rgba(45,107,204,0.7)" : "rgba(45,107,204,0.35)" }}
+                              style={{ background: barColor }}
                               initial={{ width: 0 }}
                               animate={{ width: `${pct}%` }}
-                              transition={{ duration: 0.8, delay: i * 0.06 }} />
+                              transition={{ duration: 0.9, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }} />
                           </div>
-                          <span className="text-[10px] font-semibold tabular-nums shrink-0" style={{ color: "var(--t-blue)" }}>
-                            {v.totalVotes}
-                          </span>
                         </div>
                       );
                     })}
                   </div>
-                  {/* Test type votes compact */}
+
+                  {/* Test type chips */}
                   {Object.keys(testVotes).length > 0 && (
-                    <div className="mt-2 pt-1.5 border-t" style={{ borderColor: "var(--t-border)" }}>
-                      <div className="flex flex-wrap gap-1.5 mt-1">
-                        {Object.entries(testVotes).sort(([,a],[,b]) => b - a).map(([name, count]) => (
-                          <span key={name} className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                            style={{ background: "rgba(45,107,204,0.08)", color: "var(--t-blue)" }}>
-                            {name} · {count}
-                          </span>
-                        ))}
+                    <div className="px-4 sm:px-5 pb-4 pt-1 border-t" style={{ borderColor: "var(--t-border)" }}>
+                      <span className="text-[9px] font-bold tracking-[0.14em] uppercase block mb-2" style={{ color: "var(--t-muted)" }}>Test Selections</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(testVotes).sort(([,a],[,b]) => b - a).map(([name, count], i) => {
+                          const chipColors = ["rgba(59,130,246,0.1)","rgba(139,92,246,0.1)","rgba(16,185,129,0.1)","rgba(233,160,32,0.1)"];
+                          const textColors = ["var(--t-blue)", ARC2, HIT, ARC3];
+                          const borderColors = ["rgba(59,130,246,0.25)","rgba(139,92,246,0.25)","rgba(16,185,129,0.25)","rgba(233,160,32,0.25)"];
+                          return (
+                            <span key={name} className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full"
+                              style={{ background: chipColors[i % 4], color: textColors[i % 4], border: `1px solid ${borderColors[i % 4]}` }}>
+                              {name}
+                              <span className="text-[9px] font-bold opacity-70">{count}</span>
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
