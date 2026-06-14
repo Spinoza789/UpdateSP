@@ -1027,7 +1027,7 @@ export default function GbTestingPool() {
                       const pct = totalVotes > 0 ? (v.totalVotes / totalVotes) * 100 : 0;
                       const barColor = i === 0 ? "rgba(59,130,246,0.7)" : i === 1 ? "rgba(139,92,246,0.55)" : "rgba(148,163,184,0.35)";
                       return (
-                        <div key={v.peptideName} className="flex items-center gap-2">
+                        <div key={v.peptideName} className="flex items-center gap-2 mb-[10px]">
                           <span className="text-[10px] shrink-0 w-28 truncate" style={{ color: "var(--t-muted)" }}>{v.peptideName}</span>
                           <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(148,163,184,0.12)" }}>
                             <motion.div className="h-full rounded-full"
