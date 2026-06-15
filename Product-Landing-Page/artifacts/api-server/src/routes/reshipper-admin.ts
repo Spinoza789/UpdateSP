@@ -373,9 +373,11 @@ router.patch("/admin/orders/:orderId/reassign-reshipper", async (req, res): Prom
   if (!order) { res.status(404).json({ error: "Order not found" }); return; }
 
   if (reshipperUsername === null || reshipperUsername === "") {
-    await db.update(ordersTable).set({ reshipperUsername: null }).where(eq(ordersTable.id, orderId));
+    // Also clear countryLegId so the fallback leg lookup in the orders list
+    // (gbReshippersTable joined by gbId::country) can no longer re-apply a reshipper.
+    await db.update(ordersTable).set({ reshipperUsername: null, countryLegId: null }).where(eq(ordersTable.id, orderId));
     writeLog("change", "info", "reshipper_reassigned", `Admin (manual override) cleared reshipper for order ${orderId}`, { orderId, gbId: order.groupBuyId, country: order.shippingCountry }).catch(() => {});
-    res.json({ ok: true, reshipperUsername: null });
+    res.json({ ok: true, reshipperUsername: null, countryLegId: null });
     return;
   }
 
@@ -437,7 +439,12 @@ router.post("/admin/orders/bulk-reassign-reshipper", async (req, res): Promise<v
       if (!order) { results.push({ orderId, ok: false, error: "Not found" }); continue; }
 
       await db.update(ordersTable)
-        .set({ reshipperUsername: clearing ? null : reshipperUsername })
+        .set({
+          reshipperUsername: clearing ? null : reshipperUsername,
+          // Also clear countryLegId when clearing so the fallback leg lookup
+          // (gbReshippersTable by gbId::country) can't re-apply a reshipper.
+          ...(clearing ? { countryLegId: null } : {}),
+        })
         .where(eq(ordersTable.id, orderId));
       results.push({ orderId, ok: true });
     } catch {

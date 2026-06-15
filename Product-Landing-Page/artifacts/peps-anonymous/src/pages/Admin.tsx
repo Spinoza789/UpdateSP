@@ -803,7 +803,14 @@ function OrdersTab({ secret }: { secret: string }) {
         setReassignResult(prev => ({ ...prev, [orderId]: { ok: false, text: data.error || "Failed to reassign" } }));
       } else {
         const newUsername = data.reshipperUsername ?? null;
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, reshipperUsername: newUsername } : o));
+        // Also clear countryLegId locally when clearing so the fallback
+        // leg lookup can't re-populate the reshipper on the next render.
+        const newCountryLegId = newUsername === null ? null : undefined;
+        setOrders(prev => prev.map(o => o.id === orderId ? {
+          ...o,
+          reshipperUsername: newUsername,
+          ...(newCountryLegId === null ? { countryLegId: null } : {}),
+        } : o));
         setReassignResult(prev => ({ ...prev, [orderId]: { ok: true, text: newUsername ? `Assigned to ${newUsername} ✓` : "Reshipper cleared ✓" } }));
         setReassignOpen(prev => ({ ...prev, [orderId]: false }));
         setTimeout(() => setReassignResult(prev => ({ ...prev, [orderId]: { ok: false, text: "" } })), 3000);
@@ -1443,6 +1450,26 @@ function OrdersTab({ secret }: { secret: string }) {
         setMsg(`Assigned ${successCount} order${successCount !== 1 ? "s" : ""} to ${bulkReshipper} ✓`);
         setSelected(new Set());
         setBulkReshipper("");
+      }
+    } finally { setBulkReshipperApplying(false); }
+  };
+
+  const bulkClearReshipper = async () => {
+    if (selected.size === 0) return;
+    setBulkReshipperApplying(true);
+    try {
+      const res = await fetch(apiUrl("/admin/orders/bulk-reassign-reshipper"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+        body: JSON.stringify({ orderIds: [...selected], reshipperUsername: null }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const successCount = data.results.filter((r: any) => r.ok).length;
+        const ids = new Set(selected);
+        setOrders(prev => prev.map(o => ids.has(o.id) ? { ...o, reshipperUsername: null, countryLegId: null } : o));
+        setMsg(`Cleared reshipper from ${successCount} order${successCount !== 1 ? "s" : ""} ✓`);
+        setSelected(new Set());
       }
     } finally { setBulkReshipperApplying(false); }
   };
@@ -2549,6 +2576,10 @@ function OrdersTab({ secret }: { secret: string }) {
             <Button size="sm" variant="outline" onClick={bulkAssignReshipper} disabled={!bulkReshipper || bulkReshipperApplying} className="gap-1.5 h-8 text-xs">
               {bulkReshipperApplying ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
               Assign
+            </Button>
+            <Button size="sm" variant="outline" onClick={bulkClearReshipper} disabled={bulkReshipperApplying || selected.size === 0} className="gap-1.5 h-8 text-xs text-destructive border-destructive/40 hover:bg-destructive/5">
+              {bulkReshipperApplying ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+              Clear
             </Button>
           </div>
           <Button size="sm" variant="outline" onClick={exportSelected} className="gap-1.5">
