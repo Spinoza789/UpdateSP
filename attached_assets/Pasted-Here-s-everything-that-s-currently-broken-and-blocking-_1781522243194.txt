@@ -1,0 +1,25 @@
+Here's everything that's currently broken and blocking the import from running. The good news: it's all structural/setup, not a problem with your actual code.
+
+The root cause: the project got imported one level too deep
+Your real app lives in Product-Landing-Page/ (that folder has your artifacts/, lib/, scripts/, schema, etc.), but Replit set up the workspace at the level above it (/home/runner/workspace). So now there are two competing project setups fighting each other:
+
+File	Root (/workspace)	Real project (Product-Landing-Page/)
+package.json	a wrapper that cds into the subfolder	the actual one
+pnpm-workspace.yaml	points at Product-Landing-Page/...	points at local artifacts/*
+.replit	the active one	a stale leftover
+start.sh	wrapper	the real one
+Everything technically points down into the subfolder, but it's fragile and confusing, and it's creating the side problems below.
+
+The specific things stopping it from running
+Dependencies were never installed. There's no node_modules anywhere — not at the root, not in Product-Landing-Page/. That's why every workflow dies with tsx: not found and vite: not found. This is the #1 blocker. Nothing can run until a pnpm install succeeds.
+
+A duplicate stub of mockup-sandbox at the root. There's a half-empty artifacts/mockup-sandbox/ at the top level (only some .tsx mockup files, no package.json). The real one is in Product-Landing-Page/artifacts/mockup-sandbox. The root copy is an orphan that isn't part of any workspace and just adds confusion.
+
+Redundant, conflicting workflows. You have five workflows, several of which overlap — e.g. both Product-Landing-Page/artifacts/mockup-sandbox: Component Preview Server and artifacts/mockup-sandbox: Component Preview Server, plus separate per-artifact workflows that duplicate what "Start application" already does. They all fail for the same reason (no deps), but the duplication needs cleaning up.
+
+Nothing is committed to git yet, and there's a stray index.lock in the repo root (a leftover git lock file). Everything shows as untracked.
+
+What I'd recommend
+The cleanest fix is to flatten the structure — move everything from Product-Landing-Page/ up into the workspace root, delete the duplicate root scaffolding (the stub artifacts/, the wrapper config files), run a proper pnpm install, and collapse the workflows down to the two you actually need (the app + the mockup server).
+
+Want me to go ahead and do that flatten-and-install cleanup? It's a fairly mechanical fix and should get all the workflows green. I'll also need to confirm a few environment variables (DATABASE_URL, ADMIN_SECRET, etc.) are set before the app will fully boot — but the structural fix comes first.
