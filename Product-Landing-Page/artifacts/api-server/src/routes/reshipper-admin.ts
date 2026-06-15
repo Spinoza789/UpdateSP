@@ -373,11 +373,11 @@ router.patch("/admin/orders/:orderId/reassign-reshipper", async (req, res): Prom
   if (!order) { res.status(404).json({ error: "Order not found" }); return; }
 
   if (reshipperUsername === null || reshipperUsername === "") {
-    // Also clear countryLegId so the fallback leg lookup in the orders list
-    // (gbReshippersTable joined by gbId::country) can no longer re-apply a reshipper.
-    await db.update(ordersTable).set({ reshipperUsername: null, countryLegId: null }).where(eq(ordersTable.id, orderId));
+    // Set reshipperCleared=true so the gbReshippers fallback (gbId::country lookup)
+    // is permanently suppressed for this order, even after a page refresh.
+    await db.update(ordersTable).set({ reshipperUsername: null, reshipperCleared: true, countryLegId: null }).where(eq(ordersTable.id, orderId));
     writeLog("change", "info", "reshipper_reassigned", `Admin (manual override) cleared reshipper for order ${orderId}`, { orderId, gbId: order.groupBuyId, country: order.shippingCountry }).catch(() => {});
-    res.json({ ok: true, reshipperUsername: null, countryLegId: null });
+    res.json({ ok: true, reshipperUsername: null, reshipperCleared: true });
     return;
   }
 
@@ -390,8 +390,8 @@ router.patch("/admin/orders/:orderId/reassign-reshipper", async (req, res): Prom
   if (!account) { res.status(404).json({ error: "Reshipper account not found" }); return; }
   if (account.reshipperStatus !== "approved") { res.status(400).json({ error: "Account is not an approved reshipper" }); return; }
 
-  // Update the order row directly — no GB+country slot modification
-  await db.update(ordersTable).set({ reshipperUsername }).where(eq(ordersTable.id, orderId));
+  // Update the order row directly — reset reshipperCleared since a reshipper is now assigned
+  await db.update(ordersTable).set({ reshipperUsername, reshipperCleared: false }).where(eq(ordersTable.id, orderId));
 
   writeLog("change", "info", "reshipper_reassigned", `Admin (manual override) force-assigned reshipper @${reshipperUsername} to order ${orderId}`, { orderId, gbId: order.groupBuyId, country: order.shippingCountry, reshipperUsername, manualOverride: true }).catch(() => {});
 
@@ -441,8 +441,9 @@ router.post("/admin/orders/bulk-reassign-reshipper", async (req, res): Promise<v
       await db.update(ordersTable)
         .set({
           reshipperUsername: clearing ? null : reshipperUsername,
-          // Also clear countryLegId when clearing so the fallback leg lookup
-          // (gbReshippersTable by gbId::country) can't re-apply a reshipper.
+          // reshipperCleared=true suppresses the gbReshippers fallback (gbId::country
+          // lookup) permanently so clearing survives page refreshes.
+          reshipperCleared: clearing ? true : false,
           ...(clearing ? { countryLegId: null } : {}),
         })
         .where(eq(ordersTable.id, orderId));

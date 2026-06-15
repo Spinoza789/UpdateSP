@@ -58,6 +58,7 @@ export const ordersTable = pgTable("orders", {
   shippingCountry: text("shipping_country"),
   countryLegId: text("country_leg_id").references(() => gbCountryLegsTable.id, { onDelete: "set null" }), // nullable — set for orders in country-legs-enabled GBs
   reshipperUsername: text("reshipper_username"),
+  reshipperCleared: boolean("reshipper_cleared").notNull().default(false), // true = admin explicitly removed reshipper; suppresses gbReshippers fallback
   shippingCity: text("shipping_city"),
   ipAddress: text("ip_address"),
   shippingPostcode: text("shipping_postcode"),

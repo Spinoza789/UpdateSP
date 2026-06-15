@@ -560,8 +560,11 @@ router.get("/admin/orders", async (req, res): Promise<void> => {
 
   const formatted = orders.map((o) => {
     const currency = o.groupBuyId ? (gbCurrencyMap.get(o.groupBuyId) ?? null) : null;
+    // Only fall back to the gbReshippers leg lookup when:
+    //  • no direct reshipperUsername is set, AND
+    //  • the admin hasn't explicitly cleared the reshipper (reshipperCleared=true)
     const reshipperUsername = o.reshipperUsername
-      ?? ((o.groupBuyId && o.shippingCountry)
+      ?? ((!o.reshipperCleared && o.groupBuyId && o.shippingCountry)
         ? (reshipperMap.get(`${o.groupBuyId}::${o.shippingCountry}`) ?? null)
         : null);
     const accountCountry = accountCountryMap.get(o.telegramUsername) ?? null;
