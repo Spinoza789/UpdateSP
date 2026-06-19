@@ -1,0 +1,47 @@
+Here's everything from the last two days, grouped by what it actually does for you. (Lots of the raw entries are repeats from re-runs and "Published your App" deploys, so I've combined them.)
+
+June 17
+Mostly setup/checkpoint work and a deployment. Nothing major feature-wise.
+June 18 (the busy day)
+Group buys
+
+Added a percentage option for group-buy admin fees (not just a flat amount) and fixed related inconsistencies.
+Filled in some missing fee configuration.
+Fixed two crashes in the admin/organiser group-buy panel (the "A.map is not a function" error and a crash when the server returned an error instead of a list).
+Lab tests
+
+Made lab test images show up that previously weren't displaying.
+Fixed broken preview images and hid an internal import note from the public view.
+Sped up the lab tests page by making the data it loads much smaller.
+Orders & parcels
+
+Improved parcel visibility for reshippers and for members who had unassigned orders.
+Admin & member tools
+
+Added the ability for admins to send direct Telegram messages to members.
+Added a broadcast to message people who haven't voted yet in a testing pool.
+Added bulk role management so admins can assign or revoke roles for many people at once.
+Navigation
+
+Fixed community testing links so logged-out users land on the right page.
+Behind the scenes
+
+Added new admin/home design components to the preview/mockup tool.
+Several app deployments.
+June 19 (today)
+Orders
+
+Added an option to view all orders for dispatch, with packing slips.
+Cleanup
+
+Removed all the DNA / SNP features and their database tables and dependencies (no longer needed).
+Removed the health section from the public navigation.
+Crypto payments
+
+Fixed the dollar→crypto conversion so the amount shown to the customer matches what's verified on the blockchain (added fields to remember the currency, exchange rate, and dollar amount on each order).
+Design tooling
+
+Updated the mockup previews with new layout and order-redesign components.
+Git / sync (the part we just finished)
+
+Resolved the merge conflict in the auto-generated component list, helped you clear the stuck lock file, and gave you the commands to finish the half-done merge so syncing works again
