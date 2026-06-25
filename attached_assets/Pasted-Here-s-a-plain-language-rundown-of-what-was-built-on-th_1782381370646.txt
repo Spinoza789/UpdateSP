@@ -1,0 +1,34 @@
+Here's a plain-language rundown of what was built on the project over the last two days (June 23–25). I've grouped it by area.
+
+Group orders & "top-ups" (Jun 25 — most recent)
+
+Fixed the add-items-to-a-paid-order flow so a top-up permanently keeps free shipping and the original delivery address (closing the loophole we just discussed).
+Wholesale shared-order page (Jun 24 — the biggest chunk)
+
+Redesigned the whole page into a cleaner, step-by-step layout with collapsible sections, tailored to each person's role (buyer, organiser, reshipper).
+Added a guided onboarding overlay to walk people through it.
+Added "save and resume" so a part-finished wholesale order isn't lost.
+Built a peer-to-peer fee system, with separate payment options for organiser fees and reshipper fees, and folded the reshipper fee into a full "onward shipping" flow.
+Invites (Jun 24)
+
+Added a one-time "invite others" popup after someone saves items on a shared order — shown at most once per account, even across devices.
+Group buys & members (Jun 24)
+
+Added the ability to archive and unarchive group buys.
+Added a filter to show all members, fixed wholesale approval not appearing to save, removed a duplicate badge, and tidied when the wholesale tab shows.
+Announcements (Jun 24)
+
+Announcements now send immediately, and you can send a test message before broadcasting to everyone.
+Contributions (Jun 23)
+
+Added a panel to manage pending group-buy contributions, showing the correct currency and submission time.
+Fixed testing data not loading correctly.
+Security (Jun 24)
+
+Moved sensitive wallet information into protected environment secrets and removed the old overrides.
+Database changes specifically (3 total, all additive — nothing deleted):
+
+addition_of_order_id column on the orders table (Jun 25) — marks a top-up.
+Created the missing wholesale_share_messages table (Jun 24) — fixed a group-chat 500 error.
+Added fee and address columns to the shared order members table (Jun 24).
+A few notes for honesty: the history also contains "Published your App" entries (those are deployments, not code changes) and one rollback/restore. And this is the combined record on the main branch — some of it may have come from parallel task work, not only me. If you'd like, I can expand any one of these areas into more detail.
