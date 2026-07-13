@@ -1,0 +1,43 @@
+Here's everything that was added for the Peppys integration:
+
+New DB Table
+peppys_articles — created via direct SQL DDL (not drizzle push)
+
+CREATE TABLE peppys_articles (
+  id            TEXT PRIMARY KEY,
+  title         TEXT NOT NULL,
+  url           TEXT NOT NULL,
+  content       TEXT NOT NULL,
+  category_name TEXT,
+  tags          TEXT NOT NULL DEFAULT '[]',
+  post_count    INTEGER NOT NULL DEFAULT 1,
+  imported_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_peppys_imported ON peppys_articles (imported_at);
+
+Nothing was removed or modified in the existing DB schema.
+
+New Files Added
+File	What it does
+lib/db/src/schema/peppys_articles.ts	Drizzle ORM schema definition for the table above
+artifacts/api-server/src/lib/peppys-search.ts	PostgreSQL full-text search over peppys_articles, used by Sage to find relevant community content
+artifacts/api-server/src/routes/peppys.ts	4 API endpoints (see below)
+API Endpoints Added
+All mounted under /api:
+
+POST /api/peppys/import — bookmarklet receiver. Accepts a forum thread (id, title, url, content, category, tags, postCount) and upserts it. Requires X-Admin-Secret header. CORS-allows https://chat.peppys.org.
+GET /api/peppys/articles — lists imported articles (admin only)
+DELETE /api/peppys/articles/:id — deletes one article (admin only)
+GET /api/peppys/bookmarklet — renders an HTML setup page with a drag-to-bookmark link (admin only)
+Modified Files
+File	Change
+lib/db/src/schema/index.ts	Added peppysArticlesTable to the barrel export
+artifacts/api-server/src/routes/index.ts	Mounted the peppys router
+artifacts/api-server/src/routes/blood-tests.ts	Wired searchPeppysArticles() into Sage's context-building — when a user asks a question, Sage now searches peppys_articles and injects matching community threads into its system prompt alongside other context
+How to replicate in another project
+Run the CREATE TABLE SQL above against the new project's DB
+Copy the 3 new files across
+Add peppysArticlesTable to the DB schema barrel export
+Mount the peppys router in the API routes index
+Call searchPeppysArticles(userMessage) inside whatever function builds Sage's system prompt/context, and inject results as a "Community knowledge" block
