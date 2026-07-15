@@ -1,0 +1,106 @@
+Here's everything — DB, backend, and frontend — organized by feature area:
+
+1. Multi-Chain Crypto Payments
+DB changes:
+
+orders.payment_crypto_network — new column to store which chain was used
+cryptoOptions jsonb array added to accounts, group_buys, gb_reshippers payment config fields
+Backend:
+
+Updated crypto payment verification to resolve wallet address by {currency, network} pair from a CHAIN_WALLET_CONFIGS map
+verifyTransaction routes updated to accept and match network alongside currency
+Rate-lock (paymentUsdAmount) now clears on any total-changing edit unless the order is already confirmed/paid
+Verification uses ~1% tolerance (was accidentally wider before)
+Frontend:
+
+Payment panel redesigned to show separate option per chain (e.g. USDT on ETH, USDT on TRX, USDC on ETH)
+Each option shows a network badge
+TON and XMR removed from the options list
+Order detail page updated to show which network was used
+2. Wholesale Access Requests
+DB changes:
+
+New table: wholesale_access_requests (see previous message for full schema)
+Backend:
+
+New routes for submitting, viewing, confirming, and rejecting access requests
+Admin toggle to enable/disable the request system via site config
+Optional test-payment mode flag
+Confirmed requests auto-grant the isWholesale flag on the account
+Frontend:
+
+New "Wholesale Access" section in the customer account portal — apply, submit a payment TX hash, see status
+Editable amount field (with cents support)
+Admin panel: new "Access Requests" tab with approve/reject actions
+Admin panel light mode visibility fixes on the payment collection banner
+3. Organiser & Admin Order Deletion
+DB changes: None — used existing soft-delete/hard-delete patterns
+
+Backend:
+
+New endpoint for organisers to delete orders from their own GB
+Admin panel endpoint updated to support the same
+Frontend:
+
+GB organiser panel: delete button per order with confirmation
+Admin panel: delete order action added to group buy order management
+4. Lead Payment Collection (Wholesale Shared Orders)
+DB changes:
+
+wholesale_shares.lead_revolut_handle
+wholesale_shares.lead_paypal_email
+wholesale_shares.lead_crypto_options (jsonb array)
+Backend:
+
+PUT endpoint for shared order settings now accepts and persists these fields
+buildShareResponse exposes them to members (peer-to-peer display only — never in order totals)
+Frontend:
+
+Shared order management page: leads can add Revolut handle, PayPal email, and multiple crypto wallets
+Members see payment instructions when a lead fee is set
+5. Sage AI — Full Page & Redesign
+DB changes: None for the page itself (conversations were already stored)
+
+Backend:
+
+New route file: artifacts/api-server/src/routes/peppys.ts
+POST /api/peppys/import — bookmarklet receiver
+GET /api/peppys/articles — list imported articles
+DELETE /api/peppys/articles/:id — delete one
+GET /api/peppys/bookmarklet — admin setup HTML page
+New lib: peppys-search.ts — PostgreSQL full-text search over peppys_articles
+blood-tests.ts (Sage discuss route) updated to call searchPeppysArticles() and inject results into the system prompt context
+Frontend — SageChat.tsx full redesign:
+
+Layout changed from modal/overlay to full-page ChatGPT-style split layout
+Left sidebar (desktop, ≥1024px):
+Collapses to 52px icon-only strip when idle
+Smoothly expands to 240px on hover (CSS transition)
+Shows conversation list, new chat, search icons
+Tooltips on icons when collapsed
+Mobile:
+Top bar with new chat + history buttons
+History overlay on mobile
+Input box padded above the floating pill nav (calc(70px + env(safe-area-inset-bottom)))
+Landing state: "How can I help you today?" (was "What's on your mind today?")
+Suggestion chips: Explain bloodwork / Review compounds / Build a protocol
+Active chat: Sage avatar + name label per message, full markdown rendering
+Frontend — SagePage.tsx:
+
+New dedicated /sage route
+Wired up navProps so the mobile bottom nav (pill) renders on the page
+goSection navigates back to the portal correctly
+Frontend — Navigation:
+
+Sage AI added to desktop sidebar under "Research" section
+Sage AI added to the mobile "More" menu under "Research"
+6. Sage Charts
+New component: SageTrendChart
+
+Sage can now return chart data in its response (via CHARTS_JSON_START block in the stream)
+Charts render inline in the chat as line/bar trend charts
+Mockup sandbox components added for prototyping chart variants
+7. Bug Fixes & Small Touches
+Payment network on order detail — the network (e.g. "ETH ERC-20") was missing from the payment info shown on order details — fixed
+Git rebase conflict — resolved a 3-way conflict in the auto-generated mockup-components.ts file (kept all components, fixed ordering of sage-chart entries)
+Mockup sandbox component map — updated to include all new mockup components from the day (gb-create, home-atmosphere, home-concepts, home-concepts-v2, sage-chart)

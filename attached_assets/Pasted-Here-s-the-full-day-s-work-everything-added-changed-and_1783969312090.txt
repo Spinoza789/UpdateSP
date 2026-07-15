@@ -1,0 +1,86 @@
+Here's the full day's work — everything added, changed, and removed:
+
+DB Schema Changes
+New columns added
+orders table
+
+payment_crypto_network (text) — stores which blockchain network was used for crypto payment (e.g. ETH, BSC, TRX)
+accounts table
+
+pool_leader_crypto_options (jsonb) — array of {currency, network, walletAddress} for pool leaders accepting multi-chain crypto
+paymentOptions.cryptoOptions (jsonb field within existing jsonb) — same multi-chain array added to organiser + reshipper payment config
+group_buys table
+
+paymentOptions.cryptoOptions (jsonb field) — multi-chain wallet array for GB payment
+gb_reshippers table
+
+paymentOptions.cryptoOptions (jsonb field) — multi-chain wallet array for reshippers
+wholesale_shares table
+
+lead_revolut_handle (text) — order lead's Revolut handle shown to members
+lead_paypal_email (text) — order lead's PayPal email shown to members
+lead_crypto_options (jsonb) — order lead's crypto wallets array {currency, network, walletAddress}
+New tables
+wholesale_access_requests
+
+CREATE TABLE wholesale_access_requests (
+  id                    SERIAL PRIMARY KEY,
+  account_username      TEXT NOT NULL REFERENCES accounts(telegram_username) ON DELETE CASCADE ON UPDATE CASCADE,
+  amount_usd            INTEGER NOT NULL,
+  status                TEXT NOT NULL DEFAULT 'pending',  -- pending / confirmed / rejected
+  payment_tx_hash       TEXT,
+  payment_crypto_network TEXT,
+  payment_crypto_currency TEXT,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  confirmed_at          TIMESTAMPTZ,
+  admin_username        TEXT,
+  rejection_reason      TEXT
+);
+
+peppys_articles
+
+CREATE TABLE peppys_articles (
+  id            TEXT PRIMARY KEY,
+  title         TEXT NOT NULL,
+  url           TEXT NOT NULL,
+  content       TEXT NOT NULL,
+  category_name TEXT,
+  tags          TEXT NOT NULL DEFAULT '[]',
+  post_count    INTEGER NOT NULL DEFAULT 1,
+  imported_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_peppys_imported ON peppys_articles (imported_at);
+
+Features Added
+Multi-chain Crypto Payments
+Customers can now choose a specific chain when paying with crypto (ETH, BSC, TRX, SOL, etc.)
+Each wallet config now supports multiple {currency, network, walletAddress} entries
+Network shown on the payment screen with badges; network stored on the order for verification
+TON and XMR were removed as payment options
+Wholesale Access Requests
+Customers can apply for wholesale access and pay a fee (crypto) to unlock it
+Two-step flow: submit request → pay → admin confirms
+Optional test payment mode for admins to trial the flow
+Admin panel has a new "Access Requests" tab to review, confirm, or reject
+Admins can toggle whether the access request system is enabled
+Organiser Delete Orders
+Group buy organisers can now delete orders from their own GB
+Admin panel also got the same delete capability
+Lead Payment Collection (Wholesale Shared Orders)
+Order leads can now set up Revolut, PayPal, and multi-chain crypto payment details on their shared order
+Members see these details so they know where to send the lead's organiser fee (peer-to-peer, never in order totals)
+Sage AI — Full rebuild
+Dedicated /sage page with a full-page ChatGPT-style layout
+Left sidebar (desktop) with conversation history — collapses to icon strip on idle, expands on hover
+Mobile bottom nav wired up on the Sage page
+Chat input sits above mobile nav
+Prompt changed to "How can I help you today?"
+Sage now searches peppys_articles (Peppys forum content) and injects relevant threads into its context alongside other knowledge
+Bookmarklet tool at /api/peppys/bookmarklet for importing forum threads
+Sage Charts
+New SageTrendChart component — Sage can now return inline charts in its responses
+Navigation
+Sage AI added to the main desktop sidebar and mobile menu under "Research"
+Nothing was deleted from the DB
+All changes were purely additive — new columns (nullable/defaulted), new tables. No existing columns or tables were dropped.
