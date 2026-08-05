@@ -1,0 +1,25 @@
+Migrations are generated based on changes made by the agent in your app, learn more.
+ALTER TABLE "organiser_todos" DROP CONSTRAINT "organiser_todos_group_buy_id_group_buys_id_fk";
+ALTER TABLE "gb_entry_fee_payments" DROP CONSTRAINT "gb_entry_fee_payments_group_buy_id_group_buys_id_fk";
+ALTER TABLE "wholesale_access_requests" DROP CONSTRAINT "wholesale_access_requests_account_username_accounts_telegram_us";
+ALTER TABLE "wholesale_share_invite_uses" ALTER COLUMN "id" SET DATA TYPE integer;
+ALTER TABLE "wholesale_share_invite_uses" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (sequence name "wholesale_share_invite_uses_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1);
+ALTER TABLE "organiser_todos" ADD CONSTRAINT "organiser_todos_group_buy_id_fkey" FOREIGN KEY ("group_buy_id") REFERENCES "public"."group_buys"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "gb_entry_fee_payments" ADD CONSTRAINT "gb_entry_fee_payments_group_buy_id_fkey" FOREIGN KEY ("group_buy_id") REFERENCES "public"."group_buys"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "wholesale_access_requests" ADD CONSTRAINT "wholesale_access_requests_account_username_fkey" FOREIGN KEY ("account_username") REFERENCES "public"."accounts"("telegram_username") ON DELETE cascade ON UPDATE cascade;
+CREATE INDEX "routing_history_order_id_idx" ON "routing_history" USING btree ("order_id");
+CREATE INDEX "wsil_share_id_idx" ON "wholesale_share_invite_links" USING btree ("share_id");
+CREATE INDEX "wsiu_link_code_idx" ON "wholesale_share_invite_uses" USING btree ("link_code");
+CREATE INDEX "idx_turnover_log_code" ON "inventory_turnover_log" USING btree ("qiyunle_code");
+You may notice a temporary downtime of your deployment. What's happening?
+
+Migrations failed validation, please review
+
+Your database schema changes conflict with existing production data and could not be applied, learn more. To resolve this, you can:
+
+Copy your development database schema & data to production.
+
+Cancel deployment and retry once your schema conflicts are resolved.
+Failed to run database migration statement
+ALTER TABLE "wholesale_share_invite_uses" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (sequence name "wholesale_share_invite_uses_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1);
+relation "wholesale_share_invite_uses_id_seq" already exists
