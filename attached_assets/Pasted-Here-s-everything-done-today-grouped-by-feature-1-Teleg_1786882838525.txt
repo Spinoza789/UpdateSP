@@ -1,0 +1,38 @@
+Here's everything done today, grouped by feature:
+
+1. Telegram Bot — Active Group Buy buttons
+Changed the button label from 🛒 Order — {name} to 🟢 {name} for both the Active Group Buys and My Group Buys menus
+Changed the button type from a plain URL link to a Telegram Mini App (web_app) so the order page opens inside Telegram rather than launching an external browser
+2. Telegram Bot — Remove "Ask Sage" from main menu
+Removed the 🤖 Ask Sage button row from the bot's main menu keyboard
+3. Telegram Bot — Wholesale support ticket picker
+When a customer raises a support ticket and selects "Wholesale", instead of jumping straight to a free-text subject field, a picker now appears listing all their active wholesale share orders
+Each share is shown with a status emoji (🟢 locked, 🔒 etc.) and "Order #XYZ"
+Added back-navigation (tc:back:ws) and the confirmation message now includes the share name
+4. Telegram Bot — Group Buy support ticket sub-menu
+After a customer picks a GB for a support ticket, a sub-menu now appears instead of jumping straight to subject: 📦 Order or 💬 Other
+"Order" routes to issueType: order_issue; "Other" routes to issueType: general_support
+Added back-navigation from the sub-menu to the GB list
+5. Telegram image per Group Buy
+Schema: Added telegram_image_url TEXT column to group_buys table (startup migration)
+Admin UI: Each GB card in the admin list now has a 📷 Telegram image row — upload any image file, see a thumbnail preview, swap or remove it
+Bot: GBs with an image now show a detail card first (photo + name + description + close date) with a 🛒 Order now Mini App button, instead of going directly to the order page. GBs without an image still open the order page directly
+Added sendTelegramPhoto() helper to the Telegram lib — handles both public HTTPS URLs and base64 data URLs via multipart upload, with a text fallback if the photo send fails
+6. Multi-country reshipper assignment
+Schema: Added countries JSONB column to gb_reshippers table (startup migration)
+Admin UI: Replaced the single country dropdown in the "Assign Reshipper" form with a full multi-country picker:
+🇪🇺 Add all EU button (one click adds all 27 EU member states)
+Remove EU button when EU countries are present
+Individual country picker + Add button for one-offs
+Country chips with ✕ to remove individually (EU = blue, others = grey)
+The existing assignment card now shows all covered countries as colour-coded chips with a count badge
+Order routing: Updated all 4 spots in admin.ts that match orders to reshippers — the system now expands the full countries array so an order from any covered country routes correctly to the reshipper
+7. UK / GB country code alias
+"UK" and "GB" are now treated as the same country everywhere in the system
+Fixed in country-utils.ts via a CODE_ALIASES map and an expandCountryAliases() helper — one change that propagates to all callers:
+Join gate: a user with account.country = "UK" can now join a GB that allows "GB"
+allowedCountries / excludedCountries checks: both codes match
+Reshipper routing: the in-memory reshipper map now stores entries for both gbId::GB and gbId::UK, and shippingCountry is normalised before lookup — so orders stored with either code route to the correct reshipper
+Database changes (2 columns, both already live)
+ALTER TABLE group_buys ADD COLUMN IF NOT EXISTS telegram_image_url TEXT;
+ALTER TABLE gb_reshippers ADD COLUMN IF NOT EXISTS countries JSONB;
