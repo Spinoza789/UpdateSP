@@ -1,0 +1,52 @@
+Full Session Summary
+1 — Admin GB Products Panel: Bulk Actions
+Admin → Group Buys → [GB] → Products tab
+
+Vendor filter — dropdown to show only products from a chosen vendor
+Source filter — toggle between "All sources", "Admin-added (global)" (where sourceGroupBuyId is null), and "Organiser-added (GB-private)" (where sourceGroupBuyId is set) — lets you see only what you added vs what an organiser pulled in from the same vendor
+Multi-select checkboxes — per-row checkboxes plus a header checkbox to select/deselect all visible products at once
+Bulk enable all / disable all — acts on all products currently visible (respects active filters)
+Bulk enable selected / disable selected — acts on checked rows only
+Bulk half-kit toggle — enable or disable half-kits for all selected products in one click
+Bulk max-per-customer — type a number (or clear to remove the limit) and apply to all selected products at once
+GB-private products get an orange "GB-private" badge for visual distinction in the combined view
+Files changed: ProductsPanel.tsx, shared/core.tsx (added sourceGroupBuyId?: string | null to the Product interface)
+
+2 — GB Card Image
+Admin and organisers can upload a photo that appears on the group buy card.
+
+Admin DetailsPanel (General tab) — new "Card Image" section with file picker, live preview, replace/remove, and save; uses the existing admin PATCH endpoint which already supported telegramImageUrl
+Organiser GbSettingsTab — new "Card image" rail section with the same upload/preview/save flow, wired to the organiser PATCH endpoint (which previously ignored this field)
+Public API — telegramImageUrl added to GB_SELECT_COLS so /api/group-buys now returns it to customers
+Customer Portal (aurora cards) — when an image is set, the icon tile is replaced by a clickable thumbnail; clicking opens a full-screen zoomable lightbox
+Groups page cards — thumbnail appears top-right; close-date badge stacks neatly below it when both are present
+"Telegram image" → "Card image" label renamed in the admin GB list
+GroupBuySummary type updated with telegramImageUrl?: string | null
+Files changed: group-buys.ts (API), organiser.ts (API), use-account.ts, CustomerPortal.tsx, Groups.tsx, GbSettingsTab.tsx, GbSettingsTab.css, DetailsPanel.tsx, GbList.tsx
+
+3 — Fulfilment Board: Reshipper Country Flags
+Admin → Group Buys → [GB] → Fulfilment → By Reshipper
+
+Each reshipper column now shows all countries they are assigned to fulfil — e.g. if fazi covers the EU, their column displays a row of individual EU country flags below the @username.
+
+Backend computes reshipperCountries from the multi-value countries jsonb array on the reshipper assignment; falls back to the single country hub field for older records
+Up to 12 country flags shown inline; +N indicator for overflow
+The existing order-country breakdown (actual shipping countries × count) remains below as before
+RoutingGroup frontend type updated with reshipperCountries: string[] | null
+Files changed: admin.ts (API), AdminGbFulfilment.tsx
+
+4 — TG Log: Recipient Username Fix
+Admin → Tg Log
+
+The log was showing raw numeric Telegram chat IDs (e.g. @6606206793) instead of usernames for messages sent via broadcasts and automated nudges.
+
+Root cause: those call paths called sendTelegramMessage without a logCtx.recipientUsername, so the log stored null and the UI fell back to recipientChatId
+Fix: in sendTelegramMessageFull (the single central send/log function), when recipientUsername is absent from the log context, a DB lookup by telegramChatId now resolves the account's username before the log row is written — covers all future messages from every call path with no changes needed at each call site
+Files changed: telegram.ts
+
+Database Changes
+None this session. All fields used already existed:
+
+group_buys.telegram_image_url — already in schema and admin PATCH; only the organiser route and public API query were missing it
+gb_reshippers.countries (jsonb) — already in schema; only the board API wasn't reading it
+telegram_message_logs.recipient_username — already in schema; the fix enriches it at write time via a lookup, not a schema change
