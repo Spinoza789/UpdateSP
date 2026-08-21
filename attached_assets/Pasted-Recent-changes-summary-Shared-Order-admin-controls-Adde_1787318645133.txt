@@ -1,0 +1,57 @@
+Recent changes summary
+Shared Order admin controls
+Added protected admin controls for Shared Orders to:
+
+Edit member item quantities
+Add wholesale products
+Remove products
+Change total vendor shipping
+Redistribute shipping across members using the existing split mode
+Add a separate required admin fee
+Require an explanation for any positive admin fee
+Recalculate member subtotals and totals transactionally
+Prevent edits when any materialised member order is already paid, pending, test-confirmed, or otherwise non-unpaid
+Clear stale unpaid payment amounts after material changes
+Write an audit-log entry
+Send the affected member a Telegram notification after a successful database commit
+The admin detail response now also includes available catalogue products and adjustment information.
+
+Organiser payment section
+Added organiser-facing payment settings for:
+
+Crypto wallets and supported networks
+AnonPay wallet address
+PayPal
+Revolut
+Optional payment instructions
+The organiser shared-order payment summary can display the configured AnonPay wallet.
+
+Current rules-layout design
+Created a visual canvas comparison for the Order limits & rules area with three options:
+
+Grouped sections
+Accordion sections
+Two-column scan
+You selected Grouped sections. It has been approved visually, but it has not yet been integrated into the production admin page. The current canvas mockup is only a design prototype.
+
+Database changes
+The Shared Order adjustment work added these development database columns:
+
+wholesale_shares
+shipping_override
+wholesale_share_members
+admin_adjustment_fee
+admin_adjustment_message
+orders
+admin_adjustment_fee
+admin_adjustment_message
+These fields support the manual shipping override, required admin fee, and fee explanation stored on the affected member order.
+
+No production database migration or deployment was performed. The current rules-layout design work did not make any database changes.
+
+Verification completed
+API production compilation passed
+Frontend production build passed
+Shared Order adjustment tests passed: 27 tests
+Database columns confirmed in the development database
+Canonical Start application workflow restarted successfully
