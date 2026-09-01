@@ -1,0 +1,104 @@
+Summary of changes made today
+1. Group-buy add-on orders
+Added support for placing an additional order against an already-paid group-buy order.
+Add-ons are merged into the existing parent order rather than creating a separate active order.
+The parent order keeps its:
+Order code
+Original payment status
+Shipping address
+Delivery method
+Routing information
+Group-buy metadata
+The parent order totals and line items are increased by the add-on.
+Only the incremental add-on amount is charged.
+Existing parent balances are accumulated correctly when multiple add-ons are placed.
+Add-on submissions preserve the original locked order address and do not add duplicate shipping charges.
+Added validation and regression tests for parent-order eligibility and add-on total calculations.
+Added redirect handling after a merged add-on order is submitted.
+2. Payment and balance handling
+Added explicit outstanding-balance handling for add-ons.
+A paid group-buy order with a new unpaid add-on now shows:
+Original payment confirmed
+Original paid amount
+Pending add-on payment outstanding
+Add-on balance due
+The fully-paid payment panel is hidden while an add-on balance remains unpaid.
+Balance confirmation remains atomic and only clears the balance after successful confirmation.
+Confirmed orders no longer rewrite their original payment amount when the payment page loads.
+Removed the startup cleanup that was incorrectly clearing outstanding balances after a restart.
+Added tests covering:
+Paid parent plus unpaid add-on
+Settled balance behavior
+Protection against stale payment-lock rewrites
+Startup protection against destructive balance resets
+3. Order 11337 correction
+The development database record for order 11337 was corrected to:
+
+Payment status: confirmed
+Grand total: $460.00
+Original paid amount represented by the summary: $340.00
+Outstanding add-on balance: $120.00
+Balance payment status: unpaid
+Stale balance transaction hash: cleared
+Stale balance confirmation timestamp: cleared
+Payment lock amount: cleared so it cannot be mistaken for the new total
+The original confirmation and add-on audit history was not altered.
+
+4. Group-buy reporting
+Added group-buy breakdown reporting by:
+
+Customer country or region
+Product
+Quantity
+Payment status
+Product subtotals
+Shipping and total amounts
+The reporting was moved into:
+
+The admin group-buy Dashboard
+The organiser Summary view
+It was removed from the Orders tabs.
+
+5. AnonPay / Trocador payment flow
+Replaced the broken embedded AnonPay iframe flow.
+AnonPay now launches Trocador as a top-level page.
+Pending payment sessions can be restored when the customer returns.
+Added URL-building and redirect tests.
+Updated the payment interface copy from “Private crypto payment” to “AnonPay.”
+6. Balance-payment card design
+Iterated the card design through the approved orange/cream, teal, and website-blue directions.
+Added approved light and dark themes.
+Compact layout adjustments were made for mobile.
+Added the balance payment mockup and supporting assets.
+Added tests for the selected card colors, spacing, and copy.
+7. Documentation and project configuration
+Added the order-addition implementation plan and pending-add-on design specification.
+Updated project memory with the payment-balance/startup migration lesson.
+Updated Replit configuration as part of the day’s work.
+Added supporting visual assets and mockup files.
+Database changes
+Schema
+No new database tables or schema columns were added today.
+
+The existing payment fields, including amount_due, balance_payment_status, balance_tx_hash, and balance_confirmed_at, were reused.
+
+Data
+Only the development record for order 11337 was directly corrected. No production database changes were made.
+
+The destructive startup SQL that could erase outstanding balances was removed from the application code. Future startup runs will no longer recalculate or clear amount_due.
+
+Verification
+Completed successfully:
+
+API payment-integrity tests
+Add-on merge tests
+Frontend payment-summary tests
+API server build
+Frontend production build
+Desktop browser verification
+390px mobile browser verification
+Repeated hard-refresh verification
+Application restart persistence verification
+The project-wide typecheck still reports unrelated pre-existing errors in other parts of the frontend, but the changed API and frontend builds completed successfully.
+
+One remaining limitation: the current implementation separates the paid and pending amounts in the payment summary, but the more detailed persisted pending-add-on line-item model described in the design specification has not yet been implemented.
