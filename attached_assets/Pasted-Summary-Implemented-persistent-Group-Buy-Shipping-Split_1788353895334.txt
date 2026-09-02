@@ -1,0 +1,64 @@
+Summary
+Implemented persistent Group Buy Shipping Split settings for both organisers and backend admins.
+
+Application changes
+The shared Shipping Split tab now works in both modes:
+Organiser Group Buy dashboard
+Backend admin Group Buy detail page
+Added a new Shipping Split tab to the backend admin Group Buy navigation.
+Removed the older duplicate Shipping Split card from the admin Delivery panel.
+Saved Shipping Split settings are loaded automatically when the tab opens or refreshes.
+Manual order assignments are restored, including selected/unselected orders.
+Single-vial settings and selected single-vial products are restored.
+Order status and payment filters are restored.
+Admin and organiser shipping applications now persist the configuration together with the order updates.
+Admin shipping updates use the existing payment-adjustment safeguards and preserve/recalculate applicable admin fees.
+Database changes
+Added a new nullable JSONB column to the group_buys table:
+
+vendor_shipping_split jsonb
+
+It stores:
+
+Total shipping amount
+Equal percentage
+Quantity-weighted percentage
+Order status filter
+Payment status filter
+Single-vial enabled state
+Selected single-vial product IDs
+Per-order shipping assignments
+The existing column remains unchanged:
+
+vendor_shipping_excluded_product_ids jsonb NOT NULL DEFAULT '[]'
+
+That continues to store products whose prices already include vendor shipping.
+
+An idempotent startup migration was added:
+
+ALTER TABLE group_buys
+ADD COLUMN IF NOT EXISTS vendor_shipping_split jsonb;
+
+Existing Group Buys are not modified beyond receiving the new nullable column. Their saved split configuration will be created the next time shipping is applied.
+
+API changes
+Added admin settings endpoints:
+
+GET /api/admin/group-buys/:id/shipping-settings
+PUT /api/admin/group-buys/:id/shipping-settings
+
+The organiser settings endpoint now also returns the saved split configuration:
+
+GET /api/organiser/group-buys/:id/shipping-settings
+
+Both apply endpoints persist the complete configuration:
+
+POST /api/admin/group-buys/:id/apply-shipping
+POST /api/organiser/group-buys/:id/apply-shipping
+
+Verification
+Focused persistence and shipping-adjustment tests passed: 16 tests
+API TypeScript check passed
+Frontend production build passed
+git diff --check passed
+Canonical application workflow restarted successfully and the preview rendered correctly
