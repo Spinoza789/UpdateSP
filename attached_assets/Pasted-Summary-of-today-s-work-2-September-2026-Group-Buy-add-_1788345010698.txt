@@ -1,0 +1,119 @@
+Summary of today’s work — 2 September 2026
+Group Buy add-on orders
+Changed add-on orders so they merge into the existing paid or locked Group Buy order instead of creating a separate order.
+Preserved the original order’s:
+Order code
+Payment state
+Shipping address
+Delivery method
+Routing information
+Existing metadata
+The add-on only charges the additional outstanding balance.
+Added balance and outstanding-payment display to the order detail and review flows.
+Added safeguards so the original payment lock cannot be accidentally reset or reduced.
+Added regression coverage for the merge arithmetic and payment-lock behavior.
+Group Buy reporting
+Added Group Buy reporting by:
+Country or region
+Product
+Quantity
+Payment status
+Totals
+Added the reporting API and shared reporting component.
+Integrated reporting into:
+The admin Group Buy Dashboard
+The organiser Summary
+The legacy organiser view
+Organiser V2
+Shipping Split
+Added and refined the Vendor Shipping Split tab for organiser workflows:
+
+Added the Shipping Split tab to the organiser views.
+Added filters for order status and payment status.
+Added automatic shipping allocation using equal and quantity-weighted portions.
+Added editable per-order shipping amounts.
+Added per-order shortfall or reduction feedback when the proposed amount differs from the current vendor shipping.
+Added a footer showing:
+Total assigned shipping
+Target shipping
+Fully allocated, shortfall, or over-allocation status
+Apply remains disabled unless the assigned total exactly matches the target.
+Added server-side validation and payment protections for shipping changes.
+Paid-order increases are reconciled safely; unsafe decreases are rejected.
+Single-vial shipping mode
+Added an optional, Group Buy-specific calculation mode within Shipping Split:
+
+Organisers can enable single-vial adjustment when needed.
+Multiple products can be selected as single-vial products.
+Normal shipping is calculated first.
+Selected vial products receive one-tenth of their normal full-kit shipping share.
+Mixed orders keep normal products at their regular shipping portion.
+The remaining shipping is redistributed across the other eligible orders.
+Added handling for vial-only orders, mixed orders, and multiple selected vial products.
+If the allocation cannot balance, the shortfall remains visible and Apply is disabled.
+Shipping Split UI clarity
+The order rows now include:
+
+Order quantity
+Usernames without duplicated @ prefixes
+No country display in the Shipping Split row
+An expandable dropdown for each order showing:
+Normal shipping before the vial calculation
+Assigned shipping
+Current saved shipping
+Products and quantities
+Selected single-vial products
+The complete calculation
+The calculation wording was corrected to clearly distinguish kits from vials:
+
+8.61 normal shipping for the selected kit portion ÷ 3 kits = 2.87 per full-kit
+2.87 per full-kit ÷ 10 = 0.287 per vial
+0.287 per vial × 3 vials = 0.86
+
+The calculation now explicitly shows the quantity multiplier and avoids describing the initial amount as a “vial portion.”
+
+Payment and AnonPay work
+Replaced the broken embedded AnonPay iframe with a top-level Trocador AnonPay launch.
+Renamed “Private crypto payment” to “AnonPay.”
+Improved the balance-payment card with responsive light and dark styling.
+Added compact mobile behavior.
+Added crypto payment lock and verification safeguards.
+Added automatic verification for wholesale access test payments and final payments.
+Ensured final wholesale payment checks account for the already-verified test payment amount.
+Other organiser work
+Added organiser shipping controls and manual vendor-shipping adjustments.
+Added organiser Summary and Organiser V2 integration.
+Fixed the Shipping Split crash caused by decimal database values being treated as numbers and calling .toFixed() directly.
+Fixed the legacy organiser Calculator import issue.
+Added related test coverage, screenshots, and reference assets.
+Database changes
+Schema changes
+There were no new database schema changes today:
+
+No new tables
+No new columns
+No new indexes
+No new migration files
+No columns were removed
+The single-vial selection is currently UI/session state and is not persisted per Group Buy.
+
+Existing-data writes
+The new and updated workflows can write to existing database records when used:
+
+Applying Shipping Split updates existing order vendor-shipping values.
+Add-on merging updates the existing parent order’s totals, balance, and related order data.
+Payment flows update existing payment statuses, amounts, locks, and transaction fields.
+Wholesale access verification updates existing access/payment records.
+Existing safeguards prevent unsafe changes to paid or locked orders.
+The countries were removed only from the Shipping Split display; country data remains available in the database and reporting logic.
+
+The application’s existing scheduled backup process also generated SQL backup snapshots today. Those are backups, not schema migrations.
+
+Verification completed
+Shipping Split and calculation tests: 11 passed
+Server-side shipping/payment integrity tests: 6 passed
+Frontend production build: passed
+git diff --check: passed
+Canonical Start application workflow restarted successfully.
+The workspace is clean with no uncommitted changes.
+No deployment was performed today.
