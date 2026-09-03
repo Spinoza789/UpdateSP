@@ -1,0 +1,114 @@
+Summary of today’s changes
+Project setup and runtime
+Set up the imported Salt & Peps monorepo for Replit.
+Installed and aligned project dependencies using pnpm.
+Configured the application startup workflow:
+API server on port 8080.
+Frontend preview through port 5000.
+Confirmed the canonical Start application workflow runs successfully.
+Added documentation for the project structure, commands, environment variables, and workflow setup.
+Configured the backend admin password to use the ADMIN_SECRET environment secret instead of storing it in code or regular configuration.
+Qiyunle inventory integration
+Added/maintained Qiyunle inventory synchronisation with:
+Session-based login.
+Token fallback.
+Session refresh and automatic re-login.
+Paginated inventory retrieval.
+Manual sync support from the admin panel.
+Kept zero and negative stock entries out of current product and batch availability.
+Added handling so invalid stock values are reported instead of silently being processed.
+Preserved zero-stock rows internally for turnover detection without storing them as positive current inventory.
+Qiyunle batch mapping and freshness
+Added automatic mapping for newly dated Qiyunle batch codes when the base code maps unambiguously to one product.
+Prevented automatic mapping when historical mappings for the same base code are ambiguous.
+Added handling for batch-date suffixes and year rollover, including dates such as -1230.
+Updated catalogue selection so the newest valid positive-stock batch is preferred.
+Stock quantity is used only as a tie-breaker when batch dates are equal.
+Successfully mapped the latest current batches, including:
+KS10-0903
+ZE30-0903
+MITO120-0902
+TE20-0902
+HK50-0902
+SS50-0902
+ZE20-0902
+Wholesale batch-code visibility
+Added server-side authorisation before exposing batch numbers to customers.
+Customers must have more than five qualifying wholesale orders.
+Qualifying orders include both direct wholesale orders and materialised shared-wholesale orders.
+Confirmed, test-confirmed, and completed orders qualify.
+Unpaid, cancelled, deleted, and unrelated orders do not qualify.
+Batch codes are only returned from the API when the customer is authorised.
+Updated the Wholesale Order page to show the batch code only when returned by the API.
+Added the approved customer-facing disclaimer:
+Batch information: The batch number shown is the latest current batch and is for guidance only. The batch you receive may differ depending on when your order is placed and whether that batch is still in stock when your order is dispatched.
+
+Inventory turnover logic
+The original turnover logic tracked individual batch codes. That caused problems because Qiyunle usually assigns a new code when a product is replenished.
+
+The logic now tracks turnover at the product level:
+
+An OOS period starts only when total mapped stock for a product changes from positive to zero.
+The OOS period closes when any new batch brings that product back above zero stock.
+An older batch going out of stock no longer creates a false product-level OOS event while another batch remains available.
+Duplicate open OOS events for the same product are prevented.
+Existing false open events are not deleted; the admin report excludes open events for products that are currently in stock.
+The average remains based only on completed turnover events.
+The current database contains one completed historical event, so the existing average of approximately 0.22 days is not yet statistically representative. Future synchronisations will populate product-level events correctly.
+
+Database changes
+The application startup now idempotently ensures the following database structures exist:
+
+qiyunle_mappings
+Stores the relationship between products and Qiyunle batch codes.
+
+Includes:
+
+Product ID.
+Qiyunle batch code.
+Qiyunle goods ID.
+Qiyunle name.
+Manufacturer.
+Current batch stock.
+Created timestamp.
+The following additions were ensured:
+
+manufacturer column.
+batch_stock column.
+inventory_turnover_log
+Stores product OOS and restock periods.
+
+Includes:
+
+Qiyunle reference code.
+Product ID and name.
+OOS timestamp.
+Restock timestamp.
+Turnaround duration in days.
+Previous stock.
+Restocked stock quantity.
+Created timestamp.
+An index was added on the Qiyunle code column.
+
+Existing product data
+Product stock values are updated from the sum of all mapped positive Qiyunle batches.
+Zero and negative stock values are normalised to zero for turnover calculations.
+Zero/negative batches are not retained as positive current batch inventory.
+Existing configuration data
+Qiyunle session information, credentials metadata, sync status, sync counts, and sync errors continue to be stored through the existing site_config mechanism.
+
+No existing turnover records were deleted.
+
+Tests and verification
+Added tests for:
+Zero and negative stock normalisation.
+Invalid stock handling.
+Product-level OOS transitions.
+Product-level restock transitions.
+Existing Qiyunle batch mapping and stock filtering behaviour.
+Focused API tests passed:
+23 tests passed.
+API TypeScript typecheck passed.
+Frontend production build passed.
+Wholesale batch-display source tests passed.
+Canonical application workflow restarted successfully and is running.
