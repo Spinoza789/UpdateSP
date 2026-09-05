@@ -1,0 +1,173 @@
+Summary of today’s work
+Project setup
+Set up the imported Salt & Peps project in Replit.
+Provisioned and connected the development PostgreSQL database.
+Configured the secure admin setting.
+Started and verified the main application workflow.
+Logistics Control Room improvements
+Added an on-demand Order Details modal.
+Preserved wholesale currency handling, defaulting missing currencies to USD.
+Changed tracking display so every tracking number has:
+Its own status.
+Its own update history.
+An expandable Previous updates section.
+BMURFS paired-package tracking
+Implemented explicit support for BMURFS shipments where two tracking numbers represent one physical package:
+
+International: SMEX6082643740
+Local courier: HD358713635GB
+Shared tracking model
+Added durable physical-package metadata containing:
+Stable package ID.
+Courier.
+International tracking number.
+Optional local tracking number.
+Restricted local tracking legs to BMURFS only.
+Added validation for:
+Duplicate package IDs.
+Duplicate tracking numbers.
+Invalid or missing tracking numbers.
+Non-BMURFS local tracking numbers.
+A maximum of 20 tracking identifiers.
+Preserved compatibility with the existing:
+trackingNumber
+trackingNumbers
+Tracking cache and history fields.
+Existing records remain separate packages until an administrator explicitly pairs them. Pairing is never guessed from prefixes or ordering.
+Delivery-status rules
+BMURFS international delivery now represents a handoff rather than necessarily final delivery.
+If the international leg is delivered without a local number, the package displays Awaiting local courier.
+The local leg determines final BMURFS delivery.
+A delivered local leg wins even if the international cache is stale.
+An order is marked delivered only when every physical package is complete.
+Mixed BMURFS and non-BMURFS packages remain independent.
+Admin order editor
+Replaced the flat tracking-number editor with a physical-package editor.
+Administrators can:
+Add and remove packages.
+Choose a courier per package.
+Add an international tracking number.
+Add a BMURFS local tracking number.
+Add the local number later.
+Pair two existing tracking entries.
+Remove only the local leg.
+Split an incorrectly paired package back into separate packages.
+Changing away from BMURFS while a local number remains now produces a validation error instead of silently deleting or converting it.
+Save/reload preserves package IDs, tracking histories, unrelated packages, and shipped-item attribution.
+Added conflict detection so an admin edit cannot overwrite tracking updates saved by an automatic refresh.
+HTTP 409 conflicts retain the unsaved draft and tell the administrator to reload.
+Bulk tracking imports
+Added explicit paired BMURFS import support:
+ORDER_CODE,BMURFS,INTERNATIONAL,LOCAL
+Preserved the existing simple single-number format.
+AI-assisted parsing only creates a BMURFS pair when:
+BMURFS is explicitly identified.
+International and local roles are explicitly labelled.
+Ambiguous matches require acknowledgement or correction before applying.
+Imports can add a local number to an existing international package.
+Repeated imports preserve stable package IDs and do not duplicate notifications.
+Unrelated packages and package-specific contents remain intact.
+Customer Logistics Control Room
+Displays one physical BMURFS package containing:
+Labelled international and local tracking links.
+Independent statuses.
+Independent checked times.
+Separate update histories.
+Package counts now count physical packages rather than identifiers.
+Filters and order statuses use aggregate physical-package status.
+Preserved the Order Details modal and USD price formatting.
+Fixed narrow-screen overflow:
+Header alert controls now wrap.
+Status filters wrap rather than forcing horizontal scrolling.
+Tracking numbers and package details remain width-constrained.
+Admin Wholesale Tracking view
+Added the same grouped physical-package display for administrators.
+Shows separate international and local legs, histories, and waiting-for-local states.
+Shared-wholesale tracking behavior and masking remain unchanged.
+Telegram
+Added direct-wholesale tracking to the linked customer’s Telegram Tracking menu.
+Added package lists, details, and independently paginated histories.
+Every Telegram callback rechecks account ownership.
+Direct-wholesale access remains limited to:
+Non-deleted orders.
+Non-group-buy orders.
+Non-shared orders.
+Paired BMURFS identifiers display as one package.
+International and local legs show their latest valid update.
+Earlier updates are sorted newest-first.
+Messages are HTML-escaped and bounded to Telegram’s message and callback limits.
+Existing group-buy tracking remains available.
+Tracking and delivery notifications use physical-package milestones, preventing:
+Duplicate alerts from identical saves.
+Duplicate alerts from import retries.
+False final-delivery alerts when only the international leg is delivered.
+No live Telegram messages were sent during testing.
+Tracking refresh and concurrency safety
+Both BMURFS legs refresh independently.
+BMURFS international tracking uses 17TRACK carrier code 190843.
+Local courier tracking uses carrier autodetection.
+Refresh failures retain the previous valid cache.
+Late refresh responses cannot overwrite replaced tracking numbers.
+Manual admin, bulk, organiser, and reshipper writes now compare:
+Tracking identifiers.
+Package metadata.
+Tracking details and histories.
+Status and checked timestamps.
+Shipped-item mappings.
+This prevents an editor opened before a refresh from restoring stale tracking information.
+Courier dropdown update
+The package editor’s courier selection now contains:
+
+GLY
+YunExpress
+BMURFS Express
+Other / auto-detect
+The complete 17TRACK courier catalogue
+Existing custom courier values remain supported. Only BMURFS reveals and accepts the local courier tracking field.
+
+Database changes
+New column
+Added a nullable JSONB column to the orders table:
+
+Column: tracking_packages
+Type: JSONB
+Nullable: Yes
+It stores explicit physical-package metadata separately from disposable tracking-provider responses.
+
+Conceptually, the stored structure is:
+
+[
+  {
+    "id": "package-id",
+    "courier": "bmurfs",
+    "internationalTrackingNumber": "SMEX6082643740",
+    "localTrackingNumber": "HD358713635GB"
+  }
+]
+
+Migration behavior
+Added an idempotent startup migration that creates tracking_packages if it does not exist.
+The migration ran successfully in development.
+No existing tracking records were destructively converted.
+Legacy orders continue to use their existing tracking fields until explicitly paired.
+No payment, total, shipping-label, customer, or shared-order data was migrated.
+shippingCarrier and carrierServiceRef were not repurposed or changed.
+Verification completed
+Backend: 50 test files, 244 tests passed.
+Frontend tracking/model checks: 42 checks passed after the mobile regression test was added.
+API TypeScript check passed.
+API production compilation passed.
+Frontend production build passed.
+Code-review pass found no remaining critical tracking-integrity issues.
+Browser verification used isolated fixture data and confirmed:
+Pairing existing numbers.
+Save and reload.
+Removing and later restoring a local number.
+Stable package IDs.
+Invalid courier protection.
+Conflict handling.
+Customer grouped display.
+Independent histories.
+Correct non-delivered status while the local leg is in transit.
+USD Order Details display.
+The project still has unrelated pre-existing frontend TypeScript errors outside this work; they were not included in this task.
