@@ -1,0 +1,72 @@
+Summary of today’s work
+1. Salt & Peps project setup
+Imported and configured the project for Replit.
+Installed and configured dependencies.
+Configured the required environment secrets.
+Set up the frontend, API server, proxy, workflows, database schema, and seed process.
+Confirmed the application and API were accessible and returning HTTP 200.
+Established the canonical combined Start application workflow.
+2. Tracking and 17TRACK improvements
+Implemented a PostgreSQL-first tracking system designed to reduce unnecessary 17TRACK calls:
+
+Public/read requests now use stored database tracking information.
+Active shipments become eligible for provider refresh after six hours.
+Terminal shipments no longer refresh.
+Manual refreshes have a persisted five-minute cooldown.
+Provider failures back off for 30 minutes.
+Concurrent refresh and registration requests are deduplicated.
+Successful tracking registrations are remembered.
+Preserved separate strict clients for 17TRACK v2.4 and legacy v2.2.
+Bound provider responses to the expected tracking number and carrier.
+Protected carrier corrections and delayed writes with identity/package compare-and-set checks.
+Prevented stale refreshes from overwriting newer tracking data or sending incorrect notifications.
+Verified this work with 19 test files and 197 passing tests.
+3. Telegram Mini App discussion
+Confirmed that Telegram ordering should eventually remain inside Telegram through a visual Telegram Mini App.
+No Telegram Mini App implementation was made today.
+4. iOS shared-wholesale composer investigation
+Investigated the Group Chat composer being obscured by the fixed bottom navigation on iOS.
+Identified and recommended a fix.
+No code change was made because the fix was not approved for implementation.
+5. Lonely Vial seller CAPTCHA
+Diagnosed and fixed seller registration failures:
+
+Confirmed the API already required a turnstileToken.
+Found that the seller application form neither displayed Turnstile nor sent its token.
+Added Cloudflare Turnstile to Lonely Vial → Apply to Sell.
+Reused the existing account-registration site-key and widget-loading behavior.
+Added:
+Fail-closed production behavior when the site key is missing.
+Existing Cloudflare development test-key behavior.
+Visible security-check status.
+Token expiry and error handling.
+Retry UI when Turnstile cannot load.
+CAPTCHA reset after rejected or failed submissions.
+Required-field and password validation before enabling submission.
+turnstileToken in the seller registration payload.
+Added focused tests for token enforcement, payload normalization, and submit readiness.
+Browser-tested the form without creating a seller.
+Verification results:
+
+Focused frontend tests: 6 passed
+API suite: 455 passed
+Frontend production build: passed
+Browser CAPTCHA flow: passed
+Seller page and configuration endpoint: HTTP 200
+Canonical application workflow: running
+The frontend’s project-wide typecheck still reports 97 unrelated pre-existing errors; none were reported in the seller CAPTCHA files.
+
+Database changes
+Initial project setup
+The project’s existing database schema was initialized/configured.
+Existing seed behavior was configured and verified.
+The current development database already contains 735 products, so startup correctly skips duplicate product seeding.
+Tracking work
+Tracking behavior was changed to use PostgreSQL as the primary read source and to persist refresh coordination state such as cooldowns, provider backoff, and successful registration status.
+No destructive data migration or database reset was performed.
+Seller CAPTCHA
+No database schema or data changes were required.
+Successful applications continue to create the existing inactive/pending vendor application record through the established API route.
+Current workspace state
+The Git workspace is clean.
+There are no outstanding modified schema, migration, seed, or database files.
