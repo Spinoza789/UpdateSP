@@ -1,0 +1,24 @@
+Implement shared wholesale payment status and group-buy crypto refunds
+Please inspect the existing application first and follow its current database, API, authentication, order, payment, notification, and UI patterns. Do not replace existing workflows or create duplicate systems.
+Feature 1: Mark the shared wholesale organiser’s personal order as paid
+In the shared wholesale workflow, the organiser can provide a wallet address or other payment details and collect funds from the shared-order members. The organiser then pays the collected funds to the admin.
+Currently, when the organiser pays the admin, the organiser’s own personal order still appears as unpaid.
+Implement the correct payment-status flow:
+* Identify the organiser’s personal order associated with the shared wholesale order.
+* When the organiser’s payment to the admin is verified or explicitly confirmed through the existing admin payment workflow, mark the organiser’s personal order as paid/confirmed.
+* Do not mark it paid merely because a wallet address or payment details were provided.
+* The payment must be tied to the correct shared wholesale order, organiser, amount, and payment record.
+* The update must be server-side and idempotent.
+* Repeating the confirmation must not create duplicate payments, duplicate notifications, or duplicate audit records.
+* The status update must not mark other members’ orders as paid.
+* Preserve existing payment protection and order-locking rules.
+* Add an audit record showing when and why the organiser’s personal order became paid.
+* Update all relevant admin, organiser, customer, order summary, and payment-status views.
+* If the payment cannot be verified or matched safely, leave the order unpaid and show a clear error instead of silently changing the status.
+Add tests covering:
+* Successful organiser payment confirmation marks only the organiser’s personal order as paid.
+* Member orders remain unchanged.
+* Incorrect order, organiser, amount, or transaction information is rejected.
+* Repeating the same confirmation is idempotent.
+* Failed or unverified payments do not change the order status.
+* Existing locked-order and payment protections still work.
