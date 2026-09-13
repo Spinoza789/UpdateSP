@@ -1,8 +1,14 @@
-import { Router, type IRouter } from "express";
+import {
+  assertNoActiveRefunds,
+  refundMutableOrderWhere,
+  withRefundMutationGuard,
+} from "../lib/refund-mutation-guard";
+import { Router, type IRouter, type Response } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
 import {
   groupBuysTable,
+  auditLogsTable,
   groupBuyProductsTable,
   groupBuyDeliveryMethodsTable,
   accountsTable,
@@ -53,6 +59,17 @@ async function uniqueGroupBuyId(): Promise<string> {
 
 const router: IRouter = Router();
 const BCRYPT_ROUNDS = 12;
+
+class GroupBuySettingTransactionError extends Error {
+  constructor(readonly code: "audit_failure" | "storage_failure") {
+    super(code);
+  }
+}
+
+function settingTransactionError(res: Response, error: unknown): void {
+  const code = error instanceof GroupBuySettingTransactionError ? error.code : "storage_failure";
+  res.status(503).json({ code, error: code });
+}
 
 function parseInfoCards(raw: string | null): unknown[] {
   if (!raw) return [];
@@ -170,7 +187,7 @@ router.get("/admin/group-buys/:id/orders-summary", async (req, res): Promise<voi
 router.post("/admin/group-buys", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
 
-  const { name, description, status, closeDate, invitePin, manufacturer, manufacturerCountry, infoCards, currency, sortOrder, labTestSupplier, paymentMessageEnabled, paymentMessage, paymentsEnabled, memberLimit, minMembers, maxKitsPerCustomer, maxKitsTotal, hiddenFromList, forcedUsernames, shippingOptions, allowedCountries, excludedCountries, blockedAccounts, adminFeeEnabled, adminFeeType, adminFeeAmount, adminFeeLabel, adminFeeCountries, entryFeeEnabled, entryFeeAmount, entryFeeLabel } = req.body;
+  const { name, description, status, closeDate, invitePin, manufacturer, manufacturerCountry, infoCards, currency, sortOrder, labTestSupplier, paymentMessageEnabled, paymentMessage, paymentsEnabled, memberLimit, minMembers, maxKitsPerCustomer, maxKitsTotal, hiddenFromList, forcedUsernames, shippingOptions, allowedCountries, excludedCountries, blockedAccounts, adminFeeEnabled, adminFeeType, adminFeeAmount, adminFeeLabel, adminFeeCountries, entryFeeEnabled, entryFeeAmount, entryFeeLabel, cryptoRefundsEnabled } = req.body;
 
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     res.status(400).json({ error: "name is required" });
@@ -179,6 +196,10 @@ router.post("/admin/group-buys", async (req, res): Promise<void> => {
 
   if (status && !GROUP_BUY_STATUSES.includes(status)) {
     res.status(400).json({ error: `status must be one of: ${GROUP_BUY_STATUSES.join(", ")}` });
+    return;
+  }
+  if (cryptoRefundsEnabled !== undefined && typeof cryptoRefundsEnabled !== "boolean") {
+    res.status(400).json({ error: "cryptoRefundsEnabled must be a boolean" });
     return;
   }
 
@@ -207,7 +228,7 @@ router.post("/admin/group-buys", async (req, res): Promise<void> => {
 
   const id = await uniqueGroupBuyId();
 
-  const [gb] = await db.insert(groupBuysTable).values({
+  const insertGroupBuy = (database: typeof db) => database.insert(groupBuysTable).values({
     id,
     name: name.trim(),
     description: description ? String(description).trim() : undefined,
@@ -242,7 +263,38 @@ router.post("/admin/group-buys", async (req, res): Promise<void> => {
     entryFeeEnabled: entryFeeEnabled != null ? Boolean(entryFeeEnabled) : false,
     entryFeeAmount: entryFeeAmount != null && entryFeeAmount !== "" ? parseFloat(String(entryFeeAmount)).toFixed(2) as any : undefined,
     entryFeeLabel: entryFeeLabel ? String(entryFeeLabel).trim() : undefined,
+    cryptoRefundsEnabled: cryptoRefundsEnabled ?? false,
   }).returning();
+  let gb: Awaited<ReturnType<typeof insertGroupBuy>>[number];
+  try {
+    [gb] = await db.transaction(async (tx) => {
+      const [created] = await insertGroupBuy(tx as unknown as typeof db);
+      if (cryptoRefundsEnabled === true) {
+        try {
+          await tx.insert(auditLogsTable).values({
+            type: "change",
+            level: "info",
+            action: "admin_gb_crypto_refunds_setting_changed",
+            message: `Admin enabled group-buy refunds for "${created.name}"`,
+            metadata: {
+              gbId: created.id,
+              groupBuyId: created.id,
+              previousEnabled: false,
+              enabled: true,
+              actor: res.locals["adminUsername"] ?? "admin",
+            },
+            ip: null,
+          });
+        } catch {
+          throw new GroupBuySettingTransactionError("audit_failure");
+        }
+      }
+      return [created] as const;
+    });
+  } catch (error) {
+    settingTransactionError(res, error);
+    return;
+  }
 
   createAlert("system", "medium", "New Group Buy Created",
     `Group buy "${gb.name}" (${gb.id}) was created. Status: ${gb.status ?? "draft"}.`,
@@ -261,9 +313,9 @@ router.patch("/admin/group-buys/:id", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
 
   const { id } = req.params;
-  const { name, description, status, closeDate, invitePin, manufacturer, manufacturerCountry, infoCards, currency, sortOrder, testingEnabled, labTestSupplier, paymentMessageEnabled, paymentMessage, paymentsEnabled, memberLimit, minMembers, maxKitsPerCustomer, maxKitsTotal, hiddenFromList, forcedUsernames, shippingOptions, allowedCountries, excludedCountries, blockedAccounts, adminFeeEnabled, adminFeeAmount, adminFeeLabel, adminFeeCountries, entryFeeEnabled, entryFeeAmount, entryFeeLabel, qrUploadInpostEnabled, qrUploadRoyalMailEnabled, qrUploadMessage, orderPageMessage, countryLegsEnabled, vendorShippingEnabled, vendorShippingMessage, vendorShippingAmount, sharedShippingCountries, allowExtraOrders, directShippingEnabled, directShippingVendorId } = req.body;
+  const { name, description, status, closeDate, invitePin, manufacturer, manufacturerCountry, infoCards, currency, sortOrder, testingEnabled, labTestSupplier, paymentMessageEnabled, paymentMessage, paymentsEnabled, memberLimit, minMembers, maxKitsPerCustomer, maxKitsTotal, hiddenFromList, forcedUsernames, shippingOptions, allowedCountries, excludedCountries, blockedAccounts, adminFeeEnabled, adminFeeAmount, adminFeeLabel, adminFeeCountries, entryFeeEnabled, entryFeeAmount, entryFeeLabel, qrUploadInpostEnabled, qrUploadRoyalMailEnabled, qrUploadMessage, orderPageMessage, countryLegsEnabled, vendorShippingEnabled, vendorShippingMessage, vendorShippingAmount, sharedShippingCountries, allowExtraOrders, directShippingEnabled, directShippingVendorId, cryptoRefundsEnabled } = req.body;
 
-  const [existing] = await db.select({ id: groupBuysTable.id, name: groupBuysTable.name, status: groupBuysTable.status }).from(groupBuysTable).where(eq(groupBuysTable.id, id));
+  const [existing] = await db.select({ id: groupBuysTable.id, name: groupBuysTable.name, status: groupBuysTable.status, cryptoRefundsEnabled: groupBuysTable.cryptoRefundsEnabled }).from(groupBuysTable).where(eq(groupBuysTable.id, id));
   if (!existing) {
     res.status(404).json({ error: "Group buy not found" });
     return;
@@ -271,6 +323,10 @@ router.patch("/admin/group-buys/:id", async (req, res): Promise<void> => {
 
   if (status && !GROUP_BUY_STATUSES.includes(status)) {
     res.status(400).json({ error: `status must be one of: ${GROUP_BUY_STATUSES.join(", ")}` });
+    return;
+  }
+  if (cryptoRefundsEnabled !== undefined && typeof cryptoRefundsEnabled !== "boolean") {
+    res.status(400).json({ error: "cryptoRefundsEnabled must be a boolean" });
     return;
   }
 
@@ -392,6 +448,7 @@ router.patch("/admin/group-buys/:id", async (req, res): Promise<void> => {
   }
   if (directShippingEnabled !== undefined) updates.directShippingEnabled = Boolean(directShippingEnabled);
   if (directShippingVendorId !== undefined) updates.directShippingVendorId = directShippingVendorId ? String(directShippingVendorId).trim() : null;
+  if (cryptoRefundsEnabled !== undefined) updates.cryptoRefundsEnabled = cryptoRefundsEnabled;
 
   if (invitePin !== undefined) {
     if (invitePin === null || invitePin === "") {
@@ -413,11 +470,53 @@ router.patch("/admin/group-buys/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const [updated] = await db
-    .update(groupBuysTable)
-    .set(updates)
-    .where(eq(groupBuysTable.id, id))
-    .returning();
+  let updated: GroupBuy;
+  try {
+    [updated] = cryptoRefundsEnabled !== undefined
+      ? await db.transaction(async (tx) => {
+      const [locked] = await tx.select({
+        id: groupBuysTable.id,
+        name: groupBuysTable.name,
+        status: groupBuysTable.status,
+        cryptoRefundsEnabled: groupBuysTable.cryptoRefundsEnabled,
+      }).from(groupBuysTable).where(eq(groupBuysTable.id, id)).for("update");
+      if (!locked) throw new Error("group_buy_not_found");
+      const transition = locked.cryptoRefundsEnabled !== cryptoRefundsEnabled;
+      const [saved] = await tx.update(groupBuysTable)
+        .set(updates)
+        .where(eq(groupBuysTable.id, id))
+        .returning();
+      if (transition) {
+        try {
+          await tx.insert(auditLogsTable).values({
+            type: "change",
+            level: "info",
+            action: "admin_gb_crypto_refunds_setting_changed",
+            message: `Admin ${cryptoRefundsEnabled ? "enabled" : "disabled"} group-buy refunds for "${locked.name ?? id}"`,
+            metadata: {
+              gbId: id,
+              groupBuyId: id,
+              previousEnabled: locked.cryptoRefundsEnabled,
+              enabled: cryptoRefundsEnabled,
+              actor: res.locals["adminUsername"] ?? "admin",
+            },
+            ip: null,
+          });
+        } catch {
+          throw new GroupBuySettingTransactionError("audit_failure");
+        }
+      }
+      return [saved] as const;
+      })
+      : await db
+        .update(groupBuysTable)
+        .set(updates)
+        .where(eq(groupBuysTable.id, id))
+        .returning();
+  } catch (error) {
+    settingTransactionError(res, error);
+    return;
+  }
 
   if (status !== undefined && status !== existing.status) {
     const gbLabel = existing.name ?? id;
@@ -1833,7 +1932,7 @@ router.post("/admin/group-buys/:id/apply-shipping", async (req, res): Promise<vo
         adminFee: u.resolvedAdminFee.toFixed(2),
         adminFeeLabel: u.resolvedAdminFeeLabel,
       } as any)
-      .where(and(eq(ordersTable.id, u.orderId), eq(ordersTable.groupBuyId, id)));
+      .where(refundMutableOrderWhere(and(eq(ordersTable.id, u.orderId), eq(ordersTable.groupBuyId, id))));
     }
     await tx
       .update(groupBuysTable)
@@ -1890,7 +1989,7 @@ router.post("/admin/group-buys/:id/backfill-balance-due", async (req, res): Prom
     await db
       .update(ordersTable)
       .set({ amountDue: String(o.vendorShipping) } as any)
-      .where(eq(ordersTable.id, o.id));
+      .where(refundMutableOrderWhere(eq(ordersTable.id, o.id)));
   }
 
   res.json({
@@ -2435,7 +2534,7 @@ router.post("/admin/group-buys/:gbId/backfill-country-legs", async (req, res): P
     await db
       .update(ordersTable)
       .set({ countryLegId: legId })
-      .where(and(eq(ordersTable.id, row.orderId), isNull(ordersTable.countryLegId)));
+      .where(refundMutableOrderWhere(and(eq(ordersTable.id, row.orderId), isNull(ordersTable.countryLegId))));
 
     // Backfill membership once per user
     const memberKey = `${lookupKey}::${gbId}`;
@@ -2538,10 +2637,10 @@ router.post("/admin/group-buys/:gbId/backfill-admin-fee", async (req, res): Prom
         adminFeeLabel: resolved.label,
         grandTotal: sql`${ordersTable.grandTotal} + ${resolved.amount}`,
       })
-      .where(and(
+      .where(refundMutableOrderWhere(and(
         eq(ordersTable.id, order.id),
         sql`COALESCE(${ordersTable.adminFee}, 0) = 0`,
-      ))
+      )))
       .returning({ id: ordersTable.id });
     updated += changed.length;
   }
@@ -2680,7 +2779,7 @@ router.patch("/admin/group-buys/:gbId/orders/:orderId/route", async (req, res): 
       directShippingRequested: routingType === "direct",
       ...(body.reshipperUsername !== undefined && { reshipperUsername: body.reshipperUsername ?? null }),
     })
-    .where(eq(ordersTable.id, orderId));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
 
   // Record routing history
   await db.insert(routingHistoryTable).values({
@@ -2743,9 +2842,12 @@ router.post("/admin/group-buys/:gbId/bulk-route", async (req, res): Promise<void
   };
   if (reshipperUsername !== undefined) updateSet.reshipperUsername = reshipperUsername ?? null;
 
-  await db.update(ordersTable)
-    .set(updateSet)
-    .where(inArray(ordersTable.id, existingOrders.map(o => o.id)));
+  const existingOrderIds = existingOrders.map(o => o.id);
+  await withRefundMutationGuard(db, existingOrderIds, async tx => {
+    await tx.update(ordersTable)
+      .set(updateSet)
+      .where(refundMutableOrderWhere(inArray(ordersTable.id, existingOrderIds)));
+  });
 
   // Batch insert routing history
   const historyRows = existingOrders.map(o => ({
@@ -2790,7 +2892,7 @@ router.patch("/admin/group-buys/:gbId/country-legs/:legId/batch-lock", async (re
   const now = new Date();
   await db.update(ordersTable)
     .set({ batchLocked: locked, batchLockedAt: locked ? now : null })
-    .where(and(eq(ordersTable.countryLegId, legId), isNull(ordersTable.deletedAt)));
+    .where(refundMutableOrderWhere(and(eq(ordersTable.countryLegId, legId), isNull(ordersTable.deletedAt))));
 
   res.json({ ok: true, legId, locked });
 });
@@ -2916,7 +3018,7 @@ router.patch("/admin/group-buys/:gbId/orders/:orderId/country-leg", async (req, 
     updates.reshipperUsername = reshipperUsername ?? null;
   }
 
-  await db.update(ordersTable).set(updates).where(eq(ordersTable.id, orderId));
+  await db.update(ordersTable).set(updates).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
 
   writeLog(
     "change", "info", "order_leg_reassigned",
@@ -3000,7 +3102,7 @@ router.post("/admin/group-buys/:gbId/routing-undo", async (req, res): Promise<vo
     routingType: h.fromRoutingType as "direct" | "reshipper" | "unrouted" | null,
     reshipperUsername: h.fromReshipperUsername,
     countryLegId: h.fromCountryLegId,
-  }).where(eq(ordersTable.id, orderId));
+  }).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
 
   // Log the undo
   await db.insert(routingHistoryTable).values({
@@ -3255,10 +3357,11 @@ router.post("/admin/group-buys/:gbId/fs3-submit", async (req, res): Promise<void
       if (eligible.length === 0) throw new Error("NO_ELIGIBLE_ORDERS");
       const now = new Date();
       const eligibleIds = eligible.map(o => o.id);
-      await tx.update(ordersTable).set({ batchLocked: true, batchLockedAt: now }).where(inArray(ordersTable.id, eligibleIds));
+      await assertNoActiveRefunds(tx, eligibleIds);
+      await tx.update(ordersTable).set({ batchLocked: true, batchLockedAt: now }).where(refundMutableOrderWhere(inArray(ordersTable.id, eligibleIds)));
       const toProcess = eligible.filter(o => o.paymentStatus === "confirmed" && o.status === "Submitted");
       if (toProcess.length > 0) {
-        await tx.update(ordersTable).set({ status: "Processing" }).where(inArray(ordersTable.id, toProcess.map(o => o.id)));
+        await tx.update(ordersTable).set({ status: "Processing" }).where(refundMutableOrderWhere(inArray(ordersTable.id, toProcess.map(o => o.id))));
       }
       const submissionId = randomUUID();
       await tx.insert(fs3SubmissionsTable).values({

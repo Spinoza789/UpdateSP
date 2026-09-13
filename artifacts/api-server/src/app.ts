@@ -9,6 +9,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import { globalLimiter } from "./middleware/rate-limits";
 import router from "./routes";
 import { buildAllowedOrigins, isAllowedOrigin } from "./lib/cors-origin";
+import { refundMutationConflictResponse, refundMutationHttpStatus } from "./lib/refund-mutation-guard";
 
 const app: Express = express();
 
@@ -258,7 +259,12 @@ if (process.env["NODE_ENV"] === "production") {
 // ── Global error handler ───────────────────────────────────────
 // Never leak internal stack traces or error details to the client.
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  const status = (err as any).status ?? 500;
+  const refundConflict = refundMutationConflictResponse(err);
+  if (refundConflict) {
+    res.status(refundConflict.status).json(refundConflict.body);
+    return;
+  }
+  const status = refundMutationHttpStatus(err) ?? (err as any).status ?? 500;
   if (status >= 500) {
     console.error("[ERROR]", err.message, err.stack);
     res.status(status).json({ error: "Internal server error" });

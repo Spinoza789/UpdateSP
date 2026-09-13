@@ -1,3 +1,9 @@
+import {
+  activeRefundStatusesSql,
+  refundMutationErrorOrderId,
+  refundMutableOrderWhere,
+  refundMutableOrderWhereSkipActive,
+} from "./lib/refund-mutation-guard";
 import app, { markApplicationReady } from "./app";
 import { seedIfEmpty } from "./seed";
 import { setWebhook, getTelegramStatus, buildWebhookUrl } from "./lib/telegram";
@@ -16,8 +22,10 @@ import { startDbBackupSchedule } from "./lib/db-backup";
 import { startDbBackupVerificationSchedule } from "./lib/db-backup-verifier";
 import { ensureSystemEmailTemplates } from "./lib/email-templates";
 import { runSecurityIncidentRemediation } from "./lib/security-incident-remediation";
+import { registerRefundNotificationScheduler } from "./lib/refund-notifications";
+import { stopAllSchedulers } from "./lib/scheduler-registry";
 import { db, ordersTable } from "@workspace/db";
-import { sql, and, isNotNull, lt } from "drizzle-orm";
+import { sql, and, eq, isNotNull, isNull, lt } from "drizzle-orm";
 
 const rawPort = process.env["API_PORT"] ?? process.env["PORT"];
 
@@ -33,8 +41,47 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
+/**
+ * Compatibility repairs are intentionally isolated: an active refund skips
+ * only the matching row, while a schema/database error rejects startup and
+ * therefore keeps production readiness blocked.
+ */
+async function runStartupRefundSafeRepair(
+  name: string,
+  predicate: unknown,
+  update: (guardedWhere: unknown) => Promise<unknown>,
+): Promise<void> {
+  const activeRows = await db
+    .select({ id: ordersTable.id })
+    .from(ordersTable)
+    .where(and(
+      predicate as any,
+      sql`EXISTS (
+        SELECT 1 FROM group_buy_refunds startup_refund_guard
+        WHERE startup_refund_guard.order_id = ${ordersTable.id}
+          AND startup_refund_guard.status IN (${activeRefundStatusesSql})
+      )`,
+    ));
+  if (activeRows.length > 0) {
+    console.warn(
+      `[startup:migrations] ${name}: skipped ${activeRows.length} order(s) with active refunds`,
+      activeRows.map(row => row.id),
+    );
+  }
+
+  const repaired = await update(refundMutableOrderWhereSkipActive(predicate));
+  const repairedCount = Array.isArray(repaired)
+    ? repaired.length
+    : Number((repaired as { rowCount?: unknown } | undefined)?.rowCount ?? 0);
+  console.log(`[startup:migrations] ${name}: repaired ${repairedCount} order(s)`);
+}
+
 async function runStartupMigrations(): Promise<void> {
-  try {
+    // Startup compatibility only adds columns/tables that are absent. It must
+    // never change an existing production column type or constraint: publish
+    // the branch so the normal Replit schema migration applies those changes.
+    // The development schema is already migrated; this fallback is not a
+    // substitute for publishing the schema diff.
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS hidden_orders (
         id text PRIMARY KEY,
@@ -585,7 +632,11 @@ async function runStartupMigrations(): Promise<void> {
     await db.execute(sql`
       CREATE INDEX IF NOT EXISTS idx_turnover_log_code ON inventory_turnover_log (qiyunle_code)
     `);
-    await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS credits_applied integer NOT NULL DEFAULT 0`);
+    await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS credits_applied numeric(10,2) NOT NULL DEFAULT 0`);
+    // Additive compatibility fallback for retry-safe credit spends. The
+    // published schema migration remains authoritative for this column/index.
+    await db.execute(sql`ALTER TABLE credit_transactions ADD COLUMN IF NOT EXISTS operation_key text`);
+    await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS credit_transactions_account_operation_unique ON credit_transactions (account_username, operation_key) WHERE operation_key IS NOT NULL`);
     await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS deleted_at timestamptz`);
     await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS deleted_by text`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS orders_deleted_at_idx ON orders (deleted_at)`);
@@ -615,17 +666,19 @@ async function runStartupMigrations(): Promise<void> {
     // so the cleanup above won't re-flag orders it just corrected.
     // If payment_usd_amount is 0/NULL the payment was manually confirmed without a recorded amount —
     // assume the admin verified it was correct and do NOT create a spurious balance.
-    await db.execute(sql`
-      UPDATE orders
-      SET amount_due = vendor_shipping
-      WHERE payment_status IN ('confirmed', 'test_confirmed')
-        AND vendor_shipping > 0
-        AND amount_due = 0
-        AND (balance_payment_status IS NULL OR (balance_payment_status <> 'confirmed' AND balance_payment_status <> 'waived'))
-        AND deleted_at IS NULL
-        AND payment_usd_amount > 0
-        AND payment_usd_amount < grand_total * 0.96
-    `);
+    await runStartupRefundSafeRepair("vendor-shipping balance backfill", and(
+        sql`${ordersTable.paymentStatus} IN ('confirmed', 'test_confirmed')`,
+        sql`${ordersTable.vendorShipping} > 0`,
+        eq(ordersTable.amountDue, "0"),
+        sql`(${ordersTable.balancePaymentStatus} IS NULL OR (${ordersTable.balancePaymentStatus} <> 'confirmed' AND ${ordersTable.balancePaymentStatus} <> 'waived'))`,
+        isNull(ordersTable.deletedAt),
+        sql`${ordersTable.paymentUsdAmount} > 0`,
+        sql`${ordersTable.paymentUsdAmount} < ${ordersTable.grandTotal} * 0.96`,
+      ), guardedWhere => db.update(ordersTable)
+        .set({ amountDue: ordersTable.vendorShipping })
+        // runStartupRefundSafeRepair supplies refundMutableOrderWhereSkipActive.
+        .where(guardedWhere as any)
+        .returning({ id: ordersTable.id }));
     // Ensure payment_confirmed_at exists (timestamptz, nullable)
     await db.execute(sql`
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_confirmed_at timestamptz
@@ -818,13 +871,15 @@ async function runStartupMigrations(): Promise<void> {
       created_at timestamptz NOT NULL DEFAULT now()
     )`);
     // Backfill dispatched_by_reshipper from reshipper_username for previously-confirmed orders
-    await db.execute(sql`
-      UPDATE orders
-      SET dispatched_by_reshipper = reshipper_username
-      WHERE dispatched_by_reshipper IS NULL
-        AND reshipper_username IS NOT NULL
-        AND status IN ('Shipped', 'Completed')
-    `);
+    await runStartupRefundSafeRepair("dispatched-reshipper backfill", and(
+        isNull(ordersTable.dispatchedByReshipper),
+        isNotNull(ordersTable.reshipperUsername),
+        sql`${ordersTable.status} IN ('Shipped', 'Completed')`,
+      ), guardedWhere => db.update(ordersTable)
+        .set({ dispatchedByReshipper: ordersTable.reshipperUsername })
+        // runStartupRefundSafeRepair supplies refundMutableOrderWhereSkipActive.
+        .where(guardedWhere as any)
+        .returning({ id: ordersTable.id }));
     // accounts — wholesale invite prompt seen timestamp (self-heal: drizzle may drop on push)
     await db.execute(sql`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS wholesale_invite_prompt_seen_at timestamptz`);
     // orders — top-up order reference (self-heal: added via direct SQL in deploy.sh)
@@ -864,7 +919,14 @@ async function runStartupMigrations(): Promise<void> {
     // One-time: clear stale locked paymentUsdAmount for order 10342 (admin edited items
     // after the rate was locked, leaving 372.91 USD for a €519 order — stale EUR→USD
     // conversion). Safe to run repeatedly; idempotent once order is confirmed.
-    await db.execute(sql`UPDATE orders SET payment_usd_amount = NULL WHERE code::text = '10342' AND payment_status NOT IN ('confirmed', 'waived')`);
+    await runStartupRefundSafeRepair("stale payment-rate cleanup", and(
+        sql`${ordersTable.code}::text = '10342'`,
+        sql`${ordersTable.paymentStatus} NOT IN ('confirmed', 'waived')`,
+      ), guardedWhere => db.update(ordersTable)
+        .set({ paymentUsdAmount: null })
+        // runStartupRefundSafeRepair supplies refundMutableOrderWhereSkipActive.
+        .where(guardedWhere as any)
+        .returning({ id: ordersTable.id }));
     // wholesale_shares — main parcel tracking columns (17track combined feed)
     await db.execute(sql`ALTER TABLE wholesale_shares ADD COLUMN IF NOT EXISTS main_tracking_number text`);
     await db.execute(sql`ALTER TABLE wholesale_shares ADD COLUMN IF NOT EXISTS main_tracking_carrier text`);
@@ -973,9 +1035,6 @@ async function runStartupMigrations(): Promise<void> {
     await db.execute(sql`ALTER TABLE group_buys ADD COLUMN IF NOT EXISTS reshipper_can_edit_tracking boolean NOT NULL DEFAULT true`);
     await db.execute(sql`ALTER TABLE group_buys ADD COLUMN IF NOT EXISTS reshipper_can_edit_address boolean NOT NULL DEFAULT true`);
     console.log("[startup:migrations] Schema sync complete");
-  } catch (err) {
-    console.error("[startup:migrations] Warning — could not apply startup migrations:", err);
-  }
 }
 
 async function autoRegisterWebhook(): Promise<void> {
@@ -1010,12 +1069,17 @@ async function autoRegisterWebhook(): Promise<void> {
 async function purgeExpiredDeletedOrders(): Promise<void> {
   const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
   try {
-    const result = await db.delete(ordersTable).where(
+    const result = await db.delete(ordersTable).where(refundMutableOrderWhere(
       and(isNotNull(ordersTable.deletedAt), lt(ordersTable.deletedAt, cutoff))
-    );
+    ));
     const count = Array.isArray(result) ? result.length : 0;
     if (count > 0) console.log(`[cleanup] Purged ${count} expired soft-deleted order(s)`);
   } catch (err) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      console.warn(`[cleanup] Skipped purging order ${refundOrderId}: refund_active`);
+      return;
+    }
     console.error("[cleanup] Error purging expired deleted orders:", err);
   }
 }
@@ -1041,6 +1105,7 @@ function startBackgroundServices(): void {
   startEmailScheduler();
   startDbBackupSchedule();
   startDbBackupVerificationSchedule();
+  registerRefundNotificationScheduler(db);
   setInterval(purgeExpiredDeletedOrders, 60 * 60 * 1000);
 }
 
@@ -1048,6 +1113,13 @@ function startBackgroundServices(): void {
 // gated with 503 until bootstrap succeeds, while the deployment health probe
 // can confirm that the process opened its configured port.
 const server = startServer();
+
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.once(signal, () => {
+    stopAllSchedulers();
+    server.close(() => process.exit(0));
+  });
+}
 
 runStartupMigrations()
   .then(() => seedIfEmpty())

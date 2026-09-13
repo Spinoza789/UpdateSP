@@ -1,3 +1,4 @@
+import { assertNoActiveRefunds, refundMutableOrderWhere } from "./refund-mutation-guard";
 /**
  * Group buy country-legs auto-sync — every 2 hours, loops through all active
  * group buys that have country legs enabled and backfills any members/orders
@@ -7,7 +8,7 @@
  * editable from the admin panel (Schedulers tab).
  */
 import { db, groupBuysTable, gbCountryLegsTable, accountGroupBuysTable, accountsTable, ordersTable } from "@workspace/db";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import { registerScheduler } from "./scheduler-registry";
 
 const DEFAULT_INTERVAL_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -65,31 +66,48 @@ async function runGbLegsSync(): Promise<void> {
         sql`${accountGroupBuysTable.countryLegId} is null`,
       ));
 
-    for (const row of unassigned) {
-      if (!row.country) continue;
+    const assignments = unassigned.flatMap(row => {
+      if (!row.country) return [];
       const legId = findLegId(row.country, legs);
-      if (!legId) continue;
+      if (!legId) return [];
+      return [{ accountId: row.accountId, legId }];
+    });
+    if (assignments.length === 0) continue;
 
-      await db
+    const syncOrderIds = (await db.select({ id: ordersTable.id })
+      .from(ordersTable)
+      .where(and(
+        eq(ordersTable.groupBuyId, gb.id),
+        inArray(ordersTable.telegramUsername, assignments.map(row => row.accountId)),
+        sql`${ordersTable.countryLegId} is null`,
+      ))).map(order => order.id).sort();
+    await db.transaction(async tx => {
+      await tx.select({ id: ordersTable.id }).from(ordersTable)
+        .where(inArray(ordersTable.id, syncOrderIds)).orderBy(ordersTable.id).for("update");
+      await assertNoActiveRefunds(tx, syncOrderIds);
+      for (const row of assignments) {
+        const [memberUpdated] = await tx
         .update(accountGroupBuysTable)
-        .set({ countryLegId: legId })
+        .set({ countryLegId: row.legId })
         .where(and(
           eq(accountGroupBuysTable.groupBuyId, gb.id),
           eq(accountGroupBuysTable.accountId, row.accountId),
-        ));
-      totalMembers++;
+        )).returning({ id: accountGroupBuysTable.id });
+        if (!memberUpdated) throw new Error(`Country-leg assignment lost member ${row.accountId}.`);
 
-      const updated = await db
+        const updated = await tx
         .update(ordersTable)
-        .set({ countryLegId: legId })
-        .where(and(
+        .set({ countryLegId: row.legId })
+        .where(refundMutableOrderWhere(and(
           eq(ordersTable.groupBuyId, gb.id),
           eq(ordersTable.telegramUsername, row.accountId),
           sql`${ordersTable.countryLegId} is null`,
-        ))
+        )))
         .returning({ id: ordersTable.id });
-      totalOrders += updated.length;
-    }
+        totalOrders += updated.length;
+        totalMembers++;
+      }
+    });
   }
 
   if (totalMembers > 0 || totalOrders > 0) {

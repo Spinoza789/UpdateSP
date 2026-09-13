@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Copy, Check, Loader2, Send, AlertCircle, ShieldCheck, Clock, FlaskConical, Zap, RefreshCw, ChevronRight, Wallet, ExternalLink, ArrowLeft, ImagePlus, X, Upload, CheckCircle2, Info } from "lucide-react";
+import { Copy, Check, Loader2, Send, AlertCircle, ShieldCheck, Clock, FlaskConical, Zap, RefreshCw, ChevronRight, Wallet, ExternalLink, ArrowLeft, ImagePlus, X, Upload, CheckCircle2, Info, Lock } from "lucide-react";
 import QRCode from "react-qr-code";
 import { Card, Button, Input } from "@/components/ui";
 import { currSym } from "@/lib/currency";
+import { safeSubtractMoneyClamped } from "@/lib/exact-money";
 
 // ── Brand icons ────────────────────────────────────────────────
 
@@ -377,6 +378,7 @@ interface Props {
   onStatusChange?: (status: string, txHash?: string, currency?: string) => void;
   paymentsEnabled?: boolean;
   creditsUsd?: number;
+  disabled?: boolean;
 }
 
 // ── Gradient styles ────────────────────────────────────────────
@@ -437,6 +439,7 @@ export default function PaymentPanel({
   onStatusChange,
   paymentsEnabled: paymentsEnabledProp,
   creditsUsd = 0,
+  disabled = false,
 }: Props) {
   const apiBase = apiPrefix ?? (orderId ? `/api/orders/${orderId}` : null);
   const [paymentsEnabled, setPaymentsEnabled] = useState<boolean | null>(
@@ -536,7 +539,7 @@ export default function PaymentPanel({
   useEffect(() => { loadRate(); }, [loadRate]);
   const usdTotal = lockedUsdTotal ?? grandTotal;
   // Credits are always in USD — deduct from the USD payment side after conversion
-  const effectiveUsdTotal = Math.max(0, usdTotal - creditsUsd);
+  const effectiveUsdTotal = safeSubtractMoneyClamped(usdTotal, creditsUsd);
   // Convert a USD amount to the chosen coin using the locked rate. Stablecoins
   // (and any order with no usable rate yet) stay 1:1 with USD.
   const usdToCoin = useCallback(
@@ -547,7 +550,7 @@ export default function PaymentPanel({
     [isStableCoin, usdPerCoin, coinDecimals],
   );
   // For fiat displays (Revolut/PayPal): for GBP keep original, for USD deduct credits
-  const effectiveGrandTotal = isGbp ? grandTotal : Math.max(0, grandTotal - creditsUsd);
+  const effectiveGrandTotal = isGbp ? grandTotal : safeSubtractMoneyClamped(grandTotal, creditsUsd);
   const [confirmations, setConfirmations] = useState<number | null>(null);
 
   const initialStep: Step =
@@ -712,6 +715,13 @@ export default function PaymentPanel({
   if (paymentsEnabled === null) return null;
   if (!paymentsEnabled) return null;
   if (step === "loading") return null;
+  if (disabled) {
+    return <Card className="p-4" aria-disabled="true" style={{ background: "var(--t-surface2)", border: "1px solid var(--t-border)" }}>
+      <p className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--t-muted)" }}>
+        <Lock className="w-4 h-4 shrink-0" /> Refund request active — payment and proof controls are temporarily locked.
+      </p>
+    </Card>;
+  }
 
   const availableMethods: PaymentMethod[] = ([
     walletAddress ? "crypto" : null,
@@ -1939,7 +1949,7 @@ export default function PaymentPanel({
   // ── Crypto: full payment ─────────────────────────────────────
 
   const remainingUsd = (status === "test_confirmed" && testAmount)
-    ? Math.max(0, parseFloat((effectiveUsdTotal - testAmount).toFixed(2)))
+    ? safeSubtractMoneyClamped(effectiveUsdTotal, testAmount)
     : effectiveUsdTotal;
   const remainingCoin = usdToCoin(remainingUsd);
 

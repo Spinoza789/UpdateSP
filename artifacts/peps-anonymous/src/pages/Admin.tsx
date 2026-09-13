@@ -43,6 +43,14 @@ import { Button, Card, Input, Label, cn } from "@/components/ui";
 import { COUNTRIES } from "@/data/countries";
 import { CURRENCY_SYMBOLS, currSym, fmtC } from "@/lib/currency";
 import {
+  centsToMoneyNumber,
+  safeCentsToMoneyNumber,
+  safeMoneyToCents,
+  safeSignedMoneyToCents,
+  signedMoneyToCents,
+  sumCents,
+} from "@/lib/exact-money";
+import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
 } from "recharts";
@@ -11637,7 +11645,13 @@ function CustomerProfile({ username, secret, onRename, onDelete }: { username: s
   };
 
   const handleAdjustCredits = async () => {
-    const amount = Math.round(parseFloat(creditAmount || "0"));
+    let amount: number;
+    try {
+      amount = centsToMoneyNumber(signedMoneyToCents(creditAmount || "0"));
+    } catch {
+      setCreditMsg("Enter a valid amount with up to 2 decimals");
+      return;
+    }
     const reason = creditReason.trim();
     if (!amount || !reason) return;
     setCreditSubmitting(true);
@@ -14838,8 +14852,19 @@ function CreditLogTab({ secret }: { secret: string }) {
     return e.reason;
   };
 
-  const totalCredits  = entries.filter(e => e.amount > 0).reduce((s, e) => s + e.amount, 0);
-  const totalDebits   = entries.filter(e => e.amount < 0).reduce((s, e) => s + e.amount, 0);
+  const totalCreditsCents = sumCents(entries
+    .filter(e => e.amount > 0)
+    .map(e => safeSignedMoneyToCents(e.amount))
+    .filter((value): value is bigint => value !== null));
+  const totalDebitsCents = sumCents(entries
+    .filter(e => e.amount < 0)
+    .map(e => safeSignedMoneyToCents(e.amount))
+    .filter((value): value is bigint => value !== null)
+  );
+  const totalNetCents = totalCreditsCents + totalDebitsCents;
+  const totalCredits = safeCentsToMoneyNumber(totalCreditsCents);
+  const totalDebits = safeCentsToMoneyNumber(totalDebitsCents);
+  const totalNet = safeCentsToMoneyNumber(totalNetCents);
 
   return (
     <div className="p-4 space-y-4 max-w-5xl mx-auto">
@@ -14882,8 +14907,8 @@ function CreditLogTab({ secret }: { secret: string }) {
           </div>
           <div className="rounded-xl border border-border bg-muted/50 p-3">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Net (page)</p>
-            <p className={cn("text-lg font-bold", totalCredits + totalDebits >= 0 ? "text-green-700" : "text-red-600")}>
-              {totalCredits + totalDebits >= 0 ? "+" : ""}${(totalCredits + totalDebits).toLocaleString()}
+            <p className={cn("text-lg font-bold", totalNetCents >= 0n ? "text-green-700" : "text-red-600")}>
+              {totalNetCents >= 0n ? "+" : ""}${totalNet.toLocaleString()}
             </p>
           </div>
         </div>
@@ -17932,7 +17957,13 @@ function AccountsTab({ secret }: { secret: string }) {
   };
 
   const adjustCredits = async (username: string) => {
-    const amount = Math.round(parseFloat(creditAmount[username] ?? "0"));
+    let amount: number;
+    try {
+      amount = centsToMoneyNumber(signedMoneyToCents(creditAmount[username] ?? "0"));
+    } catch {
+      setCreditMsg(prev => ({ ...prev, [username]: "Enter a valid amount with up to 2 decimals" }));
+      return;
+    }
     const reason = (creditReason[username] ?? "").trim();
     if (!amount || !reason) return;
     setCreditSubmitting(prev => ({ ...prev, [username]: true }));

@@ -1,3 +1,10 @@
+import {
+  assertNoActiveRefunds,
+  RefundMutationBlockedError,
+  refundMutationErrorOrderId,
+  refundMutableOrderWhere,
+  withRefundMutationGuard,
+} from "../lib/refund-mutation-guard";
 import { Router, type IRouter, type Request, type Response, type NextFunction, type RequestHandler } from "express";
 import { requireAdmin } from "../middleware/require-admin";
 import { db } from "@workspace/db";
@@ -367,66 +374,62 @@ router.post(`${cfg.prefix}/:gbId/confirm`, async (req, res) => {
       return;
     }
 
-    // Get selected orders' line items → build total needs map
-    const lineItemsAll = await db.select().from(orderLineItemsTable)
-      .where(inArray(orderLineItemsTable.orderId, scopedOrderIds));
+    await db.transaction(async tx => {
+      // Lock and check the complete sorted target set before touching parcel
+      // stock. Any active middle order aborts this transaction atomically.
+      await assertNoActiveRefunds(tx, [...scopedOrderIds].sort());
 
-    const needsMap = new Map<string, number>();
-    lineItemsAll.forEach(li => {
-      const key = li.productName.trim().toLowerCase();
-      needsMap.set(key, (needsMap.get(key) ?? 0) + Number(li.quantity));
-    });
-
-    // Get selected parcels
-    const parcels = await db.select().from(gbParcelsTable)
-      .where(and(
-        eq(gbParcelsTable.groupBuyId, gbId),
-        inArray(gbParcelsTable.id, parcelIds),
-      ));
-
-    const remaining = new Map(needsMap);
-
-    // Deduct from each parcel greedily
-    for (const parcel of parcels) {
-      const updatedItems = (parcel.items as ExtParcelItem[]).map(item => {
-        const exact = item.name.trim().toLowerCase();
-        // Exact match only — no substring fallback (see compute endpoint for rationale)
-        let deductKey = remaining.has(exact) ? exact : undefined;
-
-        if (!deductKey || !remaining.get(deductKey)) return item;
-
-        const canDeduct = item.qty - (item.dispatchedQty ?? 0);
-        const needed = remaining.get(deductKey)!;
-        const toDeduct = Math.min(canDeduct, needed);
-
-        if (toDeduct <= 0) return item;
-
-        remaining.set(deductKey, needed - toDeduct);
-
-        return {
-          ...item,
-          dispatchedQty: (item.dispatchedQty ?? 0) + toDeduct,
-        } as ExtParcelItem;
+      const lineItemsAll = await tx.select().from(orderLineItemsTable)
+        .where(inArray(orderLineItemsTable.orderId, scopedOrderIds));
+      const needsMap = new Map<string, number>();
+      lineItemsAll.forEach(li => {
+        const key = li.productName.trim().toLowerCase();
+        needsMap.set(key, (needsMap.get(key) ?? 0) + Number(li.quantity));
       });
 
-      await db.update(gbParcelsTable)
-        .set({ items: updatedItems as ParcelItem[] })
-        .where(eq(gbParcelsTable.id, parcel.id));
-    }
+      const parcels = await tx.select().from(gbParcelsTable)
+        .where(and(
+          eq(gbParcelsTable.groupBuyId, gbId),
+          inArray(gbParcelsTable.id, parcelIds),
+        ));
+      const remaining = new Map(needsMap);
 
-    // Derive reshipper from the selected parcels (use first parcel's reshipperUsername)
-    const dispatchedByReshipper = parcels
-      .map(p => p.reshipperUsername)
-      .find(r => !!r) ?? null;
+      for (const parcel of parcels) {
+        const updatedItems = (parcel.items as ExtParcelItem[]).map(item => {
+          const exact = item.name.trim().toLowerCase();
+          const deductKey = remaining.has(exact) ? exact : undefined;
+          if (!deductKey || !remaining.get(deductKey)) return item;
+          const canDeduct = item.qty - (item.dispatchedQty ?? 0);
+          const needed = remaining.get(deductKey)!;
+          const toDeduct = Math.min(canDeduct, needed);
+          if (toDeduct <= 0) return item;
+          remaining.set(deductKey, needed - toDeduct);
+          return { ...item, dispatchedQty: (item.dispatchedQty ?? 0) + toDeduct } as ExtParcelItem;
+        });
+        await tx.update(gbParcelsTable)
+          .set({ items: updatedItems as ParcelItem[] })
+          .where(eq(gbParcelsTable.id, parcel.id));
+      }
 
-    // Mark all dispatched orders as Shipped and stamp dispatch confirmation time + reshipper.
-    // GB-scoped so callers can never confirm orders outside the URL group buy.
-    await db.update(ordersTable)
-      .set({ status: "Shipped", updatedAt: new Date(), dispatchConfirmedAt: new Date(), dispatchedByReshipper })
-      .where(and(eq(ordersTable.groupBuyId, gbId), inArray(ordersTable.id, scopedOrderIds)));
+      const dispatchedByReshipper = parcels
+        .map(p => p.reshipperUsername)
+        .find(r => !!r) ?? null;
+      const updated = await tx.update(ordersTable)
+        .set({ status: "Shipped", updatedAt: new Date(), dispatchConfirmedAt: new Date(), dispatchedByReshipper })
+        .where(refundMutableOrderWhere(and(eq(ordersTable.groupBuyId, gbId), inArray(ordersTable.id, scopedOrderIds))))
+        .returning({ id: ordersTable.id });
+      if (updated.length !== scopedOrderIds.length) {
+        throw new RefundMutationBlockedError(scopedOrderIds.find(id => !updated.some(row => row.id === id)) ?? scopedOrderIds[0]!);
+      }
+    });
 
     res.json({ ok: true, confirmed: scopedOrderIds.length });
   } catch (e) {
+    const refundOrderId = refundMutationErrorOrderId(e);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[dispatch confirm]", e);
     res.status(500).json({ error: "Failed to confirm dispatch" });
   }
@@ -455,45 +458,54 @@ router.post(`${cfg.prefix}/:gbId/undispatch`, async (req, res) => {
       return;
     }
 
-    // Build a map of qty to restore per product name from the order line items
-    const lineItems = await db.select().from(orderLineItemsTable)
-      .where(inArray(orderLineItemsTable.orderId, scopedOrderIds));
+    await db.transaction(async tx => {
+      // This check must be inside the same transaction as parcel restoration;
+      // a blocked order therefore cannot leave stock or order state changed.
+      await assertNoActiveRefunds(tx, [...scopedOrderIds].sort());
 
-    const restoreMap = new Map<string, number>();
-    lineItems.forEach(li => {
-      const key = li.productName.trim().toLowerCase();
-      restoreMap.set(key, (restoreMap.get(key) ?? 0) + Number(li.quantity));
-    });
-
-    // Greedily restore dispatchedQty on parcels in this GB
-    const parcels = await db.select().from(gbParcelsTable)
-      .where(eq(gbParcelsTable.groupBuyId, gbId));
-
-    const toRestore = new Map(restoreMap);
-    for (const parcel of parcels) {
-      if ([...toRestore.values()].every(v => v <= 0)) break;
-      const updatedItems = (parcel.items as ExtParcelItem[]).map(item => {
-        const key = item.name.trim().toLowerCase();
-        const want = toRestore.get(key) ?? 0;
-        if (want <= 0) return item;
-        const currentDispatched = item.dispatchedQty ?? 0;
-        const actualRestore = Math.min(currentDispatched, want);
-        toRestore.set(key, want - actualRestore);
-        return { ...item, dispatchedQty: currentDispatched - actualRestore } as ExtParcelItem;
+      const lineItems = await tx.select().from(orderLineItemsTable)
+        .where(inArray(orderLineItemsTable.orderId, scopedOrderIds));
+      const restoreMap = new Map<string, number>();
+      lineItems.forEach(li => {
+        const key = li.productName.trim().toLowerCase();
+        restoreMap.set(key, (restoreMap.get(key) ?? 0) + Number(li.quantity));
       });
-      await db.update(gbParcelsTable)
-        .set({ items: updatedItems as ParcelItem[] })
-        .where(eq(gbParcelsTable.id, parcel.id));
-    }
 
-    // Reset order status back to Processing.
-    // GB-scoped so callers can never un-dispatch orders outside the URL group buy.
-    await db.update(ordersTable)
-      .set({ status: "Processing", updatedAt: new Date(), dispatchConfirmedAt: null, dispatchedByReshipper: null })
-      .where(and(eq(ordersTable.groupBuyId, gbId), inArray(ordersTable.id, scopedOrderIds)));
+      const parcels = await tx.select().from(gbParcelsTable)
+        .where(eq(gbParcelsTable.groupBuyId, gbId));
+      const toRestore = new Map(restoreMap);
+      for (const parcel of parcels) {
+        if ([...toRestore.values()].every(v => v <= 0)) break;
+        const updatedItems = (parcel.items as ExtParcelItem[]).map(item => {
+          const key = item.name.trim().toLowerCase();
+          const want = toRestore.get(key) ?? 0;
+          if (want <= 0) return item;
+          const currentDispatched = item.dispatchedQty ?? 0;
+          const actualRestore = Math.min(currentDispatched, want);
+          toRestore.set(key, want - actualRestore);
+          return { ...item, dispatchedQty: currentDispatched - actualRestore } as ExtParcelItem;
+        });
+        await tx.update(gbParcelsTable)
+          .set({ items: updatedItems as ParcelItem[] })
+          .where(eq(gbParcelsTable.id, parcel.id));
+      }
+
+      const updated = await tx.update(ordersTable)
+        .set({ status: "Processing", updatedAt: new Date(), dispatchConfirmedAt: null, dispatchedByReshipper: null })
+        .where(refundMutableOrderWhere(and(eq(ordersTable.groupBuyId, gbId), inArray(ordersTable.id, scopedOrderIds))))
+        .returning({ id: ordersTable.id });
+      if (updated.length !== scopedOrderIds.length) {
+        throw new RefundMutationBlockedError(scopedOrderIds.find(id => !updated.some(row => row.id === id)) ?? scopedOrderIds[0]!);
+      }
+    });
 
     res.json({ ok: true, undispatched: scopedOrderIds.length });
   } catch (e) {
+    const refundOrderId = refundMutationErrorOrderId(e);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[dispatch undispatch]", e);
     res.status(500).json({ error: "Failed to un-dispatch orders" });
   }
@@ -509,11 +521,18 @@ router.post(`${cfg.prefix}/:gbId/reattribute`, async (req, res) => {
       res.status(400).json({ error: "orderIds required" }); return;
     }
     const normReshipper = reshipper ? String(reshipper).trim() : null;
-    await db.update(ordersTable)
-      .set({ dispatchedByReshipper: normReshipper, updatedAt: new Date() })
-      .where(and(eq(ordersTable.groupBuyId, gbId), inArray(ordersTable.id, orderIds)));
+    await withRefundMutationGuard(db, orderIds, async tx => {
+      await tx.update(ordersTable)
+        .set({ dispatchedByReshipper: normReshipper, updatedAt: new Date() })
+        .where(refundMutableOrderWhere(and(eq(ordersTable.groupBuyId, gbId), inArray(ordersTable.id, orderIds))));
+    });
     res.json({ ok: true, updated: orderIds.length });
   } catch (e) {
+    const refundOrderId = refundMutationErrorOrderId(e);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[dispatch reattribute]", e);
     res.status(500).json({ error: "Failed to re-attribute orders" });
   }
@@ -598,12 +617,19 @@ router.post(`${cfg.prefix}/:gbId/mark-shipped-by-reshipper`, async (req, res) =>
       res.json({ ok: true, marked: 0 }); return;
     }
 
-    await db.update(ordersTable)
-      .set({ status: "Shipped", updatedAt: new Date(), dispatchConfirmedAt: new Date(), dispatchedByReshipper: reshipper })
-      .where(inArray(ordersTable.id, toMark));
+    await withRefundMutationGuard(db, toMark, async tx => {
+      await tx.update(ordersTable)
+        .set({ status: "Shipped", updatedAt: new Date(), dispatchConfirmedAt: new Date(), dispatchedByReshipper: reshipper })
+        .where(refundMutableOrderWhere(inArray(ordersTable.id, toMark)));
+    });
 
     res.json({ ok: true, marked: toMark.length });
   } catch (e) {
+    const refundOrderId = refundMutationErrorOrderId(e);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[dispatch mark-shipped-by-reshipper]", e);
     res.status(500).json({ error: "Failed to mark orders as shipped" });
   }
@@ -633,12 +659,19 @@ router.post("/admin/dispatch/:gbId/mark-orders-shipped", async (req, res) => {
 
     if (toMark.length === 0) { res.json({ ok: true, marked: 0 }); return; }
 
-    await db.update(ordersTable)
-      .set({ status: "Shipped", updatedAt: new Date(), dispatchConfirmedAt: new Date() })
-      .where(inArray(ordersTable.id, toMark));
+    await withRefundMutationGuard(db, toMark, async tx => {
+      await tx.update(ordersTable)
+        .set({ status: "Shipped", updatedAt: new Date(), dispatchConfirmedAt: new Date() })
+        .where(refundMutableOrderWhere(inArray(ordersTable.id, toMark)));
+    });
 
     res.json({ ok: true, marked: toMark.length });
   } catch (e) {
+    const refundOrderId = refundMutationErrorOrderId(e);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[dispatch mark-orders-shipped]", e);
     res.status(500).json({ error: "Failed to mark orders as shipped" });
   }
@@ -1385,11 +1418,18 @@ router.post(`${cfg.prefix}/:gbId/archive-orders`, async (req, res): Promise<void
     res.status(400).json({ error: "orderIds required" }); return;
   }
   try {
-    await db.update(ordersTable)
-      .set({ dispatchArchivedAt: archive ? new Date() : null })
-      .where(and(eq(ordersTable.groupBuyId, gbId), inArray(ordersTable.id, orderIds)));
+    await withRefundMutationGuard(db, orderIds, async tx => {
+      await tx.update(ordersTable)
+        .set({ dispatchArchivedAt: archive ? new Date() : null })
+        .where(refundMutableOrderWhere(and(eq(ordersTable.groupBuyId, gbId), inArray(ordersTable.id, orderIds))));
+    });
     res.json({ ok: true, updated: orderIds.length, archived: archive });
   } catch (e) {
+    const refundOrderId = refundMutationErrorOrderId(e);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[dispatch archive-orders]", e);
     res.status(500).json({ error: "Server error" });
   }

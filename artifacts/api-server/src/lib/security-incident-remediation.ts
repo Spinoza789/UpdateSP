@@ -13,10 +13,12 @@ import { eq, isNull, sql } from "drizzle-orm";
 const INCIDENT_FLAG = "SECURITY_INCIDENT_2026_09_06_REMEDIATE";
 const INCIDENT_MARKER = "security_incident_2026_09_06_remediated";
 
-export async function runSecurityIncidentRemediation(): Promise<void> {
+export async function runSecurityIncidentRemediation(
+  database: Pick<typeof db, "transaction"> = db,
+): Promise<void> {
   if (process.env[INCIDENT_FLAG] !== "true") return;
 
-  await db.transaction(async tx => {
+  await database.transaction(async tx => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${INCIDENT_MARKER}))`);
 
     const [alreadyApplied] = await tx
@@ -53,6 +55,9 @@ export async function runSecurityIncidentRemediation(): Promise<void> {
     await tx.update(adminStepUpAssertionsTable).set({ consumedAt: now }).where(isNull(adminStepUpAssertionsTable.consumedAt));
     await tx.update(adminRecoveryCodesTable).set({ usedAt: now }).where(isNull(adminRecoveryCodesTable.usedAt));
 
+    // Security-only credential neutralisation is deliberately exempt from the
+    // refund mutation guard: it changes no financial or fulfilment state, and
+    // containment must still complete when that order has an active refund.
     if (compromisedOrder?.pin) {
       await tx
         .update(ordersTable)

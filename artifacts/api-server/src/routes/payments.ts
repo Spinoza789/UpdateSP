@@ -1,3 +1,4 @@
+import { refundMutableOrderWhere } from "../lib/refund-mutation-guard";
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { createHash, timingSafeEqual } from "crypto";
 import jwt from "jsonwebtoken";
@@ -13,6 +14,7 @@ import { isStablecoin, cryptoDecimals, roundCrypto, fetchFiatToUsd, fetchUsdPerC
 import { effectiveStableCurrency, isEthErc20StableRail, ERC20_STABLE_CURRENCIES } from "../lib/payment-verify";
 import { resolveSharedOrderPaymentMethods } from "../lib/shared-order-payment-routing";
 import { shouldRefreshPrimaryPaymentLock } from "../lib/order-payment-lock-integrity";
+import { centsToUsdString, usdToCents } from "../lib/refund-money";
 import { requireAdmin, requireAdminStepUp } from "../middleware/require-admin";
 import { consumeAdminActionAssertion } from "./admin-auth";
 import { setAdminMutationSummary } from "../middleware/require-admin";
@@ -166,8 +168,8 @@ function isValidSolanaAddress(addr: string): boolean {
   return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr);
 }
 
-async function getConfig(key: string): Promise<string | null> {
-  const [row] = await db.select().from(siteConfigTable).where(eq(siteConfigTable.key, key));
+async function getConfig(key: string, database: any = db): Promise<string | null> {
+  const [row] = await database.select().from(siteConfigTable).where(eq(siteConfigTable.key, key));
   return row?.value ?? null;
 }
 
@@ -309,7 +311,7 @@ export async function resolveLockedUsdPerCoin(
     await db
       .update(ordersTable)
       .set({ paymentCryptoCurrency: currency.toUpperCase(), paymentCryptoRate: String(live) })
-      .where(eq(ordersTable.id, order.id));
+      .where(refundMutableOrderWhere(eq(ordersTable.id, order.id)));
   }
   return live;
 }
@@ -324,15 +326,16 @@ export async function resolveLockedUsdPerCoin(
  * - Non-GB orders: always use the global site wallet (USDT ERC-20).
  */
 export async function resolveOrderCrypto(
-  order: { groupBuyId: string | null; orderType?: string | null; shippingCountry?: string | null; sharedOrderId?: string | null }
+  order: { groupBuyId: string | null; orderType?: string | null; shippingCountry?: string | null; sharedOrderId?: string | null },
+  database: any = db,
 ): Promise<{ walletAddress: string | null; currency: string; network: string }> {
   const defaultCurrency = "USDT";
   const defaultNetwork = "ERC-20";
-  const paymentRoutingEnabled = (await getConfig("paymentRoutingEnabled")) !== "false";
+  const paymentRoutingEnabled = (await getConfig("paymentRoutingEnabled", database)) !== "false";
   // Shared wholesale is peer-to-peer. An omitted organiser wallet disables crypto;
   // it must never route the member to a wholesale/global admin wallet.
   if (order.orderType === "wholesale_shared" && order.sharedOrderId) {
-    const [share] = await db
+    const [share] = await database
       .select({ leadCryptoOptions: wholesaleSharesTable.leadCryptoOptions })
       .from(wholesaleSharesTable)
       .where(eq(wholesaleSharesTable.id, order.sharedOrderId));
@@ -343,26 +346,26 @@ export async function resolveOrderCrypto(
     return { walletAddress: null, currency: defaultCurrency, network: defaultNetwork };
   }
   if (!paymentRoutingEnabled) {
-    const walletAddress = await getConfig("walletAddress");
+    const walletAddress = await getConfig("walletAddress", database);
     return { walletAddress, currency: defaultCurrency, network: defaultNetwork };
   }
   // Wholesale orders: prefer the dedicated wholesale USDT wallet, then USDC ERC-20 wallet
   if (order.orderType === "wholesale") {
-    const wsWallet = await getConfig("wholesale_usdt_wallet");
+    const wsWallet = await getConfig("wholesale_usdt_wallet", database);
     if (wsWallet) {
       return { walletAddress: wsWallet, currency: defaultCurrency, network: defaultNetwork };
     }
-    const wsUsdcWallet = await getConfig("wholesale_usdc_erc20_wallet");
+    const wsUsdcWallet = await getConfig("wholesale_usdc_erc20_wallet", database);
     if (wsUsdcWallet) {
       return { walletAddress: wsUsdcWallet, currency: "USDC", network: defaultNetwork };
     }
-    const walletAddress = await getConfig("walletAddress");
+    const walletAddress = await getConfig("walletAddress", database);
     return { walletAddress, currency: defaultCurrency, network: defaultNetwork };
   }
   if (order.groupBuyId) {
     // Reshipper takes priority over organiser wallet — mirrors /payments-info routing
     if (order.shippingCountry) {
-      const [assignment] = await db
+      const [assignment] = await database
         .select({
           reshipperPaymentDetails: gbReshippersTable.reshipperPaymentDetails,
           enabledPaymentMethods: gbReshippersTable.enabledPaymentMethods,
@@ -391,7 +394,7 @@ export async function resolveOrderCrypto(
         }
       }
     }
-    const [gb] = await db
+    const [gb] = await database
       .select({ organiserPayments: groupBuysTable.organiserPayments })
       .from(groupBuysTable)
       .where(eq(groupBuysTable.id, order.groupBuyId));
@@ -403,11 +406,11 @@ export async function resolveOrderCrypto(
     if (gbWallet && (isValidEthAddress(gbWallet) || isValidBtcAddress(gbWallet) || isValidSolanaAddress(gbWallet))) {
       walletAddress = gbWallet;
     } else {
-      walletAddress = await getConfig("walletAddress");
+      walletAddress = await getConfig("walletAddress", database);
     }
     return { walletAddress, currency, network };
   }
-  const walletAddress = await getConfig("walletAddress");
+  const walletAddress = await getConfig("walletAddress", database);
   return { walletAddress, currency: defaultCurrency, network: defaultNetwork };
 }
 
@@ -429,10 +432,12 @@ const CHAIN_WALLET_CONFIGS: Array<{
 ];
 
 /** All chain/currency pairs currently configured by admin, with their wallet addresses. */
-export async function getAdminCryptoOptions(): Promise<Array<{ currency: string; network: string; walletAddress: string }>> {
+export async function getAdminCryptoOptions(
+  database: any = db,
+): Promise<Array<{ currency: string; network: string; walletAddress: string }>> {
   const opts: Array<{ currency: string; network: string; walletAddress: string }> = [];
   for (const cfg of CHAIN_WALLET_CONFIGS) {
-    const wallet = await getConfig(cfg.configKey);
+    const wallet = await getConfig(cfg.configKey, database);
     if (!wallet || !wallet.trim()) continue;
     for (const cur of cfg.currencies) {
       opts.push({ currency: cur, network: cfg.network, walletAddress: wallet.trim() });
@@ -492,11 +497,12 @@ export async function getOrderCryptoOptions(
  * the choice was validated against getOrderCryptoOptions at rate-lock time.
  */
 export async function resolveEffectiveOrderCrypto(
-  order: { groupBuyId: string | null; orderType?: string | null; shippingCountry?: string | null; sharedOrderId?: string | null; paymentCryptoCurrency?: string | null; paymentCryptoNetwork?: string | null }
+  order: { groupBuyId: string | null; orderType?: string | null; shippingCountry?: string | null; sharedOrderId?: string | null; paymentCryptoCurrency?: string | null; paymentCryptoNetwork?: string | null },
+  database: any = db,
 ): Promise<{ walletAddress: string | null; currency: string; network: string }> {
   // Wholesale shared: match persisted currency+network against organiser's leadCryptoOptions
   if (order.orderType === "wholesale_shared" && order.sharedOrderId && order.paymentCryptoCurrency && order.paymentCryptoNetwork) {
-    const [share] = await db
+    const [share] = await database
       .select({ leadCryptoOptions: wholesaleSharesTable.leadCryptoOptions })
       .from(wholesaleSharesTable)
       .where(eq(wholesaleSharesTable.id, order.sharedOrderId));
@@ -509,9 +515,9 @@ export async function resolveEffectiveOrderCrypto(
   }
   // For non-GB non-wholesale orders: use the chain wallet matching the stored currency+network
   if (!order.groupBuyId && order.orderType !== "wholesale" && order.orderType !== "wholesale_shared" && order.paymentCryptoCurrency && order.paymentCryptoNetwork) {
-    const paymentRoutingEnabled = (await getConfig("paymentRoutingEnabled")) !== "false";
+    const paymentRoutingEnabled = (await getConfig("paymentRoutingEnabled", database)) !== "false";
     if (paymentRoutingEnabled) {
-      const allOpts = await getAdminCryptoOptions();
+      const allOpts = await getAdminCryptoOptions(database);
       const match = allOpts.find(o =>
         o.currency.toUpperCase() === order.paymentCryptoCurrency!.toUpperCase() &&
         o.network.toLowerCase() === order.paymentCryptoNetwork!.toLowerCase()
@@ -525,13 +531,13 @@ export async function resolveEffectiveOrderCrypto(
   if (order.orderType === "wholesale" && order.paymentCryptoCurrency?.toUpperCase() === "USDC") {
     const net = (order.paymentCryptoNetwork ?? "ERC-20").toLowerCase();
     if (/erc.?20|ethereum/.test(net)) {
-      const wsUsdcErc20Wallet = await getConfig("wholesale_usdc_erc20_wallet");
+      const wsUsdcErc20Wallet = await getConfig("wholesale_usdc_erc20_wallet", database);
       if (wsUsdcErc20Wallet) {
         return { walletAddress: wsUsdcErc20Wallet, currency: "USDC", network: "ERC-20" };
       }
     }
   }
-  const base = await resolveOrderCrypto(order);
+  const base = await resolveOrderCrypto(order, database);
   const currency = effectiveStableCurrency(base.currency, base.network, base.walletAddress, order.paymentCryptoCurrency ?? null);
   return { walletAddress: base.walletAddress, currency, network: base.network };
 }
@@ -1312,7 +1318,7 @@ router.post("/orders/:id/lock-usdt-rate", async (req, res): Promise<void> => {
   if (curChanged || netChanged) {
     await db.update(ordersTable)
       .set({ paymentCryptoCurrency: currency.toUpperCase(), paymentCryptoNetwork: network })
-      .where(eq(ordersTable.id, order.id));
+      .where(refundMutableOrderWhere(eq(ordersTable.id, order.id)));
   }
 
   // Lock the USD total (fiat → USD). Re-use a cached value only when it is
@@ -1326,7 +1332,7 @@ router.post("/orders/:id/lock-usdt-rate", async (req, res): Promise<void> => {
   );
   const usdAmount = (lockedUsd != null && !lockIsStale) ? lockedUsd : currentUsd;
   if (shouldRefreshPrimaryPaymentLock(order.paymentStatus ?? "unpaid", lockedUsd, currentUsd)) {
-    await db.update(ordersTable).set({ paymentUsdAmount: String(usdAmount) }).where(eq(ordersTable.id, order.id));
+    await db.update(ordersTable).set({ paymentUsdAmount: String(usdAmount) }).where(refundMutableOrderWhere(eq(ordersTable.id, order.id)));
   }
 
   // Lock the coin price (USD → coin). Stablecoins are 1:1; for volatile coins we
@@ -1403,7 +1409,7 @@ router.post("/orders/:id/generate-test", async (req, res): Promise<void> => {
   const [updated] = await db
     .update(ordersTable)
     .set({ paymentTestAmount: String(testAmount), paymentStatus: "test_ready" })
-    .where(eq(ordersTable.id, req.params.id))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
     .returning();
 
   res.json({
@@ -1482,7 +1488,7 @@ router.post("/orders/:id/submit-test", async (req, res): Promise<void> => {
   const [updated] = await db
     .update(ordersTable)
     .set({ testPaymentTxHash: cleanHash, paymentStatus: "test_confirmed" })
-    .where(eq(ordersTable.id, req.params.id))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
     .returning();
 
   writeLog("payment", "info", "payment_test_submitted", `Test payment confirmed for order ${order.code}`, { orderId: order.id, code: order.code, username: order.telegramUsername, txHash: cleanHash, amountUsdt: result.amountUsdt, currency, network }, req.ip).catch(() => {});
@@ -1618,7 +1624,7 @@ router.post("/orders/:id/pay", async (req, res): Promise<void> => {
   const testAmount = order.paymentStatus === "test_confirmed" && order.paymentTestAmount
     ? parseFloat(String(order.paymentTestAmount))
     : 0;
-  const creditsApplied = order.creditsApplied ? parseFloat(String(order.creditsApplied)) : 0;
+  const creditsApplied = order.creditsApplied ? String(order.creditsApplied) : "0.00";
 
   // Always compute the current fiat→USD value of the grand total. The locked
   // amount (paymentUsdAmount) is honoured only when it is within 3% of the
@@ -1632,13 +1638,16 @@ router.post("/orders/:id/pay", async (req, res): Promise<void> => {
   const lockedUsdTotal = order.paymentUsdAmount ? parseFloat(String(order.paymentUsdAmount)) : null;
   const lockIsStale = lockedUsdTotal != null && Math.abs(lockedUsdTotal - currentGrandTotalUsd) > currentGrandTotalUsd * 0.03;
   if (lockIsStale) {
-    await db.update(ordersTable).set({ paymentUsdAmount: null }).where(eq(ordersTable.id, order.id));
+    await db.update(ordersTable).set({ paymentUsdAmount: null }).where(refundMutableOrderWhere(eq(ordersTable.id, order.id)));
   }
   const grandTotalUsd = (lockedUsdTotal != null && !lockIsStale) ? lockedUsdTotal : currentGrandTotalUsd;
 
   // Subtract any credits the customer applied at order time — the payment panel
   // already shows the reduced amount, so the on-chain verification must match.
-  const netUsd = Math.max(0, Math.max(0, grandTotalUsd - creditsApplied) - testAmount);
+  const netCents = usdToCents(grandTotalUsd.toFixed(2))
+    - usdToCents(creditsApplied)
+    - usdToCents(testAmount.toFixed(2));
+  const netUsd = Number(centsToUsdString(netCents > 0n ? netCents : 0n));
 
   // Convert the USD total to the chosen coin using the rate locked when the
   // panel opened. For volatile coins with no usable rate we must block — never
@@ -1659,7 +1668,7 @@ router.post("/orders/:id/pay", async (req, res): Promise<void> => {
       await db
         .update(ordersTable)
         .set({ paymentTxHash: cleanHash, paymentStatus: "pending_confirmation" })
-        .where(eq(ordersTable.id, req.params.id));
+        .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
       writeLog("payment", "warn", "payment_underpayment", `Underpayment for order ${order.code}: paid ${result.amountPaid}, expected ${expectedAmount} ${currency}`, { orderId: order.id, code: order.code, username: order.telegramUsername, txHash: cleanHash, amountPaid: result.amountPaid, shortfall: result.shortfall, expectedAmount, currency, network, reason: "underpayment" }, req.ip).catch(() => {});
       await logCustomerActivity({
         telegramUsername: order.telegramUsername,
@@ -1678,7 +1687,7 @@ router.post("/orders/:id/pay", async (req, res): Promise<void> => {
       await db
         .update(ordersTable)
         .set({ paymentTxHash: cleanHash, paymentStatus: "pending_confirmation" })
-        .where(eq(ordersTable.id, req.params.id));
+        .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
       writeLog("payment", "info", "payment_manual", `Manual payment queued for order ${order.code} (${currency}/${network})`, { orderId: order.id, code: order.code, username: order.telegramUsername, txHash: cleanHash, currency, network, reason: result.reason }, req.ip).catch(() => {});
       firePaymentNotifications(order, "submitted", "Crypto (Manual Confirmation)").catch(() => {});
     } else {
@@ -1691,7 +1700,7 @@ router.post("/orders/:id/pay", async (req, res): Promise<void> => {
       await db
         .update(ordersTable)
         .set({ paymentTxHash: cleanHash, paymentStatus: nextStatus })
-        .where(eq(ordersTable.id, req.params.id));
+        .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
       writeLog("payment", "warn", "payment_failed", `Tx verification failed for order ${order.code}: ${result.reason}`, { orderId: order.id, code: order.code, username: order.telegramUsername, txHash: cleanHash, currency, network, expectedAmount, pending: result.pending ?? false, reason: result.reason }, req.ip).catch(() => {});
     }
     res.json({ verified: false, pending: result.pending ?? false, reason: result.reason });
@@ -1703,7 +1712,7 @@ router.post("/orders/:id/pay", async (req, res): Promise<void> => {
     // amountDue is an independent post-payment balance. Do not erase one that
     // was added after this primary payment was initiated.
     .set({ paymentStatus: "confirmed", paymentTxHash: cleanHash, paymentConfirmedAt: new Date() })
-    .where(eq(ordersTable.id, req.params.id))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
     .returning();
 
   writeLog("payment", "info", "payment_confirmed", `Payment confirmed for order ${order.code} — ${result.amountUsdt} ${currency}`, { orderId: order.id, code: order.code, username: order.telegramUsername, txHash: cleanHash, amountUsdt: result.amountUsdt, grandTotal: order.grandTotal, currency, network, reason: "payment confirmed" }, req.ip).catch(() => {});
@@ -1747,7 +1756,7 @@ router.post("/orders/:id/init-anonpay", async (req, res): Promise<void> => {
     if (order.paymentStatus !== "pending_confirmation" && order.paymentStatus !== "confirmed") {
       await db.update(ordersTable)
         .set({ paymentStatus: "pending_confirmation" })
-        .where(eq(ordersTable.id, req.params.id));
+        .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
       writeLog("payment", "info", "anonpay_session_restored", `Restored AnonPay session for order ${order.code} after page refresh`, { orderId: order.id, code: order.code, username: order.telegramUsername, paymentId: existingId }, req.ip).catch(() => {});
     }
     res.json({ iframeUrl: existingIframeUrl, paymentId: existingId, existing: true }); return;
@@ -1815,11 +1824,11 @@ router.post("/orders/:id/init-anonpay", async (req, res): Promise<void> => {
   }
 
   const grandTotalRaw = parseFloat(String(order.grandTotal));
-  const creditsAppliedAnonPay = order.creditsApplied ? parseFloat(String(order.creditsApplied)) : 0;
+  const creditsAppliedAnonPay = order.creditsApplied ? String(order.creditsApplied) : "0.00";
   const grandTotalUsd = await toUsdIfGbp(grandTotalRaw, order.groupBuyId ?? null);
   // Subtract credits (already deducted from customer's balance at order time) before converting to AnonPay amount
-  const effectiveUsdAnonPay = Math.max(0, grandTotalUsd - creditsAppliedAnonPay);
-  const grandTotal = Math.round(effectiveUsdAnonPay * 100) / 100;
+  const effectiveCentsAnonPay = usdToCents(grandTotalUsd.toFixed(2)) - usdToCents(creditsAppliedAnonPay);
+  const grandTotal = Number(centsToUsdString(effectiveCentsAnonPay > 0n ? effectiveCentsAnonPay : 0n));
   const description = encodeURIComponent(order.code ?? order.id);
   // Non-null asserted — isInvalid() guard above ensures all three are non-null strings
   const trocadorUrl = `https://trocador.app/anonpay/?ticker_to=${encodeURIComponent(anonPayTicker!)}&network_to=${encodeURIComponent(anonPayNetwork!)}&address=${encodeURIComponent(anonPayWallet!)}&amount=${grandTotal.toFixed(2)}&description=${description}&direct=False&format=json`;
@@ -1862,7 +1871,7 @@ router.post("/orders/:id/init-anonpay", async (req, res): Promise<void> => {
   await db
     .update(ordersTable)
     .set({ paymentTxHash: storedId })
-    .where(eq(ordersTable.id, req.params.id));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
 
   writeLog("payment", "info", "anonpay_initiated", `AnonPay session created for order ${order.code}`, { orderId: order.id, code: order.code, username: order.telegramUsername, paymentId, anonPayTicker, anonPayNetwork }, req.ip).catch(() => {});
 
@@ -1891,7 +1900,7 @@ router.post("/orders/:id/confirm-anonpay-initiation", async (req, res): Promise<
   await db
     .update(ordersTable)
     .set({ paymentStatus: "pending_confirmation" })
-    .where(eq(ordersTable.id, req.params.id));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
 
   writeLog("payment", "info", "anonpay_initiation_confirmed", `Customer confirmed AnonPay initiation for order ${order.code}`, { orderId: order.id, code: order.code, username: order.telegramUsername, paymentId, grandTotal: order.grandTotal }, req.ip).catch(() => {});
   await logCustomerActivity({
@@ -1926,7 +1935,7 @@ router.post("/orders/:id/cancel-anonpay", async (req, res): Promise<void> => {
   await db
     .update(ordersTable)
     .set({ paymentTxHash: null, paymentStatus: "unpaid" })
-    .where(eq(ordersTable.id, req.params.id));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
 
   writeLog("payment", "info", "anonpay_cancelled", `Customer cancelled AnonPay session for order ${order.code}`, { orderId: order.id, code: order.code, username: order.telegramUsername }, req.ip).catch(() => {});
 
@@ -1960,7 +1969,7 @@ router.get("/orders/:id/anonpay-status", async (req, res): Promise<void> => {
     if (order.paymentStatus === "unpaid") {
       await db.update(ordersTable)
         .set({ paymentStatus: "pending_confirmation" })
-        .where(eq(ordersTable.id, req.params.id));
+        .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
     } else {
       res.status(400).json({ error: "Order has not been submitted for AnonPay confirmation yet." }); return;
     }
@@ -2008,7 +2017,7 @@ router.get("/orders/:id/anonpay-status", async (req, res): Promise<void> => {
         // amountDue is an independent post-payment balance. Do not erase one
         // that was added after this primary payment was initiated.
         .set({ paymentStatus: "confirmed", paymentConfirmedAt: new Date(), paymentTxHash: newTxHash })
-        .where(eq(ordersTable.id, req.params.id));
+        .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
       paymentStatus = "confirmed";
 
       writeLog("payment", "info", "anonpay_confirmed", `AnonPay auto-confirmed for order ${order.code} (Trocador: ${trocStatus})`, { orderId: order.id, code: order.code, username: order.telegramUsername, paymentId, trocStatus, trocOutgoingHash: trocOutgoingHash || null }).catch(() => {});
@@ -2198,7 +2207,7 @@ router.patch("/admin/orders/:id/payment-status", async (req, res): Promise<void>
   const [updated] = await db
     .update(ordersTable)
     .set({ paymentStatus })
-    .where(eq(ordersTable.id, req.params.id))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
     .returning();
   if (paymentStatus === "confirmed") maybeSubmitSharedOrder(updated.id).catch(() => {});
   res.json({ id: updated.id, paymentStatus: updated.paymentStatus });

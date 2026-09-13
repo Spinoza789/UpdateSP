@@ -1,3 +1,9 @@
+import {
+  assertNoActiveRefund,
+  RefundMutationBlockedError,
+  refundMutableOrderWhere,
+  withRefundMutationGuard,
+} from "../lib/refund-mutation-guard";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import {
@@ -625,7 +631,7 @@ router.post("/reshipper/gb/:gbId/orders/:orderId/claim", requireReshipper, async
   await db
     .update(ordersTable)
     .set({ reshipperUsername: assignment.reshipperUsername })
-    .where(and(eq(ordersTable.id, orderId), isNull(ordersTable.reshipperUsername)));
+    .where(refundMutableOrderWhere(and(eq(ordersTable.id, orderId), isNull(ordersTable.reshipperUsername))));
 
   writeLog("change", "info", "order_claimed_by_reshipper",
     `Reshipper @${assignment.reshipperUsername} claimed order ${order.code ?? orderId}`,
@@ -664,17 +670,17 @@ router.post("/reshipper/gb/:gbId/orders/claim-bulk", requireReshipper, async (re
   // Atomic claim: a single UPDATE ... WHERE ... RETURNING so we report exactly
   // which rows we actually won (race-safe even with concurrent reshippers).
   // Direct-to-home orders are excluded — reshippers cannot claim them.
-  const claimedRows = await db
+  const claimedRows = await withRefundMutationGuard(db, ids, async tx => tx
     .update(ordersTable)
     .set({ reshipperUsername: assignment.reshipperUsername })
-    .where(and(
+    .where(refundMutableOrderWhere(and(
       inArray(ordersTable.id, ids),
       eq(ordersTable.groupBuyId, gbId),
       eq(ordersTable.countryLegId, countryLeg.id),
       isNull(ordersTable.reshipperUsername),
       sql`(${ordersTable.directShippingRequested} IS NOT TRUE)`,
-    ))
-    .returning({ id: ordersTable.id, code: ordersTable.code });
+    )))
+    .returning({ id: ordersTable.id, code: ordersTable.code }));
 
   const claimedIds = claimedRows.map(r => r.id);
   const claimedSet = new Set(claimedIds);
@@ -829,12 +835,13 @@ router.patch("/reshipper/gb/:gbId/orders/:orderId", requireReshipper, async (req
   const [updated] = await db
     .update(ordersTable)
     .set(updates)
-    .where(trackingWrite ? and(
+    .where(refundMutableOrderWhere(trackingWrite ? and(
       eq(ordersTable.id, orderId),
       unchangedTrackingWriteFields(existing),
-    ) : eq(ordersTable.id, orderId))
+    ) : eq(ordersTable.id, orderId)))
     .returning();
   if (!updated) {
+    await assertNoActiveRefund(db, orderId);
     res.status(409).json({ error: "Tracking was changed by another writer; reload and try again" });
     return;
   }
@@ -1607,7 +1614,7 @@ router.patch("/reshipper/gb/:gbId/orders/:orderId/qr-posted", requireReshipper, 
   const [updated] = await db
     .update(ordersTable)
     .set({ qrPosted: posted })
-    .where(eq(ordersTable.id, orderId))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, orderId)))
     .returning({ id: ordersTable.id, qrPosted: ordersTable.qrPosted });
 
   res.json({ id: updated.id, qrPosted: updated.qrPosted });

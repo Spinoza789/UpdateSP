@@ -1,3 +1,4 @@
+import { assertNoActiveRefund, refundMutableOrderWhere } from "../lib/refund-mutation-guard";
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import multer from "multer";
 import { createHash, timingSafeEqual } from "crypto";
@@ -36,6 +37,7 @@ import { getActiveWholesaleVendor } from "./config";
 import { calcTotalShipping, pickRegionForCountry, type ShippingVendor } from "../lib/wholesale-shipping";
 import { calculateAdditionMerge } from "../lib/order-addition-merge";
 import { resolveGroupBuyAdminFee } from "../lib/group-buy-admin-fee";
+import { centsToUsdString, subtractMoneyClamped, usdToCents } from "../lib/refund-money";
 
 // ── Server-authoritative wholesale shipping ──────────────────────────────────
 // Wholesale shipping is priced by kit-count tiers per destination region, so it must
@@ -412,7 +414,7 @@ router.post("/orders/claim-pin", async (req, res): Promise<void> => {
 
   // Update ALL orders for this username that still have the default PIN
   for (const o of defaultPinOrders) {
-    await db.update(ordersTable).set({ pin: String(newPin) }).where(eq(ordersTable.id, o.id));
+    await db.update(ordersTable).set({ pin: String(newPin) }).where(refundMutableOrderWhere(eq(ordersTable.id, o.id)));
   }
 
   await writeLog("login", "info", "pin_claimed",
@@ -966,11 +968,22 @@ router.post("/orders", async (req, res): Promise<void> => {
   if (additionParent) {
     const sessionUsername = getAccountFromCookie(req);
     const mergeOutcome = await db.transaction(async (tx) => {
+      const creditRequested = Boolean(sessionUsername && typeof clientCreditsApplied === "number" && clientCreditsApplied > 0);
+      const [lockedAccount] = creditRequested
+        ? await tx.select({ telegramUsername: accountsTable.telegramUsername, credits: accountsTable.credits })
+          .from(accountsTable)
+          .where(or(
+            eq(accountsTable.telegramUsername, normalizeTg(sessionUsername!)),
+            eq(accountsTable.telegramUsername, `@${normalizeTg(sessionUsername!)}`),
+          ))
+          .for("update")
+        : [null];
       const [lockedParent] = await tx
         .select()
         .from(ordersTable)
         .where(eq(ordersTable.id, additionParent.id))
         .for("update");
+      if (lockedParent) await assertNoActiveRefunds(tx, [lockedParent.id]);
 
       if (
         !lockedParent
@@ -1018,7 +1031,7 @@ router.post("/orders", async (req, res): Promise<void> => {
               quantity: mergedQuantity.toFixed(2),
               lineTotal: mergedLineTotal.toFixed(2),
             })
-            .where(eq(orderLineItemsTable.id, matchingItem.id))
+            .where(refundMutableOrderWhere(eq(orderLineItemsTable.id, matchingItem.id), orderLineItemsTable.orderId))
             .returning();
           Object.assign(matchingItem, updatedItem);
         } else {
@@ -1039,30 +1052,31 @@ router.post("/orders", async (req, res): Promise<void> => {
       }
 
       let appliedCredits = 0;
+      let appliedCreditsUsd = "0.00";
       if (
-        sessionUsername
-        && typeof clientCreditsApplied === "number"
-        && clientCreditsApplied > 0
+        creditRequested
       ) {
-        const [account] = await tx
-          .select({ credits: accountsTable.credits })
-          .from(accountsTable)
-          .where(eq(accountsTable.telegramUsername, sessionUsername.toLowerCase()))
-          .for("update");
-        if (account?.credits) {
-          appliedCredits = Math.min(
-            account.credits,
-            Math.round(clientCreditsApplied),
-            Math.floor(grandTotal),
-          );
-          if (appliedCredits > 0) {
+        let requestedCreditsCents: bigint;
+        try {
+          requestedCreditsCents = usdToCents(String(clientCreditsApplied));
+        } catch {
+          requestedCreditsCents = 0n;
+        }
+        if (lockedAccount && requestedCreditsCents > 0n) {
+          const availableCreditsCents = usdToCents(String(lockedAccount.credits ?? "0"));
+          const remainingTotalCents = usdToCents(grandTotal.toFixed(2));
+          const deductedCents = [availableCreditsCents, requestedCreditsCents, remainingTotalCents]
+            .reduce((minimum, value) => value < minimum ? value : minimum);
+          if (deductedCents > 0n) {
+            appliedCreditsUsd = centsToUsdString(deductedCents);
+            appliedCredits = Number(appliedCreditsUsd);
             await tx
               .update(accountsTable)
-              .set({ credits: account.credits - appliedCredits })
-              .where(eq(accountsTable.telegramUsername, sessionUsername.toLowerCase()));
+              .set({ credits: centsToUsdString(availableCreditsCents - deductedCents) as unknown as number })
+              .where(eq(accountsTable.telegramUsername, lockedAccount.telegramUsername));
             await tx.insert(creditTransactionsTable).values({
-              accountUsername: sessionUsername.toLowerCase(),
-              amount: -appliedCredits,
+              accountUsername: lockedAccount.telegramUsername,
+              amount: `-${appliedCreditsUsd}` as unknown as number,
               reason: `Credits applied to order #${lockedParent.code}`,
               orderId: lockedParent.id,
               adminUsername: null,
@@ -1072,7 +1086,7 @@ router.post("/orders", async (req, res): Promise<void> => {
         }
       }
 
-      const addedAmountDue = Number(Math.max(0, grandTotal - appliedCredits).toFixed(2));
+      const addedAmountDue = Number(subtractMoneyClamped(grandTotal.toFixed(2), appliedCreditsUsd));
       const totals = calculateAdditionMerge({
         parentProductSubtotal: parseFloat(String(lockedParent.productSubtotal ?? "0")),
         parentGrandTotal: parseFloat(String(lockedParent.grandTotal ?? "0")),
@@ -1098,14 +1112,17 @@ router.post("/orders", async (req, res): Promise<void> => {
           couponDiscount: (
             parseFloat(String(lockedParent.couponDiscount ?? "0")) + couponDiscount
           ).toFixed(2),
-          creditsApplied: (lockedParent.creditsApplied ?? 0) + appliedCredits,
+          creditsApplied: centsToUsdString(
+            usdToCents(String(lockedParent.creditsApplied ?? "0")) + usdToCents(appliedCreditsUsd),
+          ) as unknown as number,
           balancePaymentStatus: totals.amountDue > 0 ? "unpaid" : null,
           balanceTxHash: null,
           balanceScreenshot: null,
           balanceConfirmedAt: null,
         })
-        .where(eq(ordersTable.id, lockedParent.id))
+        .where(refundMutableOrderWhere(eq(ordersTable.id, lockedParent.id)))
         .returning();
+      if (!updatedParent) throw new RefundMutationBlockedError(lockedParent.id);
 
       if (resolvedCouponId && appliedCouponCode) {
         await tx.insert(couponRedemptionsTable).values({
@@ -1431,33 +1448,50 @@ router.post("/orders", async (req, res): Promise<void> => {
   // If the client sent a creditsApplied amount and the request carries a valid
   // account session, re-verify the balance server-side and stamp it on the order.
   let appliedCredits = 0;
+  let appliedCreditsUsd = "0.00";
   const sessionUsernameForCredits = getAccountFromCookie(req);
   if (sessionUsernameForCredits && clientCreditsApplied && typeof clientCreditsApplied === "number" && clientCreditsApplied > 0) {
-    try {
-      const [acctRow] = await db
+    const requestedCreditsCents = usdToCents(String(clientCreditsApplied));
+    await db.transaction(async tx => {
+      // Lock account before order to match every other credit-spend path.
+      const [acctRow] = await tx
         .select({ credits: accountsTable.credits })
         .from(accountsTable)
+        .where(eq(accountsTable.telegramUsername, sessionUsernameForCredits))
+        .for("update");
+      const [lockedOrder] = await tx
+        .select({ id: ordersTable.id })
+        .from(ordersTable)
+        .where(eq(ordersTable.id, orderId))
+        .for("update");
+      if (!acctRow) throw new Error("account_not_found");
+      if (!lockedOrder) throw new Error("order_not_found");
+      if (requestedCreditsCents <= 0n) return;
+
+      const availableCreditsCents = usdToCents(String(acctRow.credits ?? "0"));
+      const orderTotalCents = usdToCents(grandTotal.toFixed(2));
+      const deductedCents = [availableCreditsCents, requestedCreditsCents, orderTotalCents]
+        .reduce((minimum, value) => value < minimum ? value : minimum);
+      if (deductedCents <= 0n) return;
+
+      appliedCreditsUsd = centsToUsdString(deductedCents);
+      appliedCredits = Number(appliedCreditsUsd);
+      const newBalance = centsToUsdString(availableCreditsCents - deductedCents);
+      await tx.update(accountsTable)
+        .set({ credits: newBalance as unknown as number })
         .where(eq(accountsTable.telegramUsername, sessionUsernameForCredits));
-      if (acctRow && acctRow.credits > 0) {
-        appliedCredits = Math.min(acctRow.credits, Math.round(clientCreditsApplied));
-        if (appliedCredits > 0) {
-          const newBalance = acctRow.credits - appliedCredits;
-          await db.update(accountsTable).set({ credits: newBalance }).where(eq(accountsTable.telegramUsername, sessionUsernameForCredits));
-          await db.update(ordersTable).set({ creditsApplied: appliedCredits }).where(eq(ordersTable.id, orderId));
-          await db.insert(creditTransactionsTable).values({
-            accountUsername: sessionUsernameForCredits,
-            amount: -appliedCredits,
-            reason: `Credits applied to order #${code}`,
-            orderId,
-            adminUsername: null,
-            createdAt: new Date(),
-          });
-        }
-      }
-    } catch (err) {
-      console.error("[orders] Failed to apply credits for order", orderId, err);
-      // Non-fatal — order was created, credits just weren't applied
-    }
+      await tx.update(ordersTable)
+        .set({ creditsApplied: appliedCreditsUsd as unknown as number })
+        .where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
+      await tx.insert(creditTransactionsTable).values({
+        accountUsername: sessionUsernameForCredits,
+        amount: `-${appliedCreditsUsd}` as unknown as number,
+        reason: `Credits applied to order #${code}`,
+        orderId,
+        adminUsername: null,
+        createdAt: new Date(),
+      });
+    });
   }
 
   const formatted = formatOrderResponse(
@@ -1836,7 +1870,7 @@ router.patch("/orders/:orderId/pin", async (req, res): Promise<void> => {
     return;
   }
 
-  await db.update(ordersTable).set({ pin: String(newPin) }).where(eq(ordersTable.id, orderId));
+  await db.update(ordersTable).set({ pin: String(newPin) }).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
 
   await writeLog("login", "info", "pin_changed",
     `PIN changed for ${tg} (order ${order.code})`,
@@ -1863,7 +1897,7 @@ router.post("/orders/:orderId/inpost-qr", qrUploadMiddleware, async (req, res): 
   if (!order || order.telegramUsername.toLowerCase() !== tg || !safeEqual(order.pin, pin.trim())) {
     res.status(401).json({ error: "Invalid credentials" }); return;
   }
-  await db.update(ordersTable).set({ inpostQrCode: qrCode }).where(eq(ordersTable.id, orderId));
+  await db.update(ordersTable).set({ inpostQrCode: qrCode }).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
   res.json({ ok: true });
 });
 
@@ -1883,7 +1917,7 @@ router.post("/orders/:orderId/royal-mail-qr", qrUploadMiddleware, async (req, re
   if (!order || order.telegramUsername.toLowerCase() !== tg || !safeEqual(order.pin, pin.trim())) {
     res.status(401).json({ error: "Invalid credentials" }); return;
   }
-  await db.update(ordersTable).set({ royalMailQrCode: qrCode }).where(eq(ordersTable.id, orderId));
+  await db.update(ordersTable).set({ royalMailQrCode: qrCode }).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
   res.json({ ok: true });
 });
 
@@ -1910,7 +1944,7 @@ router.post("/orders/:orderId/qr-upload", qrUploadMiddleware, async (req, res): 
     res.status(401).json({ error: "Invalid credentials" }); return;
   }
   const existing: Record<string, string> = (order.qrCodes as Record<string, string> | null) ?? {};
-  await db.update(ordersTable).set({ qrCodes: { ...existing, [courierId]: qrCode } }).where(eq(ordersTable.id, orderId));
+  await db.update(ordersTable).set({ qrCodes: { ...existing, [courierId]: qrCode } }).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
   res.json({ ok: true });
 });
 
@@ -2239,7 +2273,12 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
   // Capture old line items for audit log before deleting them
   const oldLineItems = await db.select().from(orderLineItemsTable).where(eq(orderLineItemsTable.orderId, rawId));
 
-  const [updatedOrder] = await db
+  const { updatedOrder, insertedLineItems } = await db.transaction(async tx => {
+  const [lockedOrder] = await tx.select({ id: ordersTable.id }).from(ordersTable)
+    .where(eq(ordersTable.id, rawId)).for("update");
+  if (!lockedOrder) throw new Error("Order no longer exists.");
+  await assertNoActiveRefund(tx, rawId);
+  const [updatedOrder] = await tx
     .update(ordersTable)
     .set({
       deliveryMethod: isAddition ? order.deliveryMethod : deliveryMethodRecord.name,
@@ -2273,10 +2312,11 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
         shippingCountry: clientShippingCountry ? String(clientShippingCountry).trim().slice(0, 128) : null,
       }),
     })
-    .where(eq(ordersTable.id, rawId))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, rawId)))
     .returning();
+  if (!updatedOrder) throw new RefundMutationBlockedError(rawId);
 
-  await db.delete(orderLineItemsTable).where(eq(orderLineItemsTable.orderId, rawId));
+  await tx.delete(orderLineItemsTable).where(refundMutableOrderWhere(eq(orderLineItemsTable.orderId, rawId), orderLineItemsTable.orderId));
 
   const lineItemsToInsert = clientLineItems.map((li: {
     productId: string; productName: string; quantity: number; unitPrice: number;
@@ -2290,10 +2330,12 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
     lineTotal: (parseFloat(String(li.quantity)) * parseFloat(String(li.unitPrice))).toFixed(2),
   }));
 
-  const insertedLineItems = await db
+  const insertedLineItems = await tx
     .insert(orderLineItemsTable)
     .values(lineItemsToInsert)
     .returning();
+  return { updatedOrder, insertedLineItems };
+  });
 
   const formatted = formatOrderResponse(updatedOrder as unknown as Record<string, unknown>, insertedLineItems as unknown as Record<string, unknown>[]);
   pushToGoogleSheets(formatted).catch(() => {});
@@ -2444,7 +2486,7 @@ router.post("/orders/:orderId/shipping-address", async (req, res): Promise<void>
       ...(shippingPostcode ? { shippingPostcode: String(shippingPostcode).trim().slice(0, 20) } : {}),
       ...(shippingCountry ? { shippingCountry: String(shippingCountry).trim().slice(0, 128) } : {}),
     })
-    .where(eq(ordersTable.id, orderId))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, orderId)))
     .returning({ shippingName: ordersTable.shippingName, shippingAddress: ordersTable.shippingAddress });
 
   writeLog("order", "info", "shipping_address_updated",
@@ -2506,7 +2548,7 @@ router.patch("/orders/change-username", async (req, res): Promise<void> => {
   }
 
   // Rename across all orders
-  await db.update(ordersTable).set({ telegramUsername: newTg }).where(tgEq(tg));
+  await db.update(ordersTable).set({ telegramUsername: newTg }).where(refundMutableOrderWhere(tgEq(tg)));
 
   writeLog("order", "info", "username_changed",
     `Customer changed username from ${tg} to ${newTg}`,
@@ -2623,7 +2665,7 @@ router.delete("/orders/:orderId", async (req, res): Promise<void> => {
 
   await db.update(ordersTable)
     .set({ deletedAt: new Date(), deletedBy: "customer" })
-    .where(eq(ordersTable.id, orderId));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
 
   writeLog("order", "warn", "order_deleted_by_customer",
     `Customer deleted order ${order.code} (${order.telegramUsername}, status: ${order.status})`,
@@ -2824,7 +2866,7 @@ router.post("/orders/:id/payment-screenshot", async (req, res): Promise<void> =>
   await db
     .update(ordersTable)
     .set({ paymentScreenshot: s })
-    .where(eq(ordersTable.id, id));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, id)));
 
   writeLog("change", "info", "payment_screenshot_uploaded",
     `Payment screenshot uploaded for order #${order.code}`,
@@ -2928,7 +2970,7 @@ router.post("/orders/:id/confirm-fiat", async (req, res): Promise<void> => {
       paymentTxHash: `fiat:${method}`,
       paymentRejectionReason: null,
     })
-    .where(eq(ordersTable.id, id));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, id)));
 
   writeLog("change", "info", "fiat_payment_claimed", `Buyer claimed ${method} payment for order #${order.code}`, { orderId: id, method }).catch(() => {});
 

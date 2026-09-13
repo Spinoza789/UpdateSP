@@ -8,6 +8,11 @@ import {
 import { and, eq, inArray } from "drizzle-orm";
 import { normalizeTg } from "./normalize";
 import { normalizeOrganiserWallets, OrganiserWalletValidationError } from "./wholesale-organiser-wallets";
+import {
+  assertNoActiveRefund,
+  refundMutableOrderWhere,
+  RefundMutationBlockedError,
+} from "./refund-mutation-guard";
 
 export type OrganiserPaymentConfirmationSource = "automatic" | "admin" | "backfill";
 
@@ -41,6 +46,7 @@ type RejectionCode =
   | "invalid_amount"
   | "invalid_creator_member"
   | "invalid_creator_order"
+  | "refund_active"
   | "missing_organiser_wallet"
   | "invalid_organiser_wallet";
 
@@ -276,6 +282,18 @@ export async function confirmWholesaleOrganiserPayment(input: {
       );
     }
 
+    // Payment confirmation changes the organiser's personal order only.  It
+    // must not update any ordinary member order, and an active refund owns the
+    // organiser order until the refund workflow reaches a terminal state.
+    try {
+      await assertNoActiveRefund(tx, organiserOrderId);
+    } catch (error) {
+      if (error instanceof RefundMutationBlockedError) {
+        return reject("refund_active", error.message);
+      }
+      throw error;
+    }
+
     const orderAlreadyConfirmed =
       organiserOrder.paymentStatus === "confirmed" ||
       organiserOrder.paymentStatus === "test_confirmed";
@@ -323,10 +341,10 @@ export async function confirmWholesaleOrganiserPayment(input: {
       const [updatedOrder] = await tx
         .update(ordersTable)
         .set({ paymentStatus: "confirmed", paymentConfirmedAt: new Date() })
-        .where(and(
+        .where(refundMutableOrderWhere(and(
           eq(ordersTable.id, organiserOrderId),
           inArray(ordersTable.paymentStatus, ["unpaid", "pending"]),
-        ))
+        )))
         .returning({ id: ordersTable.id });
       if (!updatedOrder) {
         return reject("invalid_creator_order", "The linked creator order changed during confirmation.");

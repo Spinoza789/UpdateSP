@@ -10,6 +10,8 @@ export interface SchedulerDescriptor {
   maxIntervalMs: number;
   initialDelayMs: number;
   run: () => Promise<void>;
+  backlogCount?: () => Promise<number | Record<string, unknown>>;
+  channelStatus?: () => Record<string, unknown>;
 }
 
 export interface SchedulerStatus {
@@ -26,6 +28,8 @@ export interface SchedulerStatus {
   lastDurationMs: number | null;
   lastError: string | null;
   nextRunAt: string | null;
+  backlogCount: number | Record<string, unknown> | null;
+  channelStatus: Record<string, unknown> | null;
 }
 
 interface RuntimeState {
@@ -38,6 +42,10 @@ interface RuntimeState {
   lastError: string | null;
   nextRunAt: number | null;
   timer: NodeJS.Timeout | null;
+  initialTimer: NodeJS.Timeout | null;
+  stopped: boolean;
+  backlogCount: number | Record<string, unknown> | null;
+  channelStatus: Record<string, unknown> | null;
 }
 
 const registry = new Map<string, RuntimeState>();
@@ -70,20 +78,49 @@ async function loadOverrides(state: RuntimeState): Promise<void> {
   if (rawEnabled === "false") state.enabled = false;
 }
 
+async function refreshPublishedStatus(state: RuntimeState): Promise<void> {
+  const failures: unknown[] = [];
+  if (state.desc.backlogCount) {
+    try {
+      state.backlogCount = await state.desc.backlogCount();
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (state.desc.channelStatus) {
+    try {
+      state.channelStatus = state.desc.channelStatus();
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (failures.length > 0) {
+    throw new AggregateError(failures, "Unable to refresh scheduler status");
+  }
+}
+
 async function tick(state: RuntimeState): Promise<void> {
-  if (state.running || !state.enabled) {
+  if (state.stopped || state.running || !state.enabled) {
     schedule(state);
     return;
   }
   state.running = true;
   const start = Date.now();
+  let runFailed = false;
   try {
     await state.desc.run();
     state.lastError = null;
   } catch (err: any) {
+    runFailed = true;
     state.lastError = err?.message ? String(err.message) : String(err);
     console.error(`[scheduler:${state.desc.name}] Error:`, err);
   } finally {
+    try {
+      await refreshPublishedStatus(state);
+      if (!runFailed) state.lastError = null;
+    } catch (err: any) {
+      if (!runFailed) state.lastError = err?.message ? String(err.message) : String(err);
+    }
     state.lastRunAt = Date.now();
     state.lastDurationMs = state.lastRunAt - start;
     state.running = false;
@@ -92,6 +129,7 @@ async function tick(state: RuntimeState): Promise<void> {
 }
 
 function schedule(state: RuntimeState): void {
+  if (state.stopped) return;
   if (state.timer) {
     clearTimeout(state.timer);
     state.timer = null;
@@ -109,6 +147,8 @@ export function registerScheduler(desc: SchedulerDescriptor): void {
     console.warn(`[scheduler-registry] '${desc.name}' already registered — replacing`);
     const existing = registry.get(desc.name)!;
     if (existing.timer) clearTimeout(existing.timer);
+    if (existing.initialTimer) clearTimeout(existing.initialTimer);
+    existing.stopped = true;
   }
   const state: RuntimeState = {
     desc,
@@ -120,13 +160,19 @@ export function registerScheduler(desc: SchedulerDescriptor): void {
     lastError: null,
     nextRunAt: null,
     timer: null,
+    initialTimer: null,
+    stopped: false,
+    backlogCount: null,
+    channelStatus: null,
   };
   registry.set(desc.name, state);
 
   // Load overrides + start scheduling after the initial delay.
-  setTimeout(async () => {
+  state.initialTimer = setTimeout(async () => {
+    state.initialTimer = null;
+    if (state.stopped) return;
     await loadOverrides(state);
-    if (state.enabled) {
+    if (!state.stopped && state.enabled) {
       void tick(state);
     } else {
       console.log(`[scheduler:${desc.name}] Disabled via site_config — not running`);
@@ -149,6 +195,8 @@ export function listSchedulers(): SchedulerStatus[] {
     lastDurationMs: s.lastDurationMs,
     lastError: s.lastError,
     nextRunAt: s.nextRunAt ? new Date(s.nextRunAt).toISOString() : null,
+    backlogCount: s.backlogCount,
+    channelStatus: s.channelStatus,
   }));
 }
 
@@ -160,21 +208,32 @@ export function listSchedulers(): SchedulerStatus[] {
 export async function runSchedulerNow(name: string): Promise<{ ok: boolean; error?: string }> {
   const state = registry.get(name);
   if (!state) return { ok: false, error: "Unknown scheduler" };
+  if (state.stopped) return { ok: false, error: "Scheduler stopped" };
   if (state.running) return { ok: false, error: "Already running" };
   state.running = true;
   const start = Date.now();
+  let failed = false;
   try {
     await state.desc.run();
     state.lastError = null;
   } catch (err: unknown) {
+    failed = true;
     state.lastError = err instanceof Error ? err.message : String(err);
     console.error(`[scheduler:${name}] Manual run failed:`, err);
   } finally {
+    try {
+      await refreshPublishedStatus(state);
+    } catch (err: unknown) {
+      if (!failed) {
+        failed = true;
+        state.lastError = err instanceof Error ? err.message : String(err);
+      }
+    }
     state.lastRunAt = Date.now();
     state.lastDurationMs = state.lastRunAt - start;
     state.running = false;
   }
-  return { ok: true };
+  return failed ? { ok: false, error: state.lastError ?? "Scheduler failed" } : { ok: true };
 }
 
 export async function setSchedulerInterval(name: string, intervalMs: number): Promise<{ ok: boolean; error?: string }> {
@@ -196,4 +255,17 @@ export async function setSchedulerEnabled(name: string, enabled: boolean): Promi
   await writeConfig(enabledKey(name), enabled ? "true" : "false");
   schedule(state);
   return { ok: true };
+}
+
+/** Stop every registry timer during process shutdown. */
+export function stopAllSchedulers(): void {
+  for (const state of registry.values()) {
+    if (state.timer) clearTimeout(state.timer);
+    state.timer = null;
+    if (state.initialTimer) clearTimeout(state.initialTimer);
+    state.initialTimer = null;
+    state.stopped = true;
+    state.nextRunAt = null;
+    state.channelStatus = state.desc.channelStatus ? state.desc.channelStatus() : state.channelStatus;
+  }
 }

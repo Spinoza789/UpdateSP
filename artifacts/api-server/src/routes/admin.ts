@@ -1,3 +1,12 @@
+import {
+  assertNoActiveRefund,
+  assertNoActiveRefunds,
+  activeRefundStatusesSql,
+  RefundMutationBlockedError,
+  refundMutationErrorOrderId,
+  refundMutableOrderWhere,
+  withRefundMutationGuard,
+} from "../lib/refund-mutation-guard";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID, timingSafeEqual, randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
@@ -65,6 +74,8 @@ import { logCustomerActivity } from "../lib/activity-log";
 import { normalizeToCode as normCountryCode, expandCountryAliases } from "../lib/country-utils";
 import { resolveEffectiveOrderCrypto, resolveLockedUsdPerCoin, toUsdIfGbp } from "./payments";
 import { verifyTransaction } from "../lib/payment-verify";
+import { centsToUsdString, subtractMoneyClamped, usdToCents } from "../lib/refund-money";
+import { normalizeTg } from "../lib/normalize";
 import { formatTelegramExportForAi } from "../lib/telegram-export-parser";
 import {
   canonicalTrackingNumbers,
@@ -76,6 +87,24 @@ import {
 import { prepareTrackingWrite } from "../lib/tracking-write";
 import { formatTrackingNumbersForNotification } from "../lib/tracking-notification";
 import { unchangedTrackingWriteFields } from "../lib/tracking-write-cas";
+
+function exactGrandTotal(
+  grossAmounts: number[],
+  creditsApplied: unknown,
+  deductions: number[] = [],
+): string {
+  const grossCents = grossAmounts.reduce(
+    (total, amount) => total + usdToCents(amount.toFixed(2)),
+    0n,
+  );
+  const deductionsCents = deductions.reduce(
+    (total, amount) => total + usdToCents(amount.toFixed(2)),
+    0n,
+  );
+  const creditsCents = usdToCents(String(creditsApplied ?? "0"));
+  const netCents = grossCents - deductionsCents - creditsCents;
+  return centsToUsdString(netCents > 0n ? netCents : 0n);
+}
 import {
   hasExpectedAuditAmount,
   normaliseWalletAddress,
@@ -917,7 +946,7 @@ router.post("/admin/orders/:id/restore", async (req, res): Promise<void> => {
   }
   await db.update(ordersTable)
     .set({ deletedAt: null, deletedBy: null })
-    .where(eq(ordersTable.id, req.params.id));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
   writeLog("order", "info", "order_restored_by_admin",
     `Admin restored order ${order.code} (${order.telegramUsername}) — previously deleted by ${order.deletedBy ?? "unknown"}`,
     { orderId: order.id, code: order.code, telegramUsername: order.telegramUsername, previousDeletedBy: order.deletedBy },
@@ -1235,15 +1264,22 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
     const tcDs = parseFloat(String(existing.testingContribution ?? "0"));
     const couponDs = parseFloat(String(existing.couponDiscount ?? "0"));
     const afDs = parseFloat(String(existing.adminFee ?? "0"));
-    const caDs = parseFloat(String(existing.creditsApplied ?? "0"));
     if (next) {
       // Turning ON: add the directShippingCost (already stored from customer's request), zero vendorShipping
       updates.vendorShipping = "0.00";
-      updates.grandTotal = Math.max(0, productSubtotalDs + deliveryPriceDs + storedDsc + tipDs + tcDs + afDs - couponDs - caDs).toFixed(2);
+      updates.grandTotal = exactGrandTotal(
+        [productSubtotalDs, deliveryPriceDs, storedDsc, tipDs, tcDs, afDs],
+        existing.creditsApplied,
+        [couponDs],
+      );
     } else {
       // Turning OFF: remove directShippingCost, clear it
       updates.directShippingCost = null;
-      updates.grandTotal = Math.max(0, productSubtotalDs + deliveryPriceDs + vsDs + tipDs + tcDs + afDs - couponDs - caDs).toFixed(2);
+      updates.grandTotal = exactGrandTotal(
+        [productSubtotalDs, deliveryPriceDs, vsDs, tipDs, tcDs, afDs],
+        existing.creditsApplied,
+        [couponDs],
+      );
     }
   }
   if (deliveryMethod !== undefined) {
@@ -1262,10 +1298,13 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
     const tcDp = parseFloat(String(existing.testingContribution ?? "0"));
     const couponDp = parseFloat(String(existing.couponDiscount ?? "0"));
     const afDp = parseFloat(String(existing.adminFee ?? "0"));
-    const caDp = parseFloat(String(existing.creditsApplied ?? "0"));
     const dscDp = existing.directShippingRequested && existing.directShippingCost != null
       ? parseFloat(String(existing.directShippingCost)) : 0;
-    updates.grandTotal = Math.max(0, productSubtotalDp + dp + vsDp + dscDp + tipDp + tcDp + afDp - couponDp - caDp).toFixed(2);
+    updates.grandTotal = exactGrandTotal(
+      [productSubtotalDp, dp, vsDp, dscDp, tipDp, tcDp, afDp],
+      existing.creditsApplied,
+      [couponDp],
+    );
   }
 
   if (vendorShipping !== undefined) {
@@ -1282,8 +1321,11 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
     const testingContribution = parseFloat(String(existing.testingContribution ?? "0"));
     const couponDiscount = parseFloat(String(existing.couponDiscount ?? "0"));
     const afVs = parseFloat(String(existing.adminFee ?? "0"));
-    const caVs = parseFloat(String(existing.creditsApplied ?? "0"));
-    updates.grandTotal = Math.max(0, productSubtotal + deliveryPrice + vs + tip + testingContribution + afVs - couponDiscount - caVs).toFixed(2);
+    updates.grandTotal = exactGrandTotal(
+      [productSubtotal, deliveryPrice, vs, tip, testingContribution, afVs],
+      existing.creditsApplied,
+      [couponDiscount],
+    );
     // If the order was already fully confirmed, the vendor shipping is an outstanding balance the
     // customer still needs to pay. Set amountDue so BalanceDueCard is shown to them.
     // NOTE: test_confirmed is NOT treated as fully paid — the customer is still completing
@@ -1317,10 +1359,13 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
     const tipAf = parseFloat(String(existing.tip ?? "0"));
     const tcAf = parseFloat(String(existing.testingContribution ?? "0"));
     const cdAf = parseFloat(String(existing.couponDiscount ?? "0"));
-    const caAf = parseFloat(String(existing.creditsApplied ?? "0"));
     const dscAf = existing.directShippingRequested && existing.directShippingCost != null
       ? parseFloat(String(existing.directShippingCost)) : 0;
-    updates.grandTotal = Math.max(0, psAf + dpAf + vsAf + dscAf + tipAf + tcAf + fee - cdAf - caAf).toFixed(2);
+    updates.grandTotal = exactGrandTotal(
+      [psAf, dpAf, vsAf, dscAf, tipAf, tcAf, fee],
+      existing.creditsApplied,
+      [cdAf],
+    );
   }
 
   // Allow admin to manually clear an outstanding balance (e.g. when VS was set during
@@ -1367,9 +1412,10 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
   const [updated] = await db
     .update(ordersTable)
     .set(updates)
-    .where(trackingCas)
+    .where(refundMutableOrderWhere(trackingCas))
     .returning();
   if (!updated) {
+    await assertNoActiveRefund(db, req.params.id);
     res.status(409).json({ error: "Tracking was changed by another writer; reload and try again" });
     return;
   }
@@ -1692,7 +1738,7 @@ router.post("/admin/orders/:id/convert-to-wholesale", async (req, res): Promise<
     routingType: "direct",
     reshipperUsername: null,
     countryLegId: null,
-  }).where(eq(ordersTable.id, existing.id));
+  }).where(refundMutableOrderWhere(eq(ordersTable.id, existing.id)));
 
   let accountUpdated = false;
   if (enableWholesaleOnAccount) {
@@ -1785,7 +1831,7 @@ router.post("/admin/orders/:id/qr", async (req, res): Promise<void> => {
   const field = courier === "inpost" ? "inpostQrCode" : "royalMailQrCode";
   await db.update(ordersTable)
     .set({ [field]: qrCode ?? null })
-    .where(eq(ordersTable.id, req.params.id));
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
 
   writeLog("change", "info", "admin_qr_set",
     `Admin ${qrCode ? "set" : "cleared"} ${courier} QR code for order ${existing.code}`,
@@ -1815,8 +1861,13 @@ router.delete("/admin/orders/:id", async (req, res): Promise<void> => {
   try {
     await db.update(ordersTable)
       .set({ deletedAt: new Date(), deletedBy: "admin" })
-      .where(eq(ordersTable.id, req.params.id));
+      .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
   } catch (err: unknown) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     const msg = err instanceof Error ? err.message : "Database error";
     res.status(500).json({ error: `Delete failed: ${msg}` });
     return;
@@ -1946,10 +1997,17 @@ router.delete("/admin/orders", async (req, res): Promise<void> => {
   }
 
   try {
-    await db.update(ordersTable)
-      .set({ deletedAt: new Date(), deletedBy: "admin" })
-      .where(inArray(ordersTable.id, safeIds));
+    await withRefundMutationGuard(db, safeIds, async tx => {
+      await tx.update(ordersTable)
+        .set({ deletedAt: new Date(), deletedBy: "admin" })
+        .where(refundMutableOrderWhere(inArray(ordersTable.id, safeIds)));
+    });
   } catch (err: unknown) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     const msg = err instanceof Error ? err.message : "Database error";
     res.status(500).json({ error: `Bulk delete failed: ${msg}` });
     return;
@@ -2023,10 +2081,11 @@ router.post("/admin/orders/mark-oos", async (req, res): Promise<void> => {
   const affectedOrderIds = [...new Set(nonOosItems.map(li => li.orderId))];
 
   await db.transaction(async (tx) => {
+    await assertNoActiveRefunds(tx, affectedOrderIds);
     await tx
       .update(orderLineItemsTable)
       .set({ isOos: true })
-      .where(inArray(orderLineItemsTable.id, itemIds));
+      .where(refundMutableOrderWhere(inArray(orderLineItemsTable.id, itemIds), orderLineItemsTable.orderId));
 
     for (const orderId of affectedOrderIds) {
       const [order] = await tx.select().from(ordersTable).where(eq(ordersTable.id, orderId));
@@ -2054,7 +2113,7 @@ router.post("/admin/orders/mark-oos", async (req, res): Promise<void> => {
           grandTotal: newGrandTotal.toFixed(2) as any,
           ...(!["confirmed"].includes(order.paymentStatus ?? "") && { paymentUsdAmount: null }),
         })
-        .where(eq(ordersTable.id, orderId));
+        .where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
     }
   });
 
@@ -2141,7 +2200,7 @@ router.post("/admin/orders/unmark-oos", async (req, res): Promise<void> => {
   const affectedOrderIds = [...new Set(oosItems.map(li => li.orderId))];
 
   await db.transaction(async (tx) => {
-    await tx.update(orderLineItemsTable).set({ isOos: false }).where(inArray(orderLineItemsTable.id, itemIds));
+    await tx.update(orderLineItemsTable).set({ isOos: false }).where(refundMutableOrderWhere(inArray(orderLineItemsTable.id, itemIds), orderLineItemsTable.orderId));
 
     for (const orderId of affectedOrderIds) {
       const [order] = await tx.select().from(ordersTable).where(eq(ordersTable.id, orderId));
@@ -2157,7 +2216,7 @@ router.post("/admin/orders/unmark-oos", async (req, res): Promise<void> => {
         productSubtotal: newProductSubtotal.toFixed(2) as any,
         grandTotal: newGrandTotal.toFixed(2) as any,
         ...(!["confirmed"].includes(order.paymentStatus ?? "") && { paymentUsdAmount: null }),
-      }).where(eq(ordersTable.id, orderId));
+      }).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
     }
   });
 
@@ -2326,10 +2385,14 @@ router.patch("/admin/orders/:id/qr-posted", async (req, res): Promise<void> => {
   const [updated] = await db
     .update(ordersTable)
     .set({ qrPosted: posted })
-    .where(eq(ordersTable.id, orderId))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, orderId)))
     .returning({ id: ordersTable.id, qrPosted: ordersTable.qrPosted });
 
-  if (!updated) { res.status(404).json({ error: "Order not found" }); return; }
+  if (!updated) {
+    await assertNoActiveRefund(db, orderId);
+    res.status(404).json({ error: "Order not found" });
+    return;
+  }
   res.json({ id: updated.id, qrPosted: updated.qrPosted });
 });
 
@@ -3147,16 +3210,18 @@ router.post("/admin/apply-shipping", async (req, res): Promise<void> => {
     updates.push({ orderId: order.id, vendorShipping, newGrandTotal, username: order.telegramUsername, setAmountDue });
   }
 
+  await withRefundMutationGuard(db, updates.map(u => u.orderId), async tx => {
   for (const u of updates) {
-    await db
+    await tx
       .update(ordersTable)
       .set({
         vendorShipping: u.vendorShipping.toFixed(2),
         grandTotal: u.newGrandTotal.toFixed(2),
         ...(u.setAmountDue ? { amountDue: u.vendorShipping.toFixed(2) } : {}),
       } as any)
-      .where(eq(ordersTable.id, u.orderId));
+      .where(refundMutableOrderWhere(eq(ordersTable.id, u.orderId)));
   }
+  });
 
   res.json({
     message: `$${shipping.toFixed(2)} split across ${orders.length} order(s) — ${ep}% equal / ${wp}% by quantity`,
@@ -3203,9 +3268,11 @@ router.put("/admin/orders/:id/line-items", async (req: any, res: any) => {
     validated.push({ productName: String(li.productName).trim(), quantity: qty, unitPrice: price, lineTotal: parseFloat((qty * price).toFixed(2)) });
   }
 
+  const { updated, newLineItems } = await db.transaction(async tx => {
+  await assertNoActiveRefund(tx, req.params.id);
   // Replace all line items
-  await db.delete(orderLineItemsTable).where(eq(orderLineItemsTable.orderId, req.params.id));
-  await db.insert(orderLineItemsTable).values(
+  await tx.delete(orderLineItemsTable).where(refundMutableOrderWhere(eq(orderLineItemsTable.orderId, req.params.id), orderLineItemsTable.orderId));
+  await tx.insert(orderLineItemsTable).values(
     validated.map(li => ({
       id: randomUUID(),
       orderId: req.params.id,
@@ -3234,16 +3301,19 @@ router.put("/admin/orders/:id/line-items", async (req: any, res: any) => {
     itemEditSet.paymentUsdAmount = null;
   }
 
-  const [updated] = await db
+  const [updated] = await tx
     .update(ordersTable)
     .set(itemEditSet)
-    .where(eq(ordersTable.id, req.params.id))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
     .returning();
+  if (!updated) throw new RefundMutationBlockedError(req.params.id);
 
-  const newLineItems = await db
+  const newLineItems = await tx
     .select()
     .from(orderLineItemsTable)
     .where(eq(orderLineItemsTable.orderId, req.params.id));
+  return { updated, newLineItems };
+  });
 
   res.json(fmtOrder(updated as unknown as Record<string, any>, newLineItems as unknown as Record<string, any>[]));
 });
@@ -3360,7 +3430,7 @@ router.patch("/admin/orders/:id/routing", async (req, res): Promise<void> => {
     }
 
     const adminWho = getAdminUsername(res) ?? "admin";
-    const [updated] = await db.update(ordersTable).set(updates).where(eq(ordersTable.id, req.params.id)).returning();
+    const [updated] = await db.update(ordersTable).set(updates).where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id))).returning();
     // Write routing history
     await db.insert(routingHistoryTable).values({
       orderId: req.params.id,
@@ -3376,6 +3446,11 @@ router.patch("/admin/orders/:id/routing", async (req, res): Promise<void> => {
     const lineItems = await db.select().from(orderLineItemsTable).where(eq(orderLineItemsTable.orderId, req.params.id));
     res.json(fmtOrder(updated as unknown as Record<string, any>, lineItems as unknown as Record<string, any>[]));
   } catch (err) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[admin] PATCH routing error:", err);
     res.status(500).json({ error: "Failed to update routing" });
   }
@@ -3390,13 +3465,18 @@ router.patch("/admin/orders/:id/line-items-draft", async (req, res): Promise<voi
     const [existing] = await db.select({ id: ordersTable.id }).from(ordersTable).where(eq(ordersTable.id, req.params.id));
     if (!existing) { res.status(404).json({ error: "Order not found" }); return; }
     if (clear) {
-      await db.update(ordersTable).set({ draftLineItems: null, draftLineItemsSavedAt: null }).where(eq(ordersTable.id, req.params.id));
+      await db.update(ordersTable).set({ draftLineItems: null, draftLineItemsSavedAt: null }).where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
       res.json({ ok: true, cleared: true }); return;
     }
     if (!Array.isArray(lineItems)) { res.status(400).json({ error: "lineItems must be an array" }); return; }
-    await db.update(ordersTable).set({ draftLineItems: lineItems, draftLineItemsSavedAt: new Date() }).where(eq(ordersTable.id, req.params.id));
+    await db.update(ordersTable).set({ draftLineItems: lineItems, draftLineItemsSavedAt: new Date() }).where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
     res.json({ ok: true, savedAt: new Date().toISOString() });
   } catch (err) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[admin] PATCH line-items-draft error:", err);
     res.status(500).json({ error: "Failed to save draft" });
   }
@@ -3415,7 +3495,7 @@ router.post("/admin/orders/:id/balance-resolution", async (req, res): Promise<vo
     if (!existing) { res.status(404).json({ error: "Order not found" }); return; }
     const adminWho = getAdminUsername(res) ?? "admin";
     if (action === "absorb") {
-      await db.update(ordersTable).set({ amountDue: "0.00", balancePaymentStatus: "waived" }).where(eq(ordersTable.id, req.params.id));
+      await db.update(ordersTable).set({ amountDue: "0.00", balancePaymentStatus: "waived" }).where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)));
       await db.insert(routingHistoryTable).values({
         orderId: req.params.id,
         changedBy: adminWho,
@@ -3442,6 +3522,11 @@ router.post("/admin/orders/:id/balance-resolution", async (req, res): Promise<vo
       res.json({ ok: true, action: "requested" });
     }
   } catch (err) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[admin] POST balance-resolution error:", err);
     res.status(500).json({ error: "Failed to resolve balance" });
   }
@@ -3496,9 +3581,11 @@ router.post("/admin/orders/bulk-routing", async (req, res): Promise<void> => {
     const skipped: { id: string; reason: string }[] = [];
     const errors: string[] = [];
 
+    await db.transaction(async tx => {
+    await assertNoActiveRefunds(tx, orderIds as string[]);
     for (const orderId of orderIds as string[]) {
       try {
-        const [existing] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
+        const [existing] = await tx.select().from(ordersTable).where(eq(ordersTable.id, orderId));
         if (!existing) { skipped.push({ id: orderId, reason: "not_found" }); continue; }
         if (existing.batchLocked && !force_override) {
           skipped.push({ id: orderId, reason: "batch_locked" }); continue;
@@ -3520,9 +3607,9 @@ router.post("/admin/orders/bulk-routing", async (req, res): Promise<void> => {
           }
         }
 
-        await db.update(ordersTable).set(updates).where(eq(ordersTable.id, orderId));
+        await tx.update(ordersTable).set(updates).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
 
-        await db.insert(routingHistoryTable).values({
+        await tx.insert(routingHistoryTable).values({
           orderId,
           changedBy: adminWho,
           fromRoutingType: existing.routingType ?? null,
@@ -3537,13 +3624,22 @@ router.post("/admin/orders/bulk-routing", async (req, res): Promise<void> => {
 
         updated.push(orderId);
       } catch (err) {
+        const refundOrderId = refundMutationErrorOrderId(err);
+        if (refundOrderId) throw new RefundMutationBlockedError(refundOrderId);
+        if (err instanceof RefundMutationBlockedError) throw err;
         errors.push(orderId);
         console.error(`[admin] bulk-routing error for order ${orderId}:`, err);
       }
     }
+    });
 
     res.json({ updated, skipped, errors, totalRequested: orderIds.length });
   } catch (err) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     handleRoutingError(err, res, { action: "bulk_routing" });
   }
 });
@@ -3602,7 +3698,7 @@ router.post("/admin/orders/:id/financial-override", async (req, res): Promise<vo
     const [updated] = await db
       .update(ordersTable)
       .set(patch)
-      .where(eq(ordersTable.id, req.params.id))
+      .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
       .returning();
 
     // Write to routing_history
@@ -4899,9 +4995,37 @@ router.put("/admin/customers/:username/rename", async (req: any, res: any): Prom
 
     const [existingCustomer] = await db.select().from(customersTable).where(eq(customersTable.telegramUsername, oldUsername));
 
-    // Atomic transaction: update orders + rename customer row
+    // Atomic transaction: lock every order owned by either username column,
+    // reject active refunds before any account/related write, then rename.
     await db.transaction(async (tx) => {
-      await tx.update(ordersTable).set({ telegramUsername: tg }).where(eq(ordersTable.telegramUsername, oldUsername));
+      const affectedOrders = await tx.select({
+        id: ordersTable.id,
+        telegramUsername: ordersTable.telegramUsername,
+        reshipperUsername: ordersTable.reshipperUsername,
+      })
+        .from(ordersTable)
+        .where(or(
+          eq(ordersTable.telegramUsername, oldUsername),
+          eq(ordersTable.reshipperUsername, oldUsername),
+        ))
+        .orderBy(asc(ordersTable.id)).for("update");
+      await assertNoActiveRefunds(tx, affectedOrders.map(order => order.id));
+      const renamed = await tx.update(ordersTable)
+        .set({ telegramUsername: tg })
+        .where(refundMutableOrderWhere(eq(ordersTable.telegramUsername, oldUsername)))
+        .returning({ id: ordersTable.id });
+      const expectedTelegram = affectedOrders.filter(order => order.telegramUsername === oldUsername).length;
+      if (renamed.length !== expectedTelegram) {
+        throw new RefundMutationBlockedError(affectedOrders.find(order => order.telegramUsername === oldUsername)?.id ?? affectedOrders[0].id);
+      }
+      const reshipperRows = await tx.update(ordersTable)
+        .set({ reshipperUsername: tg })
+        .where(refundMutableOrderWhere(eq(ordersTable.reshipperUsername, oldUsername)))
+        .returning({ id: ordersTable.id });
+      const expectedReshipper = affectedOrders.filter(order => order.reshipperUsername === oldUsername).length;
+      if (reshipperRows.length !== expectedReshipper) {
+        throw new RefundMutationBlockedError(affectedOrders.find(order => order.reshipperUsername === oldUsername)?.id ?? affectedOrders[0].id);
+      }
       if (existingCustomer) {
         const { telegramUsername: _old, createdAt: _ca, updatedAt: _ua, ...rest } = existingCustomer;
         await tx.insert(customersTable).values({ ...rest, telegramUsername: tg });
@@ -4932,6 +5056,11 @@ router.put("/admin/customers/:username/rename", async (req: any, res: any): Prom
 
     res.json({ ok: true, newUsername: tg });
   } catch (err) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[admin/customers/:username/rename]", err);
     res.status(500).json({ error: "Failed to rename customer" });
   }
@@ -6466,10 +6595,10 @@ async function bulkTrackingHandler(req: any, res: any): Promise<void> {
       if (needsUpdate) {
         const applied = await db.update(ordersTable)
           .set(updateFields as any)
-          .where(and(
+          .where(refundMutableOrderWhere(and(
             eq(ordersTable.code, safeCode),
             unchangedTrackingWriteFields(order),
-          ))
+          )))
           .returning({ id: ordersTable.id });
         if (applied.length === 0) {
           throw new Error("Tracking was changed by another writer; reload and try again");
@@ -6524,6 +6653,8 @@ async function bulkTrackingHandler(req: any, res: any): Promise<void> {
 
       results.push({ code: safeCode, trackingNumber: finalPrimary, ok: true });
     } catch (err: any) {
+      const refundOrderId = refundMutationErrorOrderId(err);
+      if (refundOrderId) throw new RefundMutationBlockedError(refundOrderId);
       results.push({ code: safeCode, trackingNumber: primaryTracking, ok: false, error: err?.message ?? "Unknown error" });
     }
   }
@@ -6561,23 +6692,24 @@ router.post("/admin/group-buys/:gbId/orders/bulk-add-product", async (req: any, 
   let added = 0;
   let skipped = 0;
 
+  await withRefundMutationGuard(db, orderIds, async tx => {
   for (const orderId of orderIds) {
     // Verify order belongs to this GB
-    const [order] = await db
+    const [order] = await tx
       .select({ id: ordersTable.id, paymentStatus: ordersTable.paymentStatus, deliveryPrice: ordersTable.deliveryPrice, vendorShipping: ordersTable.vendorShipping, tip: ordersTable.tip, testingContribution: ordersTable.testingContribution })
       .from(ordersTable)
       .where(and(eq(ordersTable.id, orderId), eq(ordersTable.groupBuyId, gbId)));
     if (!order) { skipped++; continue; }
 
     // Check if product already on this order
-    const existing = await db
+    const existing = await tx
       .select({ id: orderLineItemsTable.id })
       .from(orderLineItemsTable)
       .where(and(eq(orderLineItemsTable.orderId, orderId), eq(orderLineItemsTable.productId, productId)));
     if (existing.length > 0) { skipped++; continue; }
 
     // Insert new line item
-    await db.insert(orderLineItemsTable).values({
+    await tx.insert(orderLineItemsTable).values({
       id: randomUUID(),
       orderId,
       productId,
@@ -6589,18 +6721,19 @@ router.post("/admin/group-buys/:gbId/orders/bulk-add-product", async (req: any, 
     });
 
     // Recalculate totals
-    const allItems = await db.select({ lineTotal: orderLineItemsTable.lineTotal }).from(orderLineItemsTable).where(eq(orderLineItemsTable.orderId, orderId));
+    const allItems = await tx.select({ lineTotal: orderLineItemsTable.lineTotal }).from(orderLineItemsTable).where(eq(orderLineItemsTable.orderId, orderId));
     const newSubtotal = parseFloat(allItems.reduce((s, li) => s + parseFloat(String(li.lineTotal)), 0).toFixed(2));
     const extras = parseFloat(String(order.deliveryPrice ?? 0)) + parseFloat(String(order.vendorShipping ?? 0)) + parseFloat(String(order.tip ?? 0)) + parseFloat(String(order.testingContribution ?? 0));
     const newGrandTotal = parseFloat((newSubtotal + extras).toFixed(2));
-    await db.update(ordersTable).set({
+    await tx.update(ordersTable).set({
       productSubtotal: String(newSubtotal) as any,
       grandTotal: String(newGrandTotal) as any,
       ...(!["confirmed"].includes(order.paymentStatus ?? "") && { paymentUsdAmount: null }),
-    }).where(eq(ordersTable.id, orderId));
+    }).where(refundMutableOrderWhere(eq(ordersTable.id, orderId)));
 
     added++;
   }
+  });
 
   res.json({ added, skipped, productName: gbProduct.productName, unitPrice, quantity: qty });
 });
@@ -7371,7 +7504,11 @@ async function auditOrderReference(order: any, txHash: string, source?: AuditRef
       const totalUsd = lockedTotal != null && !lockIsStale ? lockedTotal : currentUsd;
       const credits = auditMoney(order.creditsApplied) ?? 0;
       const testAmount = order.paymentStatus === "test_confirmed" ? (auditMoney(order.paymentTestAmount) ?? 0) : 0;
-      lockedUsd = Math.max(0, totalUsd - credits - testAmount);
+      lockedUsd = Number(subtractMoneyClamped(
+        totalUsd.toFixed(2),
+        credits.toFixed(2),
+        testAmount.toFixed(2),
+      ));
     }
     const rate = lockedUsd != null
       ? await resolveLockedUsdPerCoin(order, effective.currency, false)
@@ -7932,12 +8069,44 @@ router.post("/admin/accounts/:username/rename", async (req: any, res: any): Prom
     // All plain-text username columns may store either @user or user format, so WHERE
     // clauses match both variants via lower() IN (bare, @bare).
     await db.transaction(async (tx) => {
+      const affectedOrderRows = await tx
+        .select({
+          id: ordersTable.id,
+          telegramUsername: ordersTable.telegramUsername,
+          reshipperUsername: ordersTable.reshipperUsername,
+        })
+        .from(ordersTable)
+        .where(or(
+          sql`lower(${ordersTable.telegramUsername}) IN (${oldBare}, ${oldWithAt})`,
+          sql`lower(${ordersTable.reshipperUsername}) IN (${oldBare}, ${oldWithAt})`,
+        ))
+        .orderBy(asc(ordersTable.id))
+        .for("update");
+      await assertNoActiveRefunds(tx, affectedOrderRows.map(order => order.id));
+      const isOldUsername = (value: string | null): boolean =>
+        value != null && [oldBare, oldWithAt].includes(value.toLowerCase());
+      const expectedTelegramOrderIds = affectedOrderRows
+        .filter(order => isOldUsername(order.telegramUsername))
+        .map(order => order.id);
+      const expectedReshipperOrderIds = affectedOrderRows
+        .filter(order => isOldUsername(order.reshipperUsername))
+        .map(order => order.id);
       // 1. Move the PK on accounts — FK children with onUpdate:cascade follow automatically.
       await tx.execute(sql`UPDATE accounts SET telegram_username = ${newBare} WHERE telegram_username = ${actualOldUsername}`);
 
       // 2. Non-FK plain-text username columns (match both @user and user formats).
-      await tx.execute(sql`UPDATE orders SET telegram_username = ${newWithAt} WHERE lower(telegram_username) IN (${oldBare}, ${oldWithAt})`);
-      await tx.execute(sql`UPDATE orders SET reshipper_username = ${newWithAt} WHERE lower(reshipper_username) IN (${oldBare}, ${oldWithAt})`);
+      const renamedTelegramRows = await tx.execute(sql`UPDATE orders SET telegram_username = ${newWithAt} WHERE lower(telegram_username) IN (${oldBare}, ${oldWithAt}) AND NOT EXISTS (SELECT 1 FROM group_buy_refunds r WHERE r.order_id = orders.id AND r.status IN (${activeRefundStatusesSql})) RETURNING id`);
+      const renamedTelegramIds = new Set((renamedTelegramRows.rows as Array<{ id: string }>).map(row => row.id));
+      const missingTelegramOrderId = expectedTelegramOrderIds.find(id => !renamedTelegramIds.has(id));
+      if (renamedTelegramIds.size !== expectedTelegramOrderIds.length || missingTelegramOrderId) {
+        throw new RefundMutationBlockedError(missingTelegramOrderId ?? expectedTelegramOrderIds[0] ?? oldBare);
+      }
+      const renamedReshipperRows = await tx.execute(sql`UPDATE orders SET reshipper_username = ${newWithAt} WHERE lower(reshipper_username) IN (${oldBare}, ${oldWithAt}) AND NOT EXISTS (SELECT 1 FROM group_buy_refunds r WHERE r.order_id = orders.id AND r.status IN (${activeRefundStatusesSql})) RETURNING id`);
+      const renamedReshipperIds = new Set((renamedReshipperRows.rows as Array<{ id: string }>).map(row => row.id));
+      const missingReshipperOrderId = expectedReshipperOrderIds.find(id => !renamedReshipperIds.has(id));
+      if (renamedReshipperIds.size !== expectedReshipperOrderIds.length || missingReshipperOrderId) {
+        throw new RefundMutationBlockedError(missingReshipperOrderId ?? expectedReshipperOrderIds[0] ?? oldBare);
+      }
       await tx.execute(sql`UPDATE feedback SET telegram_username = ${newWithAt} WHERE lower(telegram_username) IN (${oldBare}, ${oldWithAt})`);
       await tx.execute(sql`UPDATE coupon_redemptions SET telegram_username = ${newWithAt} WHERE lower(telegram_username) IN (${oldBare}, ${oldWithAt})`);
       await tx.execute(sql`UPDATE vial_orders SET telegram_username = ${newWithAt} WHERE lower(telegram_username) IN (${oldBare}, ${oldWithAt})`);
@@ -8002,6 +8171,11 @@ router.post("/admin/accounts/:username/rename", async (req: any, res: any): Prom
 
     res.json({ ok: true, oldUsername: oldBare, newUsername: newBare });
   } catch (err: any) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[admin/accounts/rename]", err);
     res.status(500).json({ error: "Rename failed", detail: err?.message });
   }
@@ -8069,7 +8243,7 @@ router.post("/admin/accounts/merge", async (req: any, res: any): Promise<void> =
   if (!target) { res.status(404).json({ error: `Account '${targetUsername}' not found` }); return; }
 
   // Re-point orders
-  await db.update(ordersTable).set({ telegramUsername: targetUsername }).where(eq(ordersTable.telegramUsername, sourceUsername));
+  await db.update(ordersTable).set({ telegramUsername: targetUsername }).where(refundMutableOrderWhere(eq(ordersTable.telegramUsername, sourceUsername)));
   // Re-point blood tests
   await db.update(bloodTestSessionsTable).set({ telegramUsername: targetUsername }).where(eq(bloodTestSessionsTable.telegramUsername, sourceUsername));
 
@@ -9067,61 +9241,90 @@ router.post("/admin/accounts/:username/credits", async (req: any, res: any): Pro
   const { amount, reason, orderId } = req.body as { amount: number; reason: string; orderId?: string };
   if (typeof amount !== "number" || amount === 0) { res.status(400).json({ error: "amount must be a non-zero number" }); return; }
   if (!reason || typeof reason !== "string") { res.status(400).json({ error: "reason is required" }); return; }
-
-  const [acct] = await db
-    .select({ telegramUsername: accountsTable.telegramUsername, credits: accountsTable.credits })
-    .from(accountsTable)
-    .where(or(eq(accountsTable.telegramUsername, username), eq(accountsTable.telegramUsername, altUsername)));
-
-  if (!acct) { res.status(404).json({ error: "Account not found" }); return; }
-
-  const newBalance = acct.credits + amount;
-  await db.update(accountsTable)
-    .set({ credits: newBalance })
-    .where(eq(accountsTable.telegramUsername, acct.telegramUsername));
-
-  // When the admin deducts credits against a specific order, stamp credits_applied
-  // on that order so the payment verification knows the correct net amount.
-  if (orderId && amount < 0) {
-    const deducted = Math.abs(amount);
-    const [targetOrder] = await db
-      .select({ id: ordersTable.id, grandTotal: ordersTable.grandTotal, paymentStatus: ordersTable.paymentStatus, creditsApplied: ordersTable.creditsApplied })
-      .from(ordersTable)
-      .where(eq(ordersTable.id, orderId));
-    if (targetOrder) {
-      const newCreditsApplied = (targetOrder.creditsApplied ?? 0) + deducted;
-      await db.update(ordersTable)
-        .set({ creditsApplied: newCreditsApplied })
-        .where(eq(ordersTable.id, orderId));
-      // Auto-confirm if credits now fully cover the order.
-      // Use Math.ceil so a $30.99 order correctly requires ≥31 credits (not 30).
-      if (Math.ceil(parseFloat(String(targetOrder.grandTotal))) <= newCreditsApplied && targetOrder.paymentStatus !== "confirmed") {
-        await db.update(ordersTable).set({ paymentStatus: "confirmed", paymentConfirmedAt: new Date() }).where(eq(ordersTable.id, orderId));
-        maybeSubmitSharedOrder(orderId).catch(() => {});
-      }
-    }
+  let amountCents: bigint;
+  try {
+    const absoluteCents = usdToCents(String(Math.abs(amount)));
+    amountCents = amount < 0 ? -absoluteCents : absoluteCents;
+  } catch {
+    res.status(400).json({ error: "amount must be a non-zero number with at most two decimals" }); return;
   }
 
-  await db.insert(creditTransactionsTable).values({
-    accountUsername: acct.telegramUsername,
-    amount,
-    reason,
-    orderId: orderId ?? null,
-    adminUsername: adminUser ?? "admin",
-    createdAt: new Date(),
+  const outcome = await db.transaction(async tx => {
+    // Global order for account-backed operations: account lock, then order lock.
+    const [acct] = await tx
+      .select({ telegramUsername: accountsTable.telegramUsername, credits: accountsTable.credits })
+      .from(accountsTable)
+      .where(or(eq(accountsTable.telegramUsername, username), eq(accountsTable.telegramUsername, altUsername)))
+      .for("update");
+    if (!acct) return { kind: "account_not_found" as const };
+    let targetOrder: {
+      id: string; telegramUsername: string | null; grandTotal: unknown;
+      paymentStatus: string | null; creditsApplied: unknown;
+    } | null = null;
+    if (orderId) {
+      const [lockedOrder] = await tx.select({
+        id: ordersTable.id, telegramUsername: ordersTable.telegramUsername,
+        grandTotal: ordersTable.grandTotal, paymentStatus: ordersTable.paymentStatus,
+        creditsApplied: ordersTable.creditsApplied,
+      }).from(ordersTable).where(eq(ordersTable.id, orderId)).for("update");
+      if (!lockedOrder) return { kind: "order_not_found" as const };
+      if (!lockedOrder.telegramUsername || normalizeTg(lockedOrder.telegramUsername) !== normalizeTg(acct.telegramUsername)) {
+        return { kind: "order_not_owned" as const };
+      }
+      await assertNoActiveRefund(tx, lockedOrder.id);
+      targetOrder = lockedOrder;
+    }
+    let adjustedAmountCents = amountCents;
+    const availableCents = usdToCents(String(acct.credits ?? "0"));
+    if (adjustedAmountCents < 0n && -adjustedAmountCents > availableCents) adjustedAmountCents = -availableCents;
+    if (adjustedAmountCents === 0n) return { kind: "zero_deduction" as const };
+    const newBalance = centsToUsdString(availableCents + adjustedAmountCents);
+    const amountUsd = adjustedAmountCents >= 0n
+      ? centsToUsdString(adjustedAmountCents)
+      : `-${centsToUsdString(-adjustedAmountCents)}`;
+    await tx.update(accountsTable).set({ credits: newBalance as unknown as number })
+      .where(eq(accountsTable.telegramUsername, acct.telegramUsername));
+    let confirmedOrder = false;
+    if (targetOrder && adjustedAmountCents < 0n) {
+      const newCreditsApplied = centsToUsdString(
+        usdToCents(String(targetOrder.creditsApplied ?? "0")) + -adjustedAmountCents,
+      );
+      const [creditsAppliedOrder] = await tx.update(ordersTable).set({ creditsApplied: newCreditsApplied as unknown as number })
+        .where(refundMutableOrderWhere(eq(ordersTable.id, targetOrder.id)))
+        .returning({ id: ordersTable.id });
+      if (!creditsAppliedOrder) throw new RefundMutationBlockedError(targetOrder.id);
+      if (usdToCents(String(targetOrder.grandTotal)) <= usdToCents(newCreditsApplied) && targetOrder.paymentStatus !== "confirmed") {
+        const [confirmedCreditsOrder] = await tx.update(ordersTable).set({ paymentStatus: "confirmed", paymentConfirmedAt: new Date() })
+          .where(refundMutableOrderWhere(eq(ordersTable.id, targetOrder.id)))
+          .returning({ id: ordersTable.id });
+        if (!confirmedCreditsOrder) throw new RefundMutationBlockedError(targetOrder.id);
+        confirmedOrder = true;
+      }
+    }
+    await tx.insert(creditTransactionsTable).values({
+      accountUsername: acct.telegramUsername, amount: amountUsd as unknown as number,
+      reason, orderId: orderId ?? null, adminUsername: adminUser ?? "admin", createdAt: new Date(),
+    });
+    return { kind: "ok" as const, acct, newBalance, amountUsd, adjustedAmountCents, confirmedOrder };
   });
+  if (outcome.kind === "account_not_found") { res.status(404).json({ error: "Account not found" }); return; }
+  if (outcome.kind === "order_not_found") { res.status(404).json({ error: "Order not found" }); return; }
+  if (outcome.kind === "order_not_owned") { res.status(403).json({ error: "Order does not belong to this account" }); return; }
+  if (outcome.kind === "zero_deduction") { res.status(400).json({ error: "Account has no credits to deduct" }); return; }
+  const { acct, newBalance, amountUsd, adjustedAmountCents, confirmedOrder } = outcome;
+  if (confirmedOrder && orderId) maybeSubmitSharedOrder(orderId).catch(() => {});
 
-  writeLog("change", "info", "credits_adjusted", `Admin adjusted credits for ${acct.telegramUsername} by ${amount} (${reason})`, { username: acct.telegramUsername, amount, reason, orderId }).catch(() => {});
+  writeLog("change", "info", "credits_adjusted", `Admin adjusted credits for ${acct.telegramUsername} by ${amountUsd} (${reason})`, { username: acct.telegramUsername, amount: Number(amountUsd), reason, orderId }).catch(() => {});
 
-  const sign = amount >= 0 ? "+" : "";
-  const action = amount >= 0 ? "added to" : "deducted from";
+  const sign = adjustedAmountCents >= 0n ? "+" : "";
+  const action = adjustedAmountCents >= 0n ? "added to" : "deducted from";
   notifyUser(
     acct.telegramUsername,
     "profile",
-    `💳 <b>Credits ${amount >= 0 ? "Added" : "Deducted"}</b>\n\n<b>${sign}$${amount}</b> has been ${action} your account by admin.\n\nReason: ${reason}\nNew balance: <b>$${newBalance}</b>`,
+     `💳 <b>Credits ${adjustedAmountCents >= 0n ? "Added" : "Deducted"}</b>\n\n<b>${sign}$${amountUsd.replace("-", "")}</b> has been ${action} your account by admin.\n\nReason: ${reason}\nNew balance: <b>$${newBalance}</b>`,
   ).catch(() => {});
 
-  res.json({ ok: true, credits: newBalance });
+  res.json({ ok: true, credits: Number(newBalance) });
 });
 
 // PATCH /api/admin/accounts/:username/pool-leader-status — update pool leader role status
@@ -9146,42 +9349,77 @@ router.post("/admin/orders/:id/refund-to-credits", async (req: any, res: any): P
   const adminUser = getAdminUsername(res);
   const orderId = String(req.params["id"]);
 
-  const [order] = await db
-    .select({ id: ordersTable.id, grandTotal: ordersTable.grandTotal, telegramUsername: ordersTable.telegramUsername, code: ordersTable.code })
-    .from(ordersTable)
-    .where(eq(ordersTable.id, orderId));
-
-  if (!order) { res.status(404).json({ error: "Order not found" }); return; }
-  if (!order.telegramUsername) { res.status(400).json({ error: "Order has no linked account" }); return; }
-
-  const username = order.telegramUsername;
+  const [orderHint] = await db.select({ telegramUsername: ordersTable.telegramUsername })
+    .from(ordersTable).where(eq(ordersTable.id, orderId));
+  if (!orderHint) { res.status(404).json({ error: "Order not found" }); return; }
+  if (!orderHint.telegramUsername) { res.status(400).json({ error: "Order has no linked customer account" }); return; }
+  const username = orderHint.telegramUsername;
   const altUsername = username.startsWith("@") ? username.slice(1) : `@${username}`;
+  const outcome = await db.transaction(async tx => {
+    // Lock account first, then order, so all account-backed paths share one
+    // deterministic lock order.
+    const [acct] = await tx.select({ telegramUsername: accountsTable.telegramUsername, credits: accountsTable.credits })
+      .from(accountsTable)
+      .where(or(eq(accountsTable.telegramUsername, username), eq(accountsTable.telegramUsername, altUsername)))
+      .for("update");
+    if (!acct) return { kind: "missing_account" as const };
+    const [order] = await tx
+      .select({
+        id: ordersTable.id,
+        grandTotal: ordersTable.grandTotal,
+        telegramUsername: ordersTable.telegramUsername,
+        code: ordersTable.code,
+        refundStatus: ordersTable.refundStatus,
+      })
+      .from(ordersTable)
+      .where(eq(ordersTable.id, orderId))
+      .for("update");
+    if (!order) return { kind: "missing_order" as const };
+    if (!order.telegramUsername || normalizeTg(order.telegramUsername) !== normalizeTg(acct.telegramUsername)) {
+      return { kind: "missing_account" as const };
+    }
+    await assertNoActiveRefund(tx, orderId);
+    if (order.refundStatus === "refunded") return { kind: "already_refunded" as const, order };
 
-  const [acct] = await db
-    .select({ telegramUsername: accountsTable.telegramUsername, credits: accountsTable.credits })
-    .from(accountsTable)
-    .where(or(eq(accountsTable.telegramUsername, username), eq(accountsTable.telegramUsername, altUsername)));
-
-  if (!acct) { res.status(404).json({ error: "Customer account not found" }); return; }
-
-  // Grand total is stored as a decimal string; round to whole USD dollars
-  const totalAmount = Math.round(parseFloat(String(order.grandTotal ?? "0")));
-  if (totalAmount <= 0) { res.status(400).json({ error: "Order total is zero — nothing to refund" }); return; }
-
-  const newBalance = acct.credits + totalAmount;
-  await db.update(accountsTable).set({ credits: newBalance }).where(eq(accountsTable.telegramUsername, acct.telegramUsername));
-
-  await db.insert(creditTransactionsTable).values({
-    accountUsername: acct.telegramUsername,
-    amount: totalAmount,
-    reason: `Refund for order ${order.code}`,
-    orderId,
-    adminUsername: adminUser ?? "admin",
-    createdAt: new Date(),
+    const totalCents = usdToCents(String(order.grandTotal ?? "0"));
+    if (totalCents <= 0n) return { kind: "zero_total" as const };
+    const totalAmount = centsToUsdString(totalCents);
+    const newBalance = centsToUsdString(usdToCents(String(acct.credits ?? "0")) + totalCents);
+    await tx.update(accountsTable)
+      .set({ credits: newBalance as unknown as number })
+      .where(eq(accountsTable.telegramUsername, acct.telegramUsername));
+    await tx.insert(creditTransactionsTable).values({
+      accountUsername: acct.telegramUsername,
+      amount: totalAmount as unknown as number,
+      reason: `Refund for order ${order.code}`,
+      orderId,
+      adminUsername: adminUser ?? "admin",
+      createdAt: new Date(),
+    });
+    const [refundedOrder] = await tx.update(ordersTable)
+      .set({
+        refundStatus: "refunded",
+        refundedAt: new Date(),
+        status: "Cancelled",
+        paymentStatus: "refunded",
+      })
+      .where(refundMutableOrderWhere(and(eq(ordersTable.id, orderId), isNull(ordersTable.refundStatus))))
+      .returning({ id: ordersTable.id });
+    if (!refundedOrder) throw new RefundMutationBlockedError(orderId);
+    return { kind: "refunded" as const, order, accountUsername: acct.telegramUsername, totalAmount, newBalance };
   });
 
-  writeLog("change", "info", "order_refunded_to_credits", `Admin refunded order ${order.code} ($${totalAmount} USD) to credits for ${acct.telegramUsername}`, { orderId, username: acct.telegramUsername, amount: totalAmount }).catch(() => {});
-  res.json({ ok: true, credits: newBalance, refundedAmount: totalAmount });
+  if (outcome.kind === "missing_order") { res.status(404).json({ error: "Order not found" }); return; }
+  if (outcome.kind === "already_refunded") {
+    res.json({ ok: true, idempotent: true, refundedAmount: Number(centsToUsdString(usdToCents(String(outcome.order.grandTotal ?? "0")))) });
+    return;
+  }
+  if (outcome.kind === "missing_account") { res.status(400).json({ error: "Order has no linked customer account" }); return; }
+  if (outcome.kind === "zero_total") { res.status(400).json({ error: "Order total is zero — nothing to refund" }); return; }
+  const { order, accountUsername, totalAmount, newBalance } = outcome;
+
+  writeLog("change", "info", "order_refunded_to_credits", `Admin refunded order ${order.code} ($${totalAmount} USD) to credits for ${accountUsername}`, { orderId, username: accountUsername, amount: Number(totalAmount) }).catch(() => {});
+  res.json({ ok: true, credits: Number(newBalance), refundedAmount: Number(totalAmount) });
 });
 
 // ─── Invite Codes ────────────────────────────────────────────
@@ -9694,7 +9932,7 @@ router.post("/admin/orders/:id/reset-test-payment", async (req: any, res: any): 
   const [updated] = await db
     .update(ordersTable)
     .set({ paymentStatus: "unpaid", paymentTestAmount: null, testPaymentTxHash: null })
-    .where(eq(ordersTable.id, req.params.id))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
     .returning({ id: ordersTable.id, paymentStatus: ordersTable.paymentStatus });
   res.json(updated);
 });
@@ -9716,7 +9954,7 @@ router.post("/admin/orders/:id/generate-test", async (req: any, res: any): Promi
   const [updated] = await db
     .update(ordersTable)
     .set({ paymentTestAmount: String(testAmount), paymentStatus: "test_ready" })
-    .where(eq(ordersTable.id, req.params.id))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
     .returning({ id: ordersTable.id, paymentTestAmount: ordersTable.paymentTestAmount, paymentStatus: ordersTable.paymentStatus });
   res.json({ paymentTestAmount: parseFloat(String(updated.paymentTestAmount)), paymentStatus: updated.paymentStatus });
 });
@@ -9733,7 +9971,7 @@ router.post("/admin/orders/:id/confirm-test", async (req: any, res: any): Promis
   const [updated] = await db
     .update(ordersTable)
     .set({ paymentStatus: "test_confirmed", testPaymentTxHash: order.testPaymentTxHash ?? "admin_confirmed" })
-    .where(eq(ordersTable.id, req.params.id))
+    .where(refundMutableOrderWhere(eq(ordersTable.id, req.params.id)))
     .returning({ id: ordersTable.id, paymentStatus: ordersTable.paymentStatus });
 
   // Send admin notification for manual test-payment confirmation
@@ -10290,7 +10528,7 @@ router.post("/admin/group-buys/:gbId/routing-undo", async (req, res): Promise<vo
       routingType: latest.fromRoutingType ?? null,
       reshipperUsername: latest.fromReshipperUsername ?? null,
       countryLegId: latest.fromCountryLegId ?? null,
-    } as Record<string, unknown>).where(eq(ordersTable.id, latest.orderId));
+    } as Record<string, unknown>).where(refundMutableOrderWhere(eq(ordersTable.id, latest.orderId)));
 
     await db.update(routingHistoryTable).set({
       metadata: { ...(typeof latest.metadata === "object" && latest.metadata !== null ? latest.metadata : {}), undone: true, undoneBy: adminWho },
@@ -10306,6 +10544,11 @@ router.post("/admin/group-buys/:gbId/routing-undo", async (req, res): Promise<vo
 
     res.json({ ok: true, undoneHistoryId: latest.id, orderId: latest.orderId });
   } catch (err) {
+    const refundOrderId = refundMutationErrorOrderId(err);
+    if (refundOrderId) {
+      res.status(409).json({ error: "Order mutation is blocked while a refund is active.", code: "refund_active", orderId: refundOrderId });
+      return;
+    }
     console.error("[admin] POST routing-undo error:", err);
     res.status(500).json({ error: "Failed to undo routing" });
   }
@@ -10509,14 +10752,17 @@ router.post("/admin/wholesale-access-requests/:id/confirm", async (req: any, res
       eq(accountsTable.telegramUsername, request.accountUsername.startsWith("@") ? request.accountUsername.slice(1) : `@${request.accountUsername}`)
     ));
   if (!acct) { res.status(404).json({ error: "Account not found" }); return; }
-  const newBalance = acct.credits + request.amountUsd;
+  const refundAmount = centsToUsdString(usdToCents(String(request.amountUsd)));
+  const newBalance = centsToUsdString(
+    usdToCents(String(acct.credits ?? "0")) + usdToCents(refundAmount),
+  );
   await db.update(accountsTable)
-    .set({ isWholesale: true, credits: newBalance, updatedAt: new Date() })
+    .set({ isWholesale: true, credits: newBalance as unknown as number, updatedAt: new Date() })
     .where(eq(accountsTable.telegramUsername, acct.telegramUsername));
   await db.insert(creditTransactionsTable).values({
     accountUsername: acct.telegramUsername,
-    amount: request.amountUsd,
-    reason: `Wholesale access fee refund ($${request.amountUsd} access fee)`,
+    amount: refundAmount as unknown as number,
+    reason: `Wholesale access fee refund ($${refundAmount} access fee)`,
     adminUsername: adminUser ?? "admin",
     createdAt: new Date(),
   });
@@ -10526,13 +10772,13 @@ router.post("/admin/wholesale-access-requests/:id/confirm", async (req: any, res
   notifyUser(
     acct.telegramUsername,
     "profile",
-    `✅ <b>Wholesale Access Granted</b>\n\nYour access fee of <b>$${request.amountUsd}</b> has been confirmed and credited back to your account.\n\nYou now have full access to the wholesale shop. Visit the Wholesale section in your account portal.`
+    `✅ <b>Wholesale Access Granted</b>\n\nYour access fee of <b>$${refundAmount}</b> has been confirmed and credited back to your account.\n\nYou now have full access to the wholesale shop. Visit the Wholesale section in your account portal.`
   ).catch(() => {});
   writeLog("change", "info", "wholesale_access_confirmed",
-    `Admin @${adminUser} confirmed wholesale access for ${acct.telegramUsername} (request ${id}, $${request.amountUsd})`,
+    `Admin @${adminUser} confirmed wholesale access for ${acct.telegramUsername} (request ${id}, $${refundAmount})`,
     { username: acct.telegramUsername, requestId: id }
   ).catch(() => {});
-  res.json({ ok: true, newBalance });
+  res.json({ ok: true, newBalance: Number(newBalance) });
 });
 
 // ── POST /api/admin/wholesale-access-requests/:id/reject ─────────────────────
