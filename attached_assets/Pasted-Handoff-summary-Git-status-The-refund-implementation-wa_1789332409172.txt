@@ -1,0 +1,350 @@
+Handoff summary
+Git status
+The refund implementation was merged into main.
+
+Merge commit: 0b46571d
+Follow-up SQL fix: 66f0e380
+Current branch: main
+Working tree is clean except for three untracked screenshots in attached_assets/
+No screenshot files were included in the feature merge
+No intentional GitHub push was performed from this session
+The shared-order payment work was already present on main; the refund branch was merged on top of it.
+
+Features implemented
+Group Buy refunds
+Customers can request refunds for eligible Group Buy orders.
+
+Supported refund methods:
+
+Account credit
+
+Uses the exact persisted order grandTotal
+Amount is server-authoritative
+Adds a credit transaction atomically
+Retry-safe and idempotent
+Crypto refund
+
+Uses external USDC or USDT transfer
+Ethereum ERC-20 only
+Admin or owning organiser manually sends the transfer
+Processor submits the TXID
+Server verifies:
+Ethereum transaction
+Token contract
+Recipient wallet
+Exact token amount
+Receipt status
+Confirmation count
+The system never sends crypto automatically
+Private keys are never handled by the app
+Refund statuses:
+
+requested
+verifying
+verification_failed
+completed
+Active statuses are:
+
+requested
+verifying
+verification_failed
+Active refunds block sensitive order mutations, including:
+
+Order edits
+Item changes
+Shipping changes
+Payment changes
+Fulfilment and dispatch changes
+Relevant organiser and reshipper mutations
+Refund processing queues
+Added manual queues for:
+
+Admins
+Owning organisers
+Processor capabilities:
+
+View refund queues
+View refund details
+Complete credit refunds
+Submit and verify crypto TXIDs
+Retry failed crypto verification where allowed
+Organisers are scoped to their own Group Buys.
+
+Notifications and audit
+Added durable outbox handling for:
+
+Refund transitions
+Customer notifications
+Audit records
+Retry and lease handling
+Claim-token fencing
+Idempotent logical transition events
+Telegram delivery is intentionally at-least-once across a crash after provider acceptance.
+
+Refund settings
+Refund functionality is admin-controlled.
+Crypto refunds default to disabled.
+Each Group Buy has a cryptoRefundsEnabled setting.
+Admin UI supports enabling/disabling crypto refunds.
+Credit refunds remain distinct from crypto refunds.
+Customer UI
+Added:
+
+Refund request panel on order detail
+Refund status display in the customer portal
+Method selection
+Eligibility messaging
+Irreversible-action warning
+Active-refund control locking
+No client-supplied refund amount field
+Admin and organiser UI
+Added:
+
+Refund queue components
+Manual credit-completion controls
+Crypto TXID verification controls
+Refund details and attempt history
+Admin Group Buy crypto-refund setting
+Database changes
+New table: group_buy_refunds
+Core columns:
+
+id
+order_id
+group_buy_id
+account_id
+method
+status
+amount_usd
+asset
+network
+destination_wallet
+amount_base_units
+outgoing_txid
+confirmation_count
+explorer_url
+processor_username
+processor_role
+processing_attempt_id
+verification_error_code
+verification_error_message
+requested_at
+verifying_at
+failed_at
+completed_at
+created_at
+updated_at
+Constraints include:
+
+Method must be credit or crypto
+Status must be one of the four supported statuses
+Asset must be USDC or USDT when supplied
+Network must be Ethereum ERC-20 when supplied
+Amount must be positive
+Credit refunds cannot contain crypto fields
+Crypto refunds require asset, network, wallet, and base-unit amount
+Only one active refund is allowed per order
+TXIDs are unique when present
+Indexes include:
+
+Order lookup
+Group Buy/status queue
+Requested queue
+Status queue
+Unique active refund per order
+Unique outgoing TXID
+New table: group_buy_refund_attempts
+Tracks each crypto verification attempt:
+
+id
+refund_id
+submitted_txid
+processor_username
+processor_role
+started_at
+ended_at
+result_code
+failure_reason
+created_at
+New table: group_buy_refund_tx_claims
+Provides TXID replay protection:
+
+txid primary key
+refund_id
+created_at
+New table: group_buy_refund_transition_outbox
+Durable transition events for refund lifecycle processing.
+
+Tracks:
+
+Refund and order identity
+Group Buy and account identity
+Transition type
+Processor identity
+Submitted TXID
+Result code
+Delivery state
+Retry count
+Claim and error metadata
+New table: group_buy_refund_notifications
+Durable customer notification outbox.
+
+Tracks:
+
+Refund
+Account
+Status
+Event key
+Transition key
+Attempt ID
+Order code
+Amount
+Explorer URL
+TXID
+Claim token
+Delivery status
+Retry/error metadata
+Existing table: accounts
+credits now expects:
+
+numeric(10,2)
+
+Credit arithmetic is handled as exact integer cents in application code, with decimal conversion only at the database boundary.
+
+Existing table: credit_transactions
+Changes:
+
+amount now expects numeric(10,2)
+Added operation_key
+Added refund_id
+Added foreign key from refund_id to group_buy_refunds.id
+Added unique idempotency indexes for:
+Account + refund
+Account + operation key
+Existing table: orders
+credits_applied now expects:
+
+numeric(10,2)
+
+Refund logic also treats the order’s persisted grandTotal as the authoritative refund amount.
+
+Existing table: group_buys
+Added:
+
+crypto_refunds_enabled boolean NOT NULL DEFAULT false
+
+Existing table: telegram_message_logs
+Added:
+
+event_key text
+
+This supports notification/event deduplication.
+
+Startup and migration behavior
+The API startup process currently:
+
+Runs schema synchronization/compatibility migrations
+Creates or updates required refund-related structures
+Runs refund-safe startup repairs
+Skips active-refund orders during compatibility repairs
+Starts refund notification scheduling
+Starts the API before completing normal application bootstrap
+The merged startup was tested successfully after fixing a PostgreSQL type-inference issue in the refund mutation guard.
+
+For another project, copy the Drizzle schema changes and the related startup migration logic rather than manually recreating only the main refund table.
+
+Important schema source:
+
+lib/db/src/schema/group_buy_refunds.ts
+
+The schema is exported through:
+
+lib/db/src/schema/index.ts
+
+Important backend files
+artifacts/api-server/src/lib/group-buy-refund.ts
+artifacts/api-server/src/lib/refund-money.ts
+artifacts/api-server/src/lib/refund-eligibility.ts
+artifacts/api-server/src/lib/refund-crypto-verifier.ts
+artifacts/api-server/src/lib/refund-mutation-guard.ts
+artifacts/api-server/src/lib/refund-notifications.ts
+artifacts/api-server/src/lib/customer-refund-view.ts
+artifacts/api-server/src/routes/group-buy-refunds.ts
+
+Relevant database files:
+
+lib/db/src/schema/group_buy_refunds.ts
+lib/db/src/schema/credit_transactions.ts
+lib/db/src/schema/accounts.ts
+lib/db/src/schema/orders.ts
+lib/db/src/schema/group_buys.ts
+lib/db/src/schema/telegram_message_logs.ts
+
+Relevant frontend files:
+
+artifacts/peps-anonymous/src/components/CustomerRefundPanel.tsx
+artifacts/peps-anonymous/src/components/GroupBuyRefundQueue.tsx
+artifacts/peps-anonymous/src/pages/AccountOrderDetail.tsx
+artifacts/peps-anonymous/src/pages/CustomerPortal.tsx
+artifacts/peps-anonymous/src/pages/Admin.tsx
+
+API routes added
+Customer routes include:
+
+POST /api/group-buy-refunds
+GET  /api/account/group-buy-refunds
+GET  /api/account/group-buy-refunds/:refundId
+
+Admin routes include:
+
+GET  /api/admin/group-buy-refunds
+GET  /api/admin/group-buy-refunds/:refundId
+POST /api/admin/group-buy-refunds/:refundId/credit-complete
+POST /api/admin/group-buy-refunds/:refundId/verify
+
+Organiser routes include:
+
+GET  /api/organiser/group-buy-refunds
+GET  /api/organiser/group-buy-refunds/:refundId
+POST /api/organiser/group-buy-refunds/:refundId/credit-complete
+POST /api/organiser/group-buy-refunds/:refundId/verify
+
+Environment configuration
+Existing required secrets:
+
+ADMIN_SECRET
+SESSION_SECRET
+
+Optional refund configuration:
+
+GROUP_BUY_REFUND_MIN_CONFIRMATIONS
+GROUP_BUY_REFUND_VERIFY_LEASE_SECONDS
+
+Crypto refunds require public Ethereum/token RPC access for verification, but the application does not need private keys or a wallet signing secret.
+
+Admin login status
+Admin 2FA is currently disabled.
+
+The admin page is:
+
+/sleepingpepisadmin
+
+With 2FA disabled, it uses the shared ADMIN_SECRET gate. It does not use username/password login.
+
+The backend was verified to accept its configured secret internally. The browser issue was that the entered value did not match the runtime secret; no unauthenticated admin bypass was added.
+
+Verification completed
+Passed:
+
+Refund API route suite: 16 tests
+Refund guard and route suites: 28 tests
+Customer/processor frontend contract tests: 6 tests
+Frontend production build
+Canonical application startup
+Startup database migrations
+Refund-protected cleanup query after SQL fix
+Known existing issues:
+
+Full API TypeScript checking currently reports unrelated baseline errors in approximately 15 files.
+The duplicate artifacts/api-server: API Server workflow remains unused/failed because it conflicts with the canonical Start application workflow.
+Use only the canonical Start application workflow for the merged app.
