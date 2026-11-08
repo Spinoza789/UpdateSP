@@ -2,8 +2,6 @@ import { db, groupBuysTable, gbReshippersTable, accountsTable } from "@workspace
 import { and, eq } from "drizzle-orm";
 import { assertDirectShippingEligible, DeliveryRoutingError, resolvePostageReshipper } from "./group-buy-delivery-routing";
 import type { CustomPostageOption } from "./group-buy-shipping-options";
-import { assignedPostageCountries } from "./reshipper-postage-scope";
-import { normalizeToCode } from "./country-utils";
 
 export async function resolveGroupOrderRoute(input: {
   gbId: string; methodId: string; direct: boolean; country?: string | null;
@@ -30,8 +28,7 @@ export async function resolveGroupOrderRoute(input: {
   const option = options.find(row => row.id === input.methodId);
   const selected = option?.reshipperUsername || input.preferred;
   const reshipperUsername = resolvePostageReshipper(selected, country, assignments);
-  if (!reshipperUsername && (!country || !assignedPostageCountries(assignments).has(normalizeToCode(country)))) {
-    throw new DeliveryRoutingError("No enabled reshipper covers this country for this group buy. Contact the organiser before ordering.");
-  }
+  // Accept orders before a reshipper is appointed. Keep the route unassigned,
+  // never Direct Shipping; explicit invalid recipient choices still fail above.
   return { reshipperUsername, routingType: reshipperUsername ? "reshipper" as const : "unrouted" as const, fixedReshipper: Boolean(option?.reshipperUsername) };
 }

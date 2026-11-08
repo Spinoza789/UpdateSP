@@ -16,9 +16,25 @@ it("routes Germany EU postage to its multi-country reshipper, never direct", asy
   where.mockResolvedValueOnce([group]).mockResolvedValueOnce(assignments);
   await expect(resolveGroupOrderRoute(request)).resolves.toEqual({ reshipperUsername: "fazi28", routingType: "reshipper", fixedReshipper: true });
 });
-it("rejects ordinary postage with no enabled coverage instead of accepting an orphan", async () => {
+it("accepts ordinary postage before any reshipper is assigned, without making it direct", async () => {
   where.mockResolvedValueOnce([group]).mockResolvedValueOnce([]);
-  await expect(resolveGroupOrderRoute({ ...request, methodId: "ordinary" })).rejects.toThrow(/reshipper.*country/i);
+  await expect(resolveGroupOrderRoute({ ...request, methodId: "ordinary" })).resolves.toEqual({
+    reshipperUsername: null, routingType: "unrouted", fixedReshipper: false,
+  });
+});
+it("accepts a permitted destination while other countries already have reshippers", async () => {
+  where.mockResolvedValueOnce([group]).mockResolvedValueOnce(assignments);
+  await expect(resolveGroupOrderRoute({ ...request, methodId: "ordinary", country: "US" }))
+    .resolves.toEqual({ reshipperUsername: null, routingType: "unrouted", fixedReshipper: false });
+});
+it("still rejects an explicitly selected postage reshipper that is no longer available", async () => {
+  where.mockResolvedValueOnce([group]).mockResolvedValueOnce([]);
+  await expect(resolveGroupOrderRoute(request)).rejects.toThrow(/selected postage reshipper/i);
+});
+it("still rejects an invalid preferred reshipper instead of silently dropping the choice", async () => {
+  where.mockResolvedValueOnce([group]).mockResolvedValueOnce(assignments);
+  await expect(resolveGroupOrderRoute({ ...request, methodId: "ordinary", country: "US", preferred: "fazi28" }))
+    .rejects.toThrow(/selected postage reshipper/i);
 });
 it("preserves the unclaimed pool when multiple enabled reshippers cover the country", async () => {
   where.mockResolvedValueOnce([group]).mockResolvedValueOnce([

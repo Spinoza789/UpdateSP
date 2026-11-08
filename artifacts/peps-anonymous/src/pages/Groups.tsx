@@ -465,23 +465,8 @@ function JoinModal({ onClose }: { onClose: () => void }) {
   const rawUserCountry = account?.country ?? null;
   // Keep raw value for display ("No open group buys for X")
   const userCountry = rawUserCountry;
-  // Normalise to ISO code for comparison against reshipperCountries (ISO codes from server).
-  // account.country may be stored as a full name ("United Kingdom") or a code ("GB").
-  const userCountryCode = rawUserCountry
-    ? (COUNTRY_LIST.find(c => c.name.toLowerCase() === rawUserCountry.trim().toLowerCase())?.code?.toUpperCase()
-      ?? COUNTRY_LIST.find(c => c.code.toLowerCase() === rawUserCountry.trim().toLowerCase())?.code?.toUpperCase()
-      ?? rawUserCountry.trim().toUpperCase())
-    : null;
-
-  // Filter GBs: if a GB has reshippers assigned, only show it when the user's country matches.
-  // Exception: if country legs are enabled, skip this check — the leg itself controls access.
-  // Reshipper countries from the API are normalised ISO codes; compare uppercased on both sides.
-  const visibleGbs = activeGbs.filter(gb => {
-    if (gb.reshipperCountries.length === 0) return true;
-    if (!rawUserCountry) return true;
-    if (gb.countryLegsEnabled) return true;
-    return gb.reshipperCountries.some(c => c.toUpperCase() === userCountryCode);
-  });
+  // The API enforces country/account restrictions. Reshippers may be assigned later.
+  const visibleGbs = activeGbs;
 
   const selectedGb = visibleGbs.find(g => g.id === selectedGbId) ?? null;
   const needsPin = selectedGb?.requiresPin ?? false;
@@ -822,7 +807,7 @@ function JoinModal({ onClose }: { onClose: () => void }) {
               >
                 <Globe className="w-4 h-4 shrink-0" style={{ color: "#D97706" }} />
                 <p className="text-xs" style={{ color: "#92400e" }}>
-                  No reshipper assigned for {selectedLeg.countryName} yet — check back soon.
+                  You can join and place orders for {selectedLeg.countryName}. A reshipper will be assigned later.
                 </p>
               </div>
             )}

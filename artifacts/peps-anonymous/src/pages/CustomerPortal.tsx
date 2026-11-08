@@ -2383,22 +2383,8 @@ function JoinModal({ onClose, initialId }: { onClose: () => void; initialId?: st
       ?? COUNTRY_LIST.find(c => c.code.toLowerCase() === rawUserCountry.toLowerCase())?.name
       ?? rawUserCountry)
     : null;
-  // Normalise to ISO code for comparison against reshipperCountries (which are ISO codes server-side)
-  const userCountryCode = rawUserCountry
-    ? (COUNTRY_LIST.find(c => c.name.toLowerCase() === rawUserCountry.toLowerCase())?.code?.toUpperCase()
-      ?? COUNTRY_LIST.find(c => c.code.toLowerCase() === rawUserCountry.toLowerCase())?.code?.toUpperCase()
-      ?? rawUserCountry.toUpperCase())
-    : null;
-
-  // Filter GBs: if a GB has reshippers assigned, only show it when the user's country matches.
-  // Reshipper countries from the API are ISO codes; account.country may be a full name — compare
-  // both as ISO codes to avoid "United Kingdom" ≠ "GB" mismatches.
-  const visibleGbs = activeGbs.filter(gb => {
-    if (gb.reshipperCountries.length === 0) return true;
-    if (!userCountryCode) return true;
-    if (gb.countryLegsEnabled) return true;
-    return gb.reshipperCountries.some(c => c.toUpperCase() === userCountryCode);
-  });
+  // The API enforces country/account restrictions. Reshippers may be assigned later.
+  const visibleGbs = activeGbs;
 
   const selected = visibleGbs.find(g => g.id === gbId);
   const requiresPin = selected?.requiresPin ?? false;
