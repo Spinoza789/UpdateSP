@@ -33,6 +33,58 @@ beforeEach(() => {
   }));
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+it.each([true, false])("reloads a stale order review without losing imported prices or the note V2=%s", async v2 => {
+  let refreshed = false;
+  const submissions: any[] = [];
+  vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+    if (init?.method === "POST") {
+      submissions.push(JSON.parse(String(init.body)));
+      if (submissions.length === 1) {
+        refreshed = true;
+        return Response.json({ error: "Order 123 changed since this review. Review the latest order.", code: "ORDER_REVIEW_STALE" }, { status: 409 });
+      }
+      return Response.json({ created: 1, disabledProducts: 0 });
+    }
+    if (url.endsWith("/order-revisions")) return Response.json({ ...view, orders: view.orders.map(order => ({
+      ...order, snapshotHash: refreshed ? "new-snapshot" : "old-snapshot",
+      items: order.items.map(item => ({ ...item, id: refreshed ? "new-line" : item.id })),
+    })) });
+    if (url.endsWith("/products")) return Response.json([product]);
+    if (url.endsWith("/organiser/me")) return Response.json({});
+    return Response.json([]);
+  }));
+  await render(v2);
+  const file = host.querySelector('[data-testid="price-update-csv"]') as HTMLInputElement;
+  Object.defineProperty(file, "files", { configurable: true, value: [{ size: 100, text: async () => "Product ID,New price\nown,40" }] });
+  await act(async () => file.dispatchEvent(new window.Event("change", { bubbles: true })));
+  await click('[data-testid="review-imported-prices"]');
+  await input('[data-testid="input-revision-message"]', "Supplier has updated the price");
+  const submit = async () => act(async () => host.querySelector('[data-testid="button-send-revision"]')!.closest("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true })));
+  await submit();
+  expect(submissions).toHaveLength(1);
+  expect(submissions[0].changes[0].snapshotHash).toBe("old-snapshot");
+  expect(host.textContent).toContain("Order 123 changed");
+  expect((host.querySelector('[data-testid="product-new-price-own"]') as HTMLInputElement).value).toBe("40");
+  expect(host.querySelector('[data-testid="input-revision-message"]')).toBeNull();
+  await click('[data-testid="review-product-prices"]');
+  expect((host.querySelector('[data-testid="input-revision-message"]') as HTMLTextAreaElement).value).toBe("Supplier has updated the price");
+  await submit();
+  expect(submissions).toHaveLength(2);
+  expect(submissions[1].changes[0]).toMatchObject({ snapshotHash: "new-snapshot", items: [{ id: "new-line", quantity: 2, unitPrice: 40 }] });
+});
+it("requires an explicit new price review after manually refreshing orders", async () => {
+  await render(true);
+  await input('[data-testid="product-new-price-own"]', "40");
+  await click('[data-testid="review-product-prices"]');
+  await input('[data-testid="input-revision-message"]', "Keep this note");
+  const refresh = [...host.querySelector('[data-testid="price-confirmation-review"]')!.querySelectorAll("button")].find(button => button.textContent?.includes("Refresh"))!;
+  await act(async () => refresh.click());
+  expect(host.querySelector('[data-testid="price-confirmation-review"]')).toBeNull();
+  expect((host.querySelector('[data-testid="product-new-price-own"]') as HTMLInputElement).value).toBe("40");
+  expect(sent).toBeUndefined();
+  await click('[data-testid="review-product-prices"]');
+  expect((host.querySelector('[data-testid="input-revision-message"]') as HTMLTextAreaElement).value).toBe("Keep this note");
+});
 async function render(v2: boolean, groupId = "group") {
   await act(async () => root.render(v2 ? h(V2Products, { selectedGbId: groupId, currency: "USD" })
     : h(ProductsTab, { gb: { id: groupId, name: "Synthetic", currency: "USD" } as any })));

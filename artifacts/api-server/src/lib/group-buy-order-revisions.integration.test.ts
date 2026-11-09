@@ -6,6 +6,35 @@ describe.skipIf(process.env.ORDER_REVISION_DB_TESTS !== "1")("own-stock revision
   let store: typeof import("@workspace/db");
   let service: typeof import("./group-buy-order-revisions");
   beforeAll(async () => { store = await import("@workspace/db"); service = await import("./group-buy-order-revisions"); });
+  it("identifies an order edited since review and rejects the entire submission without disabling products", async () => fixture(async f => {
+    await service.setRevisionEnabled(f.groupId, f.actor, true, f.tx);
+    const view = await service.organiserRevisionList(f.groupId, f.actor, f.tx);
+    const reviewed = view.orders.find((order: any) => order.id === f.orderId)!;
+    await f.tx.update(store.orderLineItemsTable).set({ id: randomUUID() }).where(eq(store.orderLineItemsTable.id, f.ownLine));
+    await expect(service.createOrderRevisions(f.groupId, f.actor, { kind: "price",
+      message: "Updated supplier prices", disabledProductIds: [f.own],
+      changes: [{ orderId: f.orderId, snapshotHash: reviewed.snapshotHash, items: reviewed.items.map((item: any) => ({
+        id: item.id, quantity: item.quantity, unitPrice: item.productId === f.own ? 40 : item.unitPrice,
+      })) }],
+    }, f.tx)).rejects.toMatchObject({ status: 409, code: "ORDER_REVIEW_STALE", message: expect.stringContaining("SYNTHETIC-REVISION") });
+    expect((await f.tx.select().from(store.groupBuyProductsTable).where(eq(store.groupBuyProductsTable.productId, f.own))).every((link: any) => link.active)).toBe(true);
+    expect(await f.tx.select().from(store.groupBuyOrderRevisionsTable).where(eq(store.groupBuyOrderRevisionsTable.groupBuyId, f.groupId))).toHaveLength(0);
+  }));
+  it("binds the actual organiser review to order money, even when line IDs did not change", async () => fixture(async f => {
+    await service.setRevisionEnabled(f.groupId, f.actor, true, f.tx);
+    const view = await service.organiserRevisionList(f.groupId, f.actor, f.tx);
+    const reviewed = view.orders.find((order: any) => order.id === f.orderId)!;
+    expect(reviewed.snapshotHash).toMatch(/^[a-f0-9]{64}$/);
+    await f.tx.update(store.ordersTable).set({ grandTotal: "129" }).where(eq(store.ordersTable.id, f.orderId));
+    await expect(service.createOrderRevisions(f.groupId, f.actor, { ...f.input,
+      changes: f.input.changes.map((change: any) => ({ ...change, snapshotHash: reviewed.snapshotHash })),
+    }, f.tx)).rejects.toMatchObject({ status: 409, code: "ORDER_REVIEW_STALE" });
+    const fresh = (await service.organiserRevisionList(f.groupId, f.actor, f.tx)).orders.find((order: any) => order.id === f.orderId)!;
+    const created = await service.createOrderRevisions(f.groupId, f.actor, { ...f.input,
+      changes: f.input.changes.map((change: any) => ({ ...change, snapshotHash: fresh.snapshotHash })),
+    }, f.tx);
+    expect(created.created).toBe(1);
+  }));
   it("disables own products only in this group without changing existing orders or shared catalogue prices", async () => fixture(async f => {
     await service.setRevisionEnabled(f.groupId, f.actor, true, f.tx);
     const result = await service.createOrderRevisions(f.groupId, f.actor, { kind: "price", message: "Unavailable from supplier", disabledProductIds: [f.own], changes: [] }, f.tx);

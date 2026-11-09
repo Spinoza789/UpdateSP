@@ -8,7 +8,7 @@ type RevisionItem = { id: string; productId: string; productName: string; quanti
 type RevisionOrder = {
   id: string; code: string; telegramUsername: string; currency: string; grandTotal: number;
   adminFee?: number; adminFeePercent?: number | null;
-  eligible: boolean; ineligibleReason: string | null; items: RevisionItem[];
+  eligible: boolean; ineligibleReason: string | null; items: RevisionItem[]; snapshotHash?: string;
 };
 type RevisionRequest = {
   id: string; orderId: string; orderCode: string; member: string;
@@ -23,7 +23,7 @@ type OrganiserView = {
 };
 type DraftLine = { quantity: number; unitPrice: number };
 type EditableLine = { id: string; quantity: number; unitPrice: number };
-type OrderChange = { orderId: string; items: EditableLine[] };
+type OrderChange = { orderId: string; items: EditableLine[]; snapshotHash?: string };
 
 const cardStyle = { background: "var(--t-surface)", border: "1px solid var(--t-border)", color: "var(--t-text)" } as const;
 const insetStyle = { background: "var(--t-bg)", border: "1px solid var(--t-border)" } as const;
@@ -152,12 +152,22 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing, onProductsUpdated
     return () => window.clearInterval(timer);
   }, [view, editing, busy, load]);
 
+  const priceMode = pricing !== undefined;
   const refresh = useCallback(async () => {
+    if (priceMode) {
+      // A new server snapshot invalidates the old price review. Keep product
+      // drafts and the note, but require explicit review of the refreshed orders.
+      setDrafts(null);
+      setSelectedOrders([]);
+      setReviewedPrices(null);
+      setReviewOpen(false);
+      setEditing(false);
+    }
     const controller = new AbortController();
     activeController.current?.abort();
     activeController.current = controller;
     await load(controller.signal);
-  }, [load]);
+  }, [load, priceMode]);
 
   const eligibleOrders = view?.orders.filter(order => order.eligible) ?? [];
   const draftLine = (orderId: string, item: RevisionItem): DraftLine =>
@@ -241,6 +251,7 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing, onProductsUpdated
       if (!changed) return [];
       return [{
         orderId: order.id,
+        ...(order.snapshotHash ? { snapshotHash: order.snapshotHash } : {}),
         // The API receives every original line. Lines not editable by this organiser remain untouched.
         items: order.items.map(item => {
           const draft = drafts[`${order.id}:${item.id}`] ?? item;
@@ -287,7 +298,20 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing, onProductsUpdated
         signal: controller.signal,
       });
       if (!response.ok) {
-        const body = await response.json().catch(() => null) as { error?: string } | null;
+        const body = await response.json().catch(() => null) as { error?: string; code?: string } | null;
+        if (controller.signal.aborted) return;
+        if (response.status === 409 && body?.code === "ORDER_REVIEW_STALE") {
+          // Keep the CSV and note, but discard obsolete order-line selections.
+          // A fresh explicit review is required; never retry the write automatically.
+          setDrafts(null);
+          setSelectedOrders([]);
+          setEditing(false);
+          setReviewedPrices(null);
+          setReviewOpen(false);
+          setActionError(`${body.error} Your imported prices and note are kept. Review the refreshed orders before sending again.`);
+          await refresh();
+          return;
+        }
         throw new Error(body?.error || "The proposal could not be sent.");
       }
       const result = await response.json();

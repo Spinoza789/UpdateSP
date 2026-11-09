@@ -49,6 +49,17 @@ Other proposed prices still require each unpaid-order member's acceptance.
 Importing must clearly lead to review and explicit submission, not imply an
 unsent browser draft has already notified members.
 
+If a member changes an order during an organiser's price review, require a
+fresh review while retaining the organiser's imported prices and note. Do not
+silently skip the order, match replacement lines by product, or retry the write.
+
+**Why:** Members can continue editing while a bulk proposal is being prepared;
+the organiser's approval must refer to the order state they actually reviewed.
+
+**How to apply:** Reject stale submissions atomically with an actionable
+order-specific error. Refresh the order data, preserve unsent product drafts,
+and require explicit review before submission again.
+
 Price proposals treat products uploaded specifically for the authorised group buy as its own stock even when their recorded uploader is missing or differs from its current organiser.
 
 **Why:** Legacy imports and organiser changes can leave mixed product ownership within one uploaded catalogue, causing a price CSV to silently omit most of the group's products.

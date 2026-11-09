@@ -96,7 +96,7 @@ export async function organiserRevisionList(id: string, actor: RevisionActor, da
             baseAmount: group.adminFeeAmount, label: group.adminFeeLabel, countryOverrides: group.adminFeeCountries,
             shippingCountry: o.shippingCountry, productSubtotal: 100 }).amount : null,
         ineligibleReason: reason ?? (ownsAny ? null : "No organiser-owned products in this order."),
-        items: revisionItems(items) };
+        items: revisionItems(items), snapshotHash: revisionSnapshot(o, items, group) };
     }),
     requests: records.filter(r => byId.has(r.orderId)).map(r => publicRevision(r, byId.get(r.orderId), group)) };
 }
@@ -145,6 +145,14 @@ export async function createOrderRevisions(id: string, actor: RevisionActor, inp
       if (reason) throw new RevisionError(`Order ${order.code}: ${reason}`, 409);
       await assertNoActiveRefund(tx, order.id);
       const current = await tx.select().from(lines).where(eq(lines.orderId, order.id)).for("update");
+      // Member edits can replace every line ID while an organiser is reviewing.
+      // Never remap stale IDs by product or silently apply to a different order version.
+      const currentIds = new Set(current.map((line: any) => line.id));
+      if ((change.snapshotHash !== undefined && change.snapshotHash !== revisionSnapshot(order, current, group))
+        || (Array.isArray(change.items) && (change.items.length !== current.length
+          || change.items.some((item: any) => item && typeof item.id === "string" && !currentIds.has(item.id)))))
+        throw new RevisionError(`Order ${order.code} changed since this review. Review the latest order before sending. No changes were saved.`,
+          409, "ORDER_REVIEW_STALE");
       const proposal = planRevision(order, current, change.items, owned, group);
       const before = { items: revisionItems(current), grandTotal: order.grandTotal,
         productSubtotal: order.productSubtotal, adminFee: order.adminFee };

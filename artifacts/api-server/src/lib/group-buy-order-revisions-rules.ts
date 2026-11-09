@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { resolveGroupBuyAdminFee } from "./group-buy-admin-fee";
 
 export class RevisionError extends Error {
-  constructor(message: string, public status = 400) { super(message); }
+  constructor(message: string, public status = 400, public code?: string) { super(message); }
 }
 export type RevisionItem = { id: string; productId: string; productName: string; quantity: number; unitPrice: number; lineTotal: number };
 const money = (v: unknown) => Number(v ?? 0);

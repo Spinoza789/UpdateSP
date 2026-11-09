@@ -12,7 +12,7 @@ function actor(req: Request) {
   return { username: req.organiser!.telegramUsername, admin: req.organiser!.isAdmin, adminGbId: req.organiser!.adminGbId };
 }
 function fail(res: Response, error: unknown) {
-  if (error instanceof RevisionError) { res.status(error.status).json({ error: error.message }); return; }
+  if (error instanceof RevisionError) { res.status(error.status).json({ error: error.message, ...(error.code ? { code: error.code } : {}) }); return; }
   if (refundMutationErrorOrderId(error)) { res.status(409).json({ error: "This order has an active refund. No changes were made." }); return; }
   console.error("[order-revisions]", error);
   res.status(503).json({ error: "Order changes are temporarily unavailable. No order changes were applied." });
