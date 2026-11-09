@@ -45,6 +45,26 @@ function render() {
   return new JSDOM(renderToStaticMarkup(<Review />));
 }
 
+it.each([null, "existing-wholesale-order"])("ignores stale group-buy additions in wholesale review (edit ID: %s)", orderId => {
+  mocks.draft = {
+    ...mocks.draft, orderType: "wholesale", groupBuyId: null, orderId,
+    additionOfOrderId: "old-group-buy-order", vendorShipping: 84,
+  };
+  mocks.query.mockImplementation((options: { queryKey: unknown[] }) =>
+    options.queryKey[0] === "addition-eligibility"
+      ? { ...loaded, data: undefined, isPending: true }
+      : loaded);
+  const dom = render();
+  const doc = dom.window.document;
+  const label = orderId ? "Update Order" : "Place Order";
+  const submit = [...doc.querySelectorAll("button")].find(button => button.textContent?.includes(label));
+  expect(submit).toBeTruthy();
+  expect(submit?.hasAttribute("disabled")).toBe(false);
+  expect(doc.body.textContent).not.toContain("Add to Order");
+  expect(doc.body.textContent).not.toContain("Delivery remains included");
+  dom.window.close();
+});
+
 it("explains and disables a new addition after vendor submission", () => {
   mocks.draft = { ...mocks.draft, orderId: null, additionOfOrderId: "paid-parent" };
   mocks.query.mockImplementation((options: { queryKey: unknown[] }) =>

@@ -5,6 +5,12 @@ description: Prepared batches allow separate additions; vendor-submitted batches
 
 # Order additions (top-ups)
 
+Wholesale customers must be able to place a separate new order while an earlier order is processing or shipped; they must not be forced to add to that earlier order.
+
+**Why:** The user reported a wholesale customer blocked from placing another order and explicitly ruled out additions to processed or shipped wholesale orders.
+
+**How to apply:** Keep wholesale checkout independent of group-buy top-up state. Preserve the original order and its fulfilment; do not ask customers to mark an in-transit order received to enable another purchase.
+
 An addition (top-up) to an uncommitted paid order appends items to that order without
 creating a second active order or consuming a second code. Prepared parents split instead;
 vendor-submitted parents no longer accept new additions.

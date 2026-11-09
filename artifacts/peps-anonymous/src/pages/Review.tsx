@@ -103,9 +103,9 @@ export default function Review() {
   }, []);
 
   const isNewOrder = !draft.orderId;
-  // Derived from the single source of truth — additionOfOrderId being set means this is a
-  // top-up. Never stored as a separate boolean so the two can never fall out of sync.
-  const isTopUp = draft.additionOfOrderId !== null;
+  // Wholesale is always its own order, even if an older persisted group-buy
+  // draft left an addition ID behind. Never apply top-up UI, totals or guards.
+  const isTopUp = draft.orderType !== "wholesale" && draft.additionOfOrderId != null;
   const additionAdvice = useQuery<{ additionOutcome: "separate" | "merged"; canAddItems: boolean; reason: string | null }>({
     queryKey: ["addition-eligibility", account?.telegramUsername ?? null, draft.additionOfOrderId],
     enabled: isLoggedIn && isTopUp && isNewOrder && draft.orderType !== "wholesale",

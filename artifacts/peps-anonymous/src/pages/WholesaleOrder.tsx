@@ -504,6 +504,8 @@ export default function WholesaleOrder() {
       code: editCode,
       groupBuyId: null,
       orderType: "wholesale",
+      additionOfOrderId: null,
+      additionRequestId: null,
       wholesaleVendorId: selectedVendorId,
       telegramUsername: `@${account.telegramUsername.trim().replace(/^@/, "")}`,
       deliveryMethodId: null,

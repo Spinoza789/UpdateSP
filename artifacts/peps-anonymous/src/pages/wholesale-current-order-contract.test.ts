@@ -5,6 +5,13 @@ import { describe, expect, it } from "vitest";
 const source = readFileSync(fileURLToPath(new URL("./WholesaleOrder.tsx", import.meta.url)), "utf8");
 
 describe("regular wholesale current order", () => {
+  it("starts review without an inherited group-buy addition or submission identity", () => {
+    const reviewDraft = source.slice(source.indexOf("useDraftStore.setState({"), source.indexOf('setLocation("/review")'));
+    expect(reviewDraft).toMatch(/orderType: "wholesale"/);
+    expect(reviewDraft).toMatch(/additionOfOrderId: null/);
+    expect(reviewDraft).toMatch(/additionRequestId: null/);
+    expect(reviewDraft).toMatch(/orderId: editOrderId/);
+  });
   it("shows selected products above the catalogue with quantity controls tied to the same order state", () => {
     expect(source).toMatch(/const selectedProducts = activeProducts\.filter\(p => \(quantities\[p\.id\] \?\? 0\) > 0\)/);
     expect(source).toMatch(/selectedProducts\.length > 0 && \([\s\S]*?Current order[\s\S]*?selectedProducts\.map/);
