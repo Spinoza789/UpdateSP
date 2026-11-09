@@ -36,6 +36,19 @@ Negotiated prices must remain separate from live catalogue prices, including whe
 
 **How to apply:** CSV price updates match existing own-stock products, never create duplicates, and feed the same member-confirmation process as manual proposals.
 
+In organiser price-update CSVs, New price `0.01` means disable that product in
+the selected group buy, not a one-cent price.
+
+**Why:** The user explicitly clarified “Prices that are 0.01 are meant to be
+disabled on the group buy” after an import failed to produce the expected result.
+
+**How to apply:** Preview disabling separately from actual price proposals.
+Apply availability only to this group's product link; do not delete or reprice
+existing order lines, alter paid orders, or change shared catalogue prices.
+Other proposed prices still require each unpaid-order member's acceptance.
+Importing must clearly lead to review and explicit submission, not imply an
+unsent browser draft has already notified members.
+
 Price proposals treat products uploaded specifically for the authorised group buy as its own stock even when their recorded uploader is missing or differs from its current organiser.
 
 **Why:** Legacy imports and organiser changes can leave mixed product ownership within one uploaded catalogue, causing a price CSV to silently omit most of the group's products.

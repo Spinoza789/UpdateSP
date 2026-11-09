@@ -42,8 +42,8 @@ router.post(base, requireOrganiser, async (req, res) => {
       }
     }).catch(error => console.error("[order-revisions notification]", error));
     void writeLog("change", "info", "gb_order_revision_requested", "Organiser requested member acceptance of own-stock changes",
-      { groupBuyId: req.params.id, actor: actor(req).username, created: result.created }).catch(() => {});
-    res.json({ created: result.created });
+      { groupBuyId: req.params.id, actor: actor(req).username, created: result.created, disabledProducts: result.disabledProducts, disabledProductIds: req.body?.disabledProductIds ?? [] }).catch(() => {});
+    res.json({ created: result.created, disabledProducts: result.disabledProducts });
   } catch (e) { fail(res, e); }
 });
 router.delete(`${base}/:revisionId`, requireOrganiser, async (req, res) => {

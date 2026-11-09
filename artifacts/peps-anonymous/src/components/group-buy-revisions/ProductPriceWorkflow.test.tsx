@@ -86,7 +86,7 @@ it.each([true, false])("previews CSV without writes and clears drafts on group s
   await act(async () => fileInput.dispatchEvent(new window.Event("change", { bubbles: true })));
   expect(host.textContent).toContain("35.00");
   expect((host.querySelector('[data-testid="product-new-price-own"]') as HTMLInputElement).value).toBe("");
-  const stageButton = [...host.querySelectorAll("button")].find(b => b.textContent === "Stage 1 proposed prices")!;
+  const stageButton = [...host.querySelectorAll("button")].find(b => b.textContent === "Review 1 proposed changes")!;
   await act(async () => stageButton.click());
   expect((host.querySelector('[data-testid="product-new-price-own"]') as HTMLInputElement).value).toBe("35");
   expect(sent).toBeUndefined();
@@ -110,7 +110,23 @@ it("does not stage a partially invalid CSV or create duplicate products", async 
   }] });
   await act(async () => el.dispatchEvent(new window.Event("change", { bubbles: true })));
   expect(host.textContent).toContain("Row 3");
-  const stageButton = [...host.querySelectorAll("button")].find(b => b.textContent === "Stage 1 proposed prices")!;
+  const stageButton = [...host.querySelectorAll("button")].find(b => b.textContent === "Review 1 proposed changes")!;
   expect(stageButton.disabled).toBe(true);
   expect(sent).toBeUndefined();
+});
+it.each([true, false])("opens CSV review directly and disables 0.01 products without repricing their existing order lines V2=%s", async v2 => {
+  await render(v2);
+  const file = host.querySelector('[data-testid="price-update-csv"]') as HTMLInputElement;
+  Object.defineProperty(file, "files", { configurable: true, value: [{ size: 100, text: async () => "Product ID,New price\nown,0.01" }] });
+  await act(async () => file.dispatchEvent(new window.Event("change", { bubbles: true })));
+  expect(host.textContent).toContain("Disable in this group buy");
+  const review = [...host.querySelectorAll("button")].find(b => b.textContent === "Review 1 proposed changes")!;
+  await act(async () => review.click());
+  expect(host.querySelector('[data-testid="input-revision-message"]')).not.toBeNull();
+  expect(host.textContent).toContain("Existing order items and paid orders stay unchanged");
+  await input('[data-testid="input-revision-message"]', "Supplier no longer offers this product");
+  await act(async () => host.querySelector('[data-testid="button-send-revision"]')!.closest("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true })));
+  expect(sent.disabledProductIds).toEqual(["own"]);
+  expect(sent.changes).toEqual([]);
+  expect(sent.kind).toBe("price");
 });

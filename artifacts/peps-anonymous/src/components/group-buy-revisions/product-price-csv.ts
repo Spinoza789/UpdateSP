@@ -4,6 +4,8 @@ export type PriceImportRow = { productId: string; name: string; strength: string
 export function validProposedPrice(value: string): boolean {
   return /^\d+(?:\.\d{1,2})?$/.test(value.trim()) && Number(value) <= 1_000_000;
 }
+/** CSV convention: one cent means unavailable in this group, never a sale price. */
+export const disablesGroupProduct = (value: string) => validProposedPrice(value) && Number(value) === 0.01;
 const normal = (value: string) => value.trim().toLowerCase();
 const strength = (value: string) => normal(value).replace(/\s/g, "");
 const cell = (value: string) => `"${value.replace(/"/g, '""')}"`;

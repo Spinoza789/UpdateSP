@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseProductPriceCsv, productPriceTemplate, validProposedPrice } from "./product-price-csv";
+import { parseProductPriceCsv, productPriceTemplate, validProposedPrice, disablesGroupProduct } from "./product-price-csv";
 
 const products = [
   { id: "p1", name: 'Own, "special"', mgSize: "10 mg", price: "50" },
@@ -7,6 +7,13 @@ const products = [
   { id: "p3", name: "Same", mgSize: "10mg", price: "30" },
 ];
 describe("product price proposal CSV", () => {
+  it("treats 0.01 as group-only disabling, not a member's proposed unit price", () => {
+    const parsed = parseProductPriceCsv("Product ID,New price\np1,0.01\np2,45.25", products);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.rows.filter(row => disablesGroupProduct(row.newPrice)).map(row => row.productId)).toEqual(["p1"]);
+    expect(disablesGroupProduct("0.010")).toBe(false);
+    expect(disablesGroupProduct("0")).toBe(false);
+  });
   it("exports every product in a large group, including the last row", () => {
     const allProducts = Array.from({ length: 1148 }, (_, i) => ({
       id: `product-${i}`, name: `Uploaded product ${i}`, mgSize: "10mg", price: "50",
@@ -15,6 +22,14 @@ describe("product price proposal CSV", () => {
     expect(csv.split("\r\n")).toHaveLength(1149);
     expect(csv.split("\r\n").at(-1)).toContain('"product-1147"');
     expect(parseProductPriceCsv(csv, allProducts)).toEqual({ rows: [], errors: [] });
+  });
+  it("handles a 1,148-product update with 1,093 disabled entries and 55 proposed prices", () => {
+    const allProducts = Array.from({ length: 1148 }, (_, i) => ({ id: `p${i}`, name: `Product ${i}`, price: "50" }));
+    const text = "Product ID,New price\n" + allProducts.map((p, index) => `${p.id},${index < 1093 ? "0.01" : "45.25"}`).join("\n");
+    const parsed = parseProductPriceCsv(text, allProducts);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.rows.filter(row => disablesGroupProduct(row.newPrice))).toHaveLength(1093);
+    expect(parsed.rows.filter(row => !disablesGroupProduct(row.newPrice))).toHaveLength(55);
   });
   it("roundtrips quoted templates without proposing blank prices", () => {
     const csv = productPriceTemplate(products);

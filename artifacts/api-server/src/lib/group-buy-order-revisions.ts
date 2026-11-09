@@ -114,9 +114,16 @@ export async function setRevisionEnabled(id: string, actor: RevisionActor, value
 export async function createOrderRevisions(id: string, actor: RevisionActor, input: any, database: Database = db) {
   if (input?.kind !== undefined && input.kind !== "price")
     throw new RevisionError("Unknown change request type.");
+  const disabledProductIds = input?.disabledProductIds ?? [];
+  if (!Array.isArray(disabledProductIds) || disabledProductIds.length > 10_000
+    || disabledProductIds.some((value: unknown) => typeof value !== "string" || !value)
+    || new Set(disabledProductIds).size !== disabledProductIds.length)
+    throw new RevisionError("Choose each product to disable once, up to 10,000 products.");
+  if (disabledProductIds.length && input.kind !== "price")
+    throw new RevisionError("Product availability changes require a price update.");
   if (typeof input?.message !== "string" || !input.message.trim() || input.message.trim().length > 2000)
     throw new RevisionError("Add a message explaining the changes, up to 2000 characters.");
-  if (!Array.isArray(input.changes) || !input.changes.length || input.changes.length > 500)
+  if (!Array.isArray(input.changes) || (!input.changes.length && !disabledProductIds.length) || input.changes.length > 500)
     throw new RevisionError("Choose between 1 and 500 orders per request.");
   const ids = input.changes.map((c: any) => c?.orderId);
   if (ids.some((v: any) => typeof v !== "string") || new Set(ids).size !== ids.length)
@@ -126,6 +133,9 @@ export async function createOrderRevisions(id: string, actor: RevisionActor, inp
     if (!await enabled(tx, id)) throw new RevisionError("Enable member-confirmed revisions for this group buy first.", 409);
     const owned = new Set<string>((await ownProducts(tx, group)).map((p: any) => p.id));
     if (!owned.size) throw new RevisionError("This option is only available for organiser-added stock.", 403);
+    if (disabledProductIds.some((productId: string) => !owned.has(productId)))
+      throw new RevisionError("Only products added for this group buy may be disabled.", 403);
+    const disabling = new Set<string>(disabledProductIds);
     const created: Array<{ id: string; orderId: string; username: string; code: string }> = [];
     // All selected proposals validate and persist atomically. A bad selection never partially sends.
     for (const change of [...input.changes].sort((a: any, b: any) => a.orderId.localeCompare(b.orderId))) {
@@ -145,6 +155,11 @@ export async function createOrderRevisions(id: string, actor: RevisionActor, inp
       if (input.kind === "price" && proposal.items.some(item =>
         item.quantity !== before.items.find(old => old.id === item.id)?.quantity))
         throw new RevisionError(`Order ${order.code}: a price proposal cannot change quantities.`);
+      if (input.kind === "price" && proposal.items.some(item => {
+        const old = before.items.find(line => line.id === item.id)!;
+        return (disabling.has(item.productId) && item.unitPrice !== old.unitPrice)
+          || (item.unitPrice === 0.01 && item.unitPrice !== old.unitPrice);
+      })) throw new RevisionError("0.01 disables a group-buy product; it must not become an existing order's proposed price.");
       await tx.update(revisions).set({ status: "withdrawn", decidedAt: new Date() })
         .where(and(eq(revisions.orderId, order.id), eq(revisions.status, "pending")));
       const revisionId = randomUUID();
@@ -153,7 +168,11 @@ export async function createOrderRevisions(id: string, actor: RevisionActor, inp
         before, proposal: input.kind === "price" ? { ...proposal, kind: "price" as const } : proposal });
       created.push({ id: revisionId, orderId: order.id, username: order.telegramUsername, code: order.code });
     }
-    return { created: created.length, notifications: created };
+    // Availability is group-local. Existing lines, payments and shared catalogue
+    // prices are never changed here; member acceptance still owns order repricing.
+    if (disabledProductIds.length) await tx.update(links).set({ active: false })
+      .where(and(eq(links.groupBuyId, id), inArray(links.productId, disabledProductIds)));
+    return { created: created.length, disabledProducts: disabledProductIds.length, notifications: created };
   });
 }
 export async function withdrawOrderRevision(id: string, revisionId: string, actor: RevisionActor, database: Database = db) {

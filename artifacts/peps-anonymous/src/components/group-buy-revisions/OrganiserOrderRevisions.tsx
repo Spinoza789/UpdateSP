@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { AlertCircle, ChevronDown, Clock3, LoaderCircle, RefreshCw, Send, SlidersHorizontal, X } from "lucide-react";
 import type { ProductPricing } from "./ProductPriceProposals";
-import { validProposedPrice, type PriceProduct } from "./product-price-csv";
+import { validProposedPrice, disablesGroupProduct, type PriceProduct } from "./product-price-csv";
 
 type RevisionItem = { id: string; productId: string; productName: string; quantity: number; unitPrice: number; lineTotal: number };
 type RevisionOrder = {
@@ -59,7 +59,7 @@ function OrderTotal({ order }: { order: RevisionOrder }) {
   return <span className="font-mono text-xs tabular-nums">{money(order.grandTotal, order.currency)}</span>;
 }
 
-export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: string; pricing?: ProductPricing }) {
+export function OrganiserOrderRevisions({ groupBuyId, pricing, onProductsUpdated }: { groupBuyId: string; pricing?: ProductPricing; onProductsUpdated?: () => unknown }) {
   const [view, setView] = useState<OrganiserView | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -77,6 +77,7 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
   const [historyOpen, setHistoryOpen] = useState(false);
   const [sentNotice, setSentNotice] = useState("");
   const seq = useRef(0);
+  const handledReview = useRef(0);
   const activeController = useRef<AbortController | null>(null);
   const actionController = useRef<AbortController | null>(null);
   const endpoint = useMemo(() => `/api/organiser/group-buys/${encodeURIComponent(groupBuyId)}/order-revisions`, [groupBuyId]);
@@ -86,6 +87,7 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
   }, [view, busy, setPricingAccess]);
   const priceDraftKey = JSON.stringify(pricing?.prices ?? {});
   const stagedPrices = Object.entries(pricing?.prices ?? {});
+  const disabledProductIds = stagedPrices.filter(([, price]) => disablesGroupProduct(price)).map(([id]) => id);
   const invalidPrices = stagedPrices.some(([id, price]) => !validProposedPrice(price) || !view?.products.some(p => p.id === id));
   const pricesNeedReview = reviewedPrices !== null && reviewedPrices !== priceDraftKey;
 
@@ -195,10 +197,10 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
 
   const reviewProductPrices = () => {
     if (!view?.enabled || !pricing || invalidPrices || busy) return;
-    const priceMap = new Map(stagedPrices.map(([id, price]) => [id, Number(price)]));
+    const priceMap = new Map(stagedPrices.filter(([, price]) => !disablesGroupProduct(price)).map(([id, price]) => [id, Number(price)]));
     const affected = eligibleOrders.filter(order => order.items.some(item =>
       item.quantity > 0 && priceMap.has(item.productId) && priceMap.get(item.productId) !== item.unitPrice));
-    if (!affected.length) { setActionError("No eligible unpaid orders have a change from these proposed prices."); return; }
+    if (!affected.length && !disabledProductIds.length) { setActionError("No eligible unpaid orders have a change from these proposed prices."); return; }
     const hasUnsentEdits = view.orders.some(order => order.items.some(item => {
       const draft = draftLine(order.id, item);
       return draft.quantity !== item.quantity || draft.unitPrice !== item.unitPrice;
@@ -217,6 +219,16 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
     setEditing(true);
     setActionError(null);
   };
+  const reviewRequest = pricing?.reviewRequest ?? 0;
+  useEffect(() => {
+    if (!reviewRequest || handledReview.current === reviewRequest || !stagedPrices.length || !view?.enabled || busy) return;
+    handledReview.current = reviewRequest;
+    reviewProductPrices();
+  }, [reviewRequest, view, busy, priceDraftKey]);
+  useEffect(() => {
+    if (!reviewOpen) return;
+    document.querySelector<HTMLElement>('[data-testid="price-confirmation-review"]')?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }, [reviewOpen]);
 
   const changes = useMemo<OrderChange[]>(() => {
     if (!view || !drafts) return [];
@@ -260,7 +272,7 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
 
   const submitProposal = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!view?.enabled || busy || !message.trim() || changes.length === 0 || pricesNeedReview) return;
+    if (!view?.enabled || busy || !message.trim() || (!changes.length && !disabledProductIds.length) || pricesNeedReview) return;
     const controller = new AbortController();
     actionController.current?.abort();
     actionController.current = controller;
@@ -271,13 +283,14 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: message.trim(), changes, ...(pricing ? { kind: "price" } : {}) }),
+        body: JSON.stringify({ message: message.trim(), changes, ...(pricing ? { kind: "price", disabledProductIds } : {}) }),
         signal: controller.signal,
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null) as { error?: string } | null;
         throw new Error(body?.error || "The proposal could not be sent.");
       }
+      const result = await response.json();
       if (controller.signal.aborted) return;
       setMessage("");
       setDrafts(null);
@@ -285,9 +298,10 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
       setEditing(false);
       setReviewedPrices(null);
       setReviewOpen(false);
-      if (pricing) setSentNotice(`Sent ${changes.length} price confirmation request${changes.length === 1 ? "" : "s"}.`);
+      if (pricing) setSentNotice(`Sent ${result.created ?? changes.length} price confirmation requests. Disabled ${result.disabledProducts ?? 0} products in this group buy. Existing order prices stay unchanged until members accept.`);
       if (reviewedPrices !== null) pricing?.clear();
       await refresh();
+      if (disabledProductIds.length) onProductsUpdated?.();
     } catch (error) {
       if (controller.signal.aborted) return;
       setActionError(errorText(error, "The proposal could not be sent."));
@@ -555,6 +569,11 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
         </div>}
 
         <form onSubmit={submitProposal} className="space-y-3 border-t pt-4" style={{ borderColor: "var(--t-border)" }}>
+          {!!disabledProductIds.length && <div className="rounded-lg p-3 text-xs space-y-2" style={insetStyle} data-testid="disabled-products-review">
+            <p className="font-bold">{disabledProductIds.length} products will be disabled in this group buy (CSV 0.01).</p>
+            <p>They will no longer be available for new selections. Existing order items and paid orders stay unchanged. Only the other proposed price changes are sent for member confirmation.</p>
+            <details><summary className="cursor-pointer font-semibold">View products to disable</summary><ul className="mt-2 max-h-40 overflow-y-auto">{disabledProductIds.map(id => <li key={id}>{view.products.find(product => product.id === id)?.name ?? id}</li>)}</ul></details>
+          </div>}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-extrabold">{pricing ? "Add a note for the member" : "3. Add a note for the member"}</p>
             <span className="text-[11px] font-semibold" style={mutedStyle}>{changes.length} order{changes.length === 1 ? "" : "s"} with changes · {new Set(changes.map(change => view.orders.find(order => order.id === change.orderId)?.telegramUsername.toLowerCase().replace(/^@/, ""))).size} recipients</span>
@@ -564,11 +583,11 @@ export function OrganiserOrderRevisions({ groupBuyId, pricing }: { groupBuyId: s
             className="w-full resize-y rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#2D6BCC]/30" style={fieldStyle} data-testid="input-revision-message" />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-[10px]" style={mutedStyle}>This sends a proposal only; it never edits the live order.</p>
-            <button type="submit" disabled={!view.enabled || changes.length === 0 || !message.trim() || !!busy || pricesNeedReview}
+            <button type="submit" disabled={!view.enabled || (!changes.length && !disabledProductIds.length) || !message.trim() || !!busy || pricesNeedReview}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-xs font-bold text-white transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-45"
               style={{ background: "#1B3A7A" }} data-testid="button-send-revision">
               {busy === "submit" ? <LoaderCircle size={15} className="animate-spin" /> : <Send size={14} />}
-              Request member confirmation
+              {disabledProductIds.length ? `Disable products & send ${changes.length} requests` : "Request member confirmation"}
             </button>
           </div>
         </form>

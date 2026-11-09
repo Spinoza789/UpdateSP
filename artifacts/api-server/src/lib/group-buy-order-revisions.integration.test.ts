@@ -6,6 +6,49 @@ describe.skipIf(process.env.ORDER_REVISION_DB_TESTS !== "1")("own-stock revision
   let store: typeof import("@workspace/db");
   let service: typeof import("./group-buy-order-revisions");
   beforeAll(async () => { store = await import("@workspace/db"); service = await import("./group-buy-order-revisions"); });
+  it("disables own products only in this group without changing existing orders or shared catalogue prices", async () => fixture(async f => {
+    await service.setRevisionEnabled(f.groupId, f.actor, true, f.tx);
+    const result = await service.createOrderRevisions(f.groupId, f.actor, { kind: "price", message: "Unavailable from supplier", disabledProductIds: [f.own], changes: [] }, f.tx);
+    expect(result).toMatchObject({ created: 0, disabledProducts: 1 });
+    const links = await f.tx.select().from(store.groupBuyProductsTable).where(eq(store.groupBuyProductsTable.productId, f.own));
+    expect(links.find((l: any) => l.groupBuyId === f.groupId).active).toBe(false);
+    expect(links.find((l: any) => l.groupBuyId === f.otherGroup).active).toBe(true);
+    expect((await f.tx.select().from(store.productsTable).where(eq(store.productsTable.id, f.own)))[0].price).toBe("50.00");
+    expect((await f.tx.select().from(store.orderLineItemsTable).where(eq(store.orderLineItemsTable.id, f.ownLine)))[0]).toMatchObject({ quantity: "2.00", unitPrice: "50.00" });
+  }));
+  it("rejects foreign-product disabling atomically without creating member requests", async () => fixture(async f => {
+    await service.setRevisionEnabled(f.groupId, f.actor, true, f.tx);
+    await expect(service.createOrderRevisions(f.groupId, f.actor, { kind: "price", message: "Unavailable", disabledProductIds: [f.own, "foreign"], changes: [] }, f.tx)).rejects.toThrow(/Only products/);
+    expect((await f.tx.select().from(store.groupBuyProductsTable).where(eq(store.groupBuyProductsTable.productId, f.own))).every((l: any) => l.active)).toBe(true);
+  }));
+  it("commits group availability and member price requests together, applying prices only on acceptance", async () => fixture(async f => {
+    const unavailable = randomUUID();
+    await f.tx.insert(store.productsTable).values({ id: unavailable, name: "Unavailable upload", vendor: "Synthetic", price: "80", organiserId: f.actor.username });
+    await f.tx.insert(store.groupBuyProductsTable).values({ id: randomUUID(), groupBuyId: f.groupId, productId: unavailable });
+    await service.setRevisionEnabled(f.groupId, f.actor, true, f.tx);
+    const result = await service.createOrderRevisions(f.groupId, f.actor, {
+      kind: "price", message: "Updated supplier prices and availability", disabledProductIds: [unavailable],
+      changes: [{ orderId: f.orderId, items: [{ id: f.ownLine, quantity: 2, unitPrice: 40 }, { id: f.otherLine, quantity: 1, unitPrice: 20 }] }],
+    }, f.tx);
+    expect(result).toMatchObject({ created: 1, disabledProducts: 1 });
+    expect((await f.tx.select().from(store.groupBuyProductsTable).where(eq(store.groupBuyProductsTable.productId, unavailable)))[0].active).toBe(false);
+    expect((await f.tx.select().from(store.orderLineItemsTable).where(eq(store.orderLineItemsTable.id, f.ownLine)))[0].unitPrice).toBe("50.00");
+    await service.decideOrderRevision(f.orderId, result.notifications[0].id, f.member, "accepted", f.tx);
+    expect((await f.tx.select().from(store.orderLineItemsTable).where(eq(store.orderLineItemsTable.id, f.ownLine)))[0].unitPrice).toBe("40.00");
+  }));
+  it("never reprices paid orders or disables products when a member proposal fails validation", async () => fixture(async f => {
+    await service.setRevisionEnabled(f.groupId, f.actor, true, f.tx);
+    await f.tx.update(store.ordersTable).set({ paymentStatus: "confirmed" }).where(eq(store.ordersTable.id, f.orderId));
+    await expect(service.createOrderRevisions(f.groupId, f.actor, { ...f.input, kind: "price", disabledProductIds: [f.own] }, f.tx)).rejects.toThrow(/unpaid/);
+    expect((await f.tx.select().from(store.groupBuyProductsTable).where(eq(store.groupBuyProductsTable.productId, f.own))).every((l: any) => l.active)).toBe(true);
+    expect((await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, f.orderId)))[0]).toMatchObject({ paymentStatus: "confirmed", grandTotal: "128.00" });
+  }));
+  it("rejects one-cent order proposals instead of charging the availability marker", async () => fixture(async f => {
+    await service.setRevisionEnabled(f.groupId, f.actor, true, f.tx);
+    await expect(service.createOrderRevisions(f.groupId, f.actor, { kind: "price", message: "Unavailable",
+      changes: [{ orderId: f.orderId, items: [{ id: f.ownLine, quantity: 2, unitPrice: 0.01 }, { id: f.otherLine, quantity: 1, unitPrice: 20 }] }],
+    }, f.tx)).rejects.toThrow(/0.01 disables/);
+  }));
   async function fixture(run: (f: any) => Promise<void>) {
     const rollback = new Error("test rollback");
     try {

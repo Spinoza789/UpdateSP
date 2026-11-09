@@ -5744,7 +5744,7 @@ function ProductsTabContent({ gb }: { gb: OrganiserGB }) {
   return (
     <div className="space-y-4">
       <GroupBuyProductLabReports key={gb.id} gbId={gb.id} />
-      <OrganiserOrderRevisions key={`revisions-${gb.id}`} groupBuyId={gb.id} pricing={pricing} />
+      <OrganiserOrderRevisions key={`revisions-${gb.id}`} groupBuyId={gb.id} pricing={pricing} onProductsUpdated={load} />
       <ProductPriceImport pricing={pricing} />
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold" style={{ color: "var(--t-text)" }}>Products — {gb.name}</h2>

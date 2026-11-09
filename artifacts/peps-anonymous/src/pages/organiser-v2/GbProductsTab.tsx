@@ -500,7 +500,7 @@ function GbProductsTabContent({
   return (
     <div className="approved-inventory-allocation products-split">
       <GroupBuyProductLabReports key={selectedGbId} gbId={selectedGbId} />
-      <OrganiserOrderRevisions key={`revisions-${selectedGbId}`} groupBuyId={selectedGbId} pricing={pricing} />
+      <OrganiserOrderRevisions key={`revisions-${selectedGbId}`} groupBuyId={selectedGbId} pricing={pricing} onProductsUpdated={loadProducts} />
       <ProductPriceImport pricing={pricing} />
       <header className="products-split__header">
         <div>
