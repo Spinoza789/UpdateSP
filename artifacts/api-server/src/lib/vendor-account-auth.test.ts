@@ -15,7 +15,7 @@ describe("dedicated vendor identities", () => {
     createSession: async (account, session) => { const current = accounts.get(account.username); if (!current || current.passwordHash !== account.passwordHash || current.status === "disabled") return false; sessions.set(session.tokenHash, session); return true; },
     getSession: async (hash, now) => { const session = sessions.get(hash); const account = session && accounts.get(session.username); return session && account && session.expiresAt > now ? { session, account } : null; },
     deleteSession: async hash => { sessions.delete(hash); },
-    updateAccount: async (username, changes) => { const account = accounts.get(username); if (!account) return null; Object.assign(account, changes); for (const [hash, s] of sessions) if (s.username === username) sessions.delete(hash); return account; },
+    updateAccount: async (username, changes, expectedHash) => { const account = accounts.get(username); if (!account || (expectedHash && account.passwordHash !== expectedHash)) return null; Object.assign(account, changes); for (const [hash, s] of sessions) if (s.username === username) sessions.delete(hash); return account; },
   };
   let server: Server, base: string;
   beforeAll(async () => {
@@ -69,5 +69,26 @@ describe("dedicated vendor identities", () => {
     const r = await fetch(base + "/vendor/auth/signup", { method: "POST", headers: { origin: "https://attacker.test", "content-type": "application/json" }, body: JSON.stringify({ username: "attacker", password: "vendor-password-123", companyName: "Bad" }) });
     expect(r.status).toBe(403);
     expect((await request("/vendor/auth/signup", "POST", { username: "abc", password: "short", companyName: "Vendor" })).status).toBe(400);
+  });
+  it("changes only the authenticated vendor password and revokes every old session", async () => {
+    const signup = await request("/vendor/auth/signup", "POST", { username: "passwordvendor", password: "old-password-123", companyName: "Vendor" });
+    const body = await signup.json() as any;
+    const session = signup.headers.get("set-cookie")!.split(";")[0];
+    const login = await request("/vendor/auth/login", "POST", { username: "passwordvendor", password: "old-password-123" });
+    const second = login.headers.get("set-cookie")!.split(";")[0];
+    const endpoint = "/vendor/auth/change-password";
+    const payload = { currentPassword: "old-password-123", newPassword: "new-password-456", confirmPassword: "new-password-456", username: "separatevendor" };
+    expect((await request(endpoint, "POST", payload)).status).toBe(401);
+    expect((await request(endpoint, "POST", payload, session)).status).toBe(403);
+    expect((await request(endpoint, "POST", { ...payload, currentPassword: "wrong" }, session, body.csrfToken)).status).toBe(403);
+    expect((await request(endpoint, "POST", { ...payload, newPassword: "short" }, session, body.csrfToken)).status).toBe(400);
+    expect((await request(endpoint, "POST", { ...payload, confirmPassword: "different" }, session, body.csrfToken)).status).toBe(400);
+    const changed = await request(endpoint, "POST", payload, session, body.csrfToken);
+    expect(changed.status).toBe(200);
+    expect(changed.headers.get("set-cookie")).toContain("Expires=Thu, 01 Jan 1970");
+    expect((await request("/vendor/auth/session", "GET", undefined, session)).status).toBe(401);
+    expect((await request("/vendor/auth/session", "GET", undefined, second)).status).toBe(401);
+    expect((await request("/vendor/auth/login", "POST", { username: "passwordvendor", password: "old-password-123" })).status).toBe(401);
+    expect((await request("/vendor/auth/login", "POST", { username: "passwordvendor", password: "new-password-456" })).status).toBe(200);
   });
 });

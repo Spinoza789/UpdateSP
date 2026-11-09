@@ -9,7 +9,7 @@ export interface VendorAccountStore {
   createSession(account: VendorAccount, session: VendorSession): Promise<boolean>;
   getSession(hash: string, now: Date): Promise<{ account: VendorAccount; session: VendorSession } | null>;
   deleteSession(hash: string): Promise<void>;
-  updateAccount(username: string, changes: Partial<Pick<VendorAccount, "status" | "vendorId" | "passwordHash" | "displayName">>): Promise<VendorAccount | null>;
+  updateAccount(username: string, changes: Partial<Pick<VendorAccount, "status" | "vendorId" | "passwordHash" | "displayName">>, expectedPasswordHash?: string): Promise<VendorAccount | null>;
 }
 export const vendorAccountStore: VendorAccountStore = {
   async getAccount(username) { const [row] = await db.select().from(vendorAccountsTable).where(eq(vendorAccountsTable.username, username)); return row ?? null; },
@@ -30,10 +30,10 @@ export const vendorAccountStore: VendorAccountStore = {
     return row ?? null;
   },
   async deleteSession(hash) { await db.delete(vendorSessionsTable).where(eq(vendorSessionsTable.tokenHash, hash)); },
-  async updateAccount(username, changes) {
+  async updateAccount(username, changes, expectedPasswordHash) {
     return db.transaction(async tx => {
       const [current] = await tx.select().from(vendorAccountsTable).where(eq(vendorAccountsTable.username, username)).for("update");
-      if (!current) return null;
+      if (!current || (expectedPasswordHash !== undefined && current.passwordHash !== expectedPasswordHash)) return null;
       const [row] = await tx.update(vendorAccountsTable).set({ ...changes, updatedAt: new Date() }).where(eq(vendorAccountsTable.username, username)).returning();
       const accessChanged = (changes.status !== undefined && changes.status !== current.status)
         || (changes.vendorId !== undefined && changes.vendorId !== current.vendorId)

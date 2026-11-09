@@ -1,6 +1,7 @@
 import vendorWalletsRouter, { vendorWalletSetupGate } from "./vendor-wallets";
 import vendorPaymentsRouter from "./vendor-payments";
 import vendorAuthRouter from "./vendor-auth";
+import vendorEmailSettingsRouter from "./vendor-email-settings";
 import vendorAccountsAdminRouter from "./vendor-accounts-admin";
 import { Router, type IRouter } from "express";
 import {
@@ -148,6 +149,7 @@ router.use(supplierBatchesRouter);
 router.use(supplierFulfilmentRouter);
 router.use(adminInvoicesRouter);
 router.use(vendorAuthRouter);
+router.use(vendorEmailSettingsRouter);
 router.use("/vendor", vendorWalletSetupGate);
 router.use(vendorWalletsRouter);
 router.use(vendorPaymentsRouter);

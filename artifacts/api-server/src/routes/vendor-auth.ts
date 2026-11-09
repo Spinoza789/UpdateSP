@@ -60,6 +60,22 @@ export function createVendorAuthRouter(store: VendorAccountStore = vendorAccount
     await issue(res, account, remembered);
   }));
   router.get("/vendor/auth/session", auth.identity, (req, res) => { res.set("Cache-Control", "no-store").json({ account: publicVendorAccount(req.vendor!.account), csrfToken: req.vendor!.csrfToken }); });
+  const passwordLimit = rateLimit({ windowMs: 15 * 60_000, max: 5, keyGenerator: req => req.vendor!.username, standardHeaders: true, legacyHeaders: false, message: { error: "Too many password change attempts. Try again in 15 minutes." } });
+  router.post("/vendor/auth/change-password", auth.identity, ...(options.rateLimit === false ? [] : [passwordLimit]), wrapped(async (req, res) => {
+    const { currentPassword, newPassword, confirmPassword } = req.body ?? {};
+    if (!validVendorPassword(newPassword) || confirmPassword !== newPassword) {
+      res.status(400).json({ error: "Use a new password of at least 12 characters (at most 72 UTF-8 bytes), and enter it identically in both fields." }); return;
+    }
+    const account = req.vendor!.account;
+    if (typeof currentPassword !== "string" || Buffer.byteLength(currentPassword, "utf8") > 72 || !await bcrypt.compare(currentPassword, account.passwordHash)) {
+      res.status(403).json({ error: "Current password is incorrect." }); return;
+    }
+    if (currentPassword === newPassword) { res.status(400).json({ error: "Choose a different new password." }); return; }
+    const changed = await store.updateAccount(account.username, { passwordHash: await bcrypt.hash(newPassword, 12) }, account.passwordHash);
+    if (!changed) { res.status(409).json({ error: "Your account changed. Sign in again before retrying." }); return; }
+    res.clearCookie(VENDOR_SESSION_COOKIE, vendorCookieOptions());
+    res.json({ ok: true });
+  }));
   router.post("/vendor/auth/logout", auth.identity, wrapped(async (req, res) => {
     await store.deleteSession(req.vendor!.tokenHash); res.clearCookie(VENDOR_SESSION_COOKIE, vendorCookieOptions()); res.json({ ok: true });
   }));
