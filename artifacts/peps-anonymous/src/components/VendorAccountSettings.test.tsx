@@ -22,7 +22,7 @@ async function mount(handler?: (url: string, options?: RequestInit) => Promise<R
   vi.stubGlobal("fetch", mock);
   el = document.createElement("div"); document.body.append(el); root = createRoot(el);
   const changed = vi.fn();
-  await act(async () => root.render(createElement(VendorAccountSettings, { onPasswordChanged: changed })));
+  await act(async () => root.render(createElement(VendorAccountSettings, { onPasswordChanged: changed, onUsernameChanged: changed })));
   return { mock, changed };
 }
 const input = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLInputElement;
@@ -51,6 +51,25 @@ it("changes the password using current credentials, confirms it and exits the ol
   expect(new Headers(mock.mock.calls[1][1]!.headers).get("x-vendor-csrf")).toBe("test-vendor-token");
   expect(changed).toHaveBeenCalledTimes(1);
   expect(input("input-vendor-new-password").value).toBe("");
+});
+it("changes the username with the current password and exits the old session", async () => {
+  const { mock, changed } = await mount();
+  await change("input-vendor-new-username", "new.vendor");
+  await change("input-vendor-username-password", "current-password-123");
+  await submit("form-vendor-username");
+  expect(mock.mock.calls[1][0]).toBe("/api/vendor/auth/change-username");
+  expect(JSON.parse(mock.mock.calls[1][1]!.body as string)).toEqual({ newUsername: "new.vendor", currentPassword: "current-password-123" });
+  expect(new Headers(mock.mock.calls[1][1]!.headers).get("x-vendor-csrf")).toBe("test-vendor-token");
+  expect(changed).toHaveBeenCalledTimes(1);
+  expect(input("input-vendor-username-password").value).toBe("");
+});
+it("shows username conflicts without signing out", async () => {
+  const { changed } = await mount(async url => new Response(JSON.stringify(url.endsWith("/change-username") ? { error: "That vendor username is unavailable." } : state), { status: url.endsWith("/change-username") ? 409 : 200 }));
+  await change("input-vendor-new-username", "taken");
+  await change("input-vendor-username-password", "current-password-123");
+  await submit("form-vendor-username");
+  expect(el.textContent).toContain("That vendor username is unavailable.");
+  expect(changed).not.toHaveBeenCalled();
 });
 it("verifies an email before enabling alerts, persists the destination and allows opt out", async () => {
   let saved: any = state;

@@ -85,3 +85,14 @@ Telegram alert set. Vendors can manage their own notification destination and in
 **Why:** The user explicitly selected “New orders and messages only” rather than matching Telegram alerts, then requested options for vendors to choose their notifications.
 
 **How to apply:** Keep email opt-in and verification independent from Telegram. Do not expand email events to holds, overdue alerts, announcements or security events without approval.
+
+Vendors may change their own sign-in username in Settings only after confirming
+their current password. Sign out every vendor session afterwards, keeping the
+same supplier ownership, orders, payments and established notification settings.
+
+**Why:** The user requested vendor username changes and explicitly selected
+“Require password.”
+
+**How to apply:** Keep this separate from member username changes. Invalidate
+username-bound pending verification and login/link codes rather than carrying
+them to a renamed identity; preserve established MFA methods and linked chats.

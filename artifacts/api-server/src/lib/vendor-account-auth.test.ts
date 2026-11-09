@@ -16,6 +16,13 @@ describe("dedicated vendor identities", () => {
     getSession: async (hash, now) => { const session = sessions.get(hash); const account = session && accounts.get(session.username); return session && account && session.expiresAt > now ? { session, account } : null; },
     deleteSession: async hash => { sessions.delete(hash); },
     updateAccount: async (username, changes, expectedHash) => { const account = accounts.get(username); if (!account || (expectedHash && account.passwordHash !== expectedHash)) return null; Object.assign(account, changes); for (const [hash, s] of sessions) if (s.username === username) sessions.delete(hash); return account; },
+    renameAccount: async (username, newUsername, expectedHash) => {
+      const account = accounts.get(username);
+      if (!account || account.passwordHash !== expectedHash || accounts.has(newUsername)) return null;
+      accounts.delete(username); account.username = newUsername; accounts.set(newUsername, account);
+      for (const [hash, session] of sessions) if (session.username === username) sessions.delete(hash);
+      return account;
+    },
   };
   let server: Server, base: string;
   beforeAll(async () => {
@@ -90,5 +97,33 @@ describe("dedicated vendor identities", () => {
     expect((await request("/vendor/auth/session", "GET", undefined, second)).status).toBe(401);
     expect((await request("/vendor/auth/login", "POST", { username: "passwordvendor", password: "old-password-123" })).status).toBe(401);
     expect((await request("/vendor/auth/login", "POST", { username: "passwordvendor", password: "new-password-456" })).status).toBe(200);
+  });
+  it("renames only the authenticated vendor after password confirmation and revokes all sessions", async () => {
+    const signup = await request("/vendor/auth/signup", "POST", { username: "renamevendor", password: "vendor-password-123", companyName: "Keep Company" });
+    const body = await signup.json() as any, session = signup.headers.get("set-cookie")!.split(";")[0];
+    accounts.get("renamevendor").vendorId = "keep-vendor";
+    accounts.get("renamevendor").status = "active";
+    const login = await request("/vendor/auth/login", "POST", { username: "renamevendor", password: "vendor-password-123" });
+    const second = login.headers.get("set-cookie")!.split(";")[0];
+    const endpoint = "/vendor/auth/change-username";
+    const payload = { newUsername: " New.Vendor ", currentPassword: "vendor-password-123", username: "separatevendor", vendorId: "victim" };
+    expect((await request(endpoint, "POST", payload)).status).toBe(401);
+    expect((await request(endpoint, "POST", payload, session)).status).toBe(403);
+    expect((await request(endpoint, "POST", { ...payload, currentPassword: "wrong" }, session, body.csrfToken)).status).toBe(403);
+    for (const newUsername of ["ab", "bad space", "a".repeat(51), "renamevendor"]) {
+      expect((await request(endpoint, "POST", { ...payload, newUsername }, session, body.csrfToken)).status).toBe(400);
+    }
+    expect((await request(endpoint, "POST", { ...payload, newUsername: "separatevendor" }, session, body.csrfToken)).status).toBe(409);
+    expect(accounts.has("renamevendor")).toBe(true);
+    const changed = await request(endpoint, "POST", payload, session, body.csrfToken);
+    expect(changed.status).toBe(200);
+    expect(await changed.json()).toEqual({ ok: true, username: "new.vendor" });
+    expect(changed.headers.get("set-cookie")).toContain("Expires=Thu, 01 Jan 1970");
+    expect(accounts.get("new.vendor")).toMatchObject({ vendorId: "keep-vendor", companyName: "Keep Company", status: "active" });
+    expect(accounts.has("separatevendor")).toBe(true);
+    expect((await request("/vendor/auth/session", "GET", undefined, session)).status).toBe(401);
+    expect((await request("/vendor/auth/session", "GET", undefined, second)).status).toBe(401);
+    expect((await request("/vendor/auth/login", "POST", { username: "renamevendor", password: "vendor-password-123" })).status).toBe(401);
+    expect((await request("/vendor/auth/login", "POST", { username: "new.vendor", password: "vendor-password-123" })).status).toBe(200);
   });
 });

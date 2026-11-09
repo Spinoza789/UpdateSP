@@ -207,7 +207,7 @@ export function VendorSettingsView({ vendorName, settings, onSave, loadError, he
       {loadError && <div className="mb-4"><Banner tone="critical" role="alert">{vt(loadError)}</Banner></div>}
       {msg && <div className="mb-4"><Banner tone={msg.ok ? "success" : "critical"} role={msg.ok ? "status" : "alert"} testId="text-settings-result" onDismiss={() => setMsg(null)}>{vt(msg.text)}</Banner></div>}
       {paymentContent}
-      <VendorAccountSettings onPasswordChanged={() => window.location.assign("/vendor/login?passwordChanged=1")} />
+      <VendorAccountSettings onPasswordChanged={() => window.location.assign("/vendor/login?passwordChanged=1")} onUsernameChanged={() => window.location.assign("/vendor/login?usernameChanged=1")} />
       <form onSubmit={save} className="space-y-4" data-testid="form-vendor-settings">
         <Card title={<><CalendarOff className="w-4 h-4" style={subtle} />{vt("Holiday mode")}</>}
           actions={settings?.closedNow ? <Badge tone="warning">{vt("Closed now")}</Badge> : closed && until ? <Badge tone="info">{vt("Scheduled")}</Badge> : <Badge tone="success" progress="complete">{vt("Accepting orders")}</Badge>}>

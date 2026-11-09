@@ -61,6 +61,20 @@ export function createVendorAuthRouter(store: VendorAccountStore = vendorAccount
   }));
   router.get("/vendor/auth/session", auth.identity, (req, res) => { res.set("Cache-Control", "no-store").json({ account: publicVendorAccount(req.vendor!.account), csrfToken: req.vendor!.csrfToken }); });
   const passwordLimit = rateLimit({ windowMs: 15 * 60_000, max: 5, keyGenerator: req => req.vendor!.username, standardHeaders: true, legacyHeaders: false, message: { error: "Too many password change attempts. Try again in 15 minutes." } });
+  const usernameLimit = rateLimit({ windowMs: 15 * 60_000, max: 5, keyGenerator: req => req.vendor!.username, standardHeaders: true, legacyHeaders: false, message: { error: "Too many username change attempts. Try again in 15 minutes." } });
+  router.post("/vendor/auth/change-username", auth.identity, ...(options.rateLimit === false ? [] : [usernameLimit]), wrapped(async (req, res) => {
+    const newUsername = vendorUsername(req.body?.newUsername), account = req.vendor!.account;
+    if (!validVendorUsername(newUsername)) { res.status(400).json({ error: "Use 3–50 characters: letters, numbers, dots, underscores or hyphens. Start with a letter or number." }); return; }
+    if (newUsername === account.username) { res.status(400).json({ error: "Choose a different username." }); return; }
+    const password = req.body?.currentPassword;
+    if (typeof password !== "string" || Buffer.byteLength(password, "utf8") > 72 || !await bcrypt.compare(password, account.passwordHash)) {
+      res.status(403).json({ error: "Current password is incorrect." }); return;
+    }
+    const changed = await store.renameAccount(account.username, newUsername, account.passwordHash);
+    if (!changed) { res.status(409).json({ error: "That vendor username is unavailable or your account changed. Choose another username or sign in again." }); return; }
+    res.clearCookie(VENDOR_SESSION_COOKIE, vendorCookieOptions());
+    res.json({ ok: true, username: changed.username });
+  }));
   router.post("/vendor/auth/change-password", auth.identity, ...(options.rateLimit === false ? [] : [passwordLimit]), wrapped(async (req, res) => {
     const { currentPassword, newPassword, confirmPassword } = req.body ?? {};
     if (!validVendorPassword(newPassword) || confirmPassword !== newPassword) {

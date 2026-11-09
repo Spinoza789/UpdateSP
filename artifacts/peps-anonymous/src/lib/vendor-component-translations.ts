@@ -1,4 +1,13 @@
 export const vendorComponentTranslations: Record<string, string> = {
+  "Change username": "更改用户名",
+  "New username": "新用户名",
+  "Change username and sign out": "更改用户名并退出登录",
+  "Changing your username signs out all vendor sessions. Your password, orders, payments and notification preferences stay unchanged. Pending verification and connection codes will need to be requested again.": "更改用户名将退出所有供应商会话。您的密码、订单、付款和通知偏好保持不变。尚未完成的验证和连接需要重新获取验证码。",
+  "Use 3–50 characters: letters, numbers, dots, underscores or hyphens. Start with a letter or number.": "使用3至50个字符：字母、数字、点、下划线或连字符。以字母或数字开头。",
+  "Choose a different username.": "请选择不同的用户名。",
+  "That vendor username is unavailable or your account changed. Choose another username or sign in again.": "该供应商用户名不可用，或您的账户已更改。请选择其他用户名或重新登录。",
+  "Too many username change attempts. Try again in 15 minutes.": "更改用户名的尝试次数过多。请在15分钟后重试。",
+  "Username changed. Sign in with your new username and existing password.": "用户名已更改。请使用新用户名和现有密码登录。",
   "Choose your email notifications": "选择电子邮件通知类型",
   "New orders": "新订单",
   "When a new shipment is assigned to you.": "当新货件分配给您时。",

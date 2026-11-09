@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { KeyRound, Loader2, Mail } from "lucide-react";
+import { KeyRound, Loader2, Mail, UserRound } from "lucide-react";
 import { clearVendorCsrfToken, vendorFetch } from "@/lib/vendor-auth-client";
 import { vendorTranslate as vt, useVendorLanguage } from "@/lib/vendor-language";
 import { Banner, Btn, Card, Field, field, fieldCls, muted } from "./vendor-ui";
@@ -17,11 +17,14 @@ async function request(path: string, body?: unknown, signal?: AbortSignal) {
   if (!res.ok) throw new Error(data?.error || vt("Could not save settings"));
   return data;
 }
-export function VendorAccountSettings({ onPasswordChanged }: { onPasswordChanged: () => void }) {
+export function VendorAccountSettings({ onPasswordChanged, onUsernameChanged }: { onPasswordChanged: () => void; onUsernameChanged: () => void }) {
   useVendorLanguage();
   const [currentPassword, setCurrent] = useState("");
   const [newPassword, setNew] = useState("");
   const [confirmPassword, setConfirm] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [usernamePassword, setUsernamePassword] = useState("");
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [settings, setSettings] = useState<EmailSettings | null>(null);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -47,6 +50,23 @@ export function VendorAccountSettings({ onPasswordChanged }: { onPasswordChanged
     return () => { active.current = false; abort.abort(); controller.current?.abort(); };
   }, []);
 
+  const changeUsername = async (event: FormEvent) => {
+    event.preventDefault();
+    if (busy) return;
+    setUsernameError(null);
+    const normalized = newUsername.trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9_.-]{2,49}$/.test(normalized)) {
+      setUsernameError(vt("Use 3–50 characters: letters, numbers, dots, underscores or hyphens. Start with a letter or number.")); return;
+    }
+    setBusy("username"); controller.current = new AbortController();
+    try {
+      await request("auth/change-username", { newUsername: normalized, currentPassword: usernamePassword }, controller.current.signal);
+      clearVendorCsrfToken();
+      if (active.current) { setUsernamePassword(""); onUsernameChanged(); }
+    } catch (error) {
+      if (active.current) setUsernameError(error instanceof Error ? error.message : vt("Could not save settings"));
+    } finally { if (active.current) setBusy(null); }
+  };
   const changePassword = async (event: FormEvent) => {
     event.preventDefault();
     if (busy) return;
@@ -76,6 +96,16 @@ export function VendorAccountSettings({ onPasswordChanged }: { onPasswordChanged
     } finally { if (active.current) setBusy(null); }
   };
   return <div className="space-y-4 mb-6">
+    <Card title={<><UserRound className="w-4 h-4" />{vt("Change username")}</>} testId="card-vendor-username">
+      <p className="text-[13px] mb-4" style={muted}>{vt("Changing your username signs out all vendor sessions. Your password, orders, payments and notification preferences stay unchanged. Pending verification and connection codes will need to be requested again.")}</p>
+      {usernameError && <Banner tone="critical" role="alert" testId="text-vendor-username-error">{vt(usernameError)}</Banner>}
+      <form onSubmit={changeUsername} className="space-y-3 mt-3" data-testid="form-vendor-username">
+        <Field label={vt("New username")}><input autoComplete="username" required minLength={3} maxLength={50} value={newUsername} onChange={e => setNewUsername(e.target.value)} disabled={!!busy} autoCapitalize="none" spellCheck={false} className={fieldCls} style={field} data-testid="input-vendor-new-username" /></Field>
+        <p className="text-xs" style={muted}>{vt("Use 3–50 characters: letters, numbers, dots, underscores or hyphens. Start with a letter or number.")}</p>
+        <Field label={vt("Current password")}><input type="password" autoComplete="current-password" required value={usernamePassword} onChange={e => setUsernamePassword(e.target.value)} disabled={!!busy} className={fieldCls} style={field} data-testid="input-vendor-username-password" /></Field>
+        <Btn type="submit" variant="primary" disabled={!!busy} data-testid="button-vendor-change-username">{busy === "username" && <Loader2 className="w-4 h-4 animate-spin" />}{vt("Change username and sign out")}</Btn>
+      </form>
+    </Card>
     <Card title={<><KeyRound className="w-4 h-4" />{vt("Change password")}</>} testId="card-vendor-password">
       <p className="text-[13px] mb-4" style={muted}>{vt("Changing your password signs out all vendor sessions. Your username, orders and two-factor settings stay unchanged.")}</p>
       {passwordError && <Banner tone="critical" role="alert" testId="text-vendor-password-error">{vt(passwordError)}</Banner>}
