@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { createVendorEmailSettingsService, type EmailSettings, type EmailSettingsStore } from "./vendor-email-settings";
+import { createVendorEmailSettingsService, emptyEmailSettings, type EmailSettings, type EmailSettingsStore } from "./vendor-email-settings";
 
 function fixture() {
-  let row: EmailSettings = { username: "vendor", email: null, enabled: false, verifiedAt: null, pendingEmail: null, codeHash: null, expiresAt: null, attempts: 0 };
+  let row: EmailSettings = emptyEmailSettings("vendor");
   const store: EmailSettingsStore = {
     get: async () => ({ ...row }),
     mutate: async (_username, fn) => { const result = fn({ ...row }); row = { ...row, ...result.patch }; return result.value; },
@@ -12,6 +12,20 @@ function fixture() {
   return { store, send, service: createVendorEmailSettingsService(store, send, () => now), row: () => row, advance: () => { now = new Date(now.getTime() + 16 * 60_000); } };
 }
 describe("vendor notification email verification", () => {
+  it("saves independent notification choices before verification without enabling email", async () => {
+    const f = fixture();
+    expect(await f.service.preferences("vendor", { newOrders: true, messages: false })).toMatchObject({ newOrders: true, messages: false, enabled: false });
+    expect(await f.service.get("vendor")).toMatchObject({ newOrders: true, messages: false });
+    await f.service.start("vendor", "vendor@example.com");
+    expect(await f.service.verify("vendor", f.send.mock.calls[0][1])).toMatchObject({ newOrders: true, messages: false, enabled: true });
+    expect(await f.service.preferences("vendor", { newOrders: false })).toMatchObject({ newOrders: false, messages: false });
+    f.advance();
+    await f.service.preferences("vendor", { newOrders: true });
+    expect(f.row().newOrdersSince.toISOString()).toBe("2026-11-09T00:16:00.000Z");
+    expect(f.row().messages).toBe(false);
+    await expect(f.service.preferences("vendor", { messages: "false" })).rejects.toThrow("notification choices");
+    await expect(f.service.preferences("vendor", {})).rejects.toThrow("notification choices");
+  });
   it("validates addresses and never enables an unverified email", async () => {
     const f = fixture();
     await expect(f.service.start("vendor", "not-email")).rejects.toThrow("valid email");

@@ -18,6 +18,10 @@ export async function ensureVendorEmailSchema(database: { execute: (query: any) 
       PRIMARY KEY (notification_id, username)
     );
     CREATE INDEX IF NOT EXISTS vendor_email_deliveries_pending_idx ON vendor_email_deliveries(next_attempt_at);
+    ALTER TABLE vendor_email_settings ADD COLUMN IF NOT EXISTS new_orders boolean NOT NULL DEFAULT true;
+    ALTER TABLE vendor_email_settings ADD COLUMN IF NOT EXISTS messages boolean NOT NULL DEFAULT true;
+    ALTER TABLE vendor_email_settings ADD COLUMN IF NOT EXISTS new_orders_since timestamptz NOT NULL DEFAULT now();
+    ALTER TABLE vendor_email_settings ADD COLUMN IF NOT EXISTS messages_since timestamptz NOT NULL DEFAULT now();
   `);
 }
 const identity = (item: VendorEmailItem) => sql`notification_id = ${item.notificationId} AND username = ${item.username}`;
@@ -31,6 +35,8 @@ const queue: VendorEmailQueue = {
       JOIN vendor_accounts a ON a.vendor_id = n.vendor_id AND a.status = 'active'
       JOIN vendor_email_settings s ON s.username = a.username
       WHERE n.kind IN ('new_order', 'message') AND s.enabled = true
+        AND ((n.kind = 'new_order' AND s.new_orders = true AND n.created_at >= s.new_orders_since)
+          OR (n.kind = 'message' AND s.messages = true AND n.created_at >= s.messages_since))
         AND s.email IS NOT NULL AND s.verified_at IS NOT NULL
         AND n.created_at >= s.verified_at AND n.created_at > now() - interval '24 hours'
       ON CONFLICT DO NOTHING
@@ -51,6 +57,8 @@ const queue: VendorEmailQueue = {
       JOIN vendor_email_deliveries d ON d.username = s.username
       WHERE d.notification_id = ${item.notificationId} AND d.username = ${item.username}
         AND s.enabled = true AND s.verified_at IS NOT NULL AND s.email = d.recipient
+        AND ((d.kind = 'new_order' AND s.new_orders = true AND d.created_at >= s.new_orders_since)
+          OR (d.kind = 'message' AND s.messages = true AND d.created_at >= s.messages_since))
         AND a.status = 'active' AND a.vendor_id = d.vendor_id AND d.created_at >= s.verified_at
     `);
     return !!result.rows.length;

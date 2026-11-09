@@ -1,4 +1,9 @@
 export const vendorComponentTranslations: Record<string, string> = {
+  "Choose your email notifications": "选择电子邮件通知类型",
+  "New orders": "新订单",
+  "When a new shipment is assigned to you.": "当新货件分配给您时。",
+  "When Peps Anonymous sends you a message or reply.": "当 Peps Anonymous 向您发送消息或回复时。",
+  "No notification types selected. You will not receive notification emails.": "未选择任何通知类型。您将不会收到通知邮件。",
   "Change password": "修改密码",
   "New password": "新密码",
   "Confirm new password": "确认新密码",

@@ -4,6 +4,7 @@ import { VendorPortalError } from "./vendor-portal-model";
 export interface EmailSettings {
   username: string; email: string | null; enabled: boolean; verifiedAt: Date | null;
   pendingEmail: string | null; codeHash: string | null; expiresAt: Date | null; attempts: number;
+  newOrders: boolean; messages: boolean; newOrdersSince: Date; messagesSince: Date;
 }
 export interface EmailSettingsStore {
   get(username: string): Promise<EmailSettings>;
@@ -12,10 +13,12 @@ export interface EmailSettingsStore {
 }
 export const emptyEmailSettings = (username: string): EmailSettings => ({
   username, email: null, enabled: false, verifiedAt: null, pendingEmail: null, codeHash: null, expiresAt: null, attempts: 0,
+  newOrders: true, messages: true, newOrdersSince: new Date(), messagesSince: new Date(),
 });
 const publicSettings = (row: EmailSettings) => ({
   email: row.email, enabled: row.enabled, verified: !!row.email && !!row.verifiedAt,
   pendingEmail: row.pendingEmail, expiresAt: row.expiresAt,
+  newOrders: row.newOrders !== false, messages: row.messages !== false,
 });
 const hashCode = (username: string, code: string) => createHash("sha256").update(`vendor-email:${username}:${code.trim().toUpperCase()}`).digest("hex");
 const cleared = { pendingEmail: null, codeHash: null, expiresAt: null, attempts: 0 };
@@ -24,6 +27,24 @@ type SendCode = (email: string, code: string) => Promise<{ ok: boolean; error?: 
 export function createVendorEmailSettingsService(store: EmailSettingsStore, send: SendCode, clock = () => new Date()) {
   return {
     async get(username: string) { return publicSettings(await store.get(username)); },
+    async preferences(username: string, input: unknown) {
+      const values = input as { newOrders?: unknown; messages?: unknown } | null;
+      if (!values || typeof values !== "object" || Array.isArray(values)
+        || (values.newOrders === undefined && values.messages === undefined)
+        || (values.newOrders !== undefined && typeof values.newOrders !== "boolean")
+        || (values.messages !== undefined && typeof values.messages !== "boolean")) {
+        throw new VendorPortalError("Choose valid notification choices.");
+      }
+      return store.mutate(username, row => {
+        const patch: Partial<EmailSettings> = {};
+        for (const key of ["newOrders", "messages"] as const) {
+          if (typeof values[key] !== "boolean") continue;
+          patch[key] = values[key];
+          if (values[key] && row[key] === false) patch[key === "newOrders" ? "newOrdersSince" : "messagesSince"] = clock();
+        }
+        return { patch, value: publicSettings({ ...row, ...patch }) };
+      });
+    },
     async start(username: string, input: unknown) {
       if (typeof input !== "string" || input.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.trim())) throw new VendorPortalError("Enter a valid email address.");
       const email = input.trim().toLowerCase();

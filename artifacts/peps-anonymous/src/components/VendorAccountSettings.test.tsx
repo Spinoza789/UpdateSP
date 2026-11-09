@@ -76,3 +76,18 @@ it("shows load and send failures without claiming that settings saved", async ()
   expect(el.textContent).toContain("Email unavailable");
   expect(el.textContent).not.toContain("Verified");
 });
+it("saves new-order and message preferences independently, even before verification", async () => {
+  let saved: any = { ...state, newOrders: true, messages: true };
+  const { mock } = await mount(async (url, opts) => {
+    if (url.endsWith("/preferences")) saved = { ...saved, ...JSON.parse(opts!.body as string) };
+    return new Response(JSON.stringify(saved));
+  });
+  expect(input("checkbox-vendor-email-new-orders").checked).toBe(true);
+  await act(async () => fireEvent.click(input("checkbox-vendor-email-messages")));
+  expect(input("checkbox-vendor-email-messages").checked).toBe(false);
+  expect(input("checkbox-vendor-email-new-orders").checked).toBe(true);
+  expect(JSON.parse(mock.mock.calls[1][1]!.body as string)).toEqual({ messages: false });
+  await act(async () => fireEvent.click(input("checkbox-vendor-email-new-orders")));
+  expect(input("checkbox-vendor-email-new-orders").checked).toBe(false);
+  expect(input("checkbox-vendor-email-enabled").disabled).toBe(true);
+});

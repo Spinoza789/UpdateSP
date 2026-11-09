@@ -80,8 +80,8 @@ Vendor sign-in has its own URL and uses the existing account credentials; the re
 **How to apply:** Keep vendor entry and return-from-logout inside the dedicated vendor login flow. Enforce vendor access on the server after sign-in; do not add a second password system or expose vendor navigation on the regular member login.
 
 Vendor notification emails must cover new orders and messages only, not the full
-Telegram alert set. Vendors can manage their own notification destination in Settings.
+Telegram alert set. Vendors can manage their own notification destination and independently choose either, both or neither email category in Settings.
 
-**Why:** The user explicitly selected “New orders and messages only” rather than matching Telegram alerts.
+**Why:** The user explicitly selected “New orders and messages only” rather than matching Telegram alerts, then requested options for vendors to choose their notifications.
 
 **How to apply:** Keep email opt-in and verification independent from Telegram. Do not expand email events to holds, overdue alerts, announcements or security events without approval.

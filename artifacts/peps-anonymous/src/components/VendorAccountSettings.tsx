@@ -7,6 +7,7 @@ import { Banner, Btn, Card, Field, field, fieldCls, muted } from "./vendor-ui";
 interface EmailSettings {
   email: string | null; enabled: boolean; verified: boolean;
   pendingEmail: string | null; expiresAt: string | null;
+  newOrders: boolean; messages: boolean;
 }
 async function request(path: string, body?: unknown, signal?: AbortSignal) {
   const res = await vendorFetch(`/api/vendor/${path}`, body === undefined ? { signal } : {
@@ -109,6 +110,18 @@ export function VendorAccountSettings({ onPasswordChanged }: { onPasswordChanged
           <input type="checkbox" className="mt-0.5" checked={settings.enabled} disabled={!!busy || !settings.verified} onChange={e => void emailAction("toggle", { enabled: e.target.checked })} data-testid="checkbox-vendor-email-enabled" />
           {vt("Email me about new orders and messages")}
         </label>
+        <fieldset className="mt-4 space-y-3 border-t pt-4" style={{ borderColor: "var(--t-border)" }} disabled={!!busy} data-testid="fieldset-vendor-email-choices">
+          <legend className="text-[13px] font-semibold pt-3">{vt("Choose your email notifications")}</legend>
+          <label className="flex items-start gap-2 text-[13px]">
+            <input type="checkbox" className="mt-0.5" checked={settings.newOrders !== false} onChange={e => void emailAction("preferences", { newOrders: e.target.checked })} data-testid="checkbox-vendor-email-new-orders" />
+            <span>{vt("New orders")}<span className="block text-xs" style={muted}>{vt("When a new shipment is assigned to you.")}</span></span>
+          </label>
+          <label className="flex items-start gap-2 text-[13px]">
+            <input type="checkbox" className="mt-0.5" checked={settings.messages !== false} onChange={e => void emailAction("preferences", { messages: e.target.checked })} data-testid="checkbox-vendor-email-messages" />
+            <span>{vt("Messages")}<span className="block text-xs" style={muted}>{vt("When Peps Anonymous sends you a message or reply.")}</span></span>
+          </label>
+          {settings.newOrders === false && settings.messages === false && <p className="text-xs" style={muted} data-testid="text-vendor-email-none">{vt("No notification types selected. You will not receive notification emails.")}</p>}
+        </fieldset>
       </>}
     </Card>
   </div>;

@@ -28,6 +28,7 @@ export function createVendorEmailSettingsRouter(
   router.post("/vendor/email-settings/start", handle(req => settings.start(req.vendor.username, req.body?.email)));
   router.post("/vendor/email-settings/verify", handle(req => settings.verify(req.vendor.username, req.body?.code)));
   router.post("/vendor/email-settings/toggle", handle(req => settings.toggle(req.vendor.username, req.body?.enabled)));
+  router.post("/vendor/email-settings/preferences", handle(req => settings.preferences(req.vendor.username, req.body)));
   router.post("/vendor/email-settings/cancel", handle(req => settings.cancel(req.vendor.username)));
   return router;
 }

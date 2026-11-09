@@ -7,7 +7,7 @@ import { createVendorAuthentication, vendorTokenHash, vendorCsrfToken } from "..
 
 describe("vendor email settings access", () => {
   const token = "a".repeat(64);
-  const service = { get: vi.fn(async () => ({ email: null, enabled: false })), start: vi.fn(async () => ({ pendingEmail: "vendor@example.com" })), verify: vi.fn(async () => ({ enabled: true })), toggle: vi.fn(async () => ({ enabled: false })), cancel: vi.fn(async () => ({})) };
+  const service = { get: vi.fn(async () => ({ email: null, enabled: false })), start: vi.fn(async () => ({ pendingEmail: "vendor@example.com" })), verify: vi.fn(async () => ({ enabled: true })), toggle: vi.fn(async () => ({ enabled: false })), preferences: vi.fn(async () => ({ newOrders: false, messages: true })), cancel: vi.fn(async () => ({})) };
   let server: Server, base: string;
   beforeAll(async () => {
     const auth = createVendorAuthentication({
@@ -37,6 +37,7 @@ describe("vendor email settings access", () => {
     for (const [path, body] of [
       ["/start", { email: "vendor@example.com" }], ["/verify", { code: "ABC12345" }],
       ["/toggle", { enabled: false }], ["/cancel", {}],
+      ["/preferences", { newOrders: false, messages: true }],
     ] as const) {
       expect((await request("POST", path, headers, { ...body, username: "victim", vendorId: "v2" })).status).toBe(200);
     }
@@ -44,5 +45,6 @@ describe("vendor email settings access", () => {
     expect(service.verify).toHaveBeenCalledWith("owner", "ABC12345");
     expect(service.toggle).toHaveBeenCalledWith("owner", false);
     expect(service.cancel).toHaveBeenCalledWith("owner");
+    expect(service.preferences).toHaveBeenCalledWith("owner", { newOrders: false, messages: true, username: "victim", vendorId: "v2" });
   });
 });
