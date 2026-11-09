@@ -93,12 +93,17 @@ export function LedgerOrders({ orders, selected, onSelected, locked, onRemove, r
                   {o.stale && <span className="block mt-1 text-[11px]" style={{ color: "#B4770E" }}>Stale submission · awaiting resubmission</span>}
                   {o.reviewReason && <span className="block mt-1 text-[11px]" style={{ color: "#B4770E" }}>{o.reviewReason}</span>}
                 </div>
-                <div className="grid grid-cols-2 items-start gap-3 min-w-0">
+                <div className="col-span-full grid grid-cols-2 sm:grid-cols-3 items-start gap-3 min-w-0">
                   <div className="min-w-0 text-right">
                     <p className="text-[10px] uppercase tracking-wide" style={subtle}>Supplier cost</p>
                     <p className="text-sm font-bold tabular-nums" style={{ color: moneyOf(o.totalCost) === "Unavailable" ? "#B4770E" : "var(--t-text)" }}>{moneyOf(o.totalCost)}</p>
                   </div>
-                  <div className="min-w-0 border-l pl-3 text-right break-words" style={{ borderColor: "var(--t-border)" }} data-testid={`payment-profit-${o.id}`}>
+                  <div className="min-w-0 border-l pl-3 text-right" style={{ borderColor: "var(--t-border)" }} data-testid={`payment-sold-price-${o.id}`}>
+                    <p className="text-[10px] uppercase tracking-wide" style={subtle}>Sold price</p>
+                    <p className="text-sm font-bold tabular-nums" style={{ color: moneyOf(profit?.salesUsd) === "Unavailable" ? "#B4770E" : "var(--t-text)" }}>{moneyOf(profit?.salesUsd)}</p>
+                    <p className="text-[10px]" style={subtle}>Products only · USD</p>
+                  </div>
+                  <div className="col-span-2 sm:col-span-1 min-w-0 sm:border-l sm:pl-3 text-right break-words" style={{ borderColor: "var(--t-border)" }} data-testid={`payment-profit-${o.id}`}>
                     <p className="text-[10px] uppercase tracking-wide" style={subtle}>Estimated product profit</p>
                     <p className="text-sm font-bold tabular-nums" style={{ color: !profit?.amountUsd ? "#B4770E" : (profit.amountUsd.startsWith("-") ? "#B42318" : "#15803D") }}>{signedMoneyOf(profit?.amountUsd)}</p>
                     <p className="text-[10px] tabular-nums" style={subtle}>Sales {moneyOf(profit?.salesUsd)} − product cost {moneyOf(profit?.supplierProductsUsd)}</p>

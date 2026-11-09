@@ -458,6 +458,11 @@ test("shows exact signed product profit beside orders with its definition and sa
   assert.ok(ledgerRow.includes("$18.20"));
   assert.ok(ledgerRow.includes("$7.00"));
   assert.ok(ledgerRow.includes("Estimated product profit"));
+  const soldPrice = el("payment-sold-price-o1");
+  assert.ok(soldPrice.textContent!.includes("Sold price"));
+  assert.ok(soldPrice.textContent!.includes("$18.20"));
+  assert.ok(soldPrice.textContent!.includes("Products only"));
+  assert.ok(soldPrice.parentElement!.textContent!.includes("Supplier cost"));
   await click("payment-expand-o1");
   const profitDetail = el("payment-profit-detail-o1").textContent!;
   assert.ok(profitDetail.includes("before shipping"));
@@ -470,6 +475,7 @@ test("shows exact signed product profit beside orders with its definition and sa
   const unavailable = el("payment-order-paid").closest("li")!.textContent!;
   assert.ok(unavailable.includes("Unavailable"));
   assert.ok(unavailable.includes("Customer product prices are ambiguous."));
+  assert.ok(el("payment-sold-price-paid").textContent!.includes("Unavailable"));
 });
 
 test("removal requires confirmation, uses the supplier submission endpoint, and preserves customer order", async () => {
