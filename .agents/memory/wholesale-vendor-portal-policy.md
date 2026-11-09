@@ -96,3 +96,13 @@ same supplier ownership, orders, payments and established notification settings.
 **How to apply:** Keep this separate from member username changes. Invalidate
 username-bound pending verification and login/link codes rather than carrying
 them to a renamed identity; preserve established MFA methods and linked chats.
+
+Vendor setup guidance must also be available to existing vendor accounts, not
+only during signup. It covers username/password review, payment wallets,
+verified email notifications and Telegram linking.
+
+**Why:** The user requested a setup guide especially for an existing vendor,
+then approved all those setup steps.
+
+**How to apply:** Reuse the existing Settings actions and saved connection
+states. Do not reset existing accounts or silently enable optional notifications.

@@ -30,6 +30,27 @@ function setup() {
 // The vendor gate uses the shared query client to clear cached account state after sign-in.
 const walletFixture = { wallets: [{ id: "wallet-a", vendorId: "a", currency: "ETH", network: "Ethereum", address: "0x123", label: null }], options: [{ currency: "ETH", network: "Ethereum", family: "evm", decimals: 18 }] };
 const withQuery = (node: ReturnType<typeof createElement>) => createElement(QueryClientProvider, { client: new QueryClient() }, node);
+it("shows setup for an existing JBG123 vendor and opens the requested Settings form", async () => {
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+    if (url === "/api/vendor/me") return Response.json({ vendorId: "jbg", vendorName: "JBG/YT", username: "jbg123" });
+    if (url === "/api/vendor/wallets") return Response.json(walletFixture);
+    if (url === "/api/vendor/email-settings") return Response.json({ verified: false, enabled: false, email: null, pendingEmail: null, newOrders: true, messages: true });
+    if (url === "/api/vendor/telegram") return Response.json({ configured: true, chats: [] });
+    if (url === "/api/vendor/settings") return Response.json({ vendorId: "jbg" });
+    if (url === "/api/vendor/security") return Response.json({ available: false, totp: { enabled: false, pending: false, recoveryCodesRemaining: 0 }, passkeys: [] });
+    if (url === "/api/vendor/orders") return Response.json({ orders: [] });
+    return Response.json({});
+  }));
+  const el = setup();
+  await act(async () => root.render(withQuery(createElement(VendorPortal))));
+  await settle();
+  expect(el.querySelector('[data-testid="vendor-setup-guide"]')).not.toBeNull();
+  expect(el.textContent).toContain("jbg123");
+  await act(async () => (el.querySelector('[data-testid="button-setup-open-email"]') as HTMLElement).click());
+  await settle();
+  expect(el.querySelector('[data-testid="card-vendor-email"]')).not.toBeNull();
+  expect(el.querySelector('[data-testid="form-vendor-wallets"]')).not.toBeNull();
+});
 async function settle() {
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 15)); });
 }

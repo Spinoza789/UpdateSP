@@ -89,6 +89,7 @@ export function VendorAccountSettings({ onPasswordChanged, onUsernameChanged }: 
       const data: EmailSettings = await request(`email-settings/${action}`, body, controller.current.signal);
       if (!active.current) return;
       setSettings(data); setCode("");
+      window.dispatchEvent(new Event("vendor-setup-updated"));
       if (action === "cancel") setEmail(data.email || "");
       setEmailMessage({ ok: true, text: vt(action === "start" ? "Verification code sent. Check your inbox and spam folder." : action === "verify" ? "Email verified. New order and message alerts are enabled." : "Email notification settings saved.") });
     } catch (error) {

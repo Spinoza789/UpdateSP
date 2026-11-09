@@ -7,6 +7,7 @@ import { type CSSProperties, type FormEvent, type ReactNode, useCallback, useEff
 import { vendorAddressLines } from "@/lib/vendor-address";
 import { downloadVendorOrdersCsv } from "@/lib/vendor-orders-csv";
 import VendorAccountAuth from "@/components/VendorAccountAuth";
+import { VendorSetupGuide, type VendorSetupStep } from "@/components/VendorSetupGuide";
 import { useVendorWallets, VendorWalletPanel, VendorPaymentHistory } from "@/components/VendorWallets";
 import VendorTrackingImport from "@/components/VendorTrackingImport";
 import { ClosedBanner, IssueBadge, OrderIssuePanel, SettingsNavIcon, VendorSettingsView, type VendorIssue, useVendorIssues, useVendorSettings } from "@/components/VendorExtras";
@@ -155,6 +156,7 @@ export default function VendorPortal() {
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState<View>("home");
+  const [setupStep, setSetupStep] = useState<VendorSetupStep | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("new");
   const [query, setQuery] = useState("");
@@ -266,8 +268,24 @@ export default function VendorPortal() {
   };
 
   const onNav = (v: View, t?: Tab) => { setView(v); if (t) setTab(t); setSelected(null); };
+  const openSetupStep = (step: VendorSetupStep) => { setSetupStep(step); setView("settings"); setSelected(null); };
+  useEffect(() => {
+    if (view !== "settings" || !setupStep) return;
+    const timer = window.setTimeout(() => {
+      const targets: Record<VendorSetupStep, string> = { username: "card-vendor-username", password: "card-vendor-password", wallet: "card-vendor-wallets", email: "card-vendor-email", telegram: "card-telegram" };
+      const target = document.querySelector<HTMLElement>(`[data-testid="${targets[setupStep]}"]`);
+      if (target) {
+        target.style.scrollMarginTop = "90px";
+        target.scrollIntoView?.({ behavior: "smooth", block: "start" });
+        target.querySelector<HTMLElement>("input,button,select")?.focus({ preventScroll: true });
+      }
+      setSetupStep(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [view, setupStep]);
   const onGlobalQuery = (q: string) => { setQuery(q); if (view !== "orders" || selected) { setView("orders"); setTab("all"); setSelected(null); } };
   const nav: NavProps = { view, tab, counts, onNav, unreadMessages: threads.unread };
+  const setupGuide = me && <VendorSetupGuide key={me.username} username={me.username} walletReady={walletsReady} walletLoading={wallets.loading} walletError={wallets.error} onOpenStep={openSetupStep} onRefreshWallet={wallets.refresh} />;
 
   const current = orders?.find(o => o.id === selected) ?? null;
   const navList = view === "home" ? attention : visible;
@@ -281,6 +299,7 @@ export default function VendorPortal() {
     <Shell me={me} onLogout={logout} nav={nav}>
       <div className="max-w-[880px] mx-auto space-y-4" data-testid="vendor-wallet-gate">
         <PageHeader title={t("Set up your payment wallet")} subtitle="Save at least one receiving wallet before using the vendor portal." />
+        {setupGuide}
         <VendorWalletPanel state={wallets} />
         <Btn onClick={() => onNav("settings")}>{t("Open Settings")}</Btn>
       </div>
@@ -311,6 +330,7 @@ export default function VendorPortal() {
   if (view === "settings") return (
     <Shell me={me} onLogout={logout} nav={nav} query={query} onQuery={onGlobalQuery} bell={<NotificationBell items={notifications.items} unread={notifications.unread} onOpenTarget={openTarget} markRead={notifications.markRead} markAllRead={notifications.markAllRead} />}>
       <VendorSettingsView vendorName={me?.vendorName ?? "your company"} settings={vendorSettings.data} onSave={vendorSettings.save} loadError={vendorSettings.error}
+        setupContent={setupGuide}
         paymentContent={<div className="space-y-4 mb-6"><VendorWalletPanel state={wallets} /><VendorPaymentHistory /></div>}
         header={<PageHeader title={t("Settings")} subtitle="Payment wallets, history, holiday mode and fulfilment defaults" />} />
     </Shell>
@@ -318,6 +338,7 @@ export default function VendorPortal() {
 
   if (view === "home") return (
     <Shell me={me} onLogout={logout} nav={nav} query={query} onQuery={onGlobalQuery} bell={<NotificationBell items={notifications.items} unread={notifications.unread} onOpenTarget={openTarget} markRead={notifications.markRead} markAllRead={notifications.markAllRead} />}>
+      <div className="max-w-[1120px] mx-auto">{setupGuide}</div>
       <HomeView me={me} orders={orders} counts={counts} attention={attention} updated={updated} refreshBtn={refreshBtn} listError={listError} onRetry={load}
         onNav={onNav} onOpen={id => setSelected(id)} flagged={issues.openIds}
         banner={<><CriticalBanner items={notifications.items} onOpenTarget={openTarget} markRead={notifications.markRead} /><ClosedBanner settings={vendorSettings.data} onOpenSettings={() => onNav("settings")} /></>} />

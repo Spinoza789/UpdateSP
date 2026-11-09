@@ -168,8 +168,8 @@ const toInputDate = (v: string | null) => { if (!v) return ""; const d = new Dat
 const startOfDay = (v: string) => (v ? new Date(`${v}T00:00:00`).toISOString() : null);
 const endOfDay = (v: string) => (v ? new Date(`${v}T23:59:59`).toISOString() : null);
 
-export function VendorSettingsView({ vendorName, settings, onSave, loadError, header, paymentContent }: {
-  vendorName: string; settings: VendorSettings | null; onSave: (body: Record<string, unknown>) => Promise<VendorSettings>; loadError: string | null; header?: ReactNode; paymentContent?: ReactNode;
+export function VendorSettingsView({ vendorName, settings, onSave, loadError, header, paymentContent, setupContent }: {
+  vendorName: string; settings: VendorSettings | null; onSave: (body: Record<string, unknown>) => Promise<VendorSettings>; loadError: string | null; header?: ReactNode; paymentContent?: ReactNode; setupContent?: ReactNode;
 }) {
   useVendorLanguage();
   const [closed, setClosed] = useState(false);
@@ -204,6 +204,7 @@ export function VendorSettingsView({ vendorName, settings, onSave, loadError, he
   return (
     <div className="max-w-[880px] mx-auto">
       {header}
+      {setupContent}
       {loadError && <div className="mb-4"><Banner tone="critical" role="alert">{vt(loadError)}</Banner></div>}
       {msg && <div className="mb-4"><Banner tone={msg.ok ? "success" : "critical"} role={msg.ok ? "status" : "alert"} testId="text-settings-result" onDismiss={() => setMsg(null)}>{vt(msg.text)}</Banner></div>}
       {paymentContent}
@@ -265,7 +266,7 @@ export function TelegramCard() {
       const r = await vendorFetch("/api/vendor/telegram");
       if (!r.ok) throw new Error(await errorOf(r, vt("Could not load Telegram settings")));
       const data = await r.json();
-      if (mounted.current) { setState(data); setError(null); }
+      if (mounted.current) { setState(data); setError(null); window.dispatchEvent(new Event("vendor-setup-updated")); }
     } catch (e) { if (mounted.current) setError(e instanceof Error ? e.message : vt("Could not load Telegram settings")); }
   }, []);
   useEffect(() => {
