@@ -34,6 +34,39 @@ const order = (id: string, quantity = 1, extra: any = {}) => ({
   ...extra,
 });
 describe("supplier batching policy", () => {
+  it("keeps whole orders below a hard limit, including all-queued previews", () => {
+    const queue = [24, 3].map((quantity, i) => snapshotOrder(order(`limit-${i}`, quantity)));
+    for (const includeAll of [false, true]) {
+      const result = propose(queue, 25, includeAll, 25);
+      expect(result.kits).toBe(24);
+      expect(result.ready).toBe(false);
+      expect(result.remainingKits).toBe(3);
+      expect(result.limitBlocked).toBe(true);
+      expect(result.orders.map(o => o.kits)).toEqual([24]);
+    }
+  });
+  it("never splits or skips an oversized first order", () => {
+    const result = propose([30, 10, 15].map((q, i) => snapshotOrder(order(`large-${i}`, q))), 25, false, 25);
+    expect(result.orders).toEqual([]);
+    expect(result.limitBlocked).toBe(true);
+    expect(result.remainingKits).toBe(55);
+  });
+  it("fills a half-kit target exactly and leaves the next order queued", () => {
+    const result = propose([24.5, 0.5, 3].map((q, i) => snapshotOrder(order(`half-${i}`, q))), 25, false, 25);
+    expect(result.kits).toBe(25);
+    expect(result.ready).toBe(true);
+    expect(result.remainingKits).toBe(3);
+  });
+  it("validates optional hard limits and automatic preparation without changing legacy regions", () => {
+    const region = { id: "uk", name: "UK", countries: ["GB"], targetKits: 25 };
+    expect(validateRegions([region])).toEqual([region]);
+    expect(validateRegions([{ ...region, hardLimitKits: 25, autoPrepare: true }])[0])
+      .toMatchObject({ hardLimitKits: 25, autoPrepare: true });
+    for (const hardLimitKits of [0, -1, 24, 25.2, "25"]) {
+      expect(() => validateRegions([{ ...region, hardLimitKits }])).toThrow();
+    }
+    expect(() => validateRegions([{ ...region, autoPrepare: "yes" }])).toThrow();
+  });
   it("normalizes UK/GB and rejects overlapping countries", () => {
     expect(validateRegions([{ id: "uk", name: "UK", countries: ["UK"], targetKits: 100 }])[0].countries).toEqual(["GB"]);
     expect(() => validateRegions([{ id: "eu", name: "EU", countries: EU_COUNTRIES, targetKits: 100 }, { id: "it", name: "Italy", countries: ["Italy"], targetKits: 100 }])).toThrow(/overlap/i);

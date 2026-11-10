@@ -5,7 +5,7 @@ export const EU_COUNTRIES = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT 
 export class SupplierBatchError extends Error {
   constructor(message: string, public status = 409) { super(message); }
 }
-export interface BatchRegion { id: string; name: string; countries: string[]; targetKits: number }
+export interface BatchRegion { id: string; name: string; countries: string[]; targetKits: number; hardLimitKits?: number | null; autoPrepare?: boolean }
 /** Preserve batch identity/sequence while correcting legacy all-GB references. */
 export function regionalBatchReference(reference: string, region?: { countries?: readonly string[] }): string {
   const countries = (region?.countries ?? []).map(normalizeToCode);
@@ -30,6 +30,13 @@ export function validateRegions(input: unknown): BatchRegion[] {
       || !Number.isFinite(r.targetKits) || r.targetKits <= 0 || r.targetKits > 1e7 || r.targetKits * 2 % 1
       || !Array.isArray(r.countries) || !r.countries.length) throw new SupplierBatchError("Each region needs a unique ID, name, countries and a positive kit target (increments of 0.5).", 400);
     ids.add(r.id);
+    if (r.hardLimitKits != null && (!Number.isFinite(r.hardLimitKits) || r.hardLimitKits < r.targetKits
+      || r.hardLimitKits > 1e7 || r.hardLimitKits * 2 % 1)) {
+      throw new SupplierBatchError("Hard limit must be at least the target, in 0.5-kit increments.", 400);
+    }
+    if (r.autoPrepare !== undefined && typeof r.autoPrepare !== "boolean") {
+      throw new SupplierBatchError("Automatic preparation must be on or off.", 400);
+    }
     const countries: string[] = r.countries.map((v: unknown) => {
       if (typeof v !== "string") throw new SupplierBatchError("Invalid country.", 400);
       const code = normalizeToCode(v);
@@ -37,7 +44,9 @@ export function validateRegions(input: unknown): BatchRegion[] {
       if (seen.has(code)) throw new SupplierBatchError(`Country overlap: ${code} belongs to more than one region.`, 400);
       seen.add(code); return code;
     });
-    return { id: r.id, name: r.name.trim(), countries: countries.sort(), targetKits: r.targetKits };
+    return { id: r.id, name: r.name.trim(), countries: countries.sort(), targetKits: r.targetKits,
+      ...(r.hardLimitKits !== undefined ? { hardLimitKits: r.hardLimitKits } : {}),
+      ...(r.autoPrepare !== undefined ? { autoPrepare: r.autoPrepare } : {}) };
   });
 }
 const iso = (v: any) => v && Number.isFinite(new Date(v).getTime()) ? new Date(v).toISOString() : null;
@@ -113,18 +122,31 @@ function canonical(v: any): any {
 }
 /** JSONB does not preserve insertion order. Hash semantic content, not key order. */
 export const fingerprint = (v: unknown) => createHash("sha256").update(JSON.stringify(canonical(v))).digest("hex");
-export function propose(queue: BatchOrder[], target: number, includeAll = false) {
+export function propose(queue: BatchOrder[], target: number, includeAll = false, hardLimitKits?: number | null) {
   const sorted = [...queue].sort((a, b) => a.orderingAt.localeCompare(b.orderingAt) || a.id.localeCompare(b.id));
   const total = sorted.reduce((s, o) => s + o.kits, 0);
   const orders: BatchOrder[] = []; let kits = 0;
-  for (const o of sorted) { if (!includeAll && kits >= target) break; orders.push(o); kits += o.kits; }
+  let limitBlocked = false;
+  for (const o of sorted) {
+    if (!includeAll && kits >= target) break;
+    // Keep FIFO and each customer order intact. Never split, skip or overfill.
+    if (hardLimitKits != null && kits + o.kits > hardLimitKits) { limitBlocked = true; break; }
+    orders.push(o); kits += o.kits;
+  }
   const products = new Map<string, { productId: string; productName: string; quantity: number }>();
   for (const o of orders) for (const i of o.items) {
     const key = `${i.productId}:${i.productName}`;
     const p = products.get(key) ?? { productId: i.productId, productName: i.productName, quantity: 0 };
     p.quantity += i.quantity; products.set(key, p);
   }
-  return { orders, kits, queuedKits: total, remainingKits: total - kits, ready: kits >= target, products: [...products.values()] };
+  return { orders, kits, queuedKits: total, remainingKits: total - kits, ready: kits >= target, products: [...products.values()],
+    ...(hardLimitKits != null ? { limitBlocked } : {}) };
+}
+export function assertBatchHardLimit(kits: number, saved: BatchRegion, configured?: BatchRegion) {
+  const caps = [saved.hardLimitKits, configured?.hardLimitKits].filter((v): v is number => v != null);
+  if (caps.length && kits > Math.min(...caps)) {
+    throw new SupplierBatchError(`Batch would exceed its hard limit of ${Math.min(...caps)} kits. Keep the order queued or change the limit.`);
+  }
 }
 export function csv(rows: unknown[][]) {
   return rows.map(row => row.map(value => {

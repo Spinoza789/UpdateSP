@@ -1,6 +1,6 @@
 ---
 name: Supplier batch policies
-description: Full FS3 supplier TXT requirements and the boundary for adding orders to existing batches.
+description: Supplier exports, safe allocations, staff alerts, whole-order hard caps and automatic preparation.
 ---
 
 Batch packing slips must show only the quantities allocated to the selected batch,
@@ -124,3 +124,18 @@ Batch references start with **EU** for EU batches and **US** for US batches. UK 
 **Why:** The user explicitly requested regional prefixes to distinguish batches at a glance.
 
 **How to apply:** Use the batch's saved destination region, not the organiser's location or mutable region label. Keep batch numbers and allocations unchanged and show consistent references to staff, members and in downloads.
+
+Optional hard kit limits must keep whole customer orders together. Automatic
+processing means preparing batches for staff review, not placing supplier orders
+or changing customer order/payment statuses.
+
+**Why:** The user explicitly chose “Keep whole orders together” and “Prepare batch
+for staff review.” They also requested removal of the separate “Message batch
+members” controls.
+
+**How to apply:** Never overfill, split or silently skip an order to fill a capped
+batch. An order that cannot fit stays queued with a visible explanation; a
+below-target queue waits for staff action rather than pretending it is full.
+Automatic preparation reserves each full batch once and continues with the next
+queue. Keep the existing manual supplier-placement confirmation and staff-only
+alerts. Do not reintroduce a separate batch-member message composer.

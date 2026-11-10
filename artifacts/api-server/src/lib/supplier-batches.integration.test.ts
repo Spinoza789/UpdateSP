@@ -62,6 +62,80 @@ describe.skipIf(process.env.SUPPLIER_BATCH_DB_TESTS !== "1")("regional supplier 
     const result = await api.saveSupplierConfig(id, admin, {expectedVersion: 0, config: {enabled:true,telegramAlerts,regions:[{id:"eu",name:"EU",countries:["IT","DE"],targetKits:100}]}});
     return {id, ids, result};
   }
+  it("automatically prepares consecutive full batches once, retaining whole orders and member statuses", async () => {
+    const f = await fixture([20, 5, 25, 3]);
+    const updated = await api.saveSupplierConfig(f.id, admin, { expectedVersion: f.result.version,
+      config: { ...f.result.config, regions: [{ ...f.result.config.regions[0], targetKits: 25, hardLimitKits: 25, autoPrepare: true }] } });
+    const results = await Promise.all([api.reconcileSupplierGroup(f.id), api.reconcileSupplierGroup(f.id)]);
+    const view = await api.supplierData(f.id, admin);
+    expect(view.batches).toHaveLength(2);
+    expect(view.batches.map((b: any) => b.snapshot.kits)).toEqual([25, 25]);
+    expect(view.batches.every((b: any) => b.state === "prepared" && b.createdBy === "supplier-batch-auto")).toBe(true);
+    expect(view.proposals[0].kits).toBe(3);
+    expect(new Set(view.batches.flatMap((b: any) => b.snapshot.orders.map((o: any) => o.id))).size).toBe(3);
+    const orders = await store.db.select().from(store.ordersTable).where(eq(store.ordersTable.groupBuyId, f.id));
+    expect(orders.every((o: any) => o.status === "Submitted" && o.paymentStatus === "confirmed")).toBe(true);
+    expect(orders.map((o: any) => Number(o.grandTotal)).sort((a: number, b: number) => a - b)).toEqual([30, 50, 200, 250]);
+  });
+  it("does not auto-prepare an underfilled hard-limited batch or skip the next whole order", async () => {
+    const f = await fixture([24, 3, 1]);
+    await api.saveSupplierConfig(f.id, admin, { expectedVersion: f.result.version,
+      config: { ...f.result.config, regions: [{ ...f.result.config.regions[0], targetKits: 25, hardLimitKits: 25, autoPrepare: true }] } });
+    const view = await api.reconcileSupplierGroup(f.id);
+    expect(view.batches).toEqual([]);
+    expect(view.proposals[0]).toMatchObject({ kits: 24, ready: false, limitBlocked: true, remainingKits: 4 });
+  });
+  it("keeps automatic preparation off by default and enforces caps on manual append", async () => {
+    const f = await fixture([25, 1]);
+    let view = await api.saveSupplierConfig(f.id, admin, { expectedVersion: f.result.version,
+      config: { ...f.result.config, regions: [{ ...f.result.config.regions[0], targetKits: 25, hardLimitKits: 25 }] } });
+    view = await api.reconcileSupplierGroup(f.id);
+    expect(view.batches).toEqual([]);
+    const p = view.proposals[0];
+    view = await api.confirmSupplierBatch(f.id, admin, { regionId: p.region.id, token: p.token });
+    const b = view.batches[0], next = view.proposals[0];
+    await expect(api.appendSupplierBatch(f.id, b.id, admin, {
+      regionId: next.region.id, token: next.token, expectedBatchToken: b.snapshot.token,
+    })).rejects.toThrow(/hard limit/i);
+    expect((await api.supplierData(f.id, admin)).batches[0].snapshot.kits).toBe(25);
+  });
+  it("automatic preparation excludes unpaid and direct-shipping orders", async () => {
+    const f = await fixture([25, 25, 25], [
+      { paymentStatus: "unpaid" },
+      { routingType: "direct", directShippingRequested: true },
+      {},
+    ]);
+    await api.saveSupplierConfig(f.id, admin, { expectedVersion: f.result.version,
+      config: { ...f.result.config, regions: [{ ...f.result.config.regions[0], targetKits: 25, hardLimitKits: 25, autoPrepare: true }] } });
+    const view = await api.reconcileSupplierGroup(f.id);
+    expect(view.batches).toHaveLength(1);
+    expect(view.batches[0].snapshot.orders.map((o: any) => o.id)).toEqual([f.ids[2]]);
+  });
+  it("cannot refresh an edited order into an over-limit batch", async () => {
+    const f = await fixture([25]);
+    let view = await api.saveSupplierConfig(f.id, admin, { expectedVersion: f.result.version,
+      config: { ...f.result.config, regions: [{ ...f.result.config.regions[0], targetKits: 25, hardLimitKits: 25 }] } });
+    view = await api.confirmSupplierBatch(f.id, admin, { regionId: "eu", token: view.proposals[0].token });
+    const b = view.batches[0];
+    await store.db.update(store.orderLineItemsTable).set({ quantity: "26", lineTotal: "260" })
+      .where(eq(store.orderLineItemsTable.orderId, f.ids[0]));
+    await store.db.update(store.ordersTable).set({ productSubtotal: "260", grandTotal: "260" })
+      .where(eq(store.ordersTable.id, f.ids[0]));
+    const preview = await api.previewSupplierBatchRefresh(f.id, b.id, admin, { expectedBatchToken: b.snapshot.token });
+    expect(preview.canConfirm).toBe(false);
+    expect(preview.blockers.some((v: any) => /hard limit/i.test(v.reason))).toBe(true);
+    await expect(api.refreshSupplierBatch(f.id, b.id, admin, {
+      expectedBatchToken: b.snapshot.token, token: preview.token, confirm: true,
+    })).rejects.toThrow(/hard limit/i);
+    expect((await api.supplierData(f.id, admin)).batches[0].snapshot.kits).toBe(25);
+  });
+  it("does not automatically prepare when supplier batching is disabled", async () => {
+    const f = await fixture([25]);
+    await api.saveSupplierConfig(f.id, admin, { expectedVersion: f.result.version,
+      config: { ...f.result.config, enabled: false,
+        regions: [{ ...f.result.config.regions[0], targetKits: 25, hardLimitKits: 25, autoPrepare: true }] } });
+    expect((await api.reconcileSupplierGroup(f.id)).batches).toEqual([]);
+  });
   it("completes a real credit refund and atomically releases its final unsubmitted allocation, without double credit", async () => {
     const f = await fixture([100]);
     const username = `refund-${randomUUID()}`; refundAccounts.push(username);

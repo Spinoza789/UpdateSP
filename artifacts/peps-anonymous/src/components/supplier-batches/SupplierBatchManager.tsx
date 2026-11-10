@@ -6,7 +6,6 @@ import { DirectSupplierDownload } from "./DirectSupplierDownload";
 import { BatchRefreshReview } from "./BatchRefreshReview";
 import { BatchCorrection } from "./BatchCorrection";
 import { BatchAdditions } from "./BatchAdditions";
-import { BatchMessages } from "./BatchMessages";
 import {
   EU_BATCH_COUNTRIES, supplierKey, supplierRequest, downloadSupplierCsv,
   downloadSupplierTxt,
@@ -38,11 +37,12 @@ interface Props {
   groupBuyId: string; scope: SupplierScope; headers?: Record<string, string>;
   onViewOrders?: (batchId: string, orderId?: string) => void; onDispatch?: () => void;
 }
-type Draft = { enabled: boolean; telegramAlerts: boolean; showToMembers: boolean; regions: { id: string; name: string; countries: string; targetKits: string }[] };
+type Draft = { enabled: boolean; telegramAlerts: boolean; showToMembers: boolean; regions: { id: string; name: string; countries: string; targetKits: string; hardLimitKits: string; autoPrepare: boolean }[] };
 const toDraft = (c: BatchConfig): Draft => ({
   showToMembers: c.showToMembers === true,
   enabled: c.enabled, telegramAlerts: c.telegramAlerts,
-  regions: c.regions.map(r => ({ id: r.id, name: r.name, countries: r.countries.join(" "), targetKits: String(r.targetKits) })),
+  regions: c.regions.map(r => ({ id: r.id, name: r.name, countries: r.countries.join(" "), targetKits: String(r.targetKits),
+    hardLimitKits: r.hardLimitKits == null ? "" : String(r.hardLimitKits), autoPrepare: r.autoPrepare === true })),
 });
 
 function Msg({ m, id }: { m: { err: boolean; text: string } | null; id: string }) {
@@ -66,7 +66,7 @@ function ConfigEditor({ data, busy, run, reload, putConfig }: {
   const setRegion = (i: number, k: keyof Draft["regions"][number], v: string) =>
     upd(d => ({ ...d, regions: d.regions.map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
   const newId = () => `r${Date.now().toString(36)}`;
-  const addRegion = (name = "", countries = "") => upd(d => ({ ...d, regions: [...d.regions, { id: newId(), name, countries, targetKits: "10" }] }));
+  const addRegion = (name = "", countries = "") => upd(d => ({ ...d, regions: [...d.regions, { id: newId(), name, countries, targetKits: "10", hardLimitKits: "", autoPrepare: false }] }));
 
   const validate = (): string | null => {
     for (const r of draft.regions) {
@@ -76,13 +76,18 @@ function ConfigEditor({ data, busy, run, reload, putConfig }: {
       if (cs.some(c => !/^[A-Z]{2}$/.test(c))) return `${r.name}: use two-letter ISO country codes.`;
       const t = Number(r.targetKits);
       if (!(t > 0) || Math.round(t * 2) !== t * 2) return `${r.name}: target kits must be positive, in 0.5 steps.`;
+      if (r.hardLimitKits !== "" && (!Number.isFinite(Number(r.hardLimitKits)) || Number(r.hardLimitKits) < t
+        || Number(r.hardLimitKits) > 1e7 || !Number.isInteger(Number(r.hardLimitKits) * 2))) {
+        return `${r.name}: hard limit must be at least the target, in 0.5-kit steps.`;
+      }
     }
     return null;
   };
   const saveReal = async () => {
     const err = validate(); if (err) { setMsg({ err: true, text: err }); return; }
     const config: BatchConfig = { enabled: draft.enabled, telegramAlerts: draft.telegramAlerts, showToMembers: draft.showToMembers,
-      regions: draft.regions.map(r => ({ id: r.id, name: r.name.trim(), countries: parseCountries(r.countries), targetKits: Number(r.targetKits) })) };
+      regions: draft.regions.map(r => ({ id: r.id, name: r.name.trim(), countries: parseCountries(r.countries),
+        targetKits: Number(r.targetKits), hardLimitKits: r.hardLimitKits === "" ? null : Number(r.hardLimitKits), autoPrepare: r.autoPrepare })) };
     try {
       const res = await run(() => putConfig(config, baseVersion));
       setDirty(false); setConflict(false); setDraft(toDraft(res.config)); setBaseVersion(res.version);
@@ -129,6 +134,26 @@ function ConfigEditor({ data, busy, run, reload, putConfig }: {
             <label><span className="block text-[11px] font-semibold mb-1" style={{ color: V.muted }}>Target kits</span>
               <input data-testid={`input-region-target-${i}`} type="number" min={0.5} step={0.5} value={r.targetKits} onChange={e => setRegion(i, "targetKits", e.target.value)} className={inputCls} style={inputStyle} /></label>
             <button type="button" aria-label={`Remove ${r.name || "region"}`} onClick={() => upd(d => ({ ...d, regions: d.regions.filter((_, j) => j !== i) }))} className="h-9 w-9 rounded-xl inline-flex items-center justify-center text-red-600 hover:bg-red-50"><Trash2 className="w-4 h-4" /></button>
+            <div className="sm:col-span-4 flex flex-wrap items-center gap-4 rounded-lg border p-3" style={{ borderColor: V.border }}>
+              <label className="flex items-center gap-2 text-xs" style={{ color: V.text }}>
+                <input type="checkbox" data-testid={`checkbox-region-hard-limit-${i}`} checked={r.hardLimitKits !== ""}
+                  onChange={e => setRegion(i, "hardLimitKits", e.target.checked ? r.targetKits : "")} />
+                Hard kit limit
+              </label>
+              {r.hardLimitKits !== "" && <label className="flex items-center gap-2 text-xs" style={{ color: V.text }}>
+                Maximum kits
+                <input data-testid={`input-region-hard-limit-${i}`} aria-label={`${r.name} maximum kits`}
+                  type="number" min={Number(r.targetKits) || 0.5} step={0.5} max={1e7}
+                  value={r.hardLimitKits} onChange={e => setRegion(i, "hardLimitKits", e.target.value)}
+                  className={`${inputCls} !w-24`} style={inputStyle} />
+              </label>}
+              <label className="flex items-center gap-2 text-xs" style={{ color: V.text }}>
+                <input type="checkbox" data-testid={`checkbox-region-auto-prepare-${i}`} checked={r.autoPrepare}
+                  onChange={e => upd(d => ({ ...d, regions: d.regions.map((v, j) => j === i ? { ...v, autoPrepare: e.target.checked } : v) }))} />
+                Auto-prepare when target is reached
+              </label>
+              <p className="w-full text-[11px]" style={{ color: V.muted }}>Whole orders stay together in payment-date order. Orders that do not fit stay queued; the limit is never exceeded. Auto-prepare runs in the background and starts the next batch, for staff review only—it never sends a supplier purchase or changes order/payment status.</p>
+            </div>
           </div>
         ))}
       </div>
@@ -203,7 +228,9 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
   const [destination, setDestination] = useState<SupplierBatch | null>(null);
   const destinations = batches.filter(b => b.state === "prepared" && !b.exceptions.length
     && b.snapshot.region.id === p.region.id
-    && [...b.snapshot.region.countries].sort().join(",") === [...p.region.countries].sort().join(","));
+    && [...b.snapshot.region.countries].sort().join(",") === [...p.region.countries].sort().join(",")
+    && [b.snapshot.region.hardLimitKits, p.region.hardLimitKits].every(cap =>
+      cap == null || b.snapshot.kits + (preview?.kits ?? p.kits) <= cap));
   const destinationStale = destination && !destinations.some(b => b.id === destination.id && b.snapshot.token === destination.snapshot.token);
   const pct = Math.min(100, (p.queuedKits / (p.region.targetKits || 1)) * 100);
   const stale = preview && preview.token !== (includeAll ? p.allQueued?.token : p.token);
@@ -213,6 +240,9 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
         <span className="text-sm font-bold" style={{ color: V.text }}>{p.region.name} <span className="text-[11px] font-mono font-normal" style={{ color: V.muted }}>{p.region.countries.join(" ")}</span></span>
         <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${p.ready ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>{p.ready ? "Ready" : "Filling"}</span>
       </div>
+      {p.region.hardLimitKits != null && <p className="text-xs" style={{ color: V.muted }}>Hard limit: {kits(p.region.hardLimitKits)} kits · Whole orders only</p>}
+      {p.region.autoPrepare && <p className="text-xs" style={{ color: V.muted }}>Automatic preparation for staff review is on.</p>}
+      {p.limitBlocked && <p role="status" className="text-xs text-amber-700">The next whole order does not fit the hard limit. It stays queued; no order is split or skipped. Review the target/limit or prepare an eligible batch manually.</p>}
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: V.surface2 }} role="progressbar" aria-label={`${p.region.name} queued kits`} aria-valuenow={p.queuedKits} aria-valuemax={p.region.targetKits}>
         <div className="h-full" style={{ width: `${pct}%`, background: "#2D6BCC" }} />
       </div>
@@ -236,7 +266,7 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
             {p.allQueued && <button type="button" aria-pressed={includeAll} disabled={busy}
               data-testid={`button-all-queued-${p.region.id}`}
               onClick={() => { setIncludeAll(true); setPreview(p.allQueued!); }}
-              className={ghost} style={{ borderColor: V.border, color: V.text }}>All queued orders · {kits(p.allQueued.kits)} kits ({p.allQueued.orders.length} orders)</button>}
+              className={ghost} style={{ borderColor: V.border, color: V.text }}>{p.region.hardLimitKits != null ? "Queued orders within hard limit" : "All queued orders"} · {kits(p.allQueued.kits)} kits ({p.allQueued.orders.length} orders)</button>}
           </div>
           <label className="block space-y-1">
             <span className="font-semibold">Batch destination</span>
@@ -257,7 +287,7 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
               onClick={() => setDestination(destinations.find(b => b.id === destination?.id) ?? null)}
               className={ghost} style={{ borderColor: V.border, color: V.text }}>Refresh selected batch</button>}
           </div>}
-          <p className="font-semibold">{includeAll ? "All queued orders selected" : "Target-sized batch selected"} · Target: {kits(preview.region.targetKits)} kits · Left in queue: {kits(preview.remainingKits)} kits</p>
+          <p className="font-semibold">{includeAll ? preview.region.hardLimitKits != null ? "Queued orders within hard limit selected" : "All queued orders selected" : "Target-sized batch selected"} · Target: {kits(preview.region.targetKits)} kits · Left in queue: {kits(preview.remainingKits)} kits</p>
           <p className="font-semibold">{destination ? "Add" : "Prepare"} {kits(preview.kits)} kits from {preview.orders.length} paid orders ({preview.orders.map(o => o.code).join(", ")}).</p>
           <OrdersDetail p={preview} />
           <p style={{ color: V.muted }}>This records a supplier batch only. No supplier order is placed and no member parcel status changes.</p>
@@ -423,7 +453,6 @@ function Body({ groupBuyId, scope, headers, onViewOrders, onDispatch }: Props) {
       <p className="text-[11px]" style={{ color: V.muted }}>Last checked {fmt(d.checkedAt)}</p>
       <ConfigEditor putConfig={putConfig} data={d} busy={busy} run={run} reload={() => { qc.invalidateQueries({ queryKey: key }); }} />
       <Msg m={msg} id="text-supplier-msg" />
-      {scope === "admin" && <BatchMessages key={groupBuyId} groupBuyId={groupBuyId} batches={d.batches} headers={headers} />}
       {scope === "admin" && <DirectSupplierDownload key={groupBuyId} groupBuyId={groupBuyId} headers={headers} />}
       <section className="space-y-2">
         <p className={label} style={{ color: "#8A9AAA" }}>Proposals</p>

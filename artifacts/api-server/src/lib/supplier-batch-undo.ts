@@ -3,7 +3,7 @@ import {
   ordersTable, gbSupplierBatchesTable as batches, gbSupplierAllocationsTable as allocations,
   gbSupplierEventsTable as events, gbSupplierShipmentsTable as shipments, gbSupplierSettingsTable as settings,
 } from "@workspace/db";
-import { SupplierBatchError, fingerprint, type BatchOrder } from "./supplier-batches-model";
+import { SupplierBatchError, assertBatchHardLimit, fingerprint, type BatchOrder } from "./supplier-batches-model";
 import { correctionSnapshots } from "./supplier-batch-correction-model";
 import { splitBatchQuantities, reservationBatch } from "./supplier-batch-additions";
 import { assertNoActiveRefunds } from "./refund-mutation-guard";
@@ -113,6 +113,13 @@ export async function undoMove(tx: any, group: any, batchId: string, actor: Upda
     token: fingerprint({ undo: event.id, source: source.snapshot.token, target: target.snapshot.token }),
     corrections: markUndone(source.snapshot.corrections),
   };
+  assertBatchHardLimit(restored.kits, restored.region,
+    current.config.regions.find((r: any) => r.id === restored.region.id));
+  if (event.detail.beforeTargetSnapshot) {
+    const previous = event.detail.beforeTargetSnapshot;
+    assertBatchHardLimit(previous.kits, previous.region,
+      current.config.regions.find((r: any) => r.id === previous.region.id));
+  }
   await tx.update(batches).set({ snapshot: restored }).where(eq(batches.id, source.id));
   await tx.update(batches).set(event.detail.beforeTargetSnapshot ? {
     snapshot: { ...event.detail.beforeTargetSnapshot,

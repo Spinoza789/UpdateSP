@@ -1,6 +1,6 @@
 export const EU_BATCH_COUNTRIES = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE".split(" ");
 export type SupplierScope = "admin" | "organiser";
-export interface BatchRegion { id: string; name: string; countries: string[]; targetKits: number }
+export interface BatchRegion { id: string; name: string; countries: string[]; targetKits: number; hardLimitKits?: number | null; autoPrepare?: boolean }
 export interface BatchConfig { enabled: boolean; telegramAlerts: boolean; showToMembers?: boolean; regions: BatchRegion[] }
 export interface BatchItem { productId: string; productName: string; quantity: number; unitPrice: string; lineTotal: string }
 export interface BatchOrder { id: string; code: string; username: string; country: string; kits: number; paidAt: string | null; orderingAt: string; historicalReviewed: boolean; items: BatchItem[]; /** grandTotal, creditsApplied, amountDue, productSubtotal, vendorShipping, currency, groupBuyId */ money?: string[]; fullOrder?: BatchOrder; allocationRootBatchId?: string }
@@ -9,7 +9,7 @@ export interface BatchCorrectionNote {
   reason: string; createdAt: string; actor: string;
   undoneAt?: string; undoneBy?: string; undoReason?: string;
 }
-export interface BatchProposal { region: BatchRegion; token: string; orders: BatchOrder[]; kits: number; queuedKits: number; remainingKits: number; ready: boolean; readyAt: string | null; products: {productId: string; productName: string; quantity: number}[]; allQueued?: BatchProposal; corrections?: BatchCorrectionNote[]; refundRemovals?: { refundId: string; orderCode: string; kits: number }[] }
+export interface BatchProposal { region: BatchRegion; token: string; orders: BatchOrder[]; kits: number; queuedKits: number; remainingKits: number; ready: boolean; readyAt: string | null; limitBlocked?: boolean; products: {productId: string; productName: string; quantity: number}[]; allQueued?: BatchProposal; corrections?: BatchCorrectionNote[]; refundRemovals?: { refundId: string; orderCode: string; kits: number }[] }
 export interface AddedBatchQuantity { orderId: string; productId: string; productName: string; quantity: number }
 export interface SupplierMoveUndo { eventId: string; targetReference: string; expectedTargetToken: string; kits: number; orderCodes: string[] }
 export interface LateBatchOrder { orderId: string; kits: number; addedAt: string }

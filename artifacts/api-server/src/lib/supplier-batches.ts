@@ -12,7 +12,7 @@ import { supplierTxt, type TxtBlock, type SupplierContact } from "./supplier-txt
 import { getActiveWholesaleVendor } from "../routes/config";
 import { COUNTRY_CODE_TO_NAME, normalizeToCode } from "./country-utils";
 import { calcPackageShipping, pickRegionForCountry } from "./wholesale-shipping";
-import { SupplierBatchError, validateRegions, eligibleOrder, isDirectSupplierOrder, snapshotOrder, collectSupplierQueues, propose, fingerprint, csv, regionalBatchReference, type SupplierConfig, type BatchOrder } from "./supplier-batches-model";
+import { SupplierBatchError, assertBatchHardLimit, validateRegions, eligibleOrder, isDirectSupplierOrder, snapshotOrder, collectSupplierQueues, propose, fingerprint, csv, regionalBatchReference, type SupplierConfig, type BatchOrder } from "./supplier-batches-model";
 import { canonicalUsername, type UpdateActor } from "./group-buy-updates-model";
 import { lockHalfKitMoney } from "./half-kit-lock";
 import { assertNoActiveRefunds } from "./refund-mutation-guard";
@@ -93,7 +93,7 @@ async function state(tx: any, group: any, reconcile = true) {
   }
   const readiness: Record<string, any> = { ...((data.stored?.readiness ?? {}) as any) };
   const proposals = data.config.regions.map(region => {
-    const p = propose(queues.get(region.id) ?? [], region.targetKits);
+    const p = propose(queues.get(region.id) ?? [], region.targetKits, false, region.hardLimitKits);
     const token = fingerprint({ version: data.stored?.version ?? 0, region, orders: p.orders });
     const prior = readiness[region.id];
     let readyAt = prior?.readyAt ?? null;
@@ -112,7 +112,7 @@ async function state(tx: any, group: any, reconcile = true) {
         }
       } else { delete readiness[region.id]; readyAt = null; }
     }
-    const all = propose(queues.get(region.id) ?? [], region.targetKits, true);
+    const all = propose(queues.get(region.id) ?? [], region.targetKits, true, region.hardLimitKits);
     return { ...p, region, token, readyAt, allQueued: {
       ...all, region, readyAt,
       token: fingerprint({ version: data.stored?.version ?? 0, region, orders: all.orders, includeAll: true }),
@@ -122,7 +122,7 @@ async function state(tx: any, group: any, reconcile = true) {
     for (const p of proposals) {
       const ready = readiness[p.region.id];
       if (!ready?.eventId) continue;
-      const text = `${group.name}: ${p.region.name} supplier batch ready — ${p.kits} kits / target ${p.region.targetKits}. Review and prepare the batch in the group-buy supplier batches panel. No supplier order has been placed.`;
+      const text = `${group.name}: ${p.region.name} supplier batch ready — ${p.kits} kits / target ${p.region.targetKits}. ${p.region.autoPrepare ? "Automatic preparation is enabled; review the prepared batches in the supplier batches panel." : "Review and prepare the batch in the group-buy supplier batches panel."} No supplier order has been placed.`;
       const inserted = await tx.insert(events).values({
         id: ready.eventId, groupBuyId: id, kind: "ready",
         detail: { region: p.region.name, kits: p.kits, target: p.region.targetKits, readyAt: ready.readyAt, thresholdPaidAt: ready.thresholdPaidAt, text },
@@ -216,6 +216,7 @@ export async function confirmSupplierBatch(id: string, actor: UpdateActor, body:
     const { allQueued, ...targetProposal } = regionProposal;
     const p = body.includeAll === true ? allQueued : targetProposal;
     if (!p || !p.ready || p.token !== body.token || existing) throw new SupplierBatchError("This preview changed or is no longer ready. Reload and review the latest orders before confirming.");
+    assertBatchHardLimit(p.kits, p.region);
     await assertNoActiveRefunds(tx, p.orders.map(o => o.id));
     const sequence = Math.max(0, ...current.batches.map((b: any) => b.sequence)) + 1;
     const batchId = randomUUID(), reference = regionalBatchReference(`GB-${id.slice(0, 8)} / ${String(sequence).padStart(3, "0")}`, p.region);
@@ -256,6 +257,7 @@ export async function appendSupplierBatch(id: string, batchId: string, actor: Up
       throw new SupplierBatchError("Choose a prepared batch for the same region and countries.");
     await assertNoActiveRefunds(tx, p.orders.map(o => o.id));
     const combined = propose([...batch.snapshot.orders, ...p.orders], batch.snapshot.region.targetKits, true);
+    assertBatchHardLimit(combined.kits, batch.snapshot.region, p.region);
     const snapshot = { ...batch.snapshot, ...combined, queuedKits: combined.kits, remainingKits: 0,
       token: fingerprint({ previous: batch.snapshot.token, requestKey, orders: combined.orders }) };
     const updated = await tx.update(batches).set({ snapshot }).where(and(
@@ -284,6 +286,14 @@ async function preparedRefresh(tx: any, group: any, batchId: string, expectedBat
   const actual = await tx.select().from(allocations).where(eq(allocations.batchId, batchId))
     .orderBy(asc(allocations.orderId)).for("update");
   const review = buildPreparedBatchRefresh(batch, data, actual, group.currency ?? "USD");
+  if (review.after) {
+    try { assertBatchHardLimit(review.after.kits, batch.snapshot.region, data.config.regions.find(r => r.id === batch.snapshot.region.id)); }
+    catch (error) {
+      if (!(error instanceof SupplierBatchError)) throw error;
+      review.blockers.push({ orderId: null, code: null, reason: error.message });
+      review.canConfirm = false;
+    }
+  }
   return { batch, review };
 }
 export async function previewSupplierBatchRefresh(id: string, batchId: string, actor: UpdateActor, body: any, database = db) {
@@ -470,6 +480,8 @@ export async function moveSupplierBatchOrders(id: string, batchId: string, actor
       token: fingerprint({ previous: target.snapshot.token, requestKey, orders: moved.orders }),
       corrections: [...(target.snapshot.corrections ?? []), ...moved.corrections],
     } : moved;
+    assertBatchHardLimit(destinationSnapshot.kits, destinationSnapshot.region,
+      current.config.regions.find(r => r.id === destinationSnapshot.region.id));
     if (target) await tx.update(batches).set({ snapshot: destinationSnapshot }).where(eq(batches.id, targetId));
     else await tx.insert(batches).values({ id: targetId, groupBuyId: id, sequence, reference, previewToken: requestKey,
       snapshot: moved, createdBy: actor.username });
@@ -627,5 +639,34 @@ export async function exportSupplierTxt(id: string, actor: UpdateActor, input: {
 }
 /** Used by HTTP/background reconciliation. Network delivery is a separate worker. */
 export async function reconcileSupplierGroup(id: string, database = db) {
-  return locked(id, null, (tx, group) => state(tx, group), database);
+  return locked(id, null, async (tx, group) => {
+    const current = await state(tx, group);
+    if (!current.config.enabled || !current.config.regions.some(r => r.autoPrepare)) return current;
+    const data = await load(tx, id);
+    const { queues } = collectSupplierQueues(data);
+    let sequence = Math.max(0, ...data.history.map((b: any) => b.sequence)), prepared = 0;
+    for (const region of data.config.regions.filter(r => r.autoPrepare)) {
+      let queue = queues.get(region.id) ?? [];
+      while (queue.length) {
+        const proposal = propose(queue, region.targetKits, false, region.hardLimitKits);
+        if (!proposal.ready || !proposal.orders.length) break;
+        assertBatchHardLimit(proposal.kits, region);
+        await assertNoActiveRefunds(tx, proposal.orders.map(o => o.id));
+        const batchId = randomUUID();
+        const reference = regionalBatchReference(`GB-${id.slice(0, 8)} / ${String(++sequence).padStart(3, "0")}`, region);
+        const token = fingerprint({ version: data.stored?.version ?? 0, region, orders: proposal.orders, automatic: true });
+        await tx.insert(batches).values({ id: batchId, groupBuyId: id, sequence, reference, previewToken: token,
+          state: "prepared", snapshot: { ...proposal, region, token, readyAt: new Date().toISOString() }, createdBy: "supplier-batch-auto" });
+        await tx.insert(allocations).values(proposal.orders.map(o => ({ orderId: o.id, batchId })));
+        await audit(tx, id, "supplier-batch-auto", "auto_prepared", {
+          batchId, reference, orderIds: proposal.orders.map(o => o.id), kits: proposal.kits,
+        });
+        const assigned = new Set(proposal.orders.map(o => o.id));
+        queue = queue.filter(o => !assigned.has(o.id));
+        prepared++;
+      }
+    }
+    // Reservations and audit are atomic; no customer order, payment or supplier placement is changed.
+    return prepared ? state(tx, group) : current;
+  }, database);
 }

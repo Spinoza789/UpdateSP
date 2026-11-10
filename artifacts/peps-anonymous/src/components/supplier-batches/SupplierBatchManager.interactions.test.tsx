@@ -32,6 +32,31 @@ const fresh = () => ({
 const batch = (exceptions: unknown[]) => ({ id: "B1", reference: "SB-001", state: "prepared", createdAt: "2026-10-02T10:00:00Z",
   createdBy: "staff", orderedAt: null, releasedAt: null, releaseReason: null, snapshot: proposal("tok-A"), exceptions });
 
+for (const scope of ["admin", "organiser"] as const) test(`${scope} saves hard limits and auto-prepare without member messaging`, async () => {
+  state = fresh();
+  await mount(scope);
+  assert.doesNotMatch(document.body.textContent!, /Message batch members/);
+  await click("checkbox-region-hard-limit-0");
+  await change("input-region-hard-limit-0", "5");
+  await click("checkbox-region-auto-prepare-0");
+  await click("button-save-supplier-config");
+  const save = requests.find(r => r.method === "PUT")!;
+  assert.ok(save);
+  assert.deepEqual((save.body as any).config.regions[0], {
+    ...region, hardLimitKits: 5, autoPrepare: true,
+  });
+});
+
+test("blocks a hard limit below target without sending settings", async () => {
+  state = fresh();
+  await mount("admin");
+  await click("checkbox-region-hard-limit-0");
+  await change("input-region-hard-limit-0", "1");
+  await click("button-save-supplier-config");
+  assert.match(document.body.textContent!, /hard limit must be at least/i);
+  assert.equal(requests.filter(r => r.method === "PUT").length, 0);
+});
+
 test("late-order shortcut selects only the appended six kits and released batches are collapsed", async () => {
   state = fresh();
   const makeOrder = (id: string, kits: number) => ({ ...order, id, code: id, kits,

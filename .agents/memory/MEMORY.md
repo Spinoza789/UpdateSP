@@ -9,9 +9,8 @@
 - [Linked Telegram identity](telegram-linked-identity.md) — website handles may differ from bot-linked Telegram usernames; show separately, never infer or rename account identities.
 - [Discord signup verification policy](discord-signup-verification-policy.md) — successful Discord OAuth replaces email verification and CAPTCHA for new Discord accounts; invite-only signup still applies.
 - [Browser and TypeScript tests](browser-test-import-order.md) — jsdom import order, Nix Chromium, API fixture routing and Node 20 runner notes.
-- [Lab imports and reports](lab-import-reference.md) — provider restrictions, extraction pitfalls, bloodwork parsing, certificate compression and blob-free lists.
-- [GB entry-fee join gate](gb-entry-fee-join-gate.md) — membership only inserted after fee confirmed (402 ENTRY_FEE_REQUIRED gate in join handler); any new join path must route through same gate.
-- [GB entry-fee confirm atomicity](gb-entry-fee-confirm-atomicity.md) — confirm status-update + membership-grant must be one transaction w/ idempotent retry, or payment shows confirmed forever with no membership.
+- [Lab imports](lab-import-reference.md) / [report policies](lab-report-policies.md) — extraction pitfalls, provider restrictions, batch/dose matching and measured potency.
+- [GB fee gate](gb-entry-fee-join-gate.md) / [atomic confirmation](gb-entry-fee-confirm-atomicity.md) — grant membership only after payment; confirmation and membership must commit together.
 - [Duplicated join-modal entry-fee gap](duplicated-join-modal-entry-fee-gap.md) — Groups.tsx & CustomerPortal.tsx each have their own copy of "Join a Group Buy"; a handler fix ported to one silently missed the other.
 - [PageLayout Portal-nav vs DashboardShell](pagelayout-portal-nav-vs-dashboardshell.md) — /order & /review show Hub/Orders/GB sidebar labels even for guests; only search/bell/credits header row signals real DashboardShell chrome.
 - [Production startup migrations](prod-startup-migrations.md) — How production schema changes work and what goes wrong when columns are missing.
@@ -51,7 +50,6 @@
 - [Wholesale shared shipping split integrity](wholesale-shared-shipping-split.md) — per-member vendorShipping is a cross-member split snapshotted at lock; never recompute from one order; block shared-order edits + reconcile grandTotal from member shipping_share snapshot.
 - [Wholesale onward tracking (masked)](wholesale-onward-tracking.md) — mask server-side in buildShareResponse; UI gate on server canEditTracking not creator flag; conditional writes + per-number guard on async fetch.
 - [Wholesale per-member onward address](wholesale-onward-member-address.md) — each member's onward forwarding address is private to recipient+owner only (gated in buildShareResponse); recipient can't set one; not vendor-priced; conditional status-gated write.
-- [Lab-report policies](lab-report-policies.md) — batch and exact-dose matching, measured potency versus label strength, warehouse prefixes, title consistency and purity thresholds.
 - [Wholesale MAIN-parcel masked tracking](wholesale-main-tracking.md) — orders.trackingNumber is truth, share.mainTracking* is a cache keyed to it; non-recipients get masked+number-HIDDEN (privacy note, like onward); conditional cache-key writes + dirty-rerun + scan self-heals stale terminal keys; never fetch in the polled GET.
 - [Admin order tracking write side-effects](admin-order-tracking-notify-side-effects.md) — PATCH tracking auto-sets Shipped + notifies customer with no old/new compare; bulk/group tracking writes MUST skip members already at the value or they spam duplicate notifications.
 - [Wholesale order shipping server-authority](wholesale-order-shipping-authority.md) — customer wholesale POST/PUT must recompute vendorShipping from tier table (never trust client); fallback-to-client only for non-calculable regions is intentional.
@@ -147,7 +145,7 @@
 - [Shared-order names](shared-order-organiser-name.md) — full name required in delivery details only, not creation or organiser rules; preserve recipient privacy.
 - [Shared-order supplier choice](shared-order-supplier-choice.md) — organiser selects Uther, JBG/YT or both; never silently remove saved member items when changing suppliers.
 - [Supplier testing policy](supplier-testing-policy.md) — JBG groups per product and physical batch; placed paid/unpaid orders qualify across wholesale, shared orders and group buys.
-- [Supplier batch policies](supplier-batch-export-policy.md) — full FS3 exports, same-region prepared additions, staff readiness alerts and EU/US/GB reference prefixes.
+- [Supplier batch policies](supplier-batch-export-policy.md) — whole-order hard caps, auto-prepare for review only, staff alerts, exports and regional references.
 - [Reshipper payout method](reshipper-payout-method.md) — Admin records external transfers by TXID; no wallet connection for new payouts.
 - [Single-vial pricing](vial-shop-currency-policy.md) — keep seller-currency prices throughout checkout; show locked crypto settlement separately; never add unlike currencies.
 - [GB bank transfers](group-buy-bank-transfer-policy.md) — UK and international organiser details; member “sent” notifications require manual receipt confirmation.
