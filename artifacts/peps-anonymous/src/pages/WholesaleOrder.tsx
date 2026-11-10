@@ -15,6 +15,7 @@ import { WholesaleJourney, getWholesaleNextStep, getWholesaleSummaryTotal, getWh
 import "@/components/wholesale/WholesaleJourney.css";
 import { WholesaleProductSearch } from "@/components/wholesale/WholesaleProductSearch";
 import { SupplierMessage } from "@/components/wholesale/SupplierMessage";
+import { FreeShippingNotice } from "@/components/wholesale/FreeShippingNotice";
 import { applyWholesaleFreeShipping } from "@/lib/wholesale-free-shipping";
 
 import { getWholesaleLabSupplier, loadWholesaleLabAvailability } from "@/lib/wholesale-lab-reports";
@@ -612,6 +613,8 @@ export default function WholesaleOrder() {
                   : "Choose your supplier first. Products and shipping stay with the supplier you select."}
               </p>
             </div>
+
+            <FreeShippingNotice vendor={vendor} />
 
             {draftRestored && !draftDismissed && (
               <motion.div
