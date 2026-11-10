@@ -650,7 +650,7 @@ export default function Review() {
               {vendorShippingIsKnown && (
                 <div className="flex justify-between text-sm text-gray-400">
                   <span>Vendor Shipping</span>
-                  <span>{formatPrice(vendorShippingAmount!)}</span>
+                  <span>{isWholesale && vendorShippingAmount === 0 ? "Free shipping" : formatPrice(vendorShippingAmount!)}</span>
                 </div>
               )}
               {vendorShippingIsTbd && (

@@ -5,6 +5,7 @@ import { eq, desc, count, sql } from "drizzle-orm";
 import { invalidateTelegramCache, getTelegramStatus, sendAdminTestMessage, setWebhook, buildWebhookUrl } from "../lib/telegram";
 import { requireAdmin } from "../middleware/require-admin";
 import { getWholesaleVendorMessages } from "../lib/wholesale-vendor-messages";
+import { parseFreeShippingThreshold } from "../lib/wholesale-shipping";
 
 const router: IRouter = Router();
 
@@ -325,6 +326,7 @@ export interface WholesaleVendorRegion {
 }
 
 export interface WholesaleVendor {
+  freeShippingThreshold?: number | null;
   wholesaleMessage?: string;
   legacyCatalogueVendor?: string;
   enabled?: boolean;
@@ -407,10 +409,14 @@ router.post("/admin/wholesale-vendors", async (req, res): Promise<void> => {
   if (!name?.trim() || !Array.isArray(tiers) || !Array.isArray(regions)) {
     res.status(400).json({ error: "name, tiers, and regions are required" }); return;
   }
+  let freeShippingThreshold: number | null;
+  try { freeShippingThreshold = parseFreeShippingThreshold(req.body.freeShippingThreshold ?? null); }
+  catch (error) { res.status(400).json({ error: (error as Error).message }); return; }
   const vendors = await getVendors();
   const newVendor: WholesaleVendor = {
     id: Date.now().toString(36),
     name: name.trim(),
+    freeShippingThreshold,
     tiers,
     tierBounds: Array.isArray(tierBounds) ? tierBounds : tiers.map((_, i) => (i + 1) * 5),
     maxKitsPerPackage: typeof maxKitsPerPackage === "number" ? maxKitsPerPackage : 25,
@@ -429,6 +435,10 @@ router.put("/admin/wholesale-vendors/:id", async (req, res): Promise<void> => {
   const vendors = await getVendors();
   const idx = vendors.findIndex(v => v.id === id);
   if (idx === -1) { res.status(404).json({ error: "Vendor not found" }); return; }
+  if (Object.prototype.hasOwnProperty.call(req.body, "freeShippingThreshold")) {
+    try { vendors[idx].freeShippingThreshold = parseFreeShippingThreshold(req.body.freeShippingThreshold); }
+    catch (error) { res.status(400).json({ error: (error as Error).message }); return; }
+  }
   if (name?.trim()) vendors[idx].name = name.trim();
   if (Array.isArray(tiers)) vendors[idx].tiers = tiers;
   if (Array.isArray(tierBounds)) vendors[idx].tierBounds = tierBounds;

@@ -15,6 +15,7 @@ import { WholesaleJourney, getWholesaleNextStep, getWholesaleSummaryTotal, getWh
 import "@/components/wholesale/WholesaleJourney.css";
 import { WholesaleProductSearch } from "@/components/wholesale/WholesaleProductSearch";
 import { SupplierMessage } from "@/components/wholesale/SupplierMessage";
+import { applyWholesaleFreeShipping } from "@/lib/wholesale-free-shipping";
 
 import { getWholesaleLabSupplier, loadWholesaleLabAvailability } from "@/lib/wholesale-lab-reports";
 
@@ -62,6 +63,7 @@ interface WholesaleVendorRegion {
 }
 
 interface WholesaleVendor {
+  freeShippingThreshold?: number | null;
   legacyCatalogueVendor?: string;
   wholesaleMessage?: string;
   id: string;
@@ -463,16 +465,17 @@ export default function WholesaleOrder() {
   const calcTotalShipping = (kits: number, region: WholesaleVendorRegion): number | null => {
     if (!vendor || region.customNote || region.priceNote || !region.prices) return null;
     const maxPkg: number = vendor.maxKitsPerPackage ?? 25;
+    if (!Number.isFinite(maxPkg) || maxPkg <= 0 || !Number.isFinite(kits)) return null;
     let remaining = kits;
     let total = 0;
     while (remaining > 0) {
       const inThisPackage = Math.min(remaining, maxPkg);
       const price = calcPackageShipping(inThisPackage, region);
-      if (price === null) return null;
+      if (price === null || !Number.isFinite(price) || price < 0) return null;
       total += price;
       remaining -= inThisPackage;
     }
-    return total;
+    return applyWholesaleFreeShipping(total, productSubtotal, vendor.freeShippingThreshold);
   };
 
   const selectedRegion = vendor && selectedRegionIdx !== null ? vendor.regions[selectedRegionIdx] ?? null : null;
@@ -1162,7 +1165,7 @@ export default function WholesaleOrder() {
                   ) : null;
                 })()}
                 <p className="text-[11px] px-1" style={{ color: "var(--t-muted)" }}>
-                  Vendor shipping is charged separately based on your total kit quantity. Prices shown in USD.
+                  Vendor shipping is based on your total kit quantity{vendor?.freeShippingThreshold ? `, with free shipping from $${vendor.freeShippingThreshold.toFixed(2)} in products from this vendor` : ""}. Prices shown in USD.
                 </p>
               </section>
               </div>
@@ -1529,7 +1532,7 @@ export default function WholesaleOrder() {
                     <div className="flex justify-between text-xs">
                       <span style={{ color: "var(--t-muted)" }}>Vendor shipping ({selectedRegion?.name})</span>
                       <span className="font-semibold tabular-nums" style={{ color: "var(--t-text)" }}>
-                        ${computedVendorShipping.toFixed(2)}
+                        {computedVendorShipping === 0 ? "Free shipping" : `$${computedVendorShipping.toFixed(2)}`}
                       </span>
                     </div>
                   )}

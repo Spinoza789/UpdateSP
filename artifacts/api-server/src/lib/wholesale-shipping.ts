@@ -17,10 +17,22 @@ export interface ShippingVendorRegion {
 export interface ShippingVendor {
   id: string;
   name: string;
+  freeShippingThreshold?: number | null;
   tiers: string[];
   tierBounds?: number[];        // upper kit-count for each tier
   maxKitsPerPackage?: number;   // kits before cycling to the next package (default 25)
   regions: ShippingVendorRegion[];
+}
+
+// Null disables the offer. Reject malformed settings rather than creating an
+// accidental free-shipping offer through numeric coercion.
+export function parseFreeShippingThreshold(value: unknown): number | null {
+  if (value === null) return null;
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0
+    || value > 99_999_999.99 || Math.abs(value * 100 - Math.round(value * 100)) > 0.000001) {
+    throw new Error("Free-shipping threshold must be a positive USD amount with at most two decimal places, or blank to disable.");
+  }
+  return value;
 }
 
 export function getTierIndex(kits: number, tierBounds: number[]): number {
@@ -53,6 +65,7 @@ export function calcTotalShipping(
   vendor: ShippingVendor,
   region: ShippingVendorRegion,
   kits: number,
+  productSubtotal?: number,
 ): number | null {
   if (region.customNote || region.priceNote || !region.prices) return null;
   if (kits <= 0) return 0;
@@ -69,6 +82,10 @@ export function calcTotalShipping(
     total += price;
     remaining -= inThisPackage;
   }
+  const threshold = vendor.freeShippingThreshold;
+  if (typeof threshold === "number" && Number.isFinite(threshold) && threshold > 0
+    && typeof productSubtotal === "number" && Number.isFinite(productSubtotal) && productSubtotal >= 0
+    && Math.round(productSubtotal * 100) >= Math.round(threshold * 100)) return 0;
   return Number(total.toFixed(2));
 }
 

@@ -92,7 +92,9 @@ async function resolveWholesaleShipping(
     (s: number, li: { quantity?: number | string }) => s + Math.max(0, Number(li?.quantity) || 0),
     0,
   );
-  const computed = calcTotalShipping(vendor as unknown as ShippingVendor, picked.region, kits);
+  const subtotal = items.reduce((sum: number, item: { quantity?: unknown; unitPrice?: unknown }) =>
+    sum + Math.round(Math.max(0, Number(item.quantity) || 0) * Math.max(0, Number(item.unitPrice) || 0) * 100), 0) / 100;
+  const computed = calcTotalShipping(vendor as unknown as ShippingVendor, picked.region, kits, subtotal);
   return computed !== null ? computed : clientVal;
 }
 

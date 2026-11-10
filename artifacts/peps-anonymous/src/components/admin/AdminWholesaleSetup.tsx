@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, Building2, Package, Pencil, Plus, RefreshCw, Truck } from "lucide-react";
 import AdminMultiVendorSetup, { isVendorEnabled } from "./AdminMultiVendorSetup";
+import { WholesaleFreeShipping } from "./WholesaleFreeShipping";
 
 export interface WholesaleSetupVendor {
+  freeShippingThreshold?: number | null;
   id: string;
   name: string;
   enabled?: boolean;
@@ -285,6 +287,8 @@ export function AdminWholesaleSetup({ secret, renderVendorModal }: SetupProps) {
                   </tbody>
                 </table>
               </div>
+              <WholesaleFreeShipping key={`${selected.id}:${selected.freeShippingThreshold ?? ""}`} vendor={selected} secret={secret}
+                onSaved={threshold => setVendors(current => current?.map(v => v.id === selected.id ? { ...v, freeShippingThreshold: threshold } : v) ?? [])} />
             </article>
           </div>
 

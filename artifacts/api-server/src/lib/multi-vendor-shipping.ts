@@ -2,7 +2,7 @@ import { calcTotalShipping, pickRegionForCountry, splitShipping, type ShippingVe
 
 export type NamedVendor = ShippingVendor & { id: string; name: string };
 export type VendorShippingPart = { vendorId: string; vendorName: string; kits: number; shipping: number | null };
-type Item = { vendorId?: string | null; quantity: number };
+type Item = { vendorId?: string | null; quantity: number; unitPrice?: number };
 export type VendorShippingSplit = Record<string, "buyers" | "all_members">;
 
 export function parseVendorShippingSplit(value: unknown, vendors: { id: string }[]): VendorShippingSplit {
@@ -46,9 +46,15 @@ export function quoteVendorShipping(
     const weights = members.map(items => items.reduce((s, i) => s + ((i.vendorId || fallbackVendorId || "") === id ? Math.max(0, Number(i.quantity) || 0) : 0), 0));
     const splitWeights = members.map(items => vendorShippingWeight(items, id, fallbackVendorId, rules));
     const kits = weights.reduce((s, n) => s + n, 0);
+    // These are server-validated selling prices, not supplier costs or member
+    // totals after credits/fees. Never count another vendor toward this offer.
+    const subtotalCents = members.flat().reduce((sum, item) =>
+      (item.vendorId || fallbackVendorId || "") === id
+        ? sum + Math.round(Math.max(0, Number(item.quantity) || 0) * Math.max(0, Number(item.unitPrice) || 0) * 100)
+        : sum, 0);
     const region = vendor && pickRegionForCountry(vendor, country);
     const shipping = ids.length === 1 && singleVendorOverride != null && singleVendorOverride >= 0
-      ? singleVendorOverride : (vendor && region ? calcTotalShipping(vendor, region.region, kits) : null);
+      ? singleVendorOverride : (vendor && region ? calcTotalShipping(vendor, region.region, kits, subtotalCents / 100) : null);
     const part = { vendorId: id, vendorName: vendor?.name ?? "Unavailable vendor", kits, shipping };
     breakdown.push(part);
     const buyers = splitWeights.flatMap((n, index) => n > 0 ? [index] : []);
