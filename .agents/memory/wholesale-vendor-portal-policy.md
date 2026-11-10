@@ -9,6 +9,16 @@ Vendors must see only their own wholesale orders and supplier cost prices, never
 
 **How to apply:** Enforce ownership and field privacy server-side, not only through dashboard presentation.
 
+Wholesale Setup price CSVs must keep supplier cost and customer selling price
+separate and support filling missing prices without repricing existing orders.
+
+**Why:** The user explicitly chose “Both cost and selling price” for downloading,
+editing and importing the selected supplier's prices.
+
+**How to apply:** Export the full assigned active catalogue, independent of table
+filters. Treat blank cells as no change, match stable product IDs within the
+selected supplier, preview before applying, and preserve stock and availability.
+
 Supplier payment receipts must retain the submitted supplier-cost breakdown as it
 was when recorded. Never reconstruct missing historical receipt detail from a
 current shipment, and never include Admin-only member identities in vendor history.

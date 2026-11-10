@@ -6,6 +6,7 @@ import { requireWholesale } from "../middleware/require-wholesale";
 import { requireAdmin } from "../middleware/require-admin";
 import { normalizeWholesalePriceNote } from "../lib/wholesale-price-note";
 import fs3CostImportRouter from "./fs3-cost-import";
+import wholesalePriceCsvRouter from "./wholesale-price-csv";
 import {
   hasWholesaleBatchAccess,
   selectPreferredBatchCodes,
@@ -14,6 +15,7 @@ import {
 
 const router: IRouter = Router();
 router.use(fs3CostImportRouter);
+router.use(wholesalePriceCsvRouter);
 
 // GET /api/products - returns all active GLOBAL products (sourceGroupBuyId IS NULL)
 router.get("/products", async (_req, res): Promise<void> => {

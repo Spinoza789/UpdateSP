@@ -4,6 +4,7 @@ import { Fs3SupplierCostImport } from "./Fs3SupplierCostImport";
 import { JbgYtCatalogueImport } from "./JbgYtCatalogueImport";
 import { wholesaleProfit } from "@/lib/wholesale-profit";
 import { SupplierMessageEditor } from "./SupplierMessageEditor";
+import { WholesalePriceCsv } from "./WholesalePriceCsv";
 
 // Contract:
 //  GET   /api/admin/wholesale-vendors                 -> { vendors: AdminVendor[], activeVendorId: string|null }
@@ -200,6 +201,9 @@ export function AdminMultiVendorSetup({ secret, selectedVendorId, onVendorsChang
         <p>Each catalogue product is <strong>one offer from one vendor</strong>. To sell the same item from a second vendor, create a separate catalogue product with Add Product and assign it here. Supplier cost is admin-only and never shown to members.</p>
       </div>
 
+      {vendors.filter(v => v.id === (selectedVendorId ?? filter)).map(v => <WholesalePriceCsv key={`prices-${v.id}`}
+        secret={secret} vendorId={v.id} vendorName={v.name} onApplied={load}
+        disabledReason={importDisabledReason} onBusyChange={setImportBusy} />)}
       {importVendor && <Fs3SupplierCostImport key={importVendor.id} secret={secret}
         vendorId={importVendor.id} vendorName={importVendor.name} onApplied={load}
         disabledReason={importDisabledReason} onBusyChange={setImportBusy} />}

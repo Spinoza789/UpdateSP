@@ -96,6 +96,8 @@ app.use("/api/organiser/group-buys/:id/products/stock", express.json({ limit: "1
 app.use("/api/organiser/group-buys/:id/order-revisions", express.json({ limit: "2mb" }));
 // Large, bounded per-order payout/review manifests; not binary uploads.
 app.use("/api/admin/reshippers/:username/gb/:gbId/payouts", express.json({ limit: "2mb" }));
+// Plain CSV text (up to 1 MB), including JSON escaping, for reviewed catalogue-price updates.
+app.use("/api/admin/wholesale-products/price-csv", express.json({ limit: "2mb" }));
 // Bounded purchased-line manifests and cumulative receipts, not binary uploads.
 app.use([
   "/api/admin/group-buys/:id/supplier-fulfilment",
