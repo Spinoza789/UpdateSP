@@ -20,6 +20,7 @@ import Review from "@/pages/Review";
 import Success from "@/pages/Success";
 import Admin from "@/pages/Admin";
 import VendorPortal from "@/pages/VendorPortal";
+import PepsAdmin from "@/pages/PepsAdmin";
 import VendorLogin from "@/pages/VendorLogin";
 import ProtoypeAdmin from "@/pages/ProtoypeAdmin";
 import JanoshikReceiver from "@/pages/JanoshikReceiver";
@@ -327,6 +328,8 @@ function SiteContent() {
   if (surface === "blocked") return <SiteNotFound />;
   if (surface === "vendor") return (
     <Switch>
+      <Route path="/vendor/admin" component={PepsAdmin} />
+      <Route path="/vendor/admin/" component={PepsAdmin} />
       <Route path="/" component={VendorPortal} />
       <Route path="/vendor" component={VendorPortal} />
       <Route path="/vendor/" component={VendorPortal} />

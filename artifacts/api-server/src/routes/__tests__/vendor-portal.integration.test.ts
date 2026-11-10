@@ -153,6 +153,47 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect((await request("/admin/vendor-portal/submit", undefined, body, true)).status).toBe(200);
     return { body, preview: preview.data, row: (await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.sourceKey, preview.data.shipments[0].id)))[0] };
   }
+  it("gives only Admin a paginated all-vendor order view and vendor-scoped filtering", () => fixture(async f => {
+    const { row } = await submit(f);
+    await f.tx.insert(store.vendorSubmissionsTable).values({
+      ...row, id: randomUUID(), sourceKey: `fixture-other-${randomUUID()}`, vendorId: "vendor-b",
+    });
+    expect((await request("/admin/vendor-portal/orders", f.a)).status).toBe(403);
+    expect((await request(`/admin/vendor-portal/orders/${row.id}`, f.a, {action:"processing"}, false, "PATCH")).status).toBe(403);
+    const all = await request("/admin/vendor-portal/orders?limit=1&page=1", undefined, undefined, true);
+    expect(all.status).toBe(200);
+    expect(all.data.orders).toHaveLength(1);
+    expect(all.data.total).toBeGreaterThanOrEqual(2);
+    expect(all.data.vendors.map((v:any) => v.id)).toEqual(["vendor-a", "vendor-b"]);
+    const filtered = await request("/admin/vendor-portal/orders?vendorId=vendor-a", undefined, undefined, true);
+    expect(filtered.status).toBe(200);
+    expect(filtered.data.orders.every((o:any) => o.vendorId === "vendor-a")).toBe(true);
+    expect(filtered.data.orders.find((o:any) => o.id === row.id)).toMatchObject({reference:f.code,vendorName:"vendor-a",totalCost:row.snapshot.totalCost});
+    expect((await request("/admin/vendor-portal/orders?vendorId=unknown", undefined, undefined, true)).status).toBe(400);
+    expect((await request("/admin/vendor-portal/orders?page=0", undefined, undefined, true)).status).toBe(400);
+    const own = await request("/vendor/orders", f.a);
+    expect(own.data.orders.every((o:any) => o.id === row.id || o.reference !== f.code)).toBe(true);
+  }));
+  it("lets Admin manage fulfilment without vendor impersonation while preserving stale and terminal guards", () => fixture(async f => {
+    const { row } = await submit(f);
+    const path = `/admin/vendor-portal/orders/${row.id}`;
+    expect((await request(path, undefined, {action:"processing"}, true, "PATCH")).status).toBe(200);
+    expect((await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id,f.orderId)))[0].status).toBe("Processing");
+    expect((await request(path, undefined, {action:"tracking",trackingNumber:"ADMIN123456",carrier:"DHL"}, true, "PATCH")).status).toBe(200);
+    const shipped = (await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id,f.orderId)))[0];
+    expect(shipped).toMatchObject({status:"Shipped",trackingNumber:"ADMIN123456",paymentStatus:"confirmed"});
+    expect((await request(path, undefined, {action:"processing"}, true, "PATCH")).status).toBe(409);
+    expect((await request(path, undefined, {action:"paid"}, true, "PATCH")).status).toBe(400);
+    await f.tx.update(store.ordersTable).set({status:"Completed"}).where(eq(store.ordersTable.id,f.orderId));
+    expect((await request(path, undefined, {action:"tracking",trackingNumber:"ADMIN123456",carrier:"DHL"}, true, "PATCH")).status).toBe(409);
+  }));
+  it("rejects Admin fulfilment of stale supplier snapshots", () => fixture(async f => {
+    const { row } = await submit(f);
+    await f.tx.update(store.orderLineItemsTable).set({quantity:"3"}).where(eq(store.orderLineItemsTable.orderId,f.orderId));
+    const result = await request(`/admin/vendor-portal/orders/${row.id}`, undefined, {action:"processing"}, true, "PATCH");
+    expect(result.status).toBe(409);
+    expect((await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id,f.orderId)))[0].status).toBe("Submitted");
+  }));
   it("previews and submits a paid order without an email address", () => fixture(async f => {
     await f.tx.update(store.ordersTable).set({ shippingEmail: null }).where(eq(store.ordersTable.id, f.orderId));
     const { preview, row } = await submit(f);
@@ -504,7 +545,8 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect(result.data.orders[0].items[0]).toMatchObject({ unitCost: "20.00", lineTotal: "40.00" });
     expect(result.data.orders[0].totalCost).toBe("90.00");
     const text = JSON.stringify(result.data);
-    for (const hidden of ["1998", "2048", "999", "grandTotal", "paymentStatus", "telegramUsername", "sourceFingerprint"]) expect(text).not.toContain(hidden);
+    // Check field boundaries, not bare numeric substrings: random IDs/names can contain "999".
+    for (const hidden of ["grandTotal", "paymentStatus", "telegramUsername", "sourceFingerprint", "unitPrice", "productSubtotal"]) expect(text).not.toContain(`"${hidden}"`);
     expect((await request("/vendor/orders", f.b)).data.orders).toEqual([]);
   }));
   it("uses independent vendor accounts and retires member-based access grants", () => fixture(async f => {

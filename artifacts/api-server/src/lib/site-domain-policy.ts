@@ -3,7 +3,13 @@ import type { RequestHandler } from "express";
 const VENDOR_HOSTS = new Set(["pepsanonymous.com", "www.pepsanonymous.com"]);
 const TESTING_HOSTS = new Set(["testmedaddy.com", "www.testmedaddy.com"]);
 const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
-const VENDOR_PAGES = new Set(["/", "/vendor", "/vendor/", "/vendor/login", "/vendor/login/", "/login", "/login/"]);
+const VENDOR_PAGES = new Set(["/", "/vendor", "/vendor/", "/vendor/login", "/vendor/login/", "/login", "/login/", "/vendor/admin", "/vendor/admin/"]);
+// Only this workspace's APIs, never the rest of Salt & Peps Admin.
+const VENDOR_ADMIN_APIS = new Set([
+  "/api/admin/security/status",
+  ...["login", "verify", "me", "logout", "legacy-login", "legacy-me", "legacy-logout"].map(p => `/api/admin/auth/${p}`),
+  "/api/admin/vendor-portal/orders", "/api/admin/vendor-portal/preview", "/api/admin/vendor-portal/submit",
+]);
 const HEALTH_PATHS = new Set(["/health", "/_health", "/api", "/api/health", "/api/healthz"]);
 
 // Never use req.hostname: Express derives that from X-Forwarded-Host when trust proxy is on.
@@ -60,7 +66,9 @@ export function siteDomainPolicy(options: { production: boolean; developmentHost
     if (vendorHost) {
       const staticAsset = /^\/assets\/[a-z0-9_./-]+\.(?:js|css|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp3|mp4|wasm)$/i.test(path)
         || (path === "/favicon.svg" || path === "/favicon.ico") || /^\/brand\/[a-z0-9_-]+\.(?:svg|png)$/i.test(path);
-      if (!vendorApi && !VENDOR_PAGES.has(path) && !HEALTH_PATHS.has(path) && !staticAsset) {
+      const vendorAdminApi = VENDOR_ADMIN_APIS.has(path)
+        || /^\/api\/admin\/vendor-portal\/(?:orders|vendor-images)\/[a-z0-9_-]+$/i.test(path);
+      if (!vendorApi && !vendorAdminApi && !VENDOR_PAGES.has(path) && !HEALTH_PATHS.has(path) && !staticAsset) {
         res.status(404).json({ error: "Not found" }); return;
       }
     }

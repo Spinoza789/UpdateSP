@@ -9,6 +9,17 @@ Vendors must see only their own wholesale orders and supplier cost prices, never
 
 **How to apply:** Enforce ownership and field privacy server-side, not only through dashboard presentation.
 
+Peps Anonymous also needs an Admin workspace that can view all submitted vendor
+orders, switch between vendors and manage orders. This must not expand vendor
+accounts' access or require staff to impersonate a vendor.
+
+**Why:** The user requested an Admin view of all orders/by vendor and explicitly
+chose “Include order management.”
+
+**How to apply:** Reuse existing Admin authentication and fulfilment safeguards.
+Keep the vendor domain's Admin API access narrowly scoped to this workspace;
+ordinary vendor sessions must never authorize cross-vendor reads or writes.
+
 Wholesale Setup price CSVs must keep supplier cost and customer selling price
 separate and support filling missing prices without repricing existing orders.
 

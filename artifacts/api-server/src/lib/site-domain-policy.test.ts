@@ -19,6 +19,21 @@ async function request(host: string, path: string, headers: Record<string,string
   });
 }
 describe("site domain boundary", () => {
+  it("allows only the dedicated Admin workspace and its required APIs on vendor hosts", async () => {
+    for (const path of ["/vendor/admin", "/vendor/admin/", "/api/admin/security/status",
+      "/api/admin/auth/login", "/api/admin/auth/verify", "/api/admin/auth/me", "/api/admin/auth/logout",
+      "/api/admin/auth/legacy-login", "/api/admin/auth/legacy-me", "/api/admin/auth/legacy-logout",
+      "/api/admin/vendor-portal/orders", "/api/admin/vendor-portal/orders/abc",
+      "/api/admin/vendor-portal/vendor-images/abc", "/api/admin/vendor-portal/preview", "/api/admin/vendor-portal/submit"]) {
+      expect((await request("pepsanonymous.com", path)).status, path).toBe(200);
+    }
+    for (const path of ["/api/admin/orders", "/api/admin/vendor-accounts", "/api/admin/security/disable",
+      "/api/admin/auth/step-up", "/api/admin/vendor-portal/access", "/api/admin/vendor-portal",
+      "/api/admin/vendor-portal/orders/abc/unknown", "/api/admin/vendor-portal/orders-extra"]) {
+      expect((await request("pepsanonymous.com", path)).status, path).toBe(404);
+    }
+    expect((await request("pepsanonymous.com", "/api/admin/vendor-portal/orders", {Origin: "https://saltandpeps.co.uk"})).status).toBe(403);
+  });
   it("only serves vendor APIs and vendor pages on vendor hosts", async () => {
     for (const host of ["pepsanonymous.com", "www.pepsanonymous.com"]) {
       for (const path of ["/", "/vendor", "/vendor/login", "/login", "/api/vendor/auth/me", "/_health", "/api/healthz", "/assets/index-123.js", "/favicon.svg"]) expect((await request(host, path)).status, path).toBe(200);

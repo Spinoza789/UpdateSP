@@ -3,7 +3,7 @@ import { assertVendorSubmissionUnpaid } from "../lib/vendor-payments";
 import { Router, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   db, accountsTable, ordersTable, orderLineItemsTable, wholesaleSharesTable,
   vendorPortalAccessTable, vendorPortalRequestsTable, vendorSubmissionsTable, vendorImagesTable,
@@ -109,7 +109,7 @@ router.post("/vendor/orders/:id/detect-carrier", requireVendorAccount, sameOrigi
   const carrierCode = await track17Client.detectCarrier(number.trim());
   res.set("Cache-Control", "no-store").json({ carrierCode });
 }));
-router.patch("/vendor/orders/:id", requireVendorAccount, sameOrigin, handled(async (req, res) => {
+async function updateShipment(req: Request, res: Response, admin = false): Promise<void> {
   const body = req.body ?? {};
   if (!["processing", "tracking"].includes(body.action) || Object.keys(body).some(k => !["action", "trackingNumber", "carrier"].includes(k))) {
     throw new VendorPortalError("Only processing and tracking updates are permitted.");
@@ -117,12 +117,19 @@ router.patch("/vendor/orders/:id", requireVendorAccount, sameOrigin, handled(asy
   let refreshShare: string | null = null;
   const notifications: Array<{ username: string; code: string }> = [];
   await db.transaction(async tx => {
-    const access = await vendorAccess(tx, username(req), true, req.vendor!.tokenHash);
+    let vendorId: string;
+    if (admin) {
+      const [candidate] = await tx.select().from(vendorSubmissionsTable).where(eq(vendorSubmissionsTable.id, String(req.params.id)));
+      if (!candidate) throw new VendorPortalError("Submission not found.", 404);
+      vendorId = candidate.vendorId;
+    } else {
+      vendorId = (await vendorAccess(tx, username(req), true, req.vendor!.tokenHash)).vendorId;
+    }
     // Parent and orders first, matching shared-order mutations; submission is locked last.
-    const initial = await ownedSubmission(tx, String(req.params.id), access.vendorId);
+    const initial = await ownedSubmission(tx, String(req.params.id), vendorId);
     const source = await loadVendorSource(tx, initial.sourceKey, true);
-    const row = await ownedSubmission(tx, initial.id, access.vendorId, true);
-    if (source.fingerprint !== row.sourceFingerprint || source.vendorIds.some(id => id !== access.vendorId)) {
+    const row = await ownedSubmission(tx, initial.id, vendorId, true);
+    if (source.fingerprint !== row.sourceFingerprint || source.vendorIds.some(id => id !== vendorId)) {
       throw new VendorPortalError("The order changed after submission. Ask Admin to review it before continuing.", 409);
     }
     if (source.orders.some(o => o.status === "Completed")) throw new VendorPortalError("Completed orders cannot be changed by the vendor.", 409);
@@ -166,13 +173,18 @@ router.patch("/vendor/orders/:id", requireVendorAccount, sameOrigin, handled(asy
       await tx.update(vendorSubmissionsTable).set({ status: "Shipped", trackingNumber, carrier, updatedAt: now }).where(eq(vendorSubmissionsTable.id, row.id));
       if (row.sharedOrderId && !mixed) refreshShare = row.sharedOrderId;
     }
-    await auditVendor(tx, username(req), body.action, row.id);
+    await auditVendor(tx, admin ? getAdminUsername(res) : username(req), body.action, row.id, admin ? { actorType: "admin" } : undefined);
   });
   // Never publish a shared supplier tracking number in member notifications.
   for (const order of notifications) void notifyUser(order.username, "status",
     `Order #${order.code} has been shipped. View your order for tracking updates.`).catch(() => {});
   if (refreshShare) void refreshWholesaleMainParcelForShare(refreshShare).catch(() => {});
   res.json({ ok: true });
+}
+router.patch("/vendor/orders/:id", requireVendorAccount, sameOrigin, handled((req, res) => updateShipment(req, res)));
+router.patch("/admin/vendor-portal/orders/:id", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  await updateShipment(req, res, true);
 }));
 router.post("/vendor/orders/:id/images", requireVendorAccount, sameOrigin, (req, res, next) => {
   upload(req, res, err => {
@@ -250,11 +262,41 @@ router.post("/admin/vendor-portal/submit", handled(async (req, res) => {
   const { vendorId, orderCodes } = submissionInput(req);
   res.json(await submitVendorOrders(vendorId, orderCodes, req.body.previewToken, getAdminUsername(res)));
 }));
+router.get("/admin/vendor-portal/orders", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const vendors = (await getVendors()).map(v => ({ id: v.id, name: v.name }));
+  const vendorId = req.query.vendorId;
+  if (vendorId !== undefined && (typeof vendorId !== "string" || !vendors.some(v => v.id === vendorId))) {
+    throw new VendorPortalError("Choose a valid vendor.");
+  }
+  const page = req.query.page === undefined ? 1 : Number(req.query.page);
+  const limit = req.query.limit === undefined ? 50 : Number(req.query.limit);
+  if ((req.query.page !== undefined && typeof req.query.page !== "string")
+    || (req.query.limit !== undefined && typeof req.query.limit !== "string")
+    || !Number.isSafeInteger(page) || page < 1 || page > 100000
+    || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+    throw new VendorPortalError("Use a positive page number and a limit from 1 to 100.");
+  }
+  const where = typeof vendorId === "string" ? eq(vendorSubmissionsTable.vendorId, vendorId) : undefined;
+  const [{ total }] = await db.select({ total: count() }).from(vendorSubmissionsTable).where(where);
+  const rows = await db.select().from(vendorSubmissionsTable).where(where)
+    .orderBy(desc(vendorSubmissionsTable.submittedAt), desc(vendorSubmissionsTable.id)).limit(limit).offset((page - 1) * limit);
+  const orders = [];
+  for (const row of rows) orders.push({
+    ...publicVendorOrder(row, await isVendorSubmissionStale(db, row), []),
+    vendorId: row.vendorId, vendorName: vendors.find(v => v.id === row.vendorId)?.name ?? row.vendorId,
+  });
+  res.set("Cache-Control", "no-store").json({ vendors, orders, total, page, limit });
+}));
 router.get("/admin/vendor-portal/orders/:id", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const [row] = await db.select().from(vendorSubmissionsTable).where(eq(vendorSubmissionsTable.id, String(req.params.id)));
   if (!row) throw new VendorPortalError("Submission not found.", 404);
-  res.json(publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "admin/vendor-portal")));
+  const vendors = await getVendors();
+  res.set("Cache-Control", "no-store").json({
+    ...publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "admin/vendor-portal")),
+    vendorId: row.vendorId, vendorName: vendors.find(v => v.id === row.vendorId)?.name ?? row.vendorId,
+  });
 }));
 router.delete("/admin/vendor-portal/orders/:id", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;

@@ -176,6 +176,9 @@ export default function VendorAccountAuth({ onAuthenticated }: { onAuthenticated
             <div className="flex items-center gap-3 my-4"><div className="flex-1 h-px" style={{ background: 'var(--t-border)' }} /><span className="text-xs" style={subtle}>{vt("or")}</span><div className="flex-1 h-px" style={{ background: 'var(--t-border)' }} /></div>
             <Btn className="w-full h-9" onClick={() => void usePasskey()} disabled={!!busy} data-testid="button-passkey-signin">{busy === 'passkey' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-4 h-4" />}{vt("Sign in with a passkey")}</Btn>
           </>)}
+        <p className="mt-5 text-center text-xs" style={muted}>
+          <a href="/vendor/admin" className="underline underline-offset-4" data-testid="link-peps-admin">Admin sign in</a>
+        </p>
       </div>
     </Frame>
   );
