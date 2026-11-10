@@ -28,6 +28,33 @@ it("treats legacy enabled=undefined as active-only", () => {
   expect(parseOptionalNumber("2.5", true)).toBeUndefined();
 });
 
+it("shows the Products-tab price when wholesale price is unset without creating an override on save", async () => {
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+    if (init?.method === "PATCH") return res({});
+    if (url.endsWith("wholesale-vendors")) return res({ vendors: [{ id: "a", name: "JBG/YT" }], activeVendorId: "a" });
+    return res([
+      { id: "p1", name: "Fallback", wholesaleVendorId: "a", wholesaleCost: 40, wholesalePrice: null, price: 60, stock: 12 },
+      { id: "p2", name: "Override", wholesaleVendorId: "a", wholesaleCost: 40, wholesalePrice: 55, price: 60, stock: 12 },
+      { id: "p3", name: "Zero", wholesaleVendorId: "a", wholesaleCost: 0, wholesalePrice: 0, price: 60, stock: 12 },
+    ]);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  const el = document.createElement("div"); document.body.appendChild(el); root = createRoot(el);
+  await act(async () => root.render(createElement(AdminMultiVendorSetup, { secret: "s" })));
+  await settle();
+  const price = (id: string) => (el.querySelector(`[data-testid="input-mv-price-${id}"]`) as HTMLInputElement).value;
+  expect(price("p1")).toBe("60");
+  expect(price("p2")).toBe("55");
+  expect(price("p3")).toBe("0");
+  expect(el.querySelector('[data-testid="row-mv-product-p1"]')?.textContent).toContain("Using Products tab price");
+  expect(el.querySelector('[data-testid="mv-profit-p1"]')?.textContent).toBe("$20.00");
+  await act(async () => { (el.querySelector('[data-testid="button-mv-save-p1"]') as HTMLElement).click(); });
+  await settle();
+  const save = fetchMock.mock.calls.find(c => c[0] === "/api/admin/wholesale-products/p1");
+  expect(JSON.parse(save![1]!.body as string).wholesalePrice).toBeNull();
+  expect(price("p1")).toBe("60");
+});
+
 it("toggles availability and saves a row with the exact contract", async () => {
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     if (url === "/api/admin/wholesale-vendors") return res({ vendors: [{ id: "a", name: "Alder" }, { id: "b", name: "Birch", enabled: false }], activeVendorId: "a" });

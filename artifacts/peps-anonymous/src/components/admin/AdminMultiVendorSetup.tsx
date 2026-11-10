@@ -21,6 +21,7 @@ export interface AdminWholesaleProduct {
   wholesaleVendorId: string | null;
   wholesaleCost: number | null;
   wholesalePrice: number | null;
+  price?: number | null;
   stock: number | null;
   wholesaleEnabled?: boolean;
 }
@@ -249,7 +250,9 @@ export function AdminMultiVendorSetup({ secret, selectedVendorId, onVendorsChang
             )}
             {visible.map(p => {
               const d = drafts[p.id] ?? toDraft(p, vendors);
-              const profit = wholesaleProfit(d.cost, d.price);
+              const usingProductPrice = d.price.trim() === "" && p.price != null;
+              const effectivePrice = usingProductPrice ? String(p.price) : d.price;
+              const profit = wholesaleProfit(d.cost, effectivePrice);
               const profitColor = profit && profit.profit < 0 ? "text-red-700" : profit && profit.profit > 0 ? "text-emerald-700" : "text-slate-500";
               const st = rowState[p.id] ?? {};
               const set = (k: keyof RowDraft) => (e: { target: { value: string } }) => {
@@ -272,7 +275,10 @@ export function AdminMultiVendorSetup({ secret, selectedVendorId, onVendorsChang
                     </select>
                   </td>
                   <td className="px-2 py-2"><input inputMode="decimal" value={d.cost} onChange={set("cost")} placeholder="—" className={inputCls} data-testid={`input-mv-cost-${p.id}`} /></td>
-                  <td className="px-2 py-2"><input inputMode="decimal" value={d.price} onChange={set("price")} placeholder="—" className={inputCls} data-testid={`input-mv-price-${p.id}`} /></td>
+                  <td className="px-2 py-2">
+                    <input inputMode="decimal" value={effectivePrice} onChange={set("price")} placeholder="—" className={inputCls} data-testid={`input-mv-price-${p.id}`} />
+                    {usingProductPrice && <p className="mt-1 text-[10px] text-slate-500">Using Products tab price</p>}
+                  </td>
                   <td className={`px-2 py-3 font-semibold whitespace-nowrap ${profitColor}`} data-testid={`mv-profit-${p.id}`}>{profit ? `${profit.profit < 0 ? "−" : ""}$${Math.abs(profit.profit).toFixed(2)}` : "—"}</td>
                   <td className={`px-2 py-3 font-semibold whitespace-nowrap ${profitColor}`} data-testid={`mv-margin-${p.id}`}>{profit?.margin != null ? `${profit.margin.toFixed(1)}%` : "—"}</td>
                   <td className="px-2 py-2"><input inputMode="numeric" value={d.stock} onChange={set("stock")} placeholder="—" className={inputCls} data-testid={`input-mv-stock-${p.id}`} /></td>
