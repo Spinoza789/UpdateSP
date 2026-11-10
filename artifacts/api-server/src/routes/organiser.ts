@@ -359,24 +359,6 @@ router.post("/organiser/group-buys", requireOrganiser, async (req, res): Promise
     if (err) { res.status(400).json({ error: err }); return; }
   }
 
-  if (manufacturer && String(manufacturer).trim()) {
-    const mfr = String(manufacturer).trim().toLowerCase();
-    const activeStatuses = ["active"];
-    const existing = await db
-      .select({ id: groupBuysTable.id, name: groupBuysTable.name, organiserId: groupBuysTable.organiserId })
-      .from(groupBuysTable)
-      .where(and(
-        sql`lower(${groupBuysTable.manufacturer}) = ${mfr}`,
-        inArray(groupBuysTable.status, activeStatuses),
-      ));
-    if (existing.length > 0) {
-      const isAdmin = existing.some(g => !g.organiserId);
-      const label = isAdmin ? "an admin" : `organiser @${existing[0].organiserId}`;
-      res.status(409).json({ error: `An active group buy for this vendor/manufacturer already exists (run by ${label}: "${existing[0].name}"). Only one active GB per vendor is allowed.` });
-      return;
-    }
-  }
-
   const parsedMemberLimit = memberLimit != null && memberLimit !== "" ? parseInt(String(memberLimit)) : null;
   if (parsedMemberLimit !== null && (isNaN(parsedMemberLimit) || parsedMemberLimit < 1)) {
     res.status(400).json({ error: "memberLimit must be a positive integer" });
