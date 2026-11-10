@@ -14,6 +14,7 @@ setupDomGlobals();
 const { act, createElement, useState } = await import("react");
 const { createRoot } = await import("react-dom/client");
 const { GroupBuyStockControls } = await import("./GroupBuyStockControls");
+const { GroupBuyBulkKitFeeControls } = await import("./GroupBuyBulkKitFeeControls");
 const { default: GbProductsTab } = await import("../pages/organiser-v2/GbProductsTab");
 const { organiserApi } = await import("../pages/organiser-v2/api/organiser-api");
 
@@ -55,6 +56,27 @@ async function selectAndEnterQuantity() {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
 }
+
+it("sets the selected products' kit fees and displays server success", async () => {
+  const updated = vi.fn();
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    products: [{ id: "p1", feePerKit: 2.5 }, { id: "p2", feePerKit: 2.5 }], updatedCount: 2,
+  }) }));
+  await act(async () => {
+    root.render(createElement(GroupBuyBulkKitFeeControls, {
+      groupId: "GB1", currency: "GBP", selectedIds: new Set(["p1", "p2"]), onUpdated: updated,
+    }));
+  });
+  await act(async () => {
+    const input = container.querySelector<HTMLInputElement>('input[type="number"]')!;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "2.50");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () => { container.querySelector<HTMLButtonElement>("button")!.click(); });
+  expect(updated).toHaveBeenCalledWith([{ id: "p1", feePerKit: 2.5 }, { id: "p2", feePerKit: 2.5 }]);
+  expect(container.querySelector('[role="status"]')?.textContent).toContain("GBP 2.50 per kit for 2 products");
+  expect(container.querySelector<HTMLInputElement>('input[type="number"]')!.value).toBe("");
+});
 
 it("selects all, submits the editable quantity, updates products and clears the form", async () => {
   const request = vi.fn().mockResolvedValue({ ok: true, json: async () => ({

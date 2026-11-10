@@ -1,4 +1,5 @@
 import { GroupBuyProductLabReports } from "@/components/GroupBuyProductLabReports";
+import { GroupBuyBulkKitFeeControls } from "@/components/GroupBuyBulkKitFeeControls";
 import { OrganiserOrderRevisions } from "@/components/group-buy-revisions/OrganiserOrderRevisions";
 import { useProductPriceProposals, ProductNewPrice, ProductPriceImport } from "@/components/group-buy-revisions/ProductPriceProposals";
 import {
@@ -550,6 +551,12 @@ function GbProductsTabContent({
           <label><span>Kits</span><input disabled={saving} type="number" min="0" step="0.5" value={bulkStock} onChange={event => setBulkStock(event.target.value)} placeholder="Quantity" inputMode="decimal" /></label>
           <button type="button" disabled={saving || !selectedIds.size || !bulkStock.trim()} onClick={() => void applyStock()}>{saving ? "Updating…" : "Update stock"}</button>
           <small>Group-buy only. Already ordered kits are preserved.</small>
+          <GroupBuyBulkKitFeeControls key={`kit-fees-${selectedGbId}`} groupId={selectedGbId} currency={currency}
+            selectedIds={selectedIds} disabled={saving} onUpdated={updates => {
+              const changed = new Map(updates.map(p => [p.id, p.feePerKit]));
+              setProducts(current => current.map(p => changed.has(p.id) ? { ...p, feePerKit: changed.get(p.id)! } : p));
+              if (selectedId && changed.has(selectedId)) setDraft(current => ({ ...current, feePerKit: String(changed.get(selectedId)) }));
+            }} />
           <label><span>Set vendor</span><select value={bulkVendor} onChange={event => setBulkVendor(event.target.value)}><option value="">Choose vendor</option>{vendors.map(item => <option key={item}>{item}</option>)}</select></label>
           <button type="button" disabled={saving || !selectedIds.size || !bulkVendor} onClick={() => void applyBulk({ vendor: bulkVendor }, `Vendor updated for ${selectedIds.size} products.`)}>Apply vendor</button>
           <button type="button" disabled={saving} className="products-split__icon-button" aria-label="Clear selection" onClick={() => setSelectedIds(new Set())}><X aria-hidden="true" /></button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { GroupBuyBulkKitFeeControls } from "@/components/GroupBuyBulkKitFeeControls";
 import { GroupBuyProductLabReports } from "@/components/GroupBuyProductLabReports";
 import { motion, AnimatePresence } from "framer-motion";
 import { DatePickerField } from "@/components/DatePickerField";
@@ -614,6 +615,18 @@ export function ProductsSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
         )}
       </div>
 
+      <button type="button" disabled={bulkWorking || loading || !gbProducts.length}
+        onClick={() => setSelectedIds(new Set(gbProducts.map(p => p.productId)))}
+        className="h-8 px-3 rounded-lg border border-border text-xs font-semibold disabled:opacity-50">
+        Select all group-buy products ({gbProducts.length})
+      </button>
+      <GroupBuyBulkKitFeeControls key={`kit-fees-${gb.id}`} groupId={gb.id} currency={gbCurrency}
+        adminSecret={secret} selectedIds={new Set([...selectedIds].filter(id => !!gbProductMap[id]))}
+        disabled={bulkWorking || loading} onUpdated={updates => {
+          const changed = new Map(updates.map(p => [p.id, p.feePerKit]));
+          setGbProducts(current => current.map(p => changed.has(p.productId) ? { ...p, feePerKit: changed.get(p.productId)! } : p));
+        }} />
+      <p className="text-xs text-muted-foreground">Bulk fees apply to selected products already enabled in this group buy. Enable catalogue products first to include them.</p>
       {actionErr && <p className="text-xs text-red-500 px-1">{actionErr}</p>}
 
       <div className="space-y-1 max-h-[55vh] overflow-y-auto pr-1">
@@ -659,6 +672,7 @@ export function ProductsSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
 
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate text-foreground">{product.name}</p>
+                {linked?.feePerKit != null && linked.feePerKit > 0 && <p className="text-xs text-muted-foreground">Fee per kit: {gb.currency} {Number(linked.feePerKit).toFixed(2)}</p>}
                 <p className="text-xs text-muted-foreground">
                   Base: {displayCurrency} {convertPrice(product.price)}
                   {product.category && ` · ${product.category}`}

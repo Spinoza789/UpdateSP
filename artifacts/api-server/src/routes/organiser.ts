@@ -1,4 +1,5 @@
 import { qrOrderBatches } from "../lib/qr-order-batches";
+import { kitFeeAmount, updateGroupKitFees } from "../lib/group-buy-kit-fees";
 import { qrPostedOrderUpdate } from "../lib/qr-posted-order";
 import { withAdditionReferences } from "../lib/addition-order-references";
 import { validateGroupProductLabReport } from "../lib/group-product-lab-report";
@@ -1250,6 +1251,28 @@ router.post("/organiser/group-buys/:id/products", requireOrganiser, async (req, 
 });
 
 // PATCH /api/organiser/group-buys/:id/products/:productId — update product or GB-link fields
+router.post("/organiser/group-buys/:id/products/kit-fees", requireOrganiser, async (req, res): Promise<void> => {
+  try {
+    const id = String(req.params.id);
+    const ids = stockSelection(req.body.productIds);
+    const fee = kitFeeAmount(req.body.feePerKit);
+    const products = await db.transaction(async tx => {
+      await lockGroupStock(tx, id);
+      const [group] = await tx.select({ id: groupBuysTable.id }).from(groupBuysTable)
+        .where(gbOwner(req, id)).for("share");
+      if (!group) throw new GroupStockError("Group buy not found.", 404);
+      return updateGroupKitFees(tx, id, ids, fee);
+    });
+    writeLog("change", "info", "organiser_group_kit_fees_updated",
+      `Set fee per kit for ${products.length} products in GB ${id}`,
+      { gbId: id, username: req.organiser!.telegramUsername, feePerKit: fee, productIds: products.map(p => p.id) }).catch(() => {});
+    res.json({ products, updatedCount: products.length });
+  } catch (error) {
+    if (error instanceof GroupStockError) { res.status(error.status).json({ error: error.message }); return; }
+    throw error;
+  }
+});
+
 router.post("/organiser/group-buys/:id/products/stock", requireOrganiser, async (req, res): Promise<void> => {
   const id = String(req.params.id);
   const ids = stockSelection(req.body.productIds);

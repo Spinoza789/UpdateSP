@@ -17,6 +17,7 @@ import { normalizeShippingCountry } from "@/lib/country-shipping-options";
 import { compareOrderAmounts } from "@/lib/order-amount-sort";
 import { GbMultipleOrderBadge, GbMultipleOrderNotice } from "@/components/GbMultipleOrders";
 import { GroupBuyStockControls } from "@/components/GroupBuyStockControls";
+import { GroupBuyBulkKitFeeControls } from "@/components/GroupBuyBulkKitFeeControls";
 import { OrganiserOrderRevisions } from "@/components/group-buy-revisions/OrganiserOrderRevisions";
 import { useProductPriceProposals, ProductNewPrice, ProductPriceImport, type ProductPricing } from "@/components/group-buy-revisions/ProductPriceProposals";
 import { annotateCompleteGbOrderCounts, isMultipleGbOrder } from "@/lib/gb-multiple-orders";
@@ -6002,6 +6003,13 @@ function ProductsTabContent({ gb }: { gb: OrganiserGB }) {
         onUpdated={updates => {
           const changed = new Map(updates.map(p => [p.id, p]));
           setProducts(current => current.map(p => changed.has(p.id) ? { ...p, ...changed.get(p.id)! } : p));
+        }} />
+      <GroupBuyBulkKitFeeControls key={`kit-fees-${gb.id}`} groupId={gb.id} currency={gb.currency}
+        selectedIds={selectedStockIds} disabled={stockSaving || showAdd || !!editTarget}
+        onUpdated={updates => {
+          const changed = new Map(updates.map(p => [p.id, p.feePerKit]));
+          setProducts(current => current.map(p => changed.has(p.id) ? { ...p, feePerKit: changed.get(p.id)! } : p));
+          setPendingFeePerKit(current => Object.fromEntries(Object.entries(current).filter(([id]) => !changed.has(id))));
         }} />
       <div className="space-y-2">
         {products.map(p => (

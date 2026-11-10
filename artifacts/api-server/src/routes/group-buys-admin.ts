@@ -1,4 +1,6 @@
 import { directShippingMessageSchema } from "../lib/direct-shipping-message";
+import { kitFeeAmount, updateGroupKitFees } from "../lib/group-buy-kit-fees";
+import { GroupStockError, lockGroupStock, stockSelection } from "../lib/group-buy-stock";
 import { validateGroupProductLabReport } from "../lib/group-product-lab-report";
 import {
   assertNoActiveRefunds,
@@ -825,6 +827,30 @@ router.delete("/admin/group-buys/:id/members/:accountId", async (req, res): Prom
   res.json({ ok: true });
 });
 
+router.post("/admin/group-buys/:id/products/kit-fees", async (req, res): Promise<void> => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const id = String(req.params.id);
+    const ids = stockSelection(req.body.productIds);
+    const fee = kitFeeAmount(req.body.feePerKit);
+    const products = await db.transaction(async tx => {
+      await lockGroupStock(tx, id);
+      const [group] = await tx.select({ id: groupBuysTable.id }).from(groupBuysTable)
+        .where(eq(groupBuysTable.id, id)).for("share");
+      if (!group) throw new GroupStockError("Group buy not found.", 404);
+      return updateGroupKitFees(tx, id, ids, fee);
+    });
+    setAdminMutationSummary(res, "group_buy_product", ["feePerKit"]);
+    writeLog("change", "info", "admin_group_kit_fees_updated",
+      `Set fee per kit for ${products.length} products in GB ${id}`,
+      { gbId: id, feePerKit: fee, productIds: products.map(p => p.id) }).catch(() => {});
+    res.json({ products, updatedCount: products.length });
+  } catch (error) {
+    if (error instanceof GroupStockError) { res.status(error.status).json({ error: error.message }); return; }
+    throw error;
+  }
+});
+
 // ── GET /admin/group-buys/:id/products ────────────────────────
 router.get("/admin/group-buys/:id/products", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
@@ -841,6 +867,7 @@ router.get("/admin/group-buys/:id/products", async (req, res): Promise<void> => 
       active: groupBuyProductsTable.active,
       sortOrder: groupBuyProductsTable.sortOrder,
       maxPerCustomer: groupBuyProductsTable.maxPerCustomer,
+      feePerKit: groupBuyProductsTable.feePerKit,
       name: productsTable.name,
     })
     .from(groupBuyProductsTable)
@@ -851,6 +878,7 @@ router.get("/admin/group-buys/:id/products", async (req, res): Promise<void> => 
   res.json(rows.map(r => ({
     ...r,
     priceOverride: r.priceOverride != null ? parseFloat(String(r.priceOverride)) : null,
+    feePerKit: r.feePerKit != null ? Number(r.feePerKit) : null,
     name: r.name ?? "(deleted product)",
   })));
 });

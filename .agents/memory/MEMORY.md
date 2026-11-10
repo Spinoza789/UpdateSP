@@ -2,7 +2,7 @@
 - [Admin / half-kit guard order](admin-half-kit-guard-order.md) — validate session and CSRF before half-kit protection; reversed order causes 401 on writes while previews work.
 - [GB excess half-kit offers](gb-half-kit-offers.md) — organiser controls publication before/after closing; claimed halves leave the list and join the member’s existing order.
 - [Vite 504 dep optimisation on .replit.dev](vite-504-dep-optimization.md) — clearing .vite cache causes 504s via edge proxy; fix is optimizeDeps.entries listing all pages.
-- [Multi-chain crypto payment rails](multi-chain-crypto-rails.md) — chain choice stored as paymentCryptoNetwork; CHAIN_WALLET_CONFIGS drives all resolution; getAdminCryptoOptions() exported for auto-verifier; pickedOption={currency,network} replaces pickedCurrency in PaymentPanel.
+- [Multi-chain crypto rails](multi-chain-crypto-rails.md) — resolve payment destinations and verification by both currency and network.
 - [Organiser V2 placeholder data traps](organiser-v2-placeholder-data.md) — mapApiGroupBuy fills fake fallbacks (maxMembers=1, counts 0); wire V2 tabs from raw API values via props, never SampleGB counts.
 - [Organiser V2 drawer portal CSS scoping](ov2-drawer-portal-scoping.md) — mobile drawer is a portalled Sheet; `.organiser-v2 .ov2-sidebar-drawer` selectors never match it, use compound `.organiser-v2.ov2-sidebar-drawer`.
 - [Discord synthetic username display](discord-synthetic-username-display.md) — own-account handle display must use getAccountHandle()/isDiscordOnlyAccount(), never raw telegramUsername; localStorage-key scoping stays raw.
@@ -24,10 +24,10 @@
 - [Wholesale share status races](wholesale-share-status-races.md) — lock/cancel/submit/delivery writes each need conditional status-gated updates (→409); only the chosen recipient sets the address.
 - [Wholesale share max-people cap](wholesale-share-max-members.md) — max_members nullable=no limit; new shares uncapped, existing keep 10 (not migrated); PUT cap min 2 (lock needs ≥2), ≤1000, ≥ current count.
 - [Workflow topology](workflow-topology.md) — only "Start application" + mockup-sandbox are canonical; api-server/web workflows are duplicates that FAIL on port conflict if restarted alongside it. Restart only "Start application" to reload secrets.
-- [Dev-domain 502 vs working preview](dev-domain-502-edge-routing.md) — public *.replit.dev can 502 after heavy restarts/DB ops while app is healthy; confirm via localhost+Host-header 200 and app_preview; it's an edge artifact, verify flows via screenshot not runTest.
+- [Dev-domain edge 502s](dev-domain-502-edge-routing.md) — public dev-domain failures can be proxy-only; compare Host-header requests and app preview.
 - [Drizzle push rename prompt](drizzle-push-interactive-rename.md) — drizzle-kit push (even --force) prompts create-vs-rename when DB has orphan tables; hangs in non-TTY agent shell → add a single new table via direct SQL DDL matching the schema.
 - [Group-buy visibility gate](gb-visibility-gate.md) — un-hiding a GB to public lists must be server-gated on approvalStatus==='approved' OR admin, else organisers self-publish unapproved GBs; hidden means list-excluded, still joinable by id+PIN.
-- [GB admin fee fixed vs percent](gb-admin-fee-percentage.md) — order stores RESOLVED fee; percent applies to product subtotal, resolved only at create/edit/backfill; edits never add a fee to an order that never had one; direct-shipping zeroes it; EVERY grandTotal recompute site (not just the main edit endpoint) must include+persist it.
+- [GB admin fees](gb-admin-fee-percentage.md) — preserve fee eligibility and country overrides; every total-recompute path must include and persist the resolved fee.
 - [Role change side-effects](role-change-side-effects.md) — any path mutating account roles must mirror single-account handler side-effects (organiser audit log + notify + clear organiserApprovedAt on revoke); strictly validate action/role.
 - [FS3 pricing and identities](fs3-selection-integrity.md) — mixed legacy vendor IDs affect selection totals; links to TXT package rates and pasted-list policies.
 - [Shared-wholesale admin grouping](shared-wholesale-admin-grouping.md) — admin order list merges same-sharedOrderId wholesale_shared orders into one lead-labelled parent row; client-side, page-window bound, wholesale/all views only.
@@ -157,3 +157,4 @@
 - [Group-buy COA requests](group-buy-coa-policy.md) — group-buy-only, independent fees, shared invitation/signup capacity, preserved evidence and committed request terms.
 - [QR posting status](qr-posting-policy.md) — Admin/organiser Order Posted means shipped; preserve terminal states and never reverse fulfilment by unposting.
 - [Shared GB vendors](group-buy-shared-vendor-policy.md) — multiple group buys may use the same vendor, including different organisers; retain normal approval checks.
+- [GB per-kit fee scope](group-buy-kit-fee-policy.md) — retain existing product-level fees; bulk-set selected group links, not a new group-wide charge or historical repricing.
