@@ -3,6 +3,14 @@ import { SaltPepsMark } from "@/components/SaltPepsMark";
 import { adminAuth, initializeAdminRequestAuth } from "@/lib/admin-auth";
 import { retryImportRequest } from "./janoshik-import-retry";
 
+// The receiver retains its cross-origin opener intentionally. Do not let an
+// arbitrary site use an already authenticated session to submit certificates.
+const JANOSHIK_ORIGINS = new Set([
+  "https://janoshik.com",
+  "https://www.janoshik.com",
+  "https://verify.janoshik.com",
+]);
+
 // ── Janoshik browser-helper receiver ─────────────────────────────────────────
 // Opened in a new tab by the admin bookmarklet running on a Janoshik report
 // page. The bookmarklet's browser has already passed the Cloudflare challenge,
@@ -144,7 +152,7 @@ function SingleReceiver() {
       // Only accept the payload from the window that opened us (the bookmarklet's
       // Janoshik tab). This blocks arbitrary pages/iframes from poking the
       // importer. The admin secret inside the payload is still what authorizes.
-      if (!window.opener || e.source !== window.opener) return;
+      if (!window.opener || e.source !== window.opener || !JANOSHIK_ORIGINS.has(e.origin)) return;
       const d = e.data as HelperPayload | undefined;
       if (
         !d ||
@@ -257,6 +265,7 @@ const ROW_META: Record<RowStatus, { label: string; cls: string }> = {
 
 function BulkReceiver() {
   const [connected, setConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState("");
   const [urlsText, setUrlsText] = useState("");
   const [delaySec, setDelaySec] = useState(2);
   const [rows, setRows] = useState<Row[]>([]);
@@ -271,9 +280,16 @@ function BulkReceiver() {
   const stopRef = useRef(false);
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setConnectionError("Could not connect to your Janoshik tab");
+    }, 35_000);
+    if (!window.opener) {
+      window.clearTimeout(timeout);
+      setConnectionError("No Janoshik tab is connected");
+    }
     function onMessage(e: MessageEvent) {
       // Messages must come from the Janoshik tab that opened us.
-      if (!window.opener || e.source !== window.opener) return;
+      if (!window.opener || e.source !== window.opener || !JANOSHIK_ORIGINS.has(e.origin)) return;
       const d = e.data as
         | { type: "janoshik-bulk-hello"; secret?: string }
         | BulkReply
@@ -281,6 +297,8 @@ function BulkReceiver() {
       if (!d || typeof d.type !== "string") return;
 
       if (d.type === "janoshik-bulk-hello" && typeof d.secret === "string") {
+        window.clearTimeout(timeout);
+        setConnectionError("");
         secretRef.current = d.secret;
         openerOriginRef.current = e.origin;
         setConnected(true);
@@ -293,7 +311,7 @@ function BulkReceiver() {
         return;
       }
 
-      if ((d.type === "janoshik-bulk-image" || d.type === "janoshik-bulk-error") && d.runId === runIdRef.current) {
+      if ((d.type === "janoshik-bulk-image" || d.type === "janoshik-bulk-error") && e.origin === openerOriginRef.current && d.runId === runIdRef.current) {
         const p = pendingRef.current;
         if (p && p.reqId === d.reqId) {
           pendingRef.current = null;
@@ -303,7 +321,10 @@ function BulkReceiver() {
     }
 
     window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("message", onMessage);
+    };
   }, []);
 
   // Ask the Janoshik tab to fetch one report; resolves with image data or error.
@@ -457,17 +478,18 @@ function BulkReceiver() {
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-xs">
           <span
-            className={`inline-block h-2.5 w-2.5 rounded-full ${connected ? "bg-green-500" : "bg-slate-600 animate-pulse"}`}
+            className={`inline-block h-2.5 w-2.5 rounded-full ${connected ? "bg-green-500" : connectionError ? "bg-amber-500" : "bg-slate-600 animate-pulse"}`}
           />
           <span className={connected ? "text-green-400 font-semibold" : "text-slate-400"}>
-            {connected ? "Connected to your Janoshik tab" : "Connecting to your Janoshik tab…"}
+            {connected ? "Connected to your Janoshik tab" : connectionError || "Connecting to your Janoshik tab…"}
           </span>
         </div>
 
         {!connected && (
-          <p className="text-xs text-slate-400">
-            Keep this tab open. If nothing connects, go back to your Janoshik tab and click the
-            <span className="font-semibold text-slate-200"> Bulk import</span> button again.
+          <p className="text-xs text-slate-400" role={connectionError ? "alert" : undefined}>
+            {connectionError
+              ? "Close this importer, return to an open Janoshik report, and click your Bulk import bookmark again. Keep both tabs open. Opening this page directly cannot connect it to Janoshik."
+              : "Keep this tab open while your Janoshik tab connects. If it does not connect, close this importer, return to Janoshik and click your Bulk import bookmark again."}
           </p>
         )}
 

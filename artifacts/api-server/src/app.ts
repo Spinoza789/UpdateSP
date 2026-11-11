@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
-import helmet from "helmet";
+import { securityHeaders } from "./lib/http-security";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { randomBytes } from "crypto";
@@ -43,23 +43,7 @@ app.use(
 );
 
 // ── Security headers ──────────────────────────────────────────
-app.use(
-  helmet({
-    contentSecurityPolicy: false, // API server — no HTML served
-    crossOriginEmbedderPolicy: false,
-    hsts: {
-      maxAge: 31536000, // 1 year
-      includeSubDomains: true,
-      preload: true,
-    },
-    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
-    permittedCrossDomainPolicies: { permittedPolicies: "none" },
-    noSniff: true,
-    xssFilter: true,
-    frameguard: { action: "deny" },
-    hidePoweredBy: true,
-  })
-);
+app.use(securityHeaders);
 
 // Distinct vendor URLs also replace browser requests for legacy/default favicons.
 app.get(["/favicon.svg", "/favicon.ico"], (req, res, next) => {

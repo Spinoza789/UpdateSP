@@ -5,6 +5,22 @@ description: Why Janoshik lab reports can no longer be fetched server-side, and 
 
 # Janoshik import moved client-side (Cloudflare block)
 
+## Cross-origin browser connection
+
+The importer must retain its Janoshik opener. Apply any cross-origin opener
+isolation changes with a narrow receiver-page exception, not a site-wide change.
+Always validate both the opening window and the exact trusted HTTPS Janoshik
+origin before accepting images or commands.
+
+**Why:** The normal `Cross-Origin-Opener-Policy: same-origin` security default
+severs this intentional cross-site connection before the handshake runs. Merely
+retrying the bookmark or changing extraction logic cannot restore that opener.
+Preserving it without origin validation would let unrelated sites send imports
+using an existing signed-in session.
+
+**How to apply:** Keep the rest of the site isolated; test both real cross-origin
+browser handshake behavior and rejection of lookalike/untrusted origins.
+
 Janoshik enabled a Cloudflare managed challenge — the server can no longer fetch
 Janoshik report pages or images (everything 403s). The old direct-fetch /
 bulk-import path is dead for Janoshik. (Uzorak still has its own RPC bypass.)
