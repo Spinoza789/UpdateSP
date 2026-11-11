@@ -1,45 +1,74 @@
 import React, { useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { fmtDate, moneyOf, paginate, type Receipt } from "./model";
 import { OrderBreakdown } from "./OrderBreakdown";
 import { Pager } from "./LedgerOrders";
-import { SectionLabel, subtle } from "../../reshipper-payouts/ui";
+import { Overlay, Notice } from "./Overlay";
+import { inputCls, inputStyle } from "../../reshipper-payouts/ui";
 
-export function ReceiptHistory({ payments, locked, onVoid }: { payments: Receipt[]; locked: boolean; onVoid: (id: string) => void }) {
+export function ReceiptHistory({ payments, openId, onOpen }: { payments: Receipt[]; openId: string | null; onOpen: (id: string) => void }) {
   const [page, setPage] = useState(1);
-  const [open, setOpen] = useState<Set<string>>(new Set());
   const view = paginate(payments, page);
-  return <section aria-label="Payment history" className="space-y-2">
-    <SectionLabel>Receipt history ({payments.length})</SectionLabel>
-    {payments.length === 0 && <p className="rounded-xl border border-dashed p-4 text-sm" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>No payment records for this vendor yet.</p>}
-    <ul className="space-y-2">
-      {view.rows.map((p) => {
-        const isOpen = open.has(p.id);
-        return <li key={p.id} className="rounded-xl border p-3 text-sm" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)", opacity: p.voidedAt ? 0.8 : 1 }} data-testid={`payment-receipt-${p.id}`}>
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className={`font-bold tabular-nums ${p.voidedAt ? "line-through" : ""}`}>{p.cryptoAmount} {p.currency} · {moneyOf(p.usdAmount)} USD allocated</span>
-            <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: p.voidedAt ? "#b91c1c" : "#15803D" }}>{p.voidedAt ? "Voided · allocations released" : "Recorded by Admin · external transfer, not blockchain verified"}</span>
-          </div>
-          <p className="text-xs mt-1" style={subtle}>To {p.walletSnapshot.label ? `${p.walletSnapshot.label} · ` : ""}{p.walletSnapshot.currency} / {p.walletSnapshot.network} (destination at time of recording)</p>
-          <code className="block text-xs break-all select-all">{p.walletSnapshot.address}</code>
-          <p className="text-xs mt-1 break-all" style={subtle}>TXID: <span className="font-mono select-all">{p.txid}</span></p>
-          <p className="text-[11px]" style={subtle}>Paid {fmtDate(p.paidAt, true)} · Recorded {fmtDate(p.recordedAt, true)} by {p.recordedBy}{p.note ? ` · ${p.note}` : ""}</p>
-          {p.voidedAt && <p className="text-xs mt-1" style={{ color: "#b91c1c" }}>Voided {fmtDate(p.voidedAt, true)}: {p.voidReason}</p>}
-          <button type="button" className="mt-2 text-xs underline" style={{ color: "var(--t-blue)" }} aria-expanded={isOpen}
-            onClick={() => setOpen((s) => { const n = new Set(s); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })} data-testid={`payment-receipt-expand-${p.id}`}>
-            {isOpen ? "Hide" : "Show"} orders covered by this payment ({p.orders.length})
-          </button>
-          {isOpen && <ul className="mt-2 space-y-2">
-            {p.orders.map((o) => <li key={o.submissionId} className="rounded-lg border p-2" style={{ borderColor: "var(--t-border)" }}>
-              <p className="flex justify-between gap-2 text-xs"><span className="font-mono font-semibold break-all">{o.reference}</span><span className="tabular-nums font-semibold">{moneyOf(o.amountUsd)} allocated</span></p>
-              {o.detail
-                ? <div className="mt-2"><OrderBreakdown src={o.detail} /></div>
-                : <p className="mt-1 text-[11px]" style={{ color: "#B4770E" }}>Breakdown not recorded for this receipt. Only the allocated amount was saved at the time; current order data is not used to reconstruct it.</p>}
-            </li>)}
-          </ul>}
-          {!p.voidedAt && <div className="mt-2"><button type="button" disabled={locked} className="text-xs font-semibold underline disabled:opacity-40" style={{ color: "#b91c1c" }} onClick={() => onVoid(p.id)}>Void record</button></div>}
-        </li>;
-      })}
-    </ul>
-    <Pager page={view.page} pages={view.pages} onPage={setPage} prefix="payment-history" />
+  return <section aria-label="Payment history" className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)" }}>
+    <div className="flex items-center justify-between border-b px-4 py-2.5" style={{ borderColor: "var(--t-border)" }}>
+      <p className="text-sm font-semibold">Receipts <span className="pap-count">{payments.length}</span></p>
+      <p className="text-[11px]" style={{ color: "var(--t-subtle)" }}>Frozen snapshots · external transfers, not blockchain verified</p>
+    </div>
+    {payments.length === 0
+      ? <p className="m-3 rounded-lg border border-dashed p-8 text-center text-sm" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>No payment records for this vendor yet.</p>
+      : <div className="relative overflow-x-auto"><table className="pap-table">
+        <thead><tr><th>Paid</th><th>Status</th><th className="pap-num">Amount sent</th><th className="pap-num">USD allocated</th><th>Orders</th><th>TXID</th><th className="w-8"><span className="sr-only">Open</span></th></tr></thead>
+        <tbody>{view.rows.map((p) => <tr key={p.id} onClick={() => onOpen(p.id)} aria-current={openId === p.id ? "true" : undefined} data-testid={`payment-receipt-row-${p.id}`}>
+          <td className="pap-c-ref whitespace-nowrap text-[12.5px]"><button type="button" className="text-left hover:underline" aria-label={`Open receipt ${p.txid}`} onClick={(e) => { e.stopPropagation(); onOpen(p.id); }} data-testid={`payment-receipt-expand-${p.id}`}>{fmtDate(p.paidAt)}</button></td>
+          <td><span className="pap-badge" style={{ color: p.voidedAt ? "#B42318" : "#15803D", background: p.voidedAt ? "rgba(180,35,24,.1)" : "rgba(21,128,61,.1)" }}>{p.voidedAt ? "Voided" : "Recorded"}</span></td>
+          <td className={"pap-num font-semibold " + (p.voidedAt ? "line-through opacity-70" : "")}><span className="pap-ml">Amount sent</span>{p.cryptoAmount} {p.currency}</td>
+          <td className="pap-num"><span className="pap-ml">USD allocated</span>{moneyOf(p.usdAmount)}</td>
+          <td className="text-[12.5px]"><span className="pap-ml">Orders</span>{p.orders.length}</td>
+          <td className="pap-c-wide"><span className="pap-ml">TXID</span><span className="block max-w-[180px] truncate font-mono text-[12px]" title={p.txid}>{p.txid}</span></td>
+          <td className="pap-c-go"><ChevronRight className="h-4 w-4" aria-hidden="true" /></td>
+        </tr>)}</tbody>
+      </table></div>}
+    <div className="border-t px-3 py-2" style={{ borderColor: "var(--t-border)" }}><Pager page={view.page} pages={view.pages} onPage={setPage} prefix="payment-history" /></div>
   </section>;
+}
+
+export function ReceiptDrawer({ p, onClose, busy, locked, voiding, onVoidStart, onVoidCancel, reason, onReason, onVoidConfirm, message }: {
+  p: Receipt; onClose: () => void; busy: boolean; locked: boolean; voiding: boolean; onVoidStart: () => void; onVoidCancel: () => void;
+  reason: string; onReason: (r: string) => void; onVoidConfirm: () => void; message: { ok: boolean; text: string } | null;
+}) {
+  const sub = { color: "var(--t-subtle)" };
+  return <Overlay testId={`payment-receipt-${p.id}`} closeTestId="payment-detail-close" canClose={!busy} onClose={onClose}
+    title={<span className={p.voidedAt ? "line-through" : ""}>{p.cryptoAmount} {p.currency} · {moneyOf(p.usdAmount)} USD allocated</span>}
+    subtitle={p.voidedAt ? "Voided · allocations released" : "Recorded by Admin · external transfer, not blockchain verified"}
+    footer={!p.voidedAt ? (voiding
+      ? <div className="space-y-2 text-sm">
+          <p>Only corrects this record; does not reverse transfer. Its order allocations are released under existing rules.</p>
+          <label className="block text-xs" style={sub}>Required reason (audited)
+            <input data-testid="payment-void-reason" className={inputCls} style={inputStyle} value={reason} disabled={busy} onChange={(e) => onReason(e.target.value)} />
+          </label>
+          <div className="flex gap-2">
+            <button type="button" data-testid="payment-void-confirm" disabled={busy || !reason.trim()} className="pap-btn pap-btn-danger" onClick={onVoidConfirm}>Confirm void record</button>
+            <button type="button" disabled={busy} className="pap-btn" onClick={onVoidCancel} data-testid="payment-void-cancel">Cancel</button>
+          </div>
+        </div>
+      : <div className="flex justify-end"><button type="button" disabled={locked} className="pap-btn" style={{ color: "#B42318" }} onClick={onVoidStart} data-testid="payment-void-open">Void record</button></div>) : undefined}>
+    <Notice message={message} />
+    <dl className="grid gap-x-4 gap-y-1.5 rounded-lg border p-3 text-xs sm:grid-cols-[150px_1fr]" style={{ borderColor: "var(--t-border)", background: "var(--t-bg)" }}>
+      <dt style={sub}>Destination (at recording)</dt><dd>{p.walletSnapshot.label ? `${p.walletSnapshot.label} · ` : ""}{p.walletSnapshot.currency} / {p.walletSnapshot.network}<code className="mt-0.5 block break-all select-all">{p.walletSnapshot.address}</code></dd>
+      <dt style={sub}>TXID</dt><dd className="font-mono break-all select-all">{p.txid}</dd>
+      <dt style={sub}>Paid</dt><dd>{fmtDate(p.paidAt, true)}</dd>
+      <dt style={sub}>Recorded</dt><dd>{fmtDate(p.recordedAt, true)} by {p.recordedBy}</dd>
+      {p.note && <><dt style={sub}>Note</dt><dd>{p.note}</dd></>}
+      {p.voidedAt && <><dt style={{ color: "#B42318" }}>Voided</dt><dd style={{ color: "#B42318" }}>{fmtDate(p.voidedAt, true)}: {p.voidReason}</dd></>}
+    </dl>
+    <p className="mb-2 mt-5 text-[11px] font-bold uppercase tracking-widest" style={sub}>Orders covered by this payment ({p.orders.length})</p>
+    <ul className="space-y-2">
+      {p.orders.map((o) => <li key={o.submissionId} className="rounded-lg border p-3" style={{ borderColor: "var(--t-border)" }}>
+        <p className="flex justify-between gap-2 text-xs"><span className="font-mono font-semibold break-all">{o.reference}</span><span className="tabular-nums font-semibold">{moneyOf(o.amountUsd)} allocated</span></p>
+        {o.detail
+          ? <div className="mt-2"><OrderBreakdown src={o.detail} /></div>
+          : <p className="mt-1 text-[11px]" style={{ color: "#B4770E" }}>Breakdown not recorded for this receipt. Only the allocated amount was saved at the time; current order data is not used to reconstruct it.</p>}
+      </li>)}
+    </ul>
+  </Overlay>;
 }

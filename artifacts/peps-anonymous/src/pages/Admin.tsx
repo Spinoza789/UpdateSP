@@ -45,6 +45,7 @@ import { AdminWholesaleSetup } from "@/components/admin/AdminWholesaleSetup";
 import { downloadSupplierVendorOrders } from "@/lib/supplier-vendor-export";
 import VendorPortalAdmin from "@/components/admin/VendorPortalAdmin";
 import VendorPaymentsAdmin from "@/components/admin/VendorPaymentsAdmin";
+import "@/components/admin/peps-anon-payment/payments.css";
 import { Fs3PastedList } from "@/components/admin/Fs3PastedList";
 import { loadFs3Costs } from "@/lib/fs3-cost-catalogue";
 import { Fs3CostMatches } from "@/components/admin/Fs3CostMatches";
@@ -28047,6 +28048,11 @@ function AdminInner({ initialSecret, theme, onToggleTheme, admin2fa = false, rem
     const allIds = ALL_TABS_META.map(t => t.id);
     return allIds.includes(hash) ? hash : "dashboard";
   });
+  // Keep unsaved supplier payment drafts and list context while consulting other Admin tabs.
+  const [paymentVisited, setPaymentVisited] = useState(activeTab === "peps-anon-payment");
+  useEffect(() => {
+    if (activeTab === "peps-anon-payment") setPaymentVisited(true);
+  }, [activeTab]);
   const [tabOrder, setTabOrder] = useState<string[]>(ALL_TABS_META.map(t => t.id));
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [navSearch, setNavSearch] = useState("");
@@ -28532,7 +28538,7 @@ function AdminInner({ initialSecret, theme, onToggleTheme, admin2fa = false, rem
             renderVendorModal={({ vendor, onSave, onClose }) => <VendorModal vendor={vendor} numTiers={vendor?.tiers.length ?? 4} onSave={onSave} onClose={onClose} />}
           />}
           {activeTab === "vendor-portal" && <VendorPortalAdmin secret={secret} />}
-          {activeTab === "peps-anon-payment" && <VendorPaymentsAdmin />}
+          {paymentVisited && <div hidden={activeTab !== "peps-anon-payment"}><VendorPaymentsAdmin active={activeTab === "peps-anon-payment"} /></div>}
           {activeTab === "wholesale-shares" && <AdminWholesaleSharesTab secret={secret} />}
           {activeTab === "wholesale-access" && <WholesaleAccessRequestsAdminTab secret={secret} />}
           {activeTab === "wholesale-tracking" && <WholesaleTrackingTab secret={secret} />}

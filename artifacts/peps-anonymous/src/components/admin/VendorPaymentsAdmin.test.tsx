@@ -152,9 +152,10 @@ async function click(id: string) {
   });
 }
 async function review() {
-  await change("payment-wallet", "w1");
   await click("payment-order-o1");
   await click("payment-order-o2");
+  await click("payment-record-open");
+  await change("payment-wallet", "w1");
   await change("payment-amount", "30");
   await change("payment-txid", "tx-123");
   await click("payment-review");
@@ -219,6 +220,8 @@ test("requires a reason and explicit confirmation to void a receipt", async () =
   (data.payments as any[]).push(payment);
   try {
     await mount();
+    await click("payment-tab-history");
+    await click("payment-receipt-expand-p1");
     const voidButton = Array.from(document.querySelectorAll("button")).find(
       (b) => b.textContent === "Void record",
     )!;
@@ -251,12 +254,13 @@ test("requires a saved vendor wallet before review", async () => {
   data.wallets = [];
   try {
     await mount();
+    await click("payment-wallets-open");
     assert.ok(
       document.body.textContent!.includes(
         "add a payment wallet in their Settings",
       ),
     );
-    assert.equal((el("payment-review") as HTMLButtonElement).disabled, true);
+    assert.equal(document.querySelector('[data-testid="payment-review"]'), null);
   } finally {
     data.wallets = wallets;
   }
@@ -356,6 +360,7 @@ test("shows whole-ledger server summary, item breakdown and shared constituents"
 test("historical receipt without detail says breakdown not recorded", async () => {
   await mountWith(async (p) => new Response(JSON.stringify(detailedData(vendorOf(p)))));
   await change("payment-vendor", "v1");
+  await click("payment-tab-history");
   await click("payment-receipt-expand-old");
   assert.ok(el("payment-receipt-old").textContent!.includes("Breakdown not recorded"));
   assert.ok(el("payment-receipt-old").textContent!.includes("historic-address"));
@@ -397,7 +402,7 @@ test("refresh failure clears stale ledger and offers retry", async () => {
   fail = false;
   await click("payment-retry");
   assert.ok(text().includes("V1-REF0"));
-  assert.ok(!text().includes("selected"));
+  assert.equal(document.querySelector('[data-testid="payment-selected-count"]'), null);
 });
 
 test("captures review tokens in draft and keeps review after 409", async () => {
@@ -407,9 +412,10 @@ test("captures review tokens in draft and keeps review after 409", async () => {
     ? new Response(JSON.stringify({ error: "Order snapshot changed; refresh" }), { status: 409 })
     : new Response(JSON.stringify(withTokens())));
   await change("payment-vendor", "v1");
-  await change("payment-wallet", "w1");
   await click("payment-order-v1-o0");
   await click("payment-order-v1-o1");
+  await click("payment-record-open");
+  await change("payment-wallet", "w1");
   await change("payment-amount", "24.68");
   await change("payment-txid", "tx-tok");
   await click("payment-review");
@@ -427,8 +433,9 @@ test("captures review tokens in draft and keeps review after 409", async () => {
 test("review shows expandable breakdown for each selected order", async () => {
   await mountWith(async (p) => new Response(JSON.stringify(detailedData(vendorOf(p)))));
   await change("payment-vendor", "v1");
-  await change("payment-wallet", "w1");
   await click("payment-order-v1-o0");
+  await click("payment-record-open");
+  await change("payment-wallet", "w1");
   await change("payment-amount", "12.34");
   await change("payment-txid", "tx-d");
   await click("payment-review");
@@ -444,6 +451,7 @@ test("copy without clipboard API shows select-and-copy fallback", async () => {
   try {
     await mountWith(async (p) => new Response(JSON.stringify(detailedData(vendorOf(p)))));
     await change("payment-vendor", "v1");
+    await click("payment-wallets-open");
     await click("payment-copy-w1");
     assert.ok(document.querySelector('[role="alert"]')?.textContent?.includes("Select and copy"));
   } finally {
@@ -453,26 +461,24 @@ test("copy without clipboard API shows select-and-copy fallback", async () => {
 
 test("shows exact signed product profit beside orders with its definition and sales/cost basis", async () => {
   await mount();
-  const ledgerRow = el("payment-order-o1").closest("li")!.textContent!;
+  const ledgerRow = el("payment-order-o1").closest("tr")!.textContent!;
   assert.ok(ledgerRow.includes("$11.20"));
   assert.ok(ledgerRow.includes("$18.20"));
-  assert.ok(ledgerRow.includes("$7.00"));
-  assert.ok(ledgerRow.includes("Estimated product profit"));
+  assert.ok(el("payment-profit-o1").textContent!.includes("$11.20"));
   const soldPrice = el("payment-sold-price-o1");
   assert.ok(soldPrice.textContent!.includes("Sold price"));
   assert.ok(soldPrice.textContent!.includes("$18.20"));
-  assert.ok(soldPrice.textContent!.includes("Products only"));
-  assert.ok(soldPrice.parentElement!.textContent!.includes("Supplier cost"));
+  assert.match(soldPrice.textContent!, /products only/i);
+  assert.match(soldPrice.closest("table")!.textContent!, /Supplier cost/);
   await click("payment-expand-o1");
   const profitDetail = el("payment-profit-detail-o1").textContent!;
   assert.ok(profitDetail.includes("before shipping"));
   assert.ok(profitDetail.includes("Customer product sales: $18.20"));
   assert.ok(profitDetail.includes("Supplier product cost: $7.00"));
-  const negativeRow = el("payment-order-o2").closest("li")!.textContent!;
+  const negativeRow = el("payment-order-o2").closest("tr")!.textContent!;
   assert.ok(negativeRow.includes("-$5.00"));
   assert.ok(negativeRow.includes("$15.00"));
-  assert.ok(negativeRow.includes("$20.00"));
-  const unavailable = el("payment-order-paid").closest("li")!.textContent!;
+  const unavailable = el("payment-order-paid").closest("tr")!.textContent!;
   assert.ok(unavailable.includes("Unavailable"));
   assert.ok(unavailable.includes("Customer product prices are ambiguous."));
   assert.ok(el("payment-sold-price-paid").textContent!.includes("Unavailable"));
@@ -481,15 +487,17 @@ test("shows exact signed product profit beside orders with its definition and sa
 test("removal requires confirmation, uses the supplier submission endpoint, and preserves customer order", async () => {
   await mount();
   await click("payment-order-o1");
+  await click("payment-record-open");
   await change("payment-wallet", "w1");
   await change("payment-amount", "10");
   await change("payment-txid", "prepared-tx");
+  await click("payment-record-close");
+  await click("payment-expand-o1");
   await click("payment-remove-o1");
   assert.ok(el("payment-remove-confirmation").textContent!.includes("REF1"));
   assert.ok(el("payment-remove-confirmation").textContent!.includes("keeps the customer order"));
   assert.ok(el("payment-remove-confirmation").textContent!.includes("does not cancel"));
-  assert.equal((el("payment-review") as HTMLButtonElement).disabled, true);
-  await click("payment-review");
+  assert.equal((el("payment-record-open") as HTMLButtonElement).disabled, true);
   assert.equal(document.querySelector('[data-testid="payment-draft"]'), null);
   assert.equal(requests.filter((r) => r.method === "POST").length, 0);
   assert.equal(requests.filter((r) => r.method === "DELETE").length, 0);
@@ -515,6 +523,7 @@ test("removal requires confirmation, uses the supplier submission endpoint, and 
 
 test("failed removal preserves the row and reports error without success", async () => {
   await mount();
+  await click("payment-expand-o1");
   await click("payment-remove-o1");
   adminAuth.request = async (path, init = {}) => {
     requests.push({ path, method: init.method, body: null });
@@ -529,8 +538,11 @@ test("failed removal preserves the row and reports error without success", async
 
 test("paid and started submissions cannot be removed", async () => {
   await mount();
+  await click("payment-expand-paid");
   assert.equal((el("payment-remove-paid") as HTMLButtonElement).disabled, true);
   assert.ok(el("payment-remove-paid").textContent!.includes("Void the payment receipt"));
+  await click("payment-detail-close");
+  await click("payment-expand-o2");
   assert.equal((el("payment-remove-o2") as HTMLButtonElement).disabled, true);
   assert.ok(el("payment-remove-o2").textContent!.includes("started"));
 });
@@ -546,6 +558,7 @@ test("Admin override requires a reason and sends it only after explicit confirma
     return new Response(JSON.stringify({ ...data, orders: deleted ? [] : [overrideOrder] }));
   });
   await change("payment-vendor", "v1");
+  await click("payment-expand-o1");
   await click("payment-remove-o1");
   assert.match(el("payment-remove-confirmation").textContent!, /does not stop a parcel already shipped/);
   assert.equal((el("payment-remove-confirm") as HTMLButtonElement).disabled, true);
@@ -560,6 +573,7 @@ test("Admin override requires a reason and sends it only after explicit confirma
 test("switching vendors clears removal confirmation and stale removal cannot act", async () => {
   await mountWith(async (p) => new Response(JSON.stringify(detailedData(vendorOf(p)))));
   await change("payment-vendor", "v1");
+  await click("payment-expand-v1-o0");
   await click("payment-remove-v1-o0");
   await change("payment-vendor", "v2");
   assert.equal(document.querySelector('[data-testid="payment-remove-confirmation"]'), null);
@@ -574,9 +588,10 @@ for (const [label, bad] of [["missing", undefined], ["malformed", "NOT-A-SHA"]] 
       return new Response(JSON.stringify(d));
     });
     await change("payment-vendor", "v1");
-    await change("payment-wallet", "w1");
     await click("payment-order-v1-o0");
     await click("payment-order-v1-o1");
+    await click("payment-record-open");
+    await change("payment-wallet", "w1");
     await change("payment-amount", "24.68");
     await change("payment-txid", "tx-bad");
     assert.equal((el("payment-review") as HTMLButtonElement).disabled, true);
@@ -584,8 +599,106 @@ for (const [label, bad] of [["missing", undefined], ["malformed", "NOT-A-SHA"]] 
     await click("payment-review");
     assert.equal(document.querySelector('[data-testid="payment-draft"]'), null);
     assert.equal(requests.filter((r) => r.method === "POST").length, 0);
+    await click("payment-record-close");
+    await click("payment-tab-history");
     await click("payment-receipt-expand-old");
     assert.ok(el("payment-receipt-old").textContent!.includes("Breakdown not recorded"));
     assert.ok(el("payment-receipt-old").textContent!.includes("LEGACY1"));
   });
 }
+
+test("order tabs filter supplier states and history keeps the list search and selection", async () => {
+  await mount();
+  assert.equal(document.querySelector('[data-testid="payment-wallet"]'), null);
+  assert.equal(document.querySelector('[data-testid="payment-copy-w1"]'), null);
+  await click("payment-order-o1");
+  await click("payment-state-paid");
+  assert.equal(document.querySelector('[data-testid="payment-order-o1"]'), null);
+  assert.ok(el("payment-order-paid"));
+  assert.match(el("payment-hidden-selected").textContent!, /1/);
+  await click("payment-state-all");
+  await change("payment-filter-search", "REF1");
+  await click("payment-tab-history");
+  await click("payment-tab-orders");
+  assert.equal((el("payment-filter-search") as HTMLInputElement).value, "REF1");
+  assert.equal((el("payment-order-o1") as HTMLInputElement).checked, true);
+  assert.equal(document.querySelector('[data-testid="payment-order-o2"]'), null);
+  await click("payment-filter-clear");
+  assert.ok(el("payment-order-o2"));
+});
+
+test("one drawer follows the filtered set and restores focus without changing selection", async () => {
+  await mountWith(async (p) => new Response(JSON.stringify(detailedData(vendorOf(p), 30))));
+  await change("payment-vendor", "v1");
+  await click("payment-select-page");
+  const trigger = el("payment-expand-v1-o0") as HTMLButtonElement;
+  trigger.focus();
+  await click("payment-expand-v1-o0");
+  assert.equal(document.querySelectorAll('[role="dialog"]').length, 1);
+  assert.equal((el("payment-detail-prev") as HTMLButtonElement).disabled, true);
+  await click("payment-detail-next");
+  assert.ok(el("payment-order-detail-v1-o1"));
+  await click("payment-detail-close");
+  assert.equal(document.activeElement, trigger);
+  assert.match(el("payment-selected-count").textContent!, /25/);
+});
+
+test("dirty payment fields survive close and refresh cannot discard a reviewed draft", async () => {
+  await mount();
+  await review();
+  await click("payment-record-close");
+  const before = requests.length;
+  await click("payment-refresh");
+  assert.equal(requests.length, before, "refresh must not silently clear selected reviewed orders");
+  await click("payment-record-open");
+  assert.ok(el("payment-draft"));
+  await click("payment-edit");
+  assert.equal((el("payment-txid") as HTMLInputElement).value, "tx-123");
+});
+
+test("changing vendors with a dirty transfer requires explicit discard", async () => {
+  await mountWith(async (p) => new Response(JSON.stringify(detailedData(vendorOf(p)))));
+  await change("payment-vendor", "v1");
+  await click("payment-order-v1-o0");
+  await click("payment-record-open");
+  await change("payment-txid", "unsaved");
+  await click("payment-record-close");
+  await change("payment-vendor", "v2");
+  assert.equal((el("payment-vendor") as HTMLSelectElement).value, "v1");
+  await click("payment-discard-cancel");
+  await click("payment-record-open");
+  assert.equal((el("payment-txid") as HTMLInputElement).value, "unsaved");
+  await click("payment-record-close");
+  await change("payment-vendor", "v2");
+  await click("payment-discard-confirm");
+  assert.equal((el("payment-vendor") as HTMLSelectElement).value, "v2");
+  assert.equal(document.querySelector('[data-testid="payment-selected-count"]'), null);
+  assert.equal(document.querySelector('[data-testid="payment-order-v1-o0"]'), null);
+});
+
+test("discarding a transfer requires confirmation and enables a fresh ledger load", async () => {
+  await mount();
+  await review();
+  await click("payment-record-discard");
+  await click("payment-record-discard-cancel");
+  assert.ok(el("payment-draft"));
+  await click("payment-record-discard");
+  await click("payment-record-discard-confirm");
+  assert.equal(document.querySelector('[data-testid="payment-record-dialog"]'), null);
+  assert.equal((el("payment-refresh") as HTMLButtonElement).disabled, false);
+  await click("payment-record-open");
+  assert.equal((el("payment-txid") as HTMLInputElement).value, "");
+});
+
+test("consulting another Admin tab hides dialogs but retains the unsaved record", async () => {
+  await mount();
+  await review();
+  const before = requests.length;
+  await act(async () => { root!.render(createElement(Component, { active: false })); });
+  assert.equal(document.querySelector('[role="dialog"]'), null);
+  await act(async () => { window.dispatchEvent(new Event("focus")); });
+  assert.equal(requests.length, before);
+  await act(async () => { root!.render(createElement(Component, { active: true })); });
+  assert.ok(el("payment-draft"));
+  assert.match(el("payment-draft").textContent!, /tx-123/);
+});
