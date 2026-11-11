@@ -11,6 +11,20 @@ const source = (items = [{ vendorId: "v1", lineTotal: "30.30" }]) => ({
   orders: [{ grandTotal: "999", productSubtotal: "888", vendorShipping: "50", creditsApplied: 100 }],
 });
 describe("Admin supplier-scoped product profit", () => {
+  it("includes per-product sales and profit, combining shared members by product name", () => {
+    const detail = vendorProductProfit(row(), source([
+      { vendorId: "v1", productName: "Product", quantity: "0.5", lineTotal: "10.00" },
+      { vendorId: "v1", productName: "Product", quantity: "1.5", lineTotal: "20.30" },
+    ] as any), false);
+    expect(detail.lines).toEqual([{ productName: "Product", salesUsd: "30.30", amountUsd: "10.10" }]);
+  });
+  it("preserves negative line profit and refuses stale or mismatched line estimates", () => {
+    const lines = [{ vendorId: "v1", productName: "Product", quantity: 2, lineTotal: "10.00" }];
+    expect(vendorProductProfit(row(), source(lines as any), false).lines?.[0].amountUsd).toBe("-10.20");
+    expect(vendorProductProfit(row(), source(lines as any), true).lines).toBeNull();
+    expect(vendorProductProfit(row(), source([{ ...lines[0], quantity: 3 }] as any), false).lines).toBeNull();
+    expect(vendorProductProfit(row(), source([{ ...lines[0], productName: "Different" }] as any), false).lines).toBeNull();
+  });
   it("uses exact customer product lines minus submitted product costs, not full order totals", () => {
     expect(vendorProductProfit(row(), source(), false)).toMatchObject({
       currency: "USD", basis: "product_gross", salesUsd: "30.30", supplierProductsUsd: "20.20", amountUsd: "10.10", reason: null,

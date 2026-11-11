@@ -10,6 +10,7 @@ export type OrderProfit = {
   amountUsd: string | null;
   reason: string | null;
   definition: string;
+  lines?: Array<{ productName: string; salesUsd: string; amountUsd: string }> | null;
 };
 export type LedgerOrder = {
   id: string;
