@@ -5,6 +5,7 @@ import { Clock, Fingerprint, KeyRound, Loader2, LogIn, LogOut, RefreshCw, Shield
 import { Badge, Banner, Btn, Field, cardStyle, field, fieldCls, muted, subtle } from '@/components/vendor-ui';
 import { clearVendorCsrfToken, restoreVendorSession, setVendorCsrfToken, vendorFetch } from '@/lib/vendor-auth-client';
 import { getPasskey, passkeyErrorMessage, passkeysSupported } from '@/lib/vendor-webauthn';
+import { pepsAdminAuth } from '@/lib/peps-admin';
 
 /* ---------------------------------------------------------------------------
  * Vendor sign-in / sign-up gate (dedicated vendor accounts).
@@ -12,11 +13,11 @@ import { getPasskey, passkeyErrorMessage, passkeysSupported } from '@/lib/vendor
  * passkey-only sign-in, account creation (pending Admin approval).
  * ------------------------------------------------------------------------- */
 type Account = { username: string; status: 'pending' | 'active' | 'disabled'; vendorId: string | null; companyName: string };
-type Mfa = { mfaToken: string; username: string; methods: { totp: boolean; passkeys: number }; rememberMe: boolean };
+type Mfa = { mfaToken: string; username: string; methods: { totp: boolean; passkeys: number }; rememberMe: boolean; workspaceChallenge?: string };
 const input = fieldCls.replace('h-8', 'h-9');
 const post = (url: string, body: unknown) => fetch(url, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
 
-export default function VendorAccountAuth({ onAuthenticated }: { onAuthenticated: () => void }) {
+export default function VendorAccountAuth({ onAuthenticated, onWorkspaceAuthenticated = () => window.location.assign("/vendor/admin") }: { onAuthenticated: () => void; onWorkspaceAuthenticated?: () => void }) {
   useVendorLanguage();
   const [account, setAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,6 +28,7 @@ export default function VendorAccountAuth({ onAuthenticated }: { onAuthenticated
   const [username, setUsername] = useState('');
   const [mfa, setMfa] = useState<Mfa | null>(null);
   const [code, setCode] = useState('');
+  const [recovery, setRecovery] = useState(false);
   const accept = useCallback((next: Account) => {
     setAccount(next); setMfa(null);
     if (next.status === 'active' && next.vendorId) onAuthenticated();
@@ -50,7 +52,8 @@ export default function VendorAccountAuth({ onAuthenticated }: { onAuthenticated
     const data = new FormData(event.currentTarget);
     const user = String(data.get('username') ?? '').trim();
     const password = String(data.get('password') ?? '');
-    if (!/^[a-z0-9][a-z0-9_.-]{2,49}$/i.test(user)) { setError(vt('Use 3–50 letters, numbers, dots, underscores or hyphens, starting with a letter or number.')); return; }
+    if (signup && !/^[a-z0-9][a-z0-9_.-]{2,49}$/i.test(user)) { setError(vt('Use 3–50 letters, numbers, dots, underscores or hyphens, starting with a letter or number.')); return; }
+    if (!signup && !/^[a-z0-9_.-]{3,64}$/i.test(user)) { setError(vt('Enter a valid username.')); return; }
     if (signup && (password.length < 12 || password.length > 128 || new TextEncoder().encode(password).length > 72)) { setError(vt('Use at least 12 characters. If your password is very long, shorten it.')); return; }
     if (signup && password !== data.get('confirm')) { setError(vt('Passwords do not match.')); return; }
     setBusy('submit'); setError('');
@@ -61,6 +64,25 @@ export default function VendorAccountAuth({ onAuthenticated }: { onAuthenticated
         email: String(data.get('email') ?? '').trim() || undefined,
       } : { rememberMe }) });
       const body = await response.json();
+      // Reuse the existing privileged authentication, never issue a vendor session
+      // or infer authority from a username. Only an actual credential rejection
+      // can fall through; rate limits and service failures remain failures.
+      if (!signup && response.status === 401) {
+        try {
+          const status = await pepsAdminAuth.initialize();
+          if (status.twoFactorEnabled) {
+            const challenge = await pepsAdminAuth.login(user, password, rememberMe);
+            setMfa({ mfaToken: "", username: user, methods: { totp: true, passkeys: 0 }, rememberMe, workspaceChallenge: challenge });
+            setCode(""); setRecovery(false);
+          } else {
+            await pepsAdminAuth.loginWithSecret(password, rememberMe);
+            onWorkspaceAuthenticated();
+          }
+        } catch {
+          setError(vt('Could not sign in. Check your details and try again.'));
+        }
+        return;
+      }
       if (!response.ok) throw new Error(body.error || vt('Could not sign in. Try again.'));
       if (body.mfaRequired) { setMfa({ mfaToken: body.mfaToken, username: body.username, methods: body.methods, rememberMe }); setCode(''); return; }
       finish(body);
@@ -72,6 +94,16 @@ export default function VendorAccountAuth({ onAuthenticated }: { onAuthenticated
     if (code.replace(/\s/g, '').length < 6) { setError(vt('Enter the six-digit code from your authenticator app, or a recovery code.')); return; }
     setBusy('code'); setError('');
     try {
+      if (mfa.workspaceChallenge) {
+        try {
+          await pepsAdminAuth.verify(mfa.workspaceChallenge, recovery ? { recoveryCode: code.trim() } : { code: code.trim() });
+          setMfa(null); setRecovery(false);
+          onWorkspaceAuthenticated();
+        } catch {
+          setError(vt('Verification was not accepted. Check your code and try again, or start over.'));
+        }
+        return;
+      }
       const response = await post('/api/vendor/auth/mfa/totp', { mfaToken: mfa.mfaToken, code: code.trim() });
       const body = await response.json();
       if (!response.ok) { if (body.mfaToken) setMfa({ ...mfa, mfaToken: body.mfaToken }); throw new Error(body.error || vt('Code not accepted.')); }
@@ -135,11 +167,12 @@ export default function VendorAccountAuth({ onAuthenticated }: { onAuthenticated
         {errorBanner}
         {mfa.methods.totp && (
           <form onSubmit={submitCode} className="space-y-3 text-left" data-testid="form-mfa-code">
-            <Field label={vt("Verification code")}><input name="code" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e => setCode(e.target.value)} className={`${input} font-mono tracking-[0.25em] text-center`} style={field} autoFocus data-testid="input-mfa-code" /></Field>
+            <Field label={vt("Verification code")}><input name="code" inputMode={recovery ? "text" : "numeric"} autoComplete="one-time-code" value={code} onChange={e => setCode(e.target.value)} className={`${input} font-mono tracking-[0.25em] text-center`} style={field} autoFocus data-testid="input-mfa-code" /></Field>
+            {mfa.workspaceChallenge && <label className="flex items-center gap-2 text-xs" style={muted}><input type="checkbox" checked={recovery} onChange={e => { setRecovery(e.target.checked); setCode(""); }} />{vt("Use a recovery code")}</label>}
             <Btn type="submit" variant="primary" className="w-full h-9" disabled={busy === 'code'} data-testid="button-mfa-submit">{busy === 'code' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}{vt("Verify")}</Btn>
           </form>)}
         {mfa.methods.passkeys > 0 && passkeysSupported() && <Btn className="w-full h-9" onClick={() => void usePasskey()} disabled={busy === 'passkey'} data-testid="button-mfa-passkey">{busy === 'passkey' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-4 h-4" />}{mfa.methods.totp ? vt('Use a passkey instead') : vt('Continue with passkey')}</Btn>}
-        <button type="button" onClick={() => { setMfa(null); setError(''); }} className="text-xs font-medium underline" style={muted}>{vt("Start over")}</button>
+        <button type="button" disabled={!!busy} onClick={() => { setMfa(null); setCode(''); setRecovery(false); setError(''); }} className="text-xs font-medium underline" style={muted}>{vt("Start over")}</button>
       </Panel>
     </Frame>
   );
@@ -176,9 +209,6 @@ export default function VendorAccountAuth({ onAuthenticated }: { onAuthenticated
             <div className="flex items-center gap-3 my-4"><div className="flex-1 h-px" style={{ background: 'var(--t-border)' }} /><span className="text-xs" style={subtle}>{vt("or")}</span><div className="flex-1 h-px" style={{ background: 'var(--t-border)' }} /></div>
             <Btn className="w-full h-9" onClick={() => void usePasskey()} disabled={!!busy} data-testid="button-passkey-signin">{busy === 'passkey' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-4 h-4" />}{vt("Sign in with a passkey")}</Btn>
           </>)}
-        <p className="mt-5 text-center text-xs" style={muted}>
-          <a href="/vendor/admin" className="underline underline-offset-4" data-testid="link-peps-admin">Admin sign in</a>
-        </p>
       </div>
     </Frame>
   );

@@ -100,6 +100,16 @@ Vendor sign-in has its own URL and uses the existing account credentials; the re
 
 **How to apply:** Keep vendor entry and return-from-logout inside the dedicated vendor login flow. Enforce vendor access on the server after sign-in; do not add a second password system or expose vendor navigation on the regular member login.
 
+The Peps Anonymous vendor sign-in must also accept the existing backend login,
+without displaying an “Admin” label, button or separate login option.
+
+**Why:** The user asked to log in through the vendor page, said “Don't mention
+admin,” and confirmed “Use existing backend login.”
+
+**How to apply:** Reuse existing privileged authentication and two-factor
+verification; only successful authentication opens the all-vendors workspace.
+Never grant elevated access from a username or weaken ordinary vendor isolation.
+
 Vendor notification emails must cover new orders and messages only, not the full
 Telegram alert set. Vendors can manage their own notification destination and independently choose either, both or neither email category in Settings.
 

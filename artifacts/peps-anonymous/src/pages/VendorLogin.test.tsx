@@ -2,6 +2,11 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 // @ts-expect-error jsdom is supplied by the workspace.
 import { JSDOM } from "jsdom";
 
+const workspace = vi.hoisted(() => ({
+  initialize: vi.fn(), loginWithSecret: vi.fn(), login: vi.fn(), verify: vi.fn(),
+}));
+vi.mock("../lib/peps-admin", () => ({ pepsAdminAuth: workspace }));
+
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/vendor/login" });
 function setupDom() {
   for (const key of ["window", "document", "navigator", "location", "history", "HTMLElement", "HTMLInputElement", "FormData", "Event", "Node"]) {
@@ -12,7 +17,12 @@ function setupDom() {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 }
 setupDom();
-beforeEach(setupDom);
+beforeEach(() => {
+  setupDom();
+  vi.clearAllMocks();
+  workspace.initialize.mockResolvedValue({ twoFactorEnabled: false });
+  workspace.loginWithSecret.mockRejectedValue(new Error("Unauthorized"));
+});
 const { act, createElement } = await import("react");
 const { createRoot } = await import("react-dom/client");
 const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
@@ -60,6 +70,73 @@ it("uses dedicated vendor sign-in and offers independent account creation", asyn
   expect(element.querySelector('a[href="/login"]')).toBeNull();
   expect(element.textContent).toContain("Create vendor account");
   expect(fields().some(i => i.name === "username")).toBe(true);
+  expect(element.textContent).not.toMatch(/\badmin\b/i);
+  expect(element.querySelector('a[href="/vendor/admin"]')).toBeNull();
+});
+it("accepts the existing secret-mode login without exposing a separate login option", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 401 })));
+  workspace.loginWithSecret.mockResolvedValue(undefined);
+  await render();
+  await enterAndSubmit();
+  expect(workspace.loginWithSecret).toHaveBeenCalledWith("example-password", false);
+  expect(path.history.at(-1)).toBe("/vendor/admin");
+  expect(element.textContent).not.toMatch(/\badmin\b/i);
+});
+it("keeps the existing second factor mandatory on the shared sign-in form", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 401 })));
+  workspace.initialize.mockResolvedValue({ twoFactorEnabled: true });
+  workspace.login.mockResolvedValue("opaque-challenge");
+  workspace.verify.mockResolvedValue({ username: "staff" });
+  await render();
+  await enterAndSubmit();
+  expect(workspace.login).toHaveBeenCalledWith("vendor-test", "example-password", false);
+  expect(path.history.at(-1)).toBe("/vendor/login");
+  expect(element.textContent).toContain("One more step");
+  expect(element.textContent).not.toMatch(/\badmin\b/i);
+  const code = element.querySelector<HTMLInputElement>('[name="code"]')!;
+  const { fireEvent } = await import("../../../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/index.js");
+  await act(async () => fireEvent.change(code, { target: { value: "123456" } }));
+  await act(async () => element.querySelector("form")!.dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true })));
+  await settle();
+  expect(workspace.verify).toHaveBeenCalledWith("opaque-challenge", { code: "123456" });
+  expect(path.history.at(-1)).toBe("/vendor/admin");
+});
+it("never attempts the alternate sign-in after a service error or a successful vendor login", async () => {
+  vi.stubGlobal("fetch", vi.fn(async (_url: string, opts?: RequestInit) =>
+    new Response(JSON.stringify({ error: "Try again later" }), { status: opts?.method === "POST" ? 503 : 401 })));
+  await render();
+  await enterAndSubmit();
+  expect(workspace.initialize).not.toHaveBeenCalled();
+  expect(path.history.at(-1)).toBe("/vendor/login");
+});
+it("does not reveal the privileged login when credentials are rejected", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 401 })));
+  workspace.loginWithSecret.mockRejectedValue(new Error("Admin credential rejected"));
+  await render();
+  await enterAndSubmit();
+  expect(element.textContent).toContain("Could not sign in. Check your details and try again.");
+  expect(element.textContent).not.toMatch(/\badmin\b/i);
+  expect(path.history.at(-1)).toBe("/vendor/login");
+});
+it("preserves the second-factor challenge on rejected codes and allows recovery codes", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 401 })));
+  workspace.initialize.mockResolvedValue({ twoFactorEnabled: true });
+  workspace.login.mockResolvedValue("opaque-challenge");
+  workspace.verify.mockRejectedValueOnce(new Error("Invalid code")).mockResolvedValue({ username: "staff" });
+  await render();
+  await enterAndSubmit();
+  const { fireEvent } = await import("../../../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/index.js");
+  await act(async () => fireEvent.change(element.querySelector('[name="code"]')!, { target: { value: "000000" } }));
+  await act(async () => element.querySelector("form")!.dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true })));
+  await settle();
+  expect(path.history.at(-1)).toBe("/vendor/login");
+  expect(element.textContent).toContain("Verification was not accepted");
+  await act(async () => fireEvent.click(element.querySelector('input[type="checkbox"]')!));
+  await act(async () => fireEvent.change(element.querySelector('[name="code"]')!, { target: { value: "RECOVERY-TEST" } }));
+  await act(async () => element.querySelector("form")!.dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true })));
+  await settle();
+  expect(workspace.verify).toHaveBeenLastCalledWith("opaque-challenge", { recoveryCode: "RECOVERY-TEST" });
+  expect(path.history.at(-1)).toBe("/vendor/admin");
 });
 it("signs in using only vendor authentication and opens the portal for a linked active account", async () => {
   const calls: string[] = [];
@@ -72,6 +149,7 @@ it("signs in using only vendor authentication and opens the portal for a linked 
   await render();
   await enterAndSubmit();
   expect(calls).toEqual(["GET /api/vendor/auth/session", "POST /api/vendor/auth/login"]);
+  expect(workspace.initialize).not.toHaveBeenCalled();
   expect(path.history?.at(-1)).toBe("/vendor");
 });
 it("restores pending accounts and preserves them when vendor logout fails", async () => {

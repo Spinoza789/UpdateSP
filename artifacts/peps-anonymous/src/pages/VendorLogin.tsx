@@ -8,8 +8,9 @@ import { vendorTranslate as vt } from "@/lib/vendor-language";
 export default function VendorLogin() {
   const [, navigate] = useLocation();
   const toPortal = useCallback(() => navigate("/vendor"), [navigate]);
+  const toWorkspace = useCallback(() => navigate("/vendor/admin"), [navigate]);
   return <>
     {new URLSearchParams(window.location.search).get("usernameChanged") === "1" && <div className="max-w-md mx-auto px-4 pt-4"><Banner tone="success" role="status" testId="text-vendor-username-changed">{vt("Username changed. Sign in with your new username and existing password.")}</Banner></div>}
-    <VendorAccountAuth onAuthenticated={toPortal} />
+    <VendorAccountAuth onAuthenticated={toPortal} onWorkspaceAuthenticated={toWorkspace} />
   </>;
 }
