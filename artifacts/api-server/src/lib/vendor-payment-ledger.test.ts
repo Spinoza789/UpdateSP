@@ -16,6 +16,17 @@ const row = (patch: Record<string, unknown> = {}) => ({
 const identities = new Map([["o1", { id: "o1", code: "12656", telegramUsername: "member" }]]);
 
 describe("supplier payment ledger", () => {
+  it("exposes submitted delivery and current tracking only on the Admin ledger row", () => {
+    const submission = row({ carrier: "Royal Mail", trackingNumber: "TRACK123", snapshot: {
+      ...snapshot, shipping: { name: "Recipient", address: "1 Road", country: "GB", phone: "123", email: "recipient@example.test", secret: "hidden" },
+    } });
+    expect(paymentOrderRow(submission, false).delivery).toEqual({
+      name: "Recipient", address: "1 Road", country: "GB", phone: "123", email: "recipient@example.test",
+      carrier: "Royal Mail", trackingNumber: "TRACK123",
+    });
+    expect(paymentOrderDetail(submission)).not.toHaveProperty("delivery");
+    expect(paymentOrderRow(row({ snapshot: {} }), false).delivery.address).toBeNull();
+  });
   it("allows recalling unstarted supplier submissions, including stale ones, without guessing about payments or vendor work", () => {
     expect(paymentRemovalPermission(row(), false, false)).toEqual({ canRemove: true, removalReason: null });
     expect(paymentRemovalPermission(row({ status: "Processing" }), false, false)).toMatchObject({ canRemove: true, requiresRemovalOverride: true });

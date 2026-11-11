@@ -80,6 +80,7 @@ const data = {
       removalReason: null,
       profit: { currency: "USD", basis: "product_gross", salesUsd: "18.20", supplierProductsUsd: "7.00", amountUsd: "11.20", reason: null, definition: "Customer product line sales for this supplier minus submitted supplier product cost, before shipping, fees, credits, discounts, tax, or overheads." },
       reference: "REF1",
+      delivery: { name: "Test Recipient", address: "1 Example Road", country: "GB", phone: "12345", email: "delivery@example.test", carrier: "Royal Mail", trackingNumber: "TRACK123" },
       totalCost: "10.10",
       status: "Submitted",
       stale: false,
@@ -140,6 +141,33 @@ async function mount() {
   await act(async () => root!.render(createElement(Component)));
   await change("payment-vendor", "v1");
 }
+test("shows delivery and starts an external payment for only the opened order", async () => {
+  await mount();
+  await click("payment-order-o2");
+  await click("payment-expand-o1");
+  assert.match(el("payment-order-delivery").textContent!, /Test Recipient/);
+  assert.match(el("payment-order-delivery").textContent!, /TRACK123/);
+  await click("payment-detail-record");
+  assert.match(el("payment-record-dialog").textContent!, /1 order/);
+  assert.equal(document.querySelector('[data-testid="payment-order-drawer"]'), null);
+  assert.equal(requests.filter((r) => r.method === "POST").length, 0);
+});
+test("per-order payment cannot replace an unsaved transfer and paid orders offer a receipt", async () => {
+  await mount();
+  await click("payment-order-o1");
+  await click("payment-record-open");
+  await change("payment-txid", "keep-this-transfer");
+  await click("payment-record-close");
+  await click("payment-expand-o2");
+  assert.equal((el("payment-detail-record") as HTMLButtonElement).disabled, true);
+  await click("payment-detail-close");
+  await click("payment-expand-paid");
+  assert.ok(el("payment-detail-receipt"));
+  assert.equal(document.querySelector('[data-testid="payment-detail-record"]'), null);
+  await click("payment-detail-close");
+  await click("payment-record-open");
+  assert.equal((el("payment-txid") as HTMLInputElement).value, "keep-this-transfer");
+});
 async function change(id: string, value: string) {
   await act(async () => {
     fireEvent.change(el(id), { target: { value } });

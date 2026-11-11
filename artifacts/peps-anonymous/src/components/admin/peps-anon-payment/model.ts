@@ -36,6 +36,10 @@ export type LedgerOrder = {
   requiresRemovalOverride?: boolean;
   removalReason?: string | null;
   profit?: OrderProfit;
+  delivery?: {
+    name: string | null; address: string | null; country: string | null;
+    phone: string | null; email: string | null; carrier: string | null; trackingNumber: string | null;
+  };
 };
 export type ReceiptDetail = {
   sourceType: "order" | "shared";

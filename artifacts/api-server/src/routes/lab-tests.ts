@@ -7,6 +7,7 @@ import { requireAdmin } from "../middleware/require-admin";
 import type { NewLabTest } from "@workspace/db";
 import {
   extractCoADataFromAnyUrl,
+  LabBrowserImportRequired,
   extractCoADataFromBuffer,
   extractCoADataFromBuffers,
   isAdminBulkImportUrl,
@@ -491,6 +492,7 @@ router.post("/lab-tests/extract-preview", async (req, res) => {
     res.json({ ok: true, extracted });
   } catch (err) {
     console.error("[public extract-preview]", err);
+    if (err instanceof LabBrowserImportRequired) { res.status(err.status).json({ error: err.message, code: err.code }); return; }
     res.status(500).json({ error: "AI extraction failed" });
   }
 });
@@ -1087,6 +1089,7 @@ router.post("/admin/lab-tests/extract-preview", async (req, res) => {
     res.json({ ok: true, extracted });
   } catch (err) {
     console.error("[extract-preview]", err);
+    if (err instanceof LabBrowserImportRequired) { res.status(err.status).json({ error: err.message, code: err.code }); return; }
     res.status(500).json({ error: "AI extraction failed" });
   }
 });
@@ -1683,6 +1686,7 @@ router.post("/admin/lab-tests/:id/extract", async (req, res) => {
     res.json({ ok: true, extracted, record: updated });
   } catch (err) {
     console.error("[/extract]", err);
+    if (err instanceof LabBrowserImportRequired) { res.status(err.status).json({ error: err.message, code: err.code }); return; }
     res.status(500).json({ error: "AI extraction failed" });
   }
 });

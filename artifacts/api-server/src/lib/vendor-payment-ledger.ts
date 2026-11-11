@@ -68,8 +68,16 @@ export function paymentOrderRow(row: any, stale: boolean, allocation: Allocation
   else if (!supplierCostsValid(detail)) { paymentState = "needs_review"; reviewReason = "Submitted supplier costs are missing or inconsistent. Review before recording payment."; }
   else if (usdToCents(detail.totalCost!) === 0n) { paymentState = "not_owed"; reviewReason = "No supplier balance to pay."; }
   else paymentState = "owed";
+  // Admin-only live ledger context, deliberately excluded from immutable receipt details.
+  const text = (value: unknown) => typeof value === "string" && value.trim() ? value.trim() : null;
+  const shipping = row.snapshot?.shipping ?? {};
   return {
     id: row.id, reference: row.reference, status: row.status, stale,
+    delivery: {
+      name: text(shipping.name), address: text(shipping.address), country: text(shipping.country),
+      phone: text(shipping.phone), email: text(shipping.email),
+      carrier: text(row.carrier), trackingNumber: text(row.trackingNumber),
+    },
     ...detail, paymentId: allocation?.paymentId ?? null,
     reviewToken: paymentReviewToken(row),
     paidAmountUsd: allocation ? money(allocation.amountUsd) : null,

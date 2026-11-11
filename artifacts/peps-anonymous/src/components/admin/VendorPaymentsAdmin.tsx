@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Landmark, RefreshCw, Wallet as WalletIcon } from "lucide-react";
 import { adminAuth } from "../../lib/admin-auth";
-import { filterOrders, hasReviewToken, isLedger, money, PAGE_SIZE, parsePaidAt, selectedTotal, summarize, toggleOne, type Filters, type LedgerData, type LedgerOrder } from "./peps-anon-payment/model";
+import { filterOrders, hasReviewToken, isEligible, isLedger, money, PAGE_SIZE, parsePaidAt, selectedTotal, summarize, toggleOne, type Filters, type LedgerData, type LedgerOrder } from "./peps-anon-payment/model";
 import { LedgerSummary } from "./peps-anon-payment/LedgerSummary";
 import { EMPTY_FILTERS, LedgerOrders } from "./peps-anon-payment/LedgerOrders";
 import { ReceiptDrawer, ReceiptHistory } from "./peps-anon-payment/ReceiptHistory";
@@ -317,6 +317,20 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
       </Overlay>}
 
       {active && detailOrder && <OrderDrawer order={detailOrder} index={detailIndex < 0 ? 0 : detailIndex} total={detailIndex < 0 ? 1 : visible.length}
+        paymentLocked={locked || transferDirty}
+        onRecord={() => {
+          if (locked || transferDirty || lock.current || !isEligible(detailOrder)) return;
+          setSelected(new Set([detailOrder.id]));
+          setMessage(null);
+          setDetailId(null);
+          setRecordOpen(true);
+        }}
+        onReceipt={() => {
+          const payment = ledger.payments.find((p) => p.id === detailOrder.paymentId && !p.voidedAt);
+          if (!payment) { setMessage({ ok: false, text: "Payment receipt unavailable. Refresh payments and try again." }); return; }
+          setDetailId(null);
+          setReceiptId(payment.id);
+        }}
         onPrev={() => step(-1)} onNext={() => step(1)} onClose={closeDetail} message={message}
         selected={selected.has(detailOrder.id)} onToggle={() => setSelected((s) => toggleOne(s, detailOrder))} locked={locked} busy={busy}
         onRemove={(order) => { if (order.canRemove === true && !busy && !draft && !voidId && !lock.current) { setRemoveTarget(order); setRemoveReason(""); setMessage(null); } }}

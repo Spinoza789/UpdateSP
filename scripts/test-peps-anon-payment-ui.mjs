@@ -39,6 +39,7 @@ await page.route("**/__payment-ui-test", route => route.fulfill({
         id:"order"+i,reference:String(12836+i),status:i%3===0?"Shipped":"Submitted",
         paymentState:states[i%4],eligible:i%4===0,stale:i%4===2,paymentId:i%4===1?"receipt":null,
         totalCost:"4210.00",productCost:"4150.00",shippingCost:"60.00",
+        delivery:{name:"Example Recipient",address:"1 Example Road, London",country:"GB",phone:"+440000000000",email:"example@example.test",carrier:"Royal Mail",trackingNumber:"EXAMPLE123"},
         submittedAt:"2026-11-11T07:20:05Z",sourceType:"order",sourceId:"fixture-source",
         sourceOrders:[{id:"original"+i,code:String(12836+i),username:"@example_member_"+i}],
         canRemove:i%4===0,removalReason:"Void the supplier payment receipt before removing this submission.",

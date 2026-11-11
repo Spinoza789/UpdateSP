@@ -6,7 +6,8 @@ import { FulfilmentText, SupplierBadge } from "./StatusBadge";
 import { isEligible, moneyOf, orderState, signedMoneyOf, type LedgerOrder } from "./model";
 
 export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, selected, onToggle, locked, message,
-  onRemove, removeTarget, onRemoveCancel, onRemoveConfirm, removeBusy, removeReason, onRemoveReason, busy }: {
+  onRecord, onReceipt, paymentLocked, onRemove, removeTarget, onRemoveCancel, onRemoveConfirm, removeBusy, removeReason, onRemoveReason, busy }: {
+  onRecord: () => void; onReceipt: () => void; paymentLocked: boolean;
   order: LedgerOrder; index: number; total: number; onPrev: () => void; onNext: () => void; onClose: () => void;
   selected: boolean; onToggle: () => void; locked: boolean; message: { ok: boolean; text: string } | null;
   onRemove: (o: LedgerOrder) => void; removeTarget: LedgerOrder | null; onRemoveCancel: () => void; onRemoveConfirm: () => void; removeBusy: boolean;
@@ -26,6 +27,10 @@ export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, sele
       <button type="button" className="pap-btn !px-2" aria-label="Next order" disabled={index >= total - 1 || removing} onClick={onNext} data-testid="payment-detail-next"><ChevronRight className="h-4 w-4" /></button>
     </div>}
     footer={<div className="flex flex-wrap items-center justify-between gap-2">
+      {isEligible(o) ? <button type="button" className="pap-btn pap-btn-primary" disabled={paymentLocked} onClick={onRecord} data-testid="payment-detail-record">Record payment for this order</button>
+        : o.paymentId ? <button type="button" className="pap-btn" disabled={busy} onClick={onReceipt} data-testid="payment-detail-receipt">View payment receipt</button>
+        : <span className="text-xs" style={{ color: "var(--t-subtle)" }}>{o.reviewReason || "This order is not payable."}</span>}
+      {paymentLocked && isEligible(o) && <p className="w-full text-xs" style={{ color: "var(--t-subtle)" }}>Finish or discard the existing payment record before starting a different order.</p>}
       <label className="inline-flex items-center gap-2 text-sm font-medium">
         <input type="checkbox" className="h-4 w-4 accent-[var(--t-blue-deep)]" checked={selected} disabled={locked || (!selected && !isEligible(o))} onChange={onToggle} data-testid={`payment-detail-select-${o.id}`} />
         {isEligible(o) || selected ? "Include in payment selection" : "Not eligible for payment"}
@@ -40,6 +45,20 @@ export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, sele
       <span className="ml-2" style={{ color: "var(--t-subtle)" }}>Fulfilment</span><FulfilmentText status={o.status} />
       <span className="ml-2" style={{ color: "var(--t-subtle)" }}>Customer payment status is not changed here.</span>
     </div>
+    <section className="mb-4 rounded-lg border p-4" style={{ borderColor: "var(--t-border)" }} data-testid="payment-order-delivery" aria-label="Delivery details">
+      <h3 className="mb-2 text-sm font-semibold">Delivery details</h3>
+      <p className="mb-3 text-xs" style={{ color: "var(--t-subtle)" }}>Address and contact details submitted to this supplier. Tracking reflects the supplier submission. Shared orders show the supplier parcel destination, not each member’s onward address.</p>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        {([
+          ["Recipient", o.delivery?.name], ["Delivery address", o.delivery?.address],
+          ["Country", o.delivery?.country], ["Phone", o.delivery?.phone], ["Email", o.delivery?.email],
+          ["Carrier / shipping method", o.delivery?.carrier], ["Tracking number", o.delivery?.trackingNumber],
+        ] as const).map(([label, value]) => <div key={label} className="min-w-0">
+          <dt className="text-xs" style={{ color: "var(--t-subtle)" }}>{label}</dt>
+          <dd className="mt-1 whitespace-pre-wrap break-words">{value || "Not recorded"}</dd>
+        </div>)}
+      </dl>
+    </section>
     {(o.stale || o.reviewReason) && <div className="mb-4 rounded-lg border-l-4 p-3 text-xs" style={{ borderColor: "#E9A020", background: "color-mix(in srgb, #E9A020 8%, var(--t-surface))" }}>
       {o.stale && <p className="font-semibold">Stale submission · awaiting resubmission</p>}
       {o.reviewReason && <p>{o.reviewReason}</p>}

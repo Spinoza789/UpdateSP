@@ -12,6 +12,7 @@ import { resolveUtherName } from "@/lib/uther-batch-codes";
 import { getLabTestWarehouse, stripWarehousePrefix } from "@/lib/batch-prefixes";
 import { adminAuth } from "@/lib/admin-auth";
 import { isLabTestFailed, labTestPurityThreshold } from "@/lib/lab-test-quality";
+import { JANOSHIK_IMPORT_HELP, janoshikUrls } from "@/lib/lab-import-routing";
 
 
 function purityColorClass(pct: number, peptideName: string): string {
@@ -181,6 +182,11 @@ function EditModal({ test, secret, onClose, onSaved }: {
 
   const handleExtract = async () => {
     if (!form.url.trim()) { setError("Enter a URL first"); return; }
+    if (janoshikUrls([form.url]).length) {
+      setExtractResult({ ok: false, msg: JANOSHIK_IMPORT_HELP });
+      setPdfMode(true);
+      return;
+    }
     setExtracting(true); setError(""); setExtractResult(null);
     try {
       const res = await fetch(apiUrl("/admin/lab-tests/extract-preview"), {
@@ -365,7 +371,7 @@ function EditModal({ test, secret, onClose, onSaved }: {
                   onClick={() => { setPdfMode(true); setExtractResult(null); }}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all ${pdfMode ? "text-white bg-indigo-600" : "text-white/50 hover:text-white/80"}`}
                 >
-                  <Upload className="w-3 h-3" /> Upload PDF
+                  <Upload className="w-3 h-3" /> Upload PDF / image
                 </button>
               </div>
 
@@ -944,8 +950,7 @@ function JanoshikHelperPanel({ secret }: { secret: string }) {
 // a fetch worker: the receiver page (where the admin pastes the list of report
 // links) drives it, asking it to fetch each report's certificate image one at a
 // time so they can be imported with throttling. Free, no external services.
-function JanoshikBulkHelperPanel({ secret }: { secret: string }) {
-  const [open, setOpen] = useState(false);
+function JanoshikBulkHelperPanel({ secret, open, onToggle }: { secret: string; open: boolean; onToggle: () => void }) {
   const [copied, setCopied] = useState(false);
   const linkRef = useRef<HTMLAnchorElement | null>(null);
 
@@ -995,7 +1000,7 @@ function JanoshikBulkHelperPanel({ secret }: { secret: string }) {
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.05)" }}>
-      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
+      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 text-left">
         <Zap className="w-4 h-4 text-indigo-400 shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-indigo-300">Bulk Janoshik Importer</p>
@@ -1064,7 +1069,7 @@ function JanoshikBulkHelperPanel({ secret }: { secret: string }) {
 }
 
 // ── Bulk Import Panel ─────────────────────────────────────────────────────────
-function BulkImportPanel({ secret, onImported }: { secret: string; onImported: () => void }) {
+function BulkImportPanel({ secret, onImported, onOpenJanoshik }: { secret: string; onImported: () => void; onOpenJanoshik: () => void }) {
   const [open, setOpen] = useState(false);
   const [urlText, setUrlText] = useState("");
   const [labName, setLabName] = useState("Janoshik");
@@ -1094,6 +1099,11 @@ function BulkImportPanel({ secret, onImported }: { secret: string; onImported: (
   const handleStart = async () => {
     const urls = urlText.split("\n").map(s => s.trim()).filter(Boolean);
     if (urls.length === 0) return;
+    if (janoshikUrls(urls).length) {
+      setStartError(JANOSHIK_IMPORT_HELP);
+      onOpenJanoshik();
+      return;
+    }
     setSubmitting(true);
     setStartError("");
     try {
@@ -1132,7 +1142,7 @@ function BulkImportPanel({ secret, onImported }: { secret: string; onImported: (
       >
         <Upload className="w-4 h-4 text-green-400 shrink-0" />
         <span className="text-sm font-bold text-white flex-1">Bulk URL Import</span>
-        <span className="text-xs text-green-400/70 mr-2">Janoshik · Uzorak · Peptidetest · Testides · Chromate · Analiza Bialek</span>
+        <span className="text-xs text-green-400/70 mr-2">Uzorak · Peptidetest · Testides · Chromate · Analiza Bialek</span>
         {open ? <ChevronUp className="w-4 h-4 text-green-400/60" /> : <ChevronDown className="w-4 h-4 text-green-400/60" />}
       </button>
 
@@ -1148,8 +1158,13 @@ function BulkImportPanel({ secret, onImported }: { secret: string; onImported: (
           >
             <div className="p-4 flex flex-col gap-3">
               <p className="text-xs text-green-300/70">
-                Paste one report URL per line. Gemini extracts CoA data and each URL is saved as an approved record (duplicates skipped).
+                Paste one report URL per line. AI extracts CoA data and each URL is saved as an approved record (duplicates skipped). Janoshik links require the browser importer instead.
               </p>
+              {janoshikUrls(urlText.split("\n")).length > 0 && <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 space-y-2">
+                <p>{JANOSHIK_IMPORT_HELP} Your pasted links stay here; no links will be silently skipped.</p>
+                <button type="button" className="underline font-semibold" onClick={onOpenJanoshik}>Open Janoshik Bulk Browser Importer</button>
+                <button type="button" className="block underline" onClick={() => void navigator.clipboard.writeText(janoshikUrls(urlText.split("\n")).join("\n")).catch(() => setStartError("Could not copy. Select and copy the Janoshik links from the box above."))}>Copy Janoshik links for the browser importer</button>
+              </div>}
 
               {/* URL textarea */}
               <div>
@@ -1849,6 +1864,11 @@ function BatchPrefixesPanel({ secret }: { secret: string }) {
 
 // ── Main admin tab ────────────────────────────────────────────────────────────
 export function LabTestsTab({ secret }: { secret: string }) {
+  const [janoshikBulkOpen, setJanoshikBulkOpen] = useState(false);
+  const openJanoshikBulk = () => {
+    setJanoshikBulkOpen(true);
+    document.getElementById("janoshik-bulk-browser-importer")?.scrollIntoView({ block: "start" });
+  };
   const [tests, setTests] = useState<LabTest[]>([]);
   const [pending, setPending] = useState<LabTest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -2253,10 +2273,12 @@ export function LabTestsTab({ secret }: { secret: string }) {
       <JanoshikHelperPanel secret={secret} />
 
       {/* Janoshik bulk browser helper */}
-      <JanoshikBulkHelperPanel secret={secret} />
+      <div id="janoshik-bulk-browser-importer">
+        <JanoshikBulkHelperPanel secret={secret} open={janoshikBulkOpen} onToggle={() => setJanoshikBulkOpen(v => !v)} />
+      </div>
 
       {/* Bulk Import Panel */}
-      <BulkImportPanel secret={secret} onImported={load} />
+      <BulkImportPanel secret={secret} onImported={load} onOpenJanoshik={openJanoshikBulk} />
 
       {/* Certificate Backfill */}
       <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ border: "1px solid rgba(14,165,233,0.25)", background: "rgba(14,165,233,0.05)" }}>

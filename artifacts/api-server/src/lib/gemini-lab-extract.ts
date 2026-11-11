@@ -58,6 +58,15 @@ export async function toSageContentParts(parts: LabFilePart[]): Promise<ContentP
 const IMAGE_CACHE = new Map<string, { urls: string[]; ts: number }>();
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
+export class LabBrowserImportRequired extends Error {
+  readonly status = 422;
+  readonly code = "browser_import_required";
+  constructor() {
+    super("Janoshik could not be downloaded by the server. Open the report in your browser, complete any verification, and use the Janoshik Browser Importer (Bulk Browser Importer for multiple links), or upload the certificate PDF/image for AI extraction. No report has been imported.");
+    this.name = "LabBrowserImportRequired";
+  }
+}
+
 // ── Domain allowlists ─────────────────────────────────────────────────────────
 
 const JANOSHIK_BASE_DOMAINS = ["janoshik.com"];
@@ -670,6 +679,7 @@ export async function extractCoADataFromAnyUrl(pageUrl: string): Promise<Extract
     const file = await downloadLabFile(pageUrl);
     if (!file) {
       console.warn("[lab-extract] Could not download file:", pageUrl);
+      if (isJanoshikAllowedUrl(pageUrl)) throw new LabBrowserImportRequired();
       return null;
     }
     return runSageExtraction([{ inlineData: { mimeType: file.mimeType, data: file.data } }]);
@@ -679,6 +689,7 @@ export async function extractCoADataFromAnyUrl(pageUrl: string): Promise<Extract
   const imageUrls = await resolvePreviewInfo(pageUrl).then(p => p.type === "image" ? p.images : []);
   if (imageUrls.length === 0) {
     console.warn("[lab-extract] No images found for URL:", pageUrl);
+    if (isJanoshikAllowedUrl(pageUrl)) throw new LabBrowserImportRequired();
     return null;
   }
 
@@ -688,7 +699,10 @@ export async function extractCoADataFromAnyUrl(pageUrl: string): Promise<Extract
     if (file) imageParts.push({ inlineData: { mimeType: file.mimeType, data: file.data } });
   }
 
-  if (imageParts.length === 0) return null;
+  if (imageParts.length === 0) {
+    if (isJanoshikAllowedUrl(pageUrl)) throw new LabBrowserImportRequired();
+    return null;
+  }
   return runSageExtraction(imageParts);
 }
 
