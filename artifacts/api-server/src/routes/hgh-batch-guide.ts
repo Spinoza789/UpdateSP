@@ -4,7 +4,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const VIDEO_KEY = "tutorials/hgh-batch-system-1794492512994.mp4";
+const VIDEO_KEYS = {
+  UAJBM: "tutorials/hgh-batch-system-1794492512994.mp4",
+  "5ZZ87": "tutorials/uther-gb-1794501095044.mp4",
+};
 
 async function downloadGuide(key: string, path: string) {
   const result = await new Client().downloadToFilename(key, path, { decompress: false });
@@ -18,19 +21,20 @@ async function downloadGuide(key: string, path: string) {
  */
 export function createHghBatchGuideRouter(download = downloadGuide) {
   const router = Router();
+  for (const [groupBuyId, videoKey] of Object.entries(VIDEO_KEYS)) {
   let cached: Promise<string> | undefined;
   async function cachedVideo() {
     const dir = await mkdtemp(join(tmpdir(), "hgh-batch-guide-"));
     const path = join(dir, "batch-guide.mp4");
     try {
-      await download(VIDEO_KEY, path);
+      await download(videoKey, path);
       return path;
     } catch (error) {
       await rm(dir, { recursive: true, force: true });
       throw error;
     }
   }
-  router.get("/group-buys/UAJBM/batch-guide.mp4", async (_req, res, next) => {
+  router.get(`/group-buys/${groupBuyId}/batch-guide.mp4`, async (_req, res, next) => {
     let path: string;
     try {
       cached ??= cachedVideo().catch(error => { cached = undefined; throw error; });
@@ -45,6 +49,7 @@ export function createHghBatchGuideRouter(download = downloadGuide) {
       if (error) next(error);
     });
   });
+  }
   return router;
 }
 

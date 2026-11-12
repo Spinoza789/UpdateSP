@@ -7,16 +7,13 @@ import { HghBatchGuide } from "./HghBatchGuide";
 
 Object.assign(globalThis, { React });
 
-test("shows a controlled, non-autoplay batch tutorial only for the exact HGH group", () => {
+test("shows a pill that opens the batch guide only for the exact HGH group", () => {
   const html = renderToStaticMarkup(<HghBatchGuide groupBuyId="UAJBM" />);
   assert.match(html, /How the batch system works/);
-  assert.match(html, /<details/);
-  assert.match(html, /<video/);
-  assert.match(html, /controls=""/);
-  assert.match(html, /preload="none"/);
-  assert.match(html, /playsInline=""/);
-  assert.match(html, /\/api\/group-buys\/UAJBM\/batch-guide\.mp4/);
-  assert.doesNotMatch(html, /autoPlay|autoplay/);
+  assert.match(html, /Batch guide/);
+  assert.match(html, /rounded-full/);
+  assert.match(html, /aria-haspopup="dialog"/);
+  assert.doesNotMatch(html, /<details|<video/);
 });
 
 test("never shows the video for other groups, including other HGH group buys", () => {
@@ -25,7 +22,19 @@ test("never shows the video for other groups, including other HGH group buys", (
   }
 });
 
-test("the guide is installed on the order form", () => {
+test("shows the Uther guide only for its explicitly selected group", () => {
+  const html = renderToStaticMarkup(<HghBatchGuide groupBuyId="5ZZ87" />);
+  assert.match(html, /Uther group-buy guide/);
+  assert.match(html, /Batch guide/);
+  assert.doesNotMatch(html, /HGH 36IU/);
+  assert.equal(renderToStaticMarkup(<HghBatchGuide groupBuyId="UTHER" />), "");
+});
+
+test("the guide is next to stock levels inside the product heading", () => {
   const source = readFileSync(new URL("../pages/OrderForm.tsx", import.meta.url), "utf8");
   assert.match(source, /<HghBatchGuide groupBuyId=\{gbId\}/);
+  const heading = source.indexOf('className="order-form-products-heading');
+  const guide = source.indexOf("<HghBatchGuide");
+  const stock = source.indexOf("Stock levels", guide);
+  assert.ok(heading < guide && guide < stock && stock - guide < 1500);
 });

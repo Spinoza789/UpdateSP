@@ -1338,7 +1338,6 @@ export default function OrderForm() {
         )}
       </AnimatePresence>
       <main className={`order-form-main flex-1 px-4 py-5 pb-24 ${contentWidth} mx-auto w-full space-y-4`}>
-        <HghBatchGuide groupBuyId={gbId} />
         {!gbId && (
           <header className="order-form-intro">
             <h1>Build your order</h1>
@@ -1557,13 +1556,15 @@ export default function OrderForm() {
             {gbId && !isPreview && (
               <HalfKitOffers key={gbId} gbId={gbId} embedded enabled={isLoggedIn} />
             )}
-            <div className="order-form-products-heading flex items-center justify-between mb-3">
+            <div className="order-form-products-heading flex flex-wrap items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(59,130,246,0.15)" }}>
                   <Package className="w-3.5 h-3.5" style={{ color: "#60A5FA" }} />
                 </div>
                 <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#E9A020" }}>Choose products</p>
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+              <HghBatchGuide groupBuyId={gbId} />
               {gbId && stockViewEnabled && gbCapacity.length > 0 && (
                 <button
                   type="button"
@@ -1576,6 +1577,7 @@ export default function OrderForm() {
                   Stock levels
                 </button>
               )}
+              </div>
             </div>
 
             {gbId && (

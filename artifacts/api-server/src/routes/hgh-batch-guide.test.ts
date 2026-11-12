@@ -8,7 +8,10 @@ let server: Server;
 let base: string;
 const bytes = Buffer.from("fixture-video-with-range-support");
 const download = vi.fn(async (key: string, path: string) => {
-  expect(key).toBe("tutorials/hgh-batch-system-1794492512994.mp4");
+  expect([
+    "tutorials/hgh-batch-system-1794492512994.mp4",
+    "tutorials/uther-gb-1794501095044.mp4",
+  ]).toContain(key);
   await writeFile(path, bytes);
 });
 
@@ -38,6 +41,13 @@ it("serves the stored video and supports seeking with byte ranges", async () => 
 
 it("does not serve a guide for any other group", async () => {
   expect((await fetch(base + "/group-buys/VZE6X/batch-guide.mp4")).status).toBe(404);
+});
+
+it("serves the Uther group's own video without reusing the HGH cache", async () => {
+  const response = await fetch(base + "/group-buys/5ZZ87/batch-guide.mp4", { headers: { Range: "bytes=0-4" } });
+  expect(response.status).toBe(206);
+  expect(Buffer.from(await response.arrayBuffer())).toEqual(bytes.subarray(0, 5));
+  expect(download).toHaveBeenCalledWith("tutorials/uther-gb-1794501095044.mp4", expect.any(String));
 });
 
 it("reports a storage failure and allows a later request to retry", async () => {

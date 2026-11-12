@@ -1,25 +1,43 @@
 import { useState } from "react";
+import { PlayCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "./ui/dialog";
 
-/** This guide was requested for HGH 36IU only, not other HGH groups. */
+const GUIDES: Record<string, { name: string; title: string }> = {
+  UAJBM: { name: "HGH 36IU", title: "How the batch system works" },
+  "5ZZ87": { name: "Uther GB - November - @ajer6130", title: "Uther group-buy guide" },
+};
+
+/** Explicit group allowlist: never expose a group's video on other group buys. */
 export function HghBatchGuide({ groupBuyId }: { groupBuyId?: string | null }) {
   const [failed, setFailed] = useState(false);
-  if (groupBuyId !== "UAJBM") return null;
+  const guide = groupBuyId ? GUIDES[groupBuyId] : undefined;
+  if (!guide) return null;
 
   return (
-    <details className="rounded-xl border p-4" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)", color: "var(--t-text)" }}>
-      <summary className="cursor-pointer text-sm font-semibold">
-        How the batch system works <span className="font-normal" style={{ color: "var(--t-muted)" }}>· 2 min video</span>
-      </summary>
-      <p className="mt-3 mb-3 text-sm" style={{ color: "var(--t-muted)" }}>
-        Watch this short guide to understand batches for your HGH 36IU group-buy order.
-      </p>
+    <Dialog onOpenChange={() => setFailed(false)}>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+          style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.8)", borderColor: "rgba(255,255,255,0.15)" }}
+          title={`${guide.title} · 2 min video`}
+        >
+          <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
+          Batch guide
+        </button>
+      </DialogTrigger>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-3xl max-h-[90dvh] overflow-y-auto rounded-xl">
+      <DialogTitle>{guide.title}</DialogTitle>
+      <DialogDescription>
+        Watch this short guide for your {guide.name} order.
+      </DialogDescription>
       <video
         className="w-full aspect-video rounded-lg bg-black"
-        aria-label="HGH 36IU batch system video guide"
+        aria-label={`${guide.name} video guide`}
         controls
         playsInline
         preload="none"
-        src="/api/group-buys/UAJBM/batch-guide.mp4"
+        src={`/api/group-buys/${groupBuyId}/batch-guide.mp4`}
         onError={() => setFailed(true)}
       >
         Your browser does not support video playback.
@@ -27,6 +45,7 @@ export function HghBatchGuide({ groupBuyId }: { groupBuyId?: string | null }) {
       {failed && <p role="alert" className="mt-3 text-sm">
         The video could not load. Please refresh the page and try again.
       </p>}
-    </details>
+      </DialogContent>
+    </Dialog>
   );
 }
