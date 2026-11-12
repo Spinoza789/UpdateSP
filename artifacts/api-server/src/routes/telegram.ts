@@ -18,6 +18,8 @@ import { completeAccountVerificationInTransaction } from "../lib/account-verific
 import { claimTelegramUpdate, getBotState, setBotState, clearBotState, incrementBotAiUsage } from "../lib/telegram-bot-state";
 import { pendingPaymentSql } from "../lib/telegram-reminders";
 import { getDeliveryTicketContext } from "../lib/telegram-delivery-support";
+import { readTelegramTicketImage, serializeTelegramMedia } from "../lib/telegram-ticket-media";
+import { persistCustomerTicketMessage, type CustomerTicketImage } from "../lib/ticket-message-attachments";
 import {
   decodeWholesaleTrackingCallback,
   encodeWholesaleTrackingCallback,
@@ -186,7 +188,9 @@ interface SageHistoryEntry {
 }
 
 interface TicketConv {
-  step: "awaiting_category" | "awaiting_gbtype" | "awaiting_gb" | "awaiting_gbsubtype" | "awaiting_ws" | "awaiting_subject" | "awaiting_body" | "labs_search" | "sage_chat";
+  step: "awaiting_category" | "awaiting_gbtype" | "awaiting_gb" | "awaiting_gbsubtype" | "awaiting_ws" | "awaiting_subject" | "awaiting_body" | "ticket_attachments" | "labs_search" | "sage_chat";
+  ticketId?: string;
+  mediaGroupId?: string;
   category?: string;
   issueType?: string;
   groupBuyId?: string;
@@ -396,13 +400,14 @@ async function finaliseTicket(
   chatId: string,
   conv: TicketConv & { subject: string },
   body: string,
-): Promise<void> {
+  image?: CustomerTicketImage,
+): Promise<string> {
   const ticketId = randomUUID();
   const now = new Date();
   const category = (conv.category ?? "general_support") as
     "order_issue" | "general_support" | "group_buy" | "wholesale" | "testing_pool";
 
-  await db.insert(ticketsTable).values({
+  await persistCustomerTicketMessage({ ticketId, username, body, image, newTicket: {
     id: ticketId,
     accountUsername: username,
     category,
@@ -414,15 +419,8 @@ async function finaliseTicket(
     customerUnread: false,
     createdAt: now,
     updatedAt: now,
-  });
-
-  await db.insert(ticketMessagesTable).values({
-    ticketId,
-    authorRole: "customer",
-    authorUsername: username,
-    body,
-    createdAt: now,
-  });
+  } });
+  const attachmentNotice = image ? await ticketAttachmentNotice(ticketId) : "";
 
   const catLabel = CATEGORY_LABELS[category] ?? category;
   const gbLabel  = conv.groupBuyName ? ` — ${escapeTelegramHtml(conv.groupBuyName)}` : conv.wholesaleShareName ? ` — ${escapeTelegramHtml(conv.wholesaleShareName)}` : "";
@@ -452,7 +450,7 @@ async function finaliseTicket(
     `From: @${escapeTelegramHtml(username)}\n` +
     `Category: ${escapeTelegramHtml(catLabel)}${gbLabel}\n` +
     `Subject: <i>${escapeTelegramHtml(conv.subject)}</i>\n\n` +
-    `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}`,
+    `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}${attachmentNotice}`,
     ticketId,
   ).then(({ ok, messageId, chatId: adminChatId }) => {
     if (ok && messageId && adminChatId) {
@@ -486,7 +484,7 @@ async function finaliseTicket(
               `From: @${escapeTelegramHtml(username)}\n` +
               (conv.issueType ? `Issue type: ${escapeTelegramHtml(conv.issueType)}\n` : "") +
               `Subject: <b>${escapeTelegramHtml(conv.subject)}</b>\n\n` +
-              `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}`;
+              `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}${attachmentNotice}`;
 
             sendTelegramMessageFull(
               organiserAcct.telegramChatId,
@@ -542,7 +540,7 @@ async function finaliseTicket(
               `🎫 <b>New order-issue ticket</b>\n` +
               `From: @${escapeTelegramHtml(username)}\n` +
               `Subject: <b>${escapeTelegramHtml(conv.subject)}</b>\n\n` +
-              `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}`;
+              `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}${attachmentNotice}`;
 
             sendTelegramMessageFull(
               reshipperAcct.telegramChatId,
@@ -556,29 +554,30 @@ async function finaliseTicket(
       } catch { /* best-effort */ }
     })();
   }
+  return ticketId;
 }
 
 // ── Ticket reply helpers ──────────────────────────────────────────────────────
 
-async function appendToTicket(ticketId: string, username: string, chatId: string, text: string): Promise<void> {
+async function ticketAttachmentNotice(ticketId: string): Promise<string> {
+  const { template } = await getTemplate("ticket_attachment_notice");
+  return "\n\n" + renderTemplate(template, { ticket_url: escapeTelegramHtml(`${process.env["APP_URL"] ?? "https://saltandpeps.co.uk"}/account?s=support&ticket=${encodeURIComponent(ticketId)}`) });
+}
+async function appendToTicket(ticketId: string, username: string, chatId: string, text: string, image?: CustomerTicketImage): Promise<void> {
   const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId));
-  if (!ticket || ticket.status === "closed") {
+  if (!ticket || ticket.status === "closed" || normalizeTg(ticket.accountUsername) !== normalizeTg(username)) {
     await sendTelegramMessage(chatId, `❌ That ticket is closed. Send <b>/support</b> to open a new one.`, "HTML");
     return;
   }
 
-  const now = new Date();
-  await db.insert(ticketMessagesTable).values({
-    ticketId,
-    authorRole: "customer",
-    authorUsername: username,
-    body: text,
-    createdAt: now,
-  });
-
-  await db.update(ticketsTable)
-    .set({ updatedAt: now, status: ticket.status === "resolved" ? "open" : ticket.status })
-    .where(eq(ticketsTable.id, ticketId));
+  await persistCustomerTicketMessage({ ticketId, username, body: text, image });
+  const attachmentNotice = image ? await ticketAttachmentNotice(ticketId) : "";
+  if (image && ticket.groupBuyId) {
+    const [group] = await db.select({ organiserId: groupBuysTable.organiserId }).from(groupBuysTable)
+      .where(eq(groupBuysTable.id, ticket.groupBuyId)).limit(1);
+    if (group?.organiserId && normalizeTg(group.organiserId) !== normalizeTg(username))
+      await notifyUserTicket(group.organiserId, ticketId, `${escapeTelegramHtml(ticket.subject)}${attachmentNotice}`);
+  }
 
   const result = await sendTelegramMessageFull(
     chatId,
@@ -598,7 +597,7 @@ async function appendToTicket(ticketId: string, username: string, chatId: string
     `💬 <b>Customer replied via Telegram</b>\n` +
     `From: @${escapeTelegramHtml(username)}\n` +
     `Ticket: <i>${escapeTelegramHtml(ticket.subject)}</i>\n\n` +
-    `${escapeTelegramHtml(text.slice(0, 300))}${text.length > 300 ? "…" : ""}`,
+    `${escapeTelegramHtml(text.slice(0, 300))}${text.length > 300 ? "…" : ""}${attachmentNotice}`,
     ticketId,
   ).then(({ ok, messageId, chatId: adminChatId }) => {
     if (ok && messageId && adminChatId) {
@@ -2911,11 +2910,59 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
   }
 
   const chatId = String(message.chat.id);
+  if (!message.text && message.chat.type !== "private") {
+    res.json({ ok: true }); return;
+  }
+  if (message.chat.type === "private" && (message.photo || message.document)) {
+    await serializeTelegramMedia(chatId, async () => {
+      const reply = async (key: string, reason = "") => {
+        const { template } = await getTemplate(key);
+        await sendTelegramMessageFull(chatId, renderTemplate(template, { reason: escapeTelegramHtml(reason) }), "HTML",
+          undefined, { reply_markup: { inline_keyboard: [[{ text: "Open support", url: `${appUrl}/account?s=support` }]] } });
+      };
+      const [linked] = await db.select({ telegramUsername: accountsTable.telegramUsername }).from(accountsTable)
+        .where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername).limit(1);
+      if (!linked) { await reply("bot_ticket_media_link_required"); return; }
+      const username = linked.telegramUsername;
+      const replyId = message.reply_to_message?.message_id;
+      const [mapping] = replyId ? await db.select().from(ticketTelegramMessagesTable)
+        .where(and(eq(ticketTelegramMessagesTable.telegramMessageId, replyId), eq(ticketTelegramMessagesTable.chatId, chatId))) : [];
+      const conv = await getConv(chatId);
+      const albumTicket = conv?.step === "ticket_attachments" && conv.mediaGroupId === String(message.media_group_id ?? "")
+        ? conv.ticketId : undefined;
+      const ticketId = mapping?.ticketId ?? albumTicket;
+      const canCreate = !ticketId && conv?.step === "awaiting_body" && Boolean(conv.subject);
+      if (!ticketId && !canCreate) { await reply("bot_ticket_media_guidance"); return; }
+      if (ticketId) {
+        const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId));
+        if (!ticket || normalizeTg(ticket.accountUsername) !== normalizeTg(username) || ticket.status === "closed") {
+          await reply("bot_ticket_media_unavailable"); return;
+        }
+      }
+      try {
+        const image = await readTelegramTicketImage(message);
+        const body = String(message.caption ?? "").trim().slice(0, 10_000) || "(photo attached)";
+        if (ticketId) {
+          await appendToTicket(ticketId, username, chatId, body, image);
+        } else if (conv?.subject) {
+          const createdId = await finaliseTicket(username, chatId, conv as TicketConv & { subject: string }, body, image);
+          await clearConv(chatId);
+          if (message.media_group_id) await setConv(chatId, { step: "ticket_attachments", ticketId: createdId, mediaGroupId: String(message.media_group_id) });
+        }
+      } catch (error) {
+        console.error("[telegram-ticket-media] Attachment rejected", { update_id: req.body?.update_id });
+        const safeReason = error instanceof Error && !/token|https?:/i.test(error.message)
+          ? error.message : "Could not attach this image. Please try again.";
+        await reply("bot_ticket_media_error", safeReason);
+      }
+    });
+    res.json({ ok: true }); return;
+  }
   if (!message.text) {
     if (message.chat.type !== "private") {
       res.json({ ok: true }); return;
     }
-    if (!message.caption) {
+    if (!message.caption || message.voice || message.video || message.sticker) {
       await sendTelegramMessageFull(chatId,
         "I can only read text messages here. Please type your message, or add photos and files to your ticket on the website.",
         "HTML", undefined, {

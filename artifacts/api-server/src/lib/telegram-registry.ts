@@ -21,6 +21,31 @@ export interface TemplateEventMeta {
 
 export const TEMPLATE_REGISTRY: TemplateEventMeta[] = [
   {
+    eventKey: "bot_ticket_media_guidance", label: "Ticket photo guidance", audience: "bot", prefKey: null,
+    description: "A photo without an active ticket or a tracked reply.", placeholders: [],
+    defaultTemplate: "To send a photo, open a ticket first with /support, or reply to a ticket message.",
+  },
+  {
+    eventKey: "bot_ticket_media_link_required", label: "Ticket photo account required", audience: "bot", prefKey: null,
+    description: "An unlinked chat tries to attach a ticket image.", placeholders: [],
+    defaultTemplate: "Link your website account before sending ticket photos. Open the Telegram settings on the website.",
+  },
+  {
+    eventKey: "bot_ticket_media_unavailable", label: "Ticket attachment unavailable", audience: "bot", prefKey: null,
+    description: "Attachment reply references a closed or inaccessible ticket.", placeholders: [],
+    defaultTemplate: "That ticket is closed or not available to your linked account. Open /support to start a new ticket.",
+  },
+  {
+    eventKey: "bot_ticket_media_error", label: "Ticket attachment rejected", audience: "bot", prefKey: null,
+    description: "Explains attachment validation or download failure.", placeholders: ["reason"],
+    defaultTemplate: "Could not attach this file: {{reason}}",
+  },
+  {
+    eventKey: "ticket_attachment_notice", label: "Ticket attachment notice", audience: "bot", prefKey: null,
+    description: "Added to staff ticket alerts when a member uploads one image.", placeholders: ["ticket_url"],
+    defaultTemplate: '1 attachment\n<a href="{{ticket_url}}">View attachment on the website</a>',
+  },
+  {
     eventKey: "customer_lab_report_published", label: "Group-buy lab report published", audience: "customer", prefKey: "status",
     description: "A public lab report explicitly linked to a group buy with a paid member order.",
     placeholders: ["gb_name", "report_name"],

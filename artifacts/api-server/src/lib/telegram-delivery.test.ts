@@ -8,9 +8,25 @@ vi.mock("@workspace/db", async (original) => ({
   },
 }));
 vi.mock("./discord", () => ({ notifyUserDiscord: vi.fn(), sendAdminDiscordMessage: vi.fn() }));
-import { sendTelegramMessageFull, sendTelegramPhoto } from "./telegram";
+import { sendTelegramMessageFull, sendTelegramPhoto, downloadTelegramTicketFile } from "./telegram";
 
 describe("Telegram HTML delivery", () => {
+  it("downloads a Telegram attachment through mocked fetch and bounds streamed bytes", async () => {
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-token"); vi.stubEnv("TELEGRAM_ADMIN_CHAT_ID", "admin");
+    const transport = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, result: { file_path: "photos/file_1.jpg" } })))
+      .mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3])));
+    vi.stubGlobal("fetch", transport);
+    expect((await downloadTelegramTicketFile("file", 10)).buffer.byteLength).toBe(3);
+    transport.mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, result: { file_path: "photos/file_2.jpg" } })))
+      .mockResolvedValueOnce(new Response(new Uint8Array(12)));
+    await expect(downloadTelegramTicketFile("file", 10)).rejects.toThrow("20 MB");
+  });
+  it("does not expose credentials when an attachment download fails", async () => {
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-token"); vi.stubEnv("TELEGRAM_ADMIN_CHAT_ID", "admin");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("https://api.telegram.org/bottest-token/getFile")));
+    await expect(downloadTelegramTicketFile("file", 10)).rejects.toThrow("Could not download this Telegram file");
+  });
   beforeEach(() => {
     vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-token");
     vi.stubEnv("TELEGRAM_ADMIN_CHAT_ID", "admin");

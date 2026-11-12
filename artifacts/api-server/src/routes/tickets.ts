@@ -22,6 +22,7 @@ import {
   AdminPostTicketMessageBody,
 } from "@workspace/api-zod";
 import { z } from "zod";
+import { cleanupUncommittedTicketImages, insertTicketImageMetadata } from "../lib/ticket-message-attachments";
 import {
   canViewTicketAttachment,
   deleteTicketImage,
@@ -151,30 +152,6 @@ async function uploadRequestTicketImages(
     ));
     throw error;
   }
-}
-
-async function cleanupUncommittedTicketImages(images: StoredTicketImage[]): Promise<void> {
-  await Promise.all(images.map(image =>
-    deleteTicketImage(image.storageKey).catch(error => {
-      console.error("[tickets] Could not clean up an uncommitted image:", error);
-    }),
-  ));
-}
-
-async function insertTicketImageMetadata(
-  tx: Pick<typeof db, "insert">,
-  messageId: number,
-  images: StoredTicketImage[],
-): Promise<void> {
-  if (images.length === 0) return;
-  await tx.insert(ticketMessageAttachmentsTable).values(images.map(image => ({
-    id: randomUUID(),
-    ticketMessageId: messageId,
-    storageKey: image.storageKey,
-    fileName: image.fileName,
-    mimeType: image.mimeType,
-    sizeBytes: image.sizeBytes,
-  })));
 }
 
 async function loadTicketMessagesWithAttachments(ticketId: string) {

@@ -439,6 +439,45 @@ export async function sendTelegramPhoto(
   }
 }
 
+/** Telegram file credentials never leave this transport or appear in surfaced errors. */
+export async function downloadTelegramTicketFile(fileId: string, maxBytes: number): Promise<{ buffer: Buffer; fileName: string }> {
+  const { token } = await getCredentials();
+  if (!token) throw new Error("Telegram file downloads are not configured.");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20_000);
+  try {
+    const metadataResponse = await fetch(`https://api.telegram.org/bot${token}/getFile`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file_id: fileId }), signal: controller.signal,
+    });
+    const metadata = await metadataResponse.json() as { ok?: boolean; result?: { file_path?: string; file_size?: number } };
+    const path = metadata.result?.file_path;
+    if (!metadataResponse.ok || !metadata.ok || !path || !/^[\w/-]+\.[\w]+$/.test(path)
+      || path.startsWith("/") || path.split("/").includes("..")) throw new Error("Could not download this Telegram file.");
+    if ((metadata.result?.file_size ?? 0) > maxBytes) throw new Error("Each image must be 20 MB or smaller.");
+    const response = await fetch(`https://api.telegram.org/file/bot${token}/${path}`, { signal: controller.signal });
+    if (!response.ok || !response.body) throw new Error("Could not download this Telegram file.");
+    if (Number(response.headers.get("content-length") ?? 0) > maxBytes) throw new Error("Each image must be 20 MB or smaller.");
+    const reader = response.body.getReader();
+    const chunks: Buffer[] = [];
+    let size = 0;
+    try {
+      while (true) {
+        const part = await reader.read();
+        if (part.done) break;
+        size += part.value.byteLength;
+        if (size > maxBytes) throw new Error("Each image must be 20 MB or smaller.");
+        chunks.push(Buffer.from(part.value));
+      }
+    } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+    if (!size) throw new Error("The image is empty.");
+    return { buffer: Buffer.concat(chunks), fileName: path.split("/").at(-1)! };
+  } catch (error) {
+    if (error instanceof Error && ["Each image must be 20 MB or smaller.", "The image is empty."].includes(error.message)) throw error;
+    throw new Error("Could not download this Telegram file. Please try again.");
+  } finally { clearTimeout(timer); }
+}
+
 export async function sendAdminMessage(text: string): Promise<boolean> {
   const { chatId } = await getCredentials();
   // Fire Discord webhook in parallel (best-effort)

@@ -83,7 +83,11 @@ function makeDb(root: boolean, accountBox: { value: any }): any {
         },
       };
     },
-    insert: () => ({ values: async () => undefined }),
+    insert: () => ({ values: () => {
+      const value: any = Promise.resolve();
+      value.returning = async () => [{ id: 42 }];
+      return value;
+    } }),
     async transaction(callback: (tx: any) => Promise<unknown>) {
       if (!root) return callback(this);
       const staged = { value: structuredClone(accountBox.value) };
@@ -275,14 +279,19 @@ describe("mounted Telegram account linking", () => {
     await webhook(text);
     expect(state.sentMessages.join("\n")).toContain("This Telegram was unlinked from: @old_account, @another_account");
   });
-  it.each(["photo", "document", "video", "voice", "sticker"])("explains how to send an unsupported private %s", async kind => {
+  it.each(["video", "voice", "sticker"])("explains how to send an unsupported private %s", async kind => {
     await webhook("", true, 410, undefined, { text: undefined, [kind]: {} });
     expect(state.sentMessages).toContain("I can only read text messages here. Please type your message, or add photos and files to your ticket on the website.");
     expect(state.payloads.at(-1)?.reply_markup.inline_keyboard[0][0].url).toContain("/account?s=support");
   });
-  it("uses a private media caption as text", async () => {
+  it("requires a ticket before accepting a private photo caption", async () => {
     await webhook("", true, 411, undefined, { text: undefined, photo: [{}], caption: "/support" });
-    expect(state.sentMessages.join("\n")).toContain("New support request");
+    expect(state.sentMessages.join("\n")).toContain("bot_ticket_media_guidance");
+  });
+  it("refuses ticket media from an unlinked chat", async () => {
+    state.account = null;
+    await webhook("", true, 413, undefined, { text: undefined, photo: [{ file_id: "file" }] });
+    expect(state.sentMessages).toContain("bot_ticket_media_link_required");
   });
   it("ignores media and captions in group chats", async () => {
     await webhook("", true, 412, undefined, { text: undefined, photo: [{}], caption: "/support", chat: { id: -123, type: "supergroup" } });
