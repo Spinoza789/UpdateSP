@@ -1,3 +1,4 @@
+import { escapeTelegramHtml } from "../lib/telegram-package-tracking";
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { feedbackTable } from "@workspace/db";
@@ -69,11 +70,11 @@ router.post("/feedback", async (req, res) => {
     getAdminChatId().then(adminChatId => {
       if (!adminChatId) return;
       const label = TYPE_LABELS[type as string] ?? type;
-      const tgLine = tgClean ? `\n👤 <b>From:</b> @${tgClean.replace(/^@/, "")}` : "";
+      const tgLine = tgClean ? `\n👤 <b>From:</b> @${escapeTelegramHtml(tgClean.replace(/^@/, ""))}` : "";
       const preview = trimmed.length > 300 ? trimmed.slice(0, 300) + "…" : trimmed;
       return sendTelegramMessage(
         adminChatId,
-        `📬 <b>New ${label}</b>${tgLine}\n\n${preview}`,
+        `📬 <b>New ${escapeTelegramHtml(label)}</b>${tgLine}\n\n${escapeTelegramHtml(preview)}`,
         "HTML",
         { recipientType: "admin" },
       );

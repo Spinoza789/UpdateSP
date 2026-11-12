@@ -1,3 +1,4 @@
+import { escapeTelegramHtml as escTg } from "../lib/telegram-package-tracking";
 import { Router, type IRouter } from "express";
 import { createHash, randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
@@ -1514,7 +1515,7 @@ router.patch("/account/pool-leader/pools/:id", requireAccount, async (req, res):
     const poolUrl = `${appUrl}/pool/${pool.slug}`;
     for (const p of participants) {
       if (!p.accountUsername) continue;
-      const msg = `🔬 <b>Results are in!</b>\n\nThe testing pool <b>${pool.title}</b> has posted results.\n\n<a href="${poolUrl}">View results →</a>`;
+      const msg = `🔬 <b>Results are in!</b>\n\nThe testing pool <b>${escTg(pool.title)}</b> has posted results.\n\n<a href="${escTg(poolUrl)}">View results →</a>`;
       notifyUser(p.accountUsername, "status", msg).catch(() => {});
     }
   }
@@ -1555,7 +1556,7 @@ router.put("/account/pool-leader/pools/:id/tests", requireAccount, async (req, r
     const poolUrl = `${appUrl}/pool/${pool.slug}`;
     for (const participant of participants) {
       if (participant.accountUsername) {
-        notifyUser(participant.accountUsername, "status", `🔬 <b>Results are in!</b>\n\nThe testing pool <b>${pool.title}</b> has posted results.\n\n<a href="${poolUrl}">View results →</a>`).catch(() => {});
+        notifyUser(participant.accountUsername, "status", `🔬 <b>Results are in!</b>\n\nThe testing pool <b>${escTg(pool.title)}</b> has posted results.\n\n<a href="${escTg(poolUrl)}">View results →</a>`).catch(() => {});
       }
     }
   }
@@ -2064,7 +2065,7 @@ router.patch("/admin/testing-pools/:id", async (req, res): Promise<void> => {
     const poolUrl = `${appUrl}/pool/${existingPool.slug}`;
     for (const p of participants) {
       if (!p.accountUsername) continue;
-      const msg = `🔬 <b>Results are in!</b>\n\nThe testing pool <b>${existingPool.title}</b> has posted results.\n\n<a href="${poolUrl}">View results →</a>`;
+      const msg = `🔬 <b>Results are in!</b>\n\nThe testing pool <b>${escTg(existingPool.title)}</b> has posted results.\n\n<a href="${escTg(poolUrl)}">View results →</a>`;
       notifyUser(p.accountUsername, "status", msg).catch(() => {});
     }
   }
@@ -2161,7 +2162,7 @@ router.put("/admin/testing-pools/:id/tests", async (req, res): Promise<void> => 
       const poolUrl = `${appUrl}/pool/${updatedPool.slug}`;
       for (const participant of participants) {
         if (participant.accountUsername) {
-          notifyUser(participant.accountUsername, "status", `🔬 <b>Results are in!</b>\n\nThe testing pool <b>${updatedPool.title}</b> has posted results.\n\n<a href="${poolUrl}">View results →</a>`).catch(() => {});
+          notifyUser(participant.accountUsername, "status", `🔬 <b>Results are in!</b>\n\nThe testing pool <b>${escTg(updatedPool.title)}</b> has posted results.\n\n<a href="${escTg(poolUrl)}">View results →</a>`).catch(() => {});
         }
       }
     }

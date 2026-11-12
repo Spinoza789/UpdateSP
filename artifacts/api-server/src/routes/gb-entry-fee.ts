@@ -1,3 +1,4 @@
+import { escapeTelegramHtml } from "../lib/telegram-package-tracking";
 import { Router, type IRouter } from "express";
 import { db, groupBuysTable, gbEntryFeePaymentsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
@@ -129,8 +130,8 @@ router.post("/account/entry-fee/:paymentId/submit-tx", requireAccount, async (re
   if (!autoConfirmed) {
     const amountLabel = `${payment.amount} ${gb.currency}`;
     const alertMsg =
-      `💳 <b>Entry fee submitted</b> — <i>${gb.name}</i>\n` +
-      `@${tg} submitted a tx hash for ${amountLabel}.\n` +
+      `💳 <b>Entry fee submitted</b> — <i>${escapeTelegramHtml(gb.name)}</i>\n` +
+      `@${escapeTelegramHtml(tg)} submitted a tx hash for ${escapeTelegramHtml(amountLabel)}.\n` +
       `Review &amp; confirm in the GB Organiser panel if it isn't auto-verified within a few minutes.`;
     sendAdminMessage(alertMsg).catch(() => {});
     if (gb.organiserId && gb.organiserId.replace(/^@/, "").toLowerCase() !== tg.replace(/^@/, "").toLowerCase()) {

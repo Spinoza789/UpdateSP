@@ -1,3 +1,4 @@
+import { escapeTelegramHtml as escTg } from "../lib/telegram-package-tracking";
 import { getOnwardOrderPreference } from "../lib/gb-onward-delivery";
 import { getAdditionAvailability } from "../lib/order-addition-submission";
 import { withAdditionReferences, additionReferenceFields } from "../lib/addition-order-references";
@@ -3946,7 +3947,7 @@ router.post("/account/wholesale-access", requireAccount, async (req: any, res: a
       status: "pending",
     }).returning();
     sendAdminMessage(
-      `🔓 <b>Wholesale Access Request</b>\n\n@${username.replace("@", "")} has requested wholesale access.\nFee assigned: <b>$${amountUsd}</b>\n\nReview via admin panel → Wholesale Access tab.`
+      `🔓 <b>Wholesale Access Request</b>\n\n@${escTg(username.replace("@", ""))} has requested wholesale access.\nFee assigned: <b>$${amountUsd}</b>\n\nReview via admin panel → Wholesale Access tab.`
     ).catch(() => {});
     res.json({ request: created, cryptoOptions });
   } catch (err: any) {
@@ -3988,7 +3989,7 @@ router.put("/account/wholesale-access/test-tx", requireAccount, async (req: any,
       .returning();
     const cryptoOptions = await getAdminCryptoOptions();
     sendAdminMessage(
-      `🧪 <b>Wholesale Test Payment</b>\n\n@${username.replace("@", "")} submitted a test payment ($${existing.paymentTestAmount ?? "??"}).\nTx: <code>${txHash.trim()}</code>\nNetwork: ${currency ?? ""} / ${network ?? ""}\nRequest ID: ${existing.id}\n\nThey will now send the full payment.`
+      `🧪 <b>Wholesale Test Payment</b>\n\n@${escTg(username.replace("@", ""))} submitted a test payment ($${existing.paymentTestAmount ?? "??"}).\nTx: <code>${escTg(txHash.trim())}</code>\nNetwork: ${escTg(currency ?? "")} / ${escTg(network ?? "")}\nRequest ID: ${escTg(existing.id)}\n\nThey will now send the full payment.`
     ).catch(() => {});
     res.json({ request: updated, cryptoOptions });
   } catch (err: any) {
@@ -4031,7 +4032,7 @@ router.put("/account/wholesale-access/tx", requireAccount, async (req: any, res:
     const currency2 = resolvedCurrency ?? "";
     const network2 = resolvedNetwork ?? "";
     sendAdminMessage(
-      `💸 <b>Wholesale Full Payment Submitted</b>\n\n@${username.replace("@", "")} submitted their full payment.\nAmount: <b>$${existing.amountUsd}</b> ${currency2} via ${network2}\nTx: <code>${txHash.trim()}</code>\nRequest ID: ${existing.id}\n\nConfirm: POST /api/admin/wholesale-access-requests/${existing.id}/confirm`
+      `💸 <b>Wholesale Full Payment Submitted</b>\n\n@${escTg(username.replace("@", ""))} submitted their full payment.\nAmount: <b>$${existing.amountUsd}</b> ${escTg(currency2)} via ${escTg(network2)}\nTx: <code>${escTg(txHash.trim())}</code>\nRequest ID: ${escTg(existing.id)}\n\nConfirm: POST /api/admin/wholesale-access-requests/${escTg(existing.id)}/confirm`
     ).catch(() => {});
     triggerWholesaleAccessCheck(existing.id);
     res.json({ request: updated, cryptoOptions });
@@ -4235,7 +4236,7 @@ router.post("/account/wholesale-access/pay", requireAccount, async (req: any, re
     const network  = existing.paymentCryptoNetwork ?? "ERC-20";
 
     sendAdminMessage(
-      `💸 <b>Wholesale Full Payment Submitted</b>\n\n@${username.replace("@", "")} submitted their full payment.\nAmount: <b>$${existing.amountUsd}</b> ${currency} via ${network}\nTx: <code>${txHash.trim()}</code>\nRequest ID: ${existing.id}`
+      `💸 <b>Wholesale Full Payment Submitted</b>\n\n@${escTg(username.replace("@", ""))} submitted their full payment.\nAmount: <b>$${existing.amountUsd}</b> ${escTg(currency)} via ${escTg(network)}\nTx: <code>${escTg(txHash.trim())}</code>\nRequest ID: ${escTg(existing.id)}`
     ).catch(() => {});
 
     // Resolve admin wallet for this currency/network.

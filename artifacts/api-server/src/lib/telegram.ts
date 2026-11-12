@@ -228,6 +228,26 @@ interface TgLogCtx {
   suppressLog?: boolean;
 }
 
+export function telegramPlainText(text: string): string {
+  return text.replace(/<\/?[a-z][^>]*>/gi, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, "&");
+}
+
+export function splitTelegramText(text: string): string[] {
+  const parts: string[] = [];
+  while (text.length > 4096) {
+    let end = text.lastIndexOf("\n", 4096);
+    if (end < 1) end = 4096;
+    // Never split a UTF-16 surrogate pair.
+    if (/[\uD800-\uDBFF]/.test(text[end - 1])) end--;
+    parts.push(text.slice(0, end));
+    text = text.slice(end);
+  }
+  if (text) parts.push(text);
+  return parts;
+}
+
 function logTgMessage(chatId: string, messageText: string, delivered: boolean, errorMessage: string | undefined, ctx: TgLogCtx): void {
   if (ctx.suppressLog) return;
   db.insert(telegramMessageLogsTable).values({
@@ -264,6 +284,18 @@ export async function sendTelegramMessageFull(
   const { token } = await getCredentials();
   if (!token) return { ok: false };
   const ctx: TgLogCtx = logCtx ?? { recipientType: "user" };
+  if (text.length > 4096) {
+    // Plain text avoids breaking HTML tags/entities across message boundaries.
+    const parts = splitTelegramText(parseMode === "HTML" ? telegramPlainText(text) : text);
+    const { reply_markup: keyboard, ...rest } = extraPayload ?? {};
+    let last: Awaited<ReturnType<typeof sendTelegramMessageFull>> = { ok: false };
+    for (let index = 0; index < parts.length; index++) {
+      last = await sendTelegramMessageFull(chatId, parts[index], "", ctx,
+        index === parts.length - 1 ? { ...rest, ...(keyboard ? { reply_markup: keyboard } : {}) } : rest);
+      if (!last.ok) return last;
+    }
+    return last;
+  }
 
   // If we don't have a recipientUsername, resolve it from the chatId so the
   // log shows a human-readable handle instead of a raw numeric ID.
@@ -295,6 +327,10 @@ export async function sendTelegramMessageFull(
       const errMsg = data.description ?? "sendMessage failed";
       console.error("[telegram] sendMessage failed:", data);
       logTgMessage(chatId, text, false, errMsg, ctx);
+      if (parseMode === "HTML" && errMsg.toLowerCase().includes("can't parse entities")) {
+        const { parse_mode: _ignored, ...plainExtra } = extraPayload ?? {};
+        return sendTelegramMessageFull(chatId, telegramPlainText(text), "", ctx, plainExtra);
+      }
       return {
         ok: false,
         errorDescription: errMsg,

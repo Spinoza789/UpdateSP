@@ -402,7 +402,7 @@ async function askForSubject(chatId: string): Promise<void> {
 async function askForBody(chatId: string, subject: string): Promise<void> {
   await sendTelegramMessageFull(
     chatId,
-    `Got it — <b>${subject}</b>\n\nNow please describe your issue or question in full:`,
+    `Got it — <b>${escapeTelegramHtml(subject)}</b>\n\nNow please describe your issue or question in full:`,
     "HTML",
     undefined,
     { reply_markup: { force_reply: true, input_field_placeholder: "Describe your issue…" } },
@@ -442,13 +442,13 @@ async function finaliseTicket(
   });
 
   const catLabel = CATEGORY_LABELS[category] ?? category;
-  const gbLabel  = conv.groupBuyName ? ` — ${conv.groupBuyName}` : conv.wholesaleShareName ? ` — ${conv.wholesaleShareName}` : "";
+  const gbLabel  = conv.groupBuyName ? ` — ${escapeTelegramHtml(conv.groupBuyName)}` : conv.wholesaleShareName ? ` — ${escapeTelegramHtml(conv.wholesaleShareName)}` : "";
 
   const confirmResult = await sendTelegramMessageFull(
     chatId,
     `🎫 <b>Support ticket opened</b>\n` +
-    `<b>Category:</b> ${catLabel}${gbLabel}\n` +
-    `<b>Subject:</b> <i>${conv.subject}</i>\n\n` +
+    `<b>Category:</b> ${escapeTelegramHtml(catLabel)}${gbLabel}\n` +
+    `<b>Subject:</b> <i>${escapeTelegramHtml(conv.subject)}</i>\n\n` +
     `Your message has been received. The support team will reply shortly.\n\n` +
     `<i>Reply directly to this message to continue the conversation.</i>`,
     "HTML",
@@ -466,10 +466,10 @@ async function finaliseTicket(
 
   sendAdminTicketNotification(
     `🎫 <b>New ticket via Telegram</b>\n` +
-    `From: @${username}\n` +
-    `Category: ${catLabel}${gbLabel}\n` +
-    `Subject: <i>${conv.subject}</i>\n\n` +
-    `${body.slice(0, 300)}${body.length > 300 ? "…" : ""}`,
+    `From: @${escapeTelegramHtml(username)}\n` +
+    `Category: ${escapeTelegramHtml(catLabel)}${gbLabel}\n` +
+    `Subject: <i>${escapeTelegramHtml(conv.subject)}</i>\n\n` +
+    `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}`,
     ticketId,
   ).then(({ ok, messageId, chatId: adminChatId }) => {
     if (ok && messageId && adminChatId) {
@@ -499,11 +499,11 @@ async function finaliseTicket(
           if (organiserAcct?.telegramChatId) {
             const orgMsg =
               `🎫 <b>New ticket for your Group Buy</b>\n` +
-              `GB: <b>${gb.name ?? conv.groupBuyId}</b>\n` +
-              `From: @${username}\n` +
-              (conv.issueType ? `Issue type: ${conv.issueType}\n` : "") +
-              `Subject: <b>${conv.subject}</b>\n\n` +
-              `${body.slice(0, 300)}${body.length > 300 ? "…" : ""}`;
+              `GB: <b>${escapeTelegramHtml(gb.name ?? conv.groupBuyId)}</b>\n` +
+              `From: @${escapeTelegramHtml(username)}\n` +
+              (conv.issueType ? `Issue type: ${escapeTelegramHtml(conv.issueType)}\n` : "") +
+              `Subject: <b>${escapeTelegramHtml(conv.subject)}</b>\n\n` +
+              `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}`;
 
             sendTelegramMessageFull(
               organiserAcct.telegramChatId,
@@ -557,9 +557,9 @@ async function finaliseTicket(
           if (reshipperAcct?.telegramChatId) {
             const reshipMsg =
               `🎫 <b>New order-issue ticket</b>\n` +
-              `From: @${username}\n` +
-              `Subject: <b>${conv.subject}</b>\n\n` +
-              `${body.slice(0, 300)}${body.length > 300 ? "…" : ""}`;
+              `From: @${escapeTelegramHtml(username)}\n` +
+              `Subject: <b>${escapeTelegramHtml(conv.subject)}</b>\n\n` +
+              `${escapeTelegramHtml(body.slice(0, 300))}${body.length > 300 ? "…" : ""}`;
 
             sendTelegramMessageFull(
               reshipperAcct.telegramChatId,
@@ -599,7 +599,7 @@ async function appendToTicket(ticketId: string, username: string, chatId: string
 
   const result = await sendTelegramMessageFull(
     chatId,
-    `✅ <b>Reply sent</b> — <i>${ticket.subject}</i>\n\nThe support team will get back to you shortly.`,
+    `✅ <b>Reply sent</b> — <i>${escapeTelegramHtml(ticket.subject)}</i>\n\nThe support team will get back to you shortly.`,
     "HTML",
   );
 
@@ -613,9 +613,9 @@ async function appendToTicket(ticketId: string, username: string, chatId: string
 
   sendAdminTicketNotification(
     `💬 <b>Customer replied via Telegram</b>\n` +
-    `From: @${username}\n` +
-    `Ticket: <i>${ticket.subject}</i>\n\n` +
-    `${text.slice(0, 300)}${text.length > 300 ? "…" : ""}`,
+    `From: @${escapeTelegramHtml(username)}\n` +
+    `Ticket: <i>${escapeTelegramHtml(ticket.subject)}</i>\n\n` +
+    `${escapeTelegramHtml(text.slice(0, 300))}${text.length > 300 ? "…" : ""}`,
     ticketId,
   ).then(({ ok, messageId, chatId: adminChatId }) => {
     if (ok && messageId && adminChatId) {
@@ -822,7 +822,7 @@ async function sendNotifPrefs(chatId: string, telegramUsername: string): Promise
 async function sendMainMenu(chatId: string, username?: string): Promise<void> {
   const { template } = await getTemplate("bot_menu_header");
   let headerText = username
-    ? renderTemplate(template, { username })
+    ? renderTemplate(template, { username: escapeTelegramHtml(username) })
     : template.replace(/Hey @\{\{username\}\}! /, "");
 
   let snap: AccountSnapshot | null = null;
@@ -941,7 +941,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       if (ticket && ticket.status !== "closed") {
         const promptResult = await sendTelegramMessageFull(
           cbChatId,
-          `💬 <b>Reply to ticket:</b> <i>${ticket.subject}</i>\n\nType your reply and send it as a reply to this message:`,
+          `💬 <b>Reply to ticket:</b> <i>${escapeTelegramHtml(ticket.subject)}</i>\n\nType your reply and send it as a reply to this message:`,
           "HTML",
           undefined,
           { reply_markup: { force_reply: true, input_field_placeholder: "Type your reply…" } },
@@ -969,7 +969,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       if (ticket && ticket.status !== "closed") {
         const promptResult = await sendTelegramMessageFull(
           cbChatId,
-          `💬 <b>Reply to:</b> <i>${ticket.subject}</i>\n\nType your message and send it as a reply to this prompt:`,
+          `💬 <b>Reply to:</b> <i>${escapeTelegramHtml(ticket.subject)}</i>\n\nType your message and send it as a reply to this prompt:`,
           "HTML",
           { recipientType: "admin" },
           { reply_markup: { force_reply: true, input_field_placeholder: "Type your reply…" } },
@@ -1002,7 +1002,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const label = FEEDBACK_CATEGORY_LABELS[category];
       await sendTelegramMessageFull(
         cbChatId,
-        `${label}\n\nType your message below and send it:`,
+        `${escapeTelegramHtml(label)}\n\nType your message below and send it:`,
         "HTML",
         undefined,
         { reply_markup: { force_reply: true, input_field_placeholder: "Write your message…" } },
@@ -1100,7 +1100,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         setConv(cbChatId, { step: "awaiting_gbsubtype", category: "group_buy", issueType: conv?.issueType, groupBuyId: gbId, groupBuyName: gbName });
         await sendTelegramMessageFull(
           cbChatId,
-          `🌍 <b>${gbName}</b>\n\nWhat is this about?`,
+          `🌍 <b>${escapeTelegramHtml(gbName)}</b>\n\nWhat is this about?`,
           "HTML",
           undefined,
           {
@@ -1186,7 +1186,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
         const events = (p.cachedEvents ?? []) as Array<{ date: string; status: string; location?: string }>;
         const eventLines = events.length > 0
-          ? events.map(ev => `• ${fmtDate(ev.date)} — ${translateZh(ev.status)}${ev.location ? ` (${ev.location})` : ""}`).join("\n")
+          ? events.map(ev => `• ${escapeTelegramHtml(fmtDate(ev.date))} — ${escapeTelegramHtml(translateZh(ev.status))}${ev.location ? ` (${escapeTelegramHtml(ev.location)})` : ""}`).join("\n")
           : null;
 
         // Find which of the customer's items are in this parcel, and what else they're waiting for
@@ -1229,7 +1229,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
               if (myItemsPm.length > 0) {
                 const iEmoji = parcelDonePm ? "✅" : "⏳";
-                sectionPartsPm.push(`<b>${parcelDonePm ? "In this parcel — arrived:" : "In this parcel:"}</b>\n${myItemsPm.map(n => `${iEmoji} ${n}`).join("\n")}`);
+                sectionPartsPm.push(`<b>${parcelDonePm ? "In this parcel — arrived:" : "In this parcel:"}</b>\n${myItemsPm.map(n => `${iEmoji} ${escapeTelegramHtml(n)}`).join("\n")}`);
               }
 
               if (otherCustItemsPm.length > 0) {
@@ -1242,9 +1242,9 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
                   if (match) {
                     const st = match.status ?? "pending";
                     const stEmoji = st === "delivered" ? "✅" : st === "out_for_delivery" ? "🚚" : "⏳";
-                    otherLinesPm.push(`${stEmoji} ${li.productName} — ${match.label}`);
+                    otherLinesPm.push(`${stEmoji} ${escapeTelegramHtml(li.productName)} — ${escapeTelegramHtml(match.label)}`);
                   } else {
-                    otherLinesPm.push(`📋 ${li.productName} — not yet dispatched`);
+                    otherLinesPm.push(`📋 ${escapeTelegramHtml(li.productName)} — not yet dispatched`);
                   }
                 }
                 sectionPartsPm.push(`<b>Your other items:</b>\n${otherLinesPm.join("\n")}`);
@@ -1258,7 +1258,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         }
 
         const lines = [
-          `${emoji} <b>${gb?.name ?? p.groupBuyId}</b> — <b>${p.label}</b>`,
+          `${emoji} <b>${escapeTelegramHtml(gb?.name ?? p.groupBuyId)}</b> — <b>${escapeTelegramHtml(p.label)}</b>`,
           tn ? `Tracking: <code>${masked}</code>` : null,
           itemSectionPm || null,
           eventLines ? `\n<b>Tracking history:</b>\n${eventLines}` : "No tracking events yet.",
@@ -1394,7 +1394,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const [gb] = await db.select({ name: groupBuysTable.name }).from(groupBuysTable).where(eq(groupBuysTable.id, gbId));
       const fmtDate3 = (raw: string): string => { try { const d = new Date(raw); if (isNaN(d.getTime())) return raw; const pad = (n: number) => String(n).padStart(2, "0"); return `${pad(d.getUTCDate())}-${pad(d.getUTCMonth() + 1)}-${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`; } catch { return raw; } };
 
-      const sections: string[] = [`<b>${gb?.name ?? gbId}</b> — your packages:\n`];
+      const sections: string[] = [`<b>${escapeTelegramHtml(gb?.name ?? gbId)}</b> — your packages:\n`];
       const PARCEL_EMOJI_ALL: Record<string, string> = { pending: "⏳", in_transit: "🚀", out_for_delivery: "🚚", attempted: "⚠️", delivered: "✅", exception: "🚨", expired: "💨" };
       for (const p of memberParcels2) {
         const status = p.status ?? "pending";
@@ -1402,12 +1402,12 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         const emoji = PARCEL_EMOJI_ALL[status] ?? "📦";
         const events = (p.cachedEvents ?? []) as Array<{ date: string; status: string; location?: string }>;
         const latestEvent = events[0];
-        const latestLine = latestEvent ? `\nLatest: ${fmtDate3(latestEvent.date)} — ${translateZh(latestEvent.status)}` : "";
+        const latestLine = latestEvent ? `\nLatest: ${escapeTelegramHtml(fmtDate3(latestEvent.date))} — ${escapeTelegramHtml(translateZh(latestEvent.status))}` : "";
         const iEmoji = parcelDone ? "✅" : "⏳";
         const itemLines = p.matchedItems.length > 0
-          ? "\n" + p.matchedItems.map(i => `${iEmoji} ${i}`).join("\n")
+          ? "\n" + p.matchedItems.map(i => `${iEmoji} ${escapeTelegramHtml(i)}`).join("\n")
           : "";
-        sections.push(`${emoji} <b>${p.label}</b>${itemLines}${latestLine}`);
+        sections.push(`${emoji} <b>${escapeTelegramHtml(p.label)}</b>${itemLines}${latestLine}`);
       }
 
       // Summary: which items arrived vs still on the way
@@ -1418,8 +1418,8 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         const arrived = itemStatuses.filter(i => i.delivered).map(i => i.name);
         const waiting = itemStatuses.filter(i => !i.delivered).map(i => i.name);
         const summaryParts: string[] = [];
-        if (arrived.length > 0) summaryParts.push(`✅ <b>Arrived:</b> ${arrived.join(", ")}`);
-        if (waiting.length > 0) summaryParts.push(`⏳ <b>Still on the way:</b> ${waiting.join(", ")}`);
+        if (arrived.length > 0) summaryParts.push(`✅ <b>Arrived:</b> ${escapeTelegramHtml(arrived.join(", "))}`);
+        if (waiting.length > 0) summaryParts.push(`⏳ <b>Still on the way:</b> ${escapeTelegramHtml(waiting.join(", "))}`);
         if (summaryParts.length > 0) sections.push(`─────────────\n${summaryParts.join("\n")}`);
       }
 
@@ -1548,10 +1548,10 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const backKeyboard = { reply_markup: { inline_keyboard: [[{ text: "⬅️ Back", callback_data: `mn:track_gb:${gbIdPend}` }]] } };
 
       if (pending.length === 0) {
-        await sendTelegramMessageFull(cbChatId, `✅ All your items from <b>${gbNamePend}</b> have been dispatched!`, "HTML", undefined, backKeyboard);
+        await sendTelegramMessageFull(cbChatId, `✅ All your items from <b>${escapeTelegramHtml(gbNamePend)}</b> have been dispatched!`, "HTML", undefined, backKeyboard);
       } else {
-        const lines = pending.map(e => `📋 ${e.name}${e.qty > 1 ? ` ×${e.qty}` : ""}`).join("\n");
-        await sendTelegramMessageFull(cbChatId, `⏳ <b>Not yet dispatched — ${gbNamePend}:</b>\n\n${lines}`, "HTML", undefined, backKeyboard);
+        const lines = pending.map(e => `📋 ${escapeTelegramHtml(e.name)}${e.qty > 1 ? ` ×${e.qty}` : ""}`).join("\n");
+        await sendTelegramMessageFull(cbChatId, `⏳ <b>Not yet dispatched — ${escapeTelegramHtml(gbNamePend)}:</b>\n\n${lines}`, "HTML", undefined, backKeyboard);
       }
       res.json({ ok: true }); return;
     }
@@ -1611,7 +1611,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
         const events = (parcel.cachedEvents ?? []) as Array<{ date: string; status: string; location?: string }>;
         const eventLines = events.length > 0
-          ? events.map(ev => `• ${fmtDate(ev.date)} — ${translateZh(ev.status)}${ev.location ? ` (${ev.location})` : ""}`).join("\n")
+          ? events.map(ev => `• ${escapeTelegramHtml(fmtDate(ev.date))} — ${escapeTelegramHtml(translateZh(ev.status))}${ev.location ? ` (${escapeTelegramHtml(ev.location)})` : ""}`).join("\n")
           : null;
 
         // Find which of the customer's items are in this parcel, and what else they're waiting for
@@ -1654,7 +1654,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
               if (myItems.length > 0) {
                 const iEmoji = parcelDonePs ? "✅" : "⏳";
-                sectionParts.push(`<b>${parcelDonePs ? "In this parcel — arrived:" : "In this parcel:"}</b>\n${myItems.map(n => `${iEmoji} ${n}`).join("\n")}`);
+                sectionParts.push(`<b>${parcelDonePs ? "In this parcel — arrived:" : "In this parcel:"}</b>\n${myItems.map(n => `${iEmoji} ${escapeTelegramHtml(n)}`).join("\n")}`);
               }
 
               if (otherCustItems.length > 0) {
@@ -1667,9 +1667,9 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
                   if (match) {
                     const st = match.status ?? "pending";
                     const stEmoji = st === "delivered" ? "✅" : st === "out_for_delivery" ? "🚚" : "⏳";
-                    otherLines.push(`${stEmoji} ${li.productName} — ${match.label}`);
+                    otherLines.push(`${stEmoji} ${escapeTelegramHtml(li.productName)} — ${escapeTelegramHtml(match.label)}`);
                   } else {
-                    otherLines.push(`📋 ${li.productName} — not yet dispatched`);
+                    otherLines.push(`📋 ${escapeTelegramHtml(li.productName)} — not yet dispatched`);
                   }
                 }
                 sectionParts.push(`<b>Your other items:</b>\n${otherLines.join("\n")}`);
@@ -1683,7 +1683,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         }
 
         const lines = [
-          `${emoji} <b>${gb?.name ?? parcel.groupBuyId}</b> — <b>${parcel.label}</b>`,
+          `${emoji} <b>${escapeTelegramHtml(gb?.name ?? parcel.groupBuyId)}</b> — <b>${escapeTelegramHtml(parcel.label)}</b>`,
           tn ? `Tracking: <code>${masked}</code>` : null,
           itemSection || null,
           eventLines ? `\n<b>Tracking history:</b>\n${eventLines}` : null,
@@ -1722,7 +1722,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
         const replyKey = optIn ? "bot_parcel_optin_yes" : "bot_parcel_optin_no";
         const { template: optinTpl } = await getTemplate(replyKey);
-        await sendTelegramMessage(cbChatId, renderTemplate(optinTpl, { label: parcel.label }), "HTML");
+        await sendTelegramMessage(cbChatId, renderTemplate(optinTpl, { label: escapeTelegramHtml(parcel.label) }), "HTML");
       }
 
       res.json({ ok: true });
@@ -1824,7 +1824,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           const gb = gbInfo?.name ?? (o.groupBuyId ? o.groupBuyId : "—");
           const cur = gbInfo?.currency ?? "GBP";
           const total = `${cur} ${Number(o.grandTotal ?? 0).toFixed(2)}`;
-          return `${emoji} ${user}  ·  ${gb}  ·  ${total}`;
+          return `${emoji} ${escapeTelegramHtml(user)}  ·  ${escapeTelegramHtml(gb)}  ·  ${escapeTelegramHtml(total)}`;
         });
 
         const msg = `📦 <b>Latest Orders</b>\n\n${lines.join("\n")}`;
@@ -1857,7 +1857,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           const hoursOld = Math.floor((Date.now() - new Date(t.updatedAt ?? t.createdAt).getTime()) / (1000 * 60 * 60));
           const age = hoursOld < 24 ? `${hoursOld}h` : `${Math.floor(hoursOld / 24)}d`;
           const subject = t.subject.length > 35 ? t.subject.slice(0, 35) + "…" : t.subject;
-          return `${emoji} @${t.accountUsername}  ·  <i>${subject}</i>  ·  ${age} ago`;
+          return `${emoji} @${escapeTelegramHtml(t.accountUsername)}  ·  <i>${escapeTelegramHtml(subject)}</i>  ·  ${age} ago`;
         });
 
         const msg = `🎫 <b>Open Tickets</b> (${openTickets.length})\n\n${lines.join("\n")}`;
@@ -1922,7 +1922,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           const paid = o.paymentStatus === "confirmed" ? "✅ Paid" : "⏳ Unpaid";
           const gb = o.gbName ? ` · ${o.gbName}` : o.groupBuyId ? ` · GB` : "";
           const cur = o.gbCurrency ?? "GBP";
-          return `${emoji} <b>${o.code}</b>${gb} — ${cur} ${Number(o.grandTotal).toFixed(2)} · ${paid}`;
+          return `${emoji} <b>${escapeTelegramHtml(o.code)}</b>${escapeTelegramHtml(gb)} — ${escapeTelegramHtml(cur)} ${Number(o.grandTotal).toFixed(2)} · ${paid}`;
         });
 
         const keyboard: { text: string; url?: string; callback_data?: string }[][] = orders.map(o => {
@@ -2014,25 +2014,25 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         const payLabel = order.paymentStatus === "confirmed" || order.paymentStatus === "test_confirmed"
           ? "Paid" : order.paymentStatus === "pending_confirmation" ? "Pending Review"
           : order.paymentStatus === "rejected" ? "Rejected" : "Unpaid";
-        const gbLine = (order.gbName ?? order.groupBuyId) ? `\n🛒 <b>Group Buy:</b> ${order.gbName ?? order.groupBuyId}` : "";
+        const gbLine = (order.gbName ?? order.groupBuyId) ? `\n🛒 <b>Group Buy:</b> ${escapeTelegramHtml(order.gbName ?? order.groupBuyId)}` : "";
         const structuredTracking = Array.isArray(order.trackingPackages) && order.orderType !== "wholesale_shared";
         const orderTrackingViews = structuredTracking ? projectTrackingPackages(order) : [];
         const trackingLine = !structuredTracking && order.trackingNumber
           ? `\n📮 <b>Tracking:</b> <code>${escapeTelegramHtml(order.trackingNumber)}</code>`
           : "";
-        const messageLine = order.adminMessage ? `\n\n💬 <i>${order.adminMessage}</i>` : "";
+        const messageLine = order.adminMessage ? `\n\n💬 <i>${escapeTelegramHtml(order.adminMessage)}</i>` : "";
 
         const itemLines = lineItems.map(li => {
           const qty = parseFloat(String(li.quantity));
           const qtyStr = Number.isInteger(qty) ? String(qty) : qty.toFixed(1).replace(/\.0$/, "");
-          return `  • ${li.productName} ×${qtyStr}`;
+          return `  • ${escapeTelegramHtml(li.productName)} ×${qtyStr}`;
         }).join("\n");
 
         const msg =
-          `${statusEmoji} <b>Order #${order.code}</b>\n` +
+          `${statusEmoji} <b>Order #${escapeTelegramHtml(order.code)}</b>\n` +
           `${gbLine}\n` +
           `\n📋 <b>Items</b>\n${itemLines || "  —"}\n` +
-          `\n💰 <b>Total:</b> ${order.gbCurrency ?? "GBP"} ${Number(order.grandTotal).toFixed(2)}\n` +
+          `\n💰 <b>Total:</b> ${escapeTelegramHtml(order.gbCurrency ?? "GBP")} ${Number(order.grandTotal).toFixed(2)}\n` +
           `${payEmoji} <b>Payment:</b> ${payLabel}` +
           `${trackingLine}` +
           `${messageLine}`;
@@ -2426,7 +2426,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
             attempted: "Delivery Attempted", delivered: "Delivered", exception: "Exception", expired: "Expired",
           };
 
-          let directBody = `📦 <b>${gbNameDirect}</b>\n🏠 <i>Direct shipping to your address</i>\n`;
+          let directBody = `📦 <b>${escapeTelegramHtml(gbNameDirect)}</b>\n🏠 <i>Direct shipping to your address</i>\n`;
 
           if (directNums.length === 0 && groupedOrders.length === 0) {
             directBody += "\n<i>No tracking number has been added to your order yet.</i>";
@@ -2440,19 +2440,19 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           }
           if (directNums.length > 0) {
             for (const num of directNums) {
-              directBody += `\n\n🔢 <b>Tracking #:</b> <code>${num}</code>`;
+              directBody += `\n\n🔢 <b>Tracking #:</b> <code>${escapeTelegramHtml(num)}</code>`;
               // Fetch live 17track events
               const { status, events } = await fetchTrackingEventsForNumber(num);
               const emoji = DIRECT_EMOJI[status] ?? "📦";
               const label = DIRECT_LABEL[status] ?? status;
-              directBody += `\n${emoji} <b>Status:</b> ${label}`;
+              directBody += `\n${emoji} <b>Status:</b> ${escapeTelegramHtml(label)}`;
               if (events.length > 0) {
                 // Show the 5 most recent events (newest first)
                 const recent = [...events].reverse().slice(0, 5);
                 for (const ev of recent) {
                   const dateStr = ev.date ? new Date(ev.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
-                  const loc = ev.location ? ` · ${ev.location}` : "";
-                  directBody += `\n  <i>${dateStr}${loc}</i> — ${ev.status}`;
+                  const loc = ev.location ? ` · ${escapeTelegramHtml(ev.location)}` : "";
+                  directBody += `\n  <i>${escapeTelegramHtml(dateStr)}${loc}</i> — ${escapeTelegramHtml(ev.status)}`;
                 }
               }
             }
@@ -2535,7 +2535,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         if (allVisibleParcels.length === 0) {
           await sendTelegramMessageFull(
             cbChatId,
-            `📦 <b>${gbName}</b>\n\nNo packages have been dispatched for you yet.`,
+            `📦 <b>${escapeTelegramHtml(gbName)}</b>\n\nNo packages have been dispatched for you yet.`,
             "HTML", undefined, { reply_markup: { inline_keyboard: [
               [{ text: "📋 Not Yet Dispatched", callback_data: `ps_pending:${gbId}` }],
               [{ text: "⬅️ Back to Tracking", callback_data: "mn:tracking" }],
@@ -2551,13 +2551,13 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
             .map(i => i.name.trim().toLowerCase())
             .filter(k => gbItemQty.has(k));
           const itemLines = matchKeys.length > 0
-            ? "\n" + matchKeys.map(k => `  • ${gbItemQty.get(k)!.name}`).join("\n")
+            ? "\n" + matchKeys.map(k => `  • ${escapeTelegramHtml(gbItemQty.get(k)!.name)}`).join("\n")
             : "";
           // Synthetic (direct-order) parcels have no GB parcel record to drill into
           if (!p.isSynthetic) {
             keyboard.push([{ text: `📦 ${p.label}`, callback_data: `ps_menu:${p.id}` }]);
           }
-          return `${emoji} <b>${p.label}</b> · ${statusLabel}${itemLines}`;
+          return `${emoji} <b>${escapeTelegramHtml(p.label)}</b> · ${escapeTelegramHtml(statusLabel)}${itemLines}`;
         });
 
         keyboard.push([{ text: "📋 Not Yet Dispatched", callback_data: `ps_pending:${gbId}` }]);
@@ -2567,7 +2567,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         const { template: trackingHeaderTpl } = await getTemplate("bot_tracking_header");
         await sendTelegramMessageFull(
           cbChatId,
-          renderTemplate(trackingHeaderTpl, { lines: `<b>${gbName}</b>\n\n` + lines.join("\n\n") }),
+          renderTemplate(trackingHeaderTpl, { lines: `<b>${escapeTelegramHtml(gbName)}</b>\n\n` + lines.join("\n\n") }),
           "HTML", undefined, { reply_markup: { inline_keyboard: keyboard } },
         );
         res.json({ ok: true }); return;
@@ -2608,7 +2608,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           const gb = gbMap.get(m.groupBuyId);
           if (!gb) return null;
           const emoji = STATUS_EMOJI[gb.status ?? ""] ?? "🌍";
-          return `${emoji} <b>${gb.name}</b>`;
+          return `${emoji} <b>${escapeTelegramHtml(gb.name)}</b>`;
         }).filter(Boolean);
 
         const keyboard: { text: string; url?: string; web_app?: { url: string }; callback_data?: string }[][] = (memberships.map(m => {
@@ -2664,7 +2664,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           const closeStr = gb.closeDate
             ? ` · closes ${new Date(gb.closeDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
             : "";
-          return `🟢 <b>${gb.name}</b>${closeStr}`;
+          return `🟢 <b>${escapeTelegramHtml(gb.name)}</b>${closeStr}`;
         });
 
         const gbKeyboard: { text: string; url?: string; web_app?: { url: string }; callback_data?: string }[][] = activeGbs.map(gb => [
@@ -2700,8 +2700,8 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         const closeStr = gb.closeDate
           ? `\n📅 Closes ${new Date(gb.closeDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`
           : "";
-        const desc = gb.description ? `\n\n${gb.description.slice(0, 500)}` : "";
-        const caption = `🟢 <b>${gb.name}</b>${closeStr}${desc}`;
+        const desc = gb.description ? `\n\n${escapeTelegramHtml(gb.description.slice(0, 500))}` : "";
+        const caption = `🟢 <b>${escapeTelegramHtml(gb.name)}</b>${closeStr}${desc}`;
 
         const detailKeyboard = {
           inline_keyboard: [
@@ -2757,9 +2757,9 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
         const lines = labs.map(l => {
           const purity = l.purityPct != null ? ` · <b>${l.purityPct.toFixed(1)}%</b> purity` : "";
-          const batch = l.batchCode ? ` <code>${l.batchCode}</code>` : "";
-          const date = l.testDate ? ` · ${l.testDate}` : "";
-          return `🧪 ${l.peptideName}${batch}${purity}${date}`;
+          const batch = l.batchCode ? ` <code>${escapeTelegramHtml(l.batchCode)}</code>` : "";
+          const date = l.testDate ? ` · ${escapeTelegramHtml(l.testDate)}` : "";
+          return `🧪 ${escapeTelegramHtml(l.peptideName)}${batch}${purity}${date}`;
         });
 
         const keyboard: ({ text: string; url: string } | { text: string; callback_data: string })[][] = [];
@@ -2972,7 +2972,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     const { template: linkSuccessTpl } = await getTemplate("bot_link_success");
     await sendTelegramMessage(
       chatId,
-      renderTemplate(linkSuccessTpl, { username: account.telegramUsername }),
+      renderTemplate(linkSuccessTpl, { username: escapeTelegramHtml(account.telegramUsername) }),
       "HTML",
     );
     writeLog("login", "info", "telegram_linked", `Telegram linked: ${account.telegramUsername}`, { telegramUsername: account.telegramUsername, chatId }).catch(() => {});
@@ -3096,7 +3096,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const { template: linkSuccessTpl } = await getTemplate("bot_link_success");
       await sendTelegramMessage(
         chatId,
-        renderTemplate(linkSuccessTpl, { username: tokenAccount.telegramUsername }),
+        renderTemplate(linkSuccessTpl, { username: escapeTelegramHtml(tokenAccount.telegramUsername) }),
         "HTML",
       );
       writeLog("login", "info", "telegram_linked", `Telegram linked via deep-link: ${tokenAccount.telegramUsername}`, { telegramUsername: tokenAccount.telegramUsername, chatId }).catch(() => {});
@@ -3120,7 +3120,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         if (alreadyLinkedGb) {
           await sendTelegramMessageFull(
             chatId,
-            `🌍 <b>${gbRow.name}</b>\n\nYou've been invited to join this group buy.\nStatus: <b>${gbRow.status ?? "Open"}</b>  •  Currency: <b>${gbRow.currency ?? "GBP"}</b>`,
+            `🌍 <b>${escapeTelegramHtml(gbRow.name)}</b>\n\nYou've been invited to join this group buy.\nStatus: <b>${escapeTelegramHtml(gbRow.status ?? "Open")}</b>  •  Currency: <b>${escapeTelegramHtml(gbRow.currency ?? "GBP")}</b>`,
             "HTML",
             undefined,
             {
@@ -3137,7 +3137,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           const startTextGb = renderTemplate(startTplGb, { app_url: appUrl });
           await sendTelegramMessageFull(
             chatId,
-            `🌍 <b>You've been invited to join ${gbRow.name}!</b>\n\nLink your Salt &amp; Peps account to access this group buy and more.\n\n${startTextGb}`,
+            `🌍 <b>You've been invited to join ${escapeTelegramHtml(gbRow.name)}!</b>\n\nLink your Salt &amp; Peps account to access this group buy and more.\n\n${startTextGb}`,
             "HTML",
             undefined,
             {
@@ -3239,11 +3239,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const adminChatIdFb = await getAdminChatId();
       if (adminChatIdFb) {
         const catLabel = FEEDBACK_CATEGORY_LABELS[category] ?? category;
-        const tgLine = tgUsername ? `\n👤 @${tgUsername}` : "";
+        const tgLine = tgUsername ? `\n👤 @${escapeTelegramHtml(tgUsername)}` : "";
         const preview = trimmed.length > 300 ? trimmed.slice(0, 300) + "…" : trimmed;
         sendTelegramMessage(
           adminChatIdFb,
-          `📬 <b>New ${catLabel}</b> (via bot)${tgLine}\n\n${preview}`,
+          `📬 <b>New ${escapeTelegramHtml(catLabel)}</b> (via bot)${tgLine}\n\n${escapeTelegramHtml(preview)}`,
           "HTML",
           { recipientType: "admin" },
         ).catch(() => {});
@@ -3252,7 +3252,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const catLabel = FEEDBACK_CATEGORY_LABELS[category] ?? category;
       await sendTelegramMessageFull(
         chatId,
-        `✅ <b>Received!</b> Your ${catLabel} has been submitted.\n\nSend /feedback any time to share more.`,
+        `✅ <b>Received!</b> Your ${escapeTelegramHtml(catLabel)} has been submitted.\n\nSend /feedback any time to share more.`,
         "HTML",
         undefined,
         {
@@ -3303,15 +3303,15 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
           console.log(`[telegram:webhook] ✅ admin reply posted to ticket=${mapping.ticketId} by @${adminUsername}`);
 
-          await sendTelegramMessage(chatId, `✅ <b>Reply posted</b> — <i>${ticket.subject}</i>`, "HTML");
+          await sendTelegramMessage(chatId, `✅ <b>Reply posted</b> — <i>${escapeTelegramHtml(ticket.subject)}</i>`, "HTML");
 
           const _appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
           notifyUserTicket(
             ticket.accountUsername,
             mapping.ticketId,
             `💬 <b>Support reply</b>\n` +
-            `Subject: <b>${ticket.subject}</b>\n\n` +
-            `${text.slice(0, 300)}${text.length > 300 ? "…" : ""}\n\n` +
+            `Subject: <b>${escapeTelegramHtml(ticket.subject)}</b>\n\n` +
+            `${escapeTelegramHtml(text.slice(0, 300))}${text.length > 300 ? "…" : ""}\n\n` +
             `<a href="${_appUrl}/account?s=support&ticket=${mapping.ticketId}">View in app →</a>\n` +
             `<i>Or reply directly here in Telegram.</i>`,
           ).catch(() => {});
@@ -3366,9 +3366,9 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         body: text,
       });
       if (result.ok) {
-        await sendTelegramMessage(chatId, `✅ <b>Posted to shared order chat</b> — <code>#${waMap.shareId}</code>`, "HTML");
+        await sendTelegramMessage(chatId, `✅ <b>Posted to shared order chat</b> — <code>#${escapeTelegramHtml(waMap.shareId)}</code>`, "HTML");
       } else {
-        await sendTelegramMessage(chatId, `❌ ${result.error}`, "HTML");
+        await sendTelegramMessage(chatId, `❌ ${escapeTelegramHtml(result.error)}`, "HTML");
       }
       res.json({ ok: true }); return;
     }
@@ -3416,15 +3416,15 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
               .set({ updatedAt: now, status: ticketRow.status === "open" ? "in_progress" : ticketRow.status, customerUnread: true })
               .where(eq(ticketsTable.id, mapping.ticketId));
 
-            await sendTelegramMessage(chatId, `✅ <b>Reply sent</b> — <i>${ticketRow.subject}</i>`, "HTML");
+            await sendTelegramMessage(chatId, `✅ <b>Reply sent</b> — <i>${escapeTelegramHtml(ticketRow.subject)}</i>`, "HTML");
 
             const _orgAppUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
             notifyUserTicket(
               ticketRow.accountUsername,
               mapping.ticketId,
               `💬 <b>Reply from your Group Buy organiser</b>\n` +
-              `Subject: <b>${ticketRow.subject}</b>\n\n` +
-              `${text.slice(0, 300)}${text.length > 300 ? "…" : ""}\n\n` +
+              `Subject: <b>${escapeTelegramHtml(ticketRow.subject)}</b>\n\n` +
+              `${escapeTelegramHtml(text.slice(0, 300))}${text.length > 300 ? "…" : ""}\n\n` +
               `<a href="${_orgAppUrl}/account?s=support&ticket=${mapping.ticketId}">View in app →</a>\n` +
               `<i>Or reply directly here in Telegram.</i>`,
             ).catch(() => {});
@@ -3474,7 +3474,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
       if (results.length === 0) {
         const { template: noResultsTpl } = await getTemplate("bot_labs_no_results");
-        const noResultsText = renderTemplate(noResultsTpl, { query });
+        const noResultsText = renderTemplate(noResultsTpl, { query: escapeTelegramHtml(query) });
         await sendTelegramMessageFull(
           chatId,
           noResultsText,
@@ -3512,7 +3512,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const { template: searchResultsTpl } = await getTemplate("bot_labs_search_results");
       await sendTelegramMessageFull(
         chatId,
-        renderTemplate(searchResultsTpl, { query }),
+        renderTemplate(searchResultsTpl, { query: escapeTelegramHtml(query) }),
         "HTML", undefined, { reply_markup: { inline_keyboard: keyboard } },
       );
       res.json({ ok: true }); return;
@@ -3590,7 +3590,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
         await sendTelegramMessageFull(
           chatId,
-          `🤖 <b>Sage</b>\n\n${sageText}`,
+          `🤖 <b>Sage</b>\n\n${escapeTelegramHtml(sageText)}`,
           "HTML",
           undefined,
           {
@@ -3634,7 +3634,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     if (usageCount >= aiCfg.messageLimit) {
       await sendTelegramMessage(
         chatId,
-        `You've reached the limit for AI-assisted support (${aiCfg.messageLimit} messages per 24 hours).\n\nFor further help please contact ${aiCfg.contactHandle} directly, or send /support to open a support ticket.`,
+        `You've reached the limit for AI-assisted support (${aiCfg.messageLimit} messages per 24 hours).\n\nFor further help please contact ${escapeTelegramHtml(aiCfg.contactHandle)} directly, or send /support to open a support ticket.`,
         "HTML",
       );
       res.json({ ok: true }); return;
@@ -3645,7 +3645,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const newCount = incrementAiUsage(chatId);
       const remaining = aiCfg.messageLimit - newCount;
 
-      let reply = aiText;
+      let reply = escapeTelegramHtml(aiText);
       if (remaining <= 2 && remaining > 0) {
         reply += `\n\n<i>(${remaining} AI message${remaining === 1 ? "" : "s"} remaining today — send /support to open a ticket anytime)</i>`;
       }
@@ -3874,7 +3874,7 @@ router.post("/account/telegram/widget-auth", requireAccount, async (req, res): P
 
   // Welcome DM
   sendTelegramMessage(String(id),
-    `✅ Your Telegram is now linked to your Salt & Peps account (@${accountUsername}). You'll receive order notifications here.`,
+    `✅ Your Telegram is now linked to your Salt &amp; Peps account (@${escapeTelegramHtml(accountUsername)}). You'll receive order notifications here.`,
   ).catch(() => {});
 
   res.json({ ok: true });

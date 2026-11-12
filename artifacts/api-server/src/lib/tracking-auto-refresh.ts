@@ -1,3 +1,4 @@
+import { escapeTelegramHtml as escTg } from "./telegram-package-tracking";
 import { assertNoActiveRefunds, refundMutationErrorOrderId, refundMutableOrderWhere } from "./refund-mutation-guard";
 /**
  * Auto-refresh tracking for all active GB parcels and tracking-link packages.
@@ -179,13 +180,13 @@ async function fireParcelStatusNotifications(
   const statusLabel = STATUS_LABELS[status] ?? status.replace(/_/g, " ");
 
   const emoji = status === "out_for_delivery" ? "🚚" : status === "attempted" ? "⚠️" : status === "exception" ? "🚨" : status === "delivered" ? "✅" : "📍";
-  const trackingLine = tn ? `\nTracking: <code>${masked}</code>` : "";
+  const trackingLine = tn ? `\nTracking: <code>${escTg(masked)}</code>` : "";
   const { template: statusTpl } = await getTemplate("bot_tracking_status_update");
   const text = renderTemplate(statusTpl, {
     emoji,
-    gb_name: gb?.name ?? groupBuyId,
-    label,
-    status_label: statusLabel,
+    gb_name: escTg(gb?.name ?? groupBuyId),
+    label: escTg(label),
+    status_label: escTg(statusLabel),
     tracking_line: trackingLine,
   });
 

@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   completedUsernames: [] as string[],
   sentMessages: [] as string[],
   updates: new Set<number>(),
+  rows: {} as Record<string, any[]>,
 }));
 
 function makeDb(root: boolean, accountBox: { value: any }): any {
@@ -27,6 +28,7 @@ function makeDb(root: boolean, accountBox: { value: any }): any {
       const query: any = {
         from(value: unknown) { table = getTableName(value as never); return query; },
         where() { return query; },
+        leftJoin() { return query; },
         orderBy() { return query; },
         limit() { return query; },
         for() {
@@ -38,7 +40,7 @@ function makeDb(root: boolean, accountBox: { value: any }): any {
           return query;
         },
         then(resolve: (rows: any[]) => unknown, reject: (reason: unknown) => unknown) {
-          return Promise.resolve(table === "accounts" && accountBox.value ? [accountBox.value] : [])
+          return Promise.resolve(table === "accounts" && accountBox.value ? [accountBox.value] : state.rows[table] ?? [])
             .then(resolve, reject);
         },
       };
@@ -102,7 +104,7 @@ vi.mock("../lib/telegram", () => ({
     state.sentMessages.push(message);
     return { ok: true };
   },
-  sendTelegramMessageFull: async () => ({ ok: true }),
+  sendTelegramMessageFull: async (_chat: string, message: string) => { state.sentMessages.push(message); return { ok: true }; },
   sendTelegramPhoto: async () => ({ ok: true }),
   sendAdminTicketNotification: async () => ({ ok: true }),
   answerCallbackQuery: async () => undefined,
@@ -130,7 +132,7 @@ vi.mock("../middleware/account-auth", () => ({
 
 import telegramRouter from "./telegram";
 
-async function webhook(text: string, authenticated = true, updateId = Math.floor(Math.random() * 1_000_000_000)) {
+async function webhook(text: string, authenticated = true, updateId = Math.floor(Math.random() * 1_000_000_000), callback?: string) {
   const app = express();
   app.use(express.json());
   app.use(telegramRouter);
@@ -142,7 +144,9 @@ async function webhook(text: string, authenticated = true, updateId = Math.floor
     return await fetch(`http://127.0.0.1:${port}/telegram/webhook`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(authenticated ? { "x-telegram-bot-api-secret-token": "test-webhook-secret" } : {}) },
-      body: JSON.stringify({ update_id: updateId, message: { text, chat: { id: 98765, username: "telegram-user" } } }),
+      body: JSON.stringify(callback
+        ? { update_id: updateId, callback_query: { id: "cb", data: callback, message: { chat: { id: 98765 } } } }
+        : { update_id: updateId, message: { text, chat: { id: 98765, username: "telegram-user", type: "private" } } }),
     });
   } finally {
     await new Promise<void>(resolve => server.close(() => resolve()));
@@ -155,6 +159,7 @@ describe("mounted Telegram account linking", () => {
   });
   beforeEach(() => {
     state.updates.clear();
+    state.rows = {};
     state.account = {
       telegramUsername: "Stored_UserName",
       telegramLinkToken: "ABCDEF12",
@@ -207,5 +212,25 @@ describe("mounted Telegram account linking", () => {
     await webhook("/link ABCDEF12", true, 123);
     await webhook("/link ABCDEF12", true, 123);
     expect(state.completedUsernames).toEqual(["Stored_UserName"]);
+  });
+  it("escapes product names, group names and admin messages in order details", async () => {
+    state.rows.orders = [{
+      id: "order-1", code: "123", status: "Submitted", paymentStatus: "unpaid",
+      grandTotal: "40", gbName: "GB & <99)", adminMessage: "<99) & message",
+      orderType: "wholesale", groupBuyId: null,
+    }];
+    state.rows.order_line_items = [{ productName: "Oxytocin 10mg (<99) & water", quantity: "1" }];
+    await webhook("", true, 321, "mn:order:123");
+    expect(state.sentMessages.join("\n")).toContain("Oxytocin 10mg (&lt;99) &amp; water");
+    expect(state.sentMessages.join("\n")).toContain("GB &amp; &lt;99)");
+  });
+  it("escapes ticket subjects in the guided confirmation", async () => {
+    await webhook("/support");
+    await webhook("", true, 322, "tc:cat:wholesale");
+    await webhook("", true, 323, "tc:ws:general");
+    await webhook("Missing <99) & water");
+    await webhook("Please help with this missing item");
+    expect(state.sentMessages.join("\n")).toContain("Support ticket opened");
+    expect(state.sentMessages.join("\n")).toContain("Missing &lt;99) &amp; water");
   });
 });

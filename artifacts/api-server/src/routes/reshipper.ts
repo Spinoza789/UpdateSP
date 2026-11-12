@@ -1,3 +1,4 @@
+import { escapeTelegramHtml as escTg } from "../lib/telegram-package-tracking";
 import {
   assertNoActiveRefund,
   RefundMutationBlockedError,
@@ -1010,8 +1011,8 @@ router.post("/reshipper/gb/:gbId/send-message", requireReshipper, async (req, re
     .from(groupBuysTable)
     .where(eq(groupBuysTable.id, gbId));
 
-  const header = `📦 <b>${gb?.name ?? gbId}</b> · ${assignment.country} · @${req.reshipper!.telegramUsername}`;
-  const text = `${header}\n\n${message.trim()}`;
+  const header = `📦 <b>${escTg(gb?.name ?? gbId)}</b> · ${escTg(assignment.country)} · @${escTg(req.reshipper!.telegramUsername)}`;
+  const text = `${header}\n\n${escTg(message.trim())}`;
   const ok = await sendTelegramMessage(account.telegramChatId, text, "HTML").catch(() => false);
   if (!ok) {
     res.status(500).json({ error: "Failed to deliver Telegram message" });
@@ -1044,8 +1045,8 @@ router.post("/reshipper/gb/:gbId/send-test", requireReshipper, async (req, res):
   }
 
   const [gb] = await db.select({ name: groupBuysTable.name }).from(groupBuysTable).where(eq(groupBuysTable.id, gbId));
-  const header = `📦 <b>${gb?.name ?? gbId}</b> · ${assignment.country} · @${myUsername}`;
-  const text = `🔔 <b>[TEST MESSAGE]</b>\n${header}\n\n${message.trim()}`;
+  const header = `📦 <b>${escTg(gb?.name ?? gbId)}</b> · ${escTg(assignment.country)} · @${escTg(myUsername)}`;
+  const text = `🔔 <b>[TEST MESSAGE]</b>\n${header}\n\n${escTg(message.trim())}`;
   const ok = await sendTelegramMessage(myAccount.telegramChatId, text, "HTML").catch(() => false);
   if (!ok) { res.status(500).json({ error: "Failed to deliver test message" }); return; }
 
@@ -1162,8 +1163,8 @@ router.post("/reshipper/gb/:gbId/broadcast", requireReshipper, async (req, res):
     .from(groupBuysTable)
     .where(eq(groupBuysTable.id, gbId));
 
-  const header = `📦 <b>${gb?.name ?? gbId}</b> · ${assignment.country} · @${req.reshipper!.telegramUsername}`;
-  const text = `${header}\n\n${message.trim()}`;
+  const header = `📦 <b>${escTg(gb?.name ?? gbId)}</b> · ${escTg(assignment.country)} · @${escTg(req.reshipper!.telegramUsername)}`;
+  const text = `${header}\n\n${escTg(message.trim())}`;
 
   let sent = 0;
   let skipped = 0;
@@ -1336,7 +1337,7 @@ router.post("/reshipper/gb/:gbId/parcels/:parcelId/broadcast", requireReshipper,
   const { usernames, note } = req.body as { usernames?: string[]; note?: string };
 
   const [gb] = await db.select({ name: groupBuysTable.name }).from(groupBuysTable).where(eq(groupBuysTable.id, gbId));
-  const header = `📦 <b>${gb?.name ?? gbId}</b> · ${assignment.country} · @${req.reshipper!.telegramUsername}`;
+  const header = `📦 <b>${escTg(gb?.name ?? gbId)}</b> · ${escTg(assignment.country)} · @${escTg(req.reshipper!.telegramUsername)}`;
 
   const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
 
@@ -1353,12 +1354,12 @@ router.post("/reshipper/gb/:gbId/parcels/:parcelId/broadcast", requireReshipper,
   const { template: dispatchTpl } = await getTemplate("bot_reshipper_dispatch_optin");
   for (const { chatId, username, matchedItems } of recipients) {
     const itemLine = matchedItems.length > 0
-      ? `\nContaining:\n${matchedItems.map((item, i) => `${i + 1}. ${item}`).join("\n")}`
+      ? `\nContaining:\n${matchedItems.map((item, i) => `${i + 1}. ${escTg(item)}`).join("\n")}`
       : "";
-    const noteLine = note ? `\n📝 ${note.trim()}` : "";
+    const noteLine = note ? `\n📝 ${escTg(note.trim())}` : "";
     const bodyText = renderTemplate(dispatchTpl, {
-      gb_name: gb?.name ?? gbId,
-      parcel_label: parcel.label,
+      gb_name: escTg(gb?.name ?? gbId),
+      parcel_label: escTg(parcel.label),
       items_line: itemLine,
       note_line: noteLine,
     });
@@ -1418,7 +1419,7 @@ router.post("/reshipper/gb/:gbId/parcels/:parcelId/test-broadcast", requireReshi
   }
 
   const [gb] = await db.select({ name: groupBuysTable.name }).from(groupBuysTable).where(eq(groupBuysTable.id, gbId));
-  const header = `📦 <b>${gb?.name ?? gbId}</b> · ${assignment.country} · @${myUsername}`;
+  const header = `📦 <b>${escTg(gb?.name ?? gbId)}</b> · ${escTg(assignment.country)} · @${escTg(myUsername)}`;
 
   const tn = parcel.trackingNumber ?? "";
   const masked = tn.length > 7 ? `${tn.slice(0, 3)}${"•".repeat(Math.min(tn.length - 7, 8))}${tn.slice(-4)}` : tn;
@@ -1427,15 +1428,15 @@ router.post("/reshipper/gb/:gbId/parcels/:parcelId/test-broadcast", requireReshi
   let bodyText: string;
   if (type === "update") {
     bodyText = [
-      `📍 <b>${parcel.label}</b> — status update`,
+      `📍 <b>${escTg(parcel.label)}</b> — status update`,
       `Status: <b>In Transit</b>`,
-      note ? `📝 ${note.trim()}` : null,
+      note ? `📝 ${escTg(note.trim())}` : null,
     ].filter(Boolean).join("\n");
   } else {
-    const allItemsList = allItems ? `\nContaining:\n${((parcel.items ?? []) as { name: string }[]).map((item, i) => `${i + 1}. ${item.name}`).join("\n")}` : "";
+    const allItemsList = allItems ? `\nContaining:\n${((parcel.items ?? []) as { name: string }[]).map((item, i) => `${i + 1}. ${escTg(item.name)}`).join("\n")}` : "";
     bodyText = [
-      `🚚 <b>${parcel.label}</b> has been dispatched!${allItemsList}`,
-      note ? `📝 ${note.trim()}` : null,
+      `🚚 <b>${escTg(parcel.label)}</b> has been dispatched!${allItemsList}`,
+      note ? `📝 ${escTg(note.trim())}` : null,
       ``,
       `Do you want to receive shipping updates through the bot?`,
     ].filter(l => l !== null).join("\n");

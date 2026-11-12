@@ -3280,7 +3280,7 @@ router.post("/organiser/group-buys/:gbId/orders/:orderId/send-message", requireO
   }
 
   const text = message.trim().slice(0, 2000);
-  const fullText = `📦 <b>Message from GB Organiser</b>\n<b>Group Buy:</b> ${gb.name}\n<b>Organiser:</b> @${username}\n<b>Order:</b> #${order.code}\n\n${text}`;
+  const fullText = `📦 <b>Message from GB Organiser</b>\n<b>Group Buy:</b> ${escapeHtml(gb.name)}\n<b>Organiser:</b> @${escapeHtml(username)}\n<b>Order:</b> #${escapeHtml(order.code)}\n\n${escapeHtml(text)}`;
 
   await notifyUser(order.telegramUsername, "status", fullText);
 

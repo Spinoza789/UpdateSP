@@ -1,3 +1,4 @@
+import { escapeTelegramHtml } from "./telegram-package-tracking";
 /**
  * Qiyunle inventory sync — fetches live stock from web3.qiyunle.com
  * and updates matched products in the Peps database.
@@ -800,7 +801,7 @@ export function startQiyunleSync(): void {
 
       // If any batches were auto-mapped, send a separate detailed notification
       if (result.autoMappedItems && result.autoMappedItems.length > 0) {
-        const lines = result.autoMappedItems.map(m => `  • <code>${m.qiyunleCode}</code> → ${m.productName}`).join("\n");
+        const lines = result.autoMappedItems.map(m => `  • <code>${escapeTelegramHtml(m.qiyunleCode)}</code> → ${escapeTelegramHtml(m.productName)}`).join("\n");
         const mapMsg = `🤖 <b>Auto-mapped batches</b>\n\nThe following new batch codes were automatically matched to products:\n\n${lines}\n\n<i>These mappings were applied with high confidence. Review them in Admin → Inventory Sync if needed.</i>`;
         await sendAdminMessage(mapMsg).catch(() => {});
       }
@@ -815,7 +816,7 @@ export function startQiyunleSync(): void {
         const prevSet = new Set(prevCodes);
         const newCodes = result.remainingUnmapped.filter(u => !prevSet.has(u.code));
         if (newCodes.length > 0) {
-          const lines = newCodes.map(u => `  • <code>${u.code}</code>${u.name ? ` — ${u.name}` : ""}`).join("\n");
+          const lines = newCodes.map(u => `  • <code>${escapeTelegramHtml(u.code)}</code>${u.name ? ` — ${escapeTelegramHtml(u.name)}` : ""}`).join("\n");
           const unmapMsg = `🔍 <b>New unmapped batches</b>\n\n${newCodes.length} batch code(s) appeared in inventory that couldn't be auto-matched:\n\n${lines}\n\n<i>Go to Admin → Inventory Sync to map them manually.</i>`;
           await sendAdminMessage(unmapMsg).catch(() => {});
         }

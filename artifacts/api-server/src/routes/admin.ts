@@ -1,3 +1,4 @@
+import { escapeTelegramHtml as escTg } from "../lib/telegram-package-tracking";
 import { qrOrderBatches } from "../lib/qr-order-batches";
 import { qrPostedOrderUpdate } from "../lib/qr-posted-order";
 import { deleteTicketImagesForAccounts } from "../lib/ticket-attachment-cleanup";
@@ -1621,8 +1622,8 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
     };
     const emoji = STATUS_EMOJI[updates.status] ?? "🔔";
     const trackingLine = updates.trackingNumber
-      ? `\nTracking: <code>${updates.trackingNumber}</code>`
-      : (existing.trackingNumber ? `\nTracking: <code>${existing.trackingNumber}</code>` : "");
+      ? `\nTracking: <code>${escTg(updates.trackingNumber)}</code>`
+      : (existing.trackingNumber ? `\nTracking: <code>${escTg(existing.trackingNumber)}</code>` : "");
     notifyUserFromTemplate(existing.telegramUsername, "status", "customer_status_update",
       { code: existing.code, emoji, status: updates.status, gb_name: patchGbContext, tracking: trackingLine, username: existing.telegramUsername.replace(/^@/, ""), order_total: patchSym + String(patchGrandTotal), delivery: patchDelivery, payment_status: patchPaidLabel, app_url: appUrl },
       { inline_keyboard: [[{ text: "📦 View Order", url: `${appUrl}/account?s=orders` }]] },
@@ -1713,12 +1714,12 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
       const numLines = trackingWrite
         ? formatTrackingNumbersForNotification(getTrackingPackages({ ...existing, ...updates }))
         : newNums.length === 1
-          ? `Tracking: <code>${newNums[0]}</code>`
-          : newNums.map((n, i) => `Tracking ${i + 1}: <code>${n}</code>`).join("\n");
+          ? `Tracking: <code>${escTg(newNums[0])}</code>`
+          : newNums.map((n, i) => `Tracking ${i + 1}: <code>${escTg(n)}</code>`).join("\n");
 
       const isDirectOrWholesale = existing.routingType === "direct" || existing.orderType === "wholesale";
       const itemsSection = isDirectOrWholesale && lineItems.length > 0
-        ? `\n\n📋 <b>Contents:</b>\n${lineItems.map((li: any) => `• ${li.productName} ×${Number(li.quantity)}`).join("\n")}`
+        ? `\n\n📋 <b>Contents:</b>\n${lineItems.map((li: any) => `• ${escTg(li.productName)} ×${Number(li.quantity)}`).join("\n")}`
         : "";
 
       const trackMsg = [
@@ -1851,7 +1852,7 @@ router.post("/admin/orders/:id/send-message", async (req, res): Promise<void> =>
   }
 
   const text = message.trim().slice(0, 2000);
-  const fullText = `📦 <b>Message from Salts & Peps Admin</b>\nOrder #${existing.code}\n\n${text}`;
+  const fullText = `📦 <b>Message from Salts & Peps Admin</b>\nOrder #${escTg(existing.code)}\n\n${escTg(text)}`;
 
   await notifyUser(existing.telegramUsername, "status", fullText);
 
@@ -9511,7 +9512,7 @@ router.post("/admin/accounts/:username/credits", async (req: any, res: any): Pro
   notifyUser(
     acct.telegramUsername,
     "profile",
-     `💳 <b>Credits ${adjustedAmountCents >= 0n ? "Added" : "Deducted"}</b>\n\n<b>${sign}$${amountUsd.replace("-", "")}</b> has been ${action} your account by admin.\n\nReason: ${reason}\nNew balance: <b>$${newBalance}</b>`,
+     `💳 <b>Credits ${adjustedAmountCents >= 0n ? "Added" : "Deducted"}</b>\n\n<b>${sign}$${amountUsd.replace("-", "")}</b> has been ${action} your account by admin.\n\nReason: ${escTg(reason)}\nNew balance: <b>$${newBalance}</b>`,
   ).catch(() => {});
 
   res.json({ ok: true, credits: Number(newBalance) });
@@ -11012,7 +11013,7 @@ router.post("/admin/wholesale-access-requests/:id/reject", async (req: any, res:
   notifyUser(
     request.accountUsername,
     "profile",
-    `❌ <b>Wholesale Access Not Approved</b>\n\n${reason ? `Reason: ${reason}\n\n` : ""}Please contact support via your account portal if you have any questions.`
+    `❌ <b>Wholesale Access Not Approved</b>\n\n${reason ? `Reason: ${escTg(reason)}\n\n` : ""}Please contact support via your account portal if you have any questions.`
   ).catch(() => {});
   res.json({ ok: true });
 });

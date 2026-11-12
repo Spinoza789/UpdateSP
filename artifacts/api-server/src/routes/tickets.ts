@@ -1,3 +1,4 @@
+import { escapeTelegramHtml as escTg } from "../lib/telegram-package-tracking";
 import { Router, type IRouter, type RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import multer from "multer";
@@ -348,13 +349,13 @@ router.post("/account/tickets", requireTicketCustomer, parseTicketImages, async 
   // ── Notify admin and track the message ID for reply routing ──────────────
   let notifText =
     `🎫 <b>New Support Ticket</b>\n` +
-    `From: @${username}\n` +
-    `Category: ${categoryLabel(category)}\n`;
-  if (issueType) notifText += `Issue type: ${issueType}\n`;
-  if (groupBuyId) notifText += `Group Buy: <code>${groupBuyId}</code>\n`;
+    `From: @${escTg(username)}\n` +
+    `Category: ${escTg(categoryLabel(category))}\n`;
+  if (issueType) notifText += `Issue type: ${escTg(issueType)}\n`;
+  if (groupBuyId) notifText += `Group Buy: <code>${escTg(groupBuyId)}</code>\n`;
   notifText +=
-    `Subject: <b>${subject.trim()}</b>\n\n` +
-    `${description.trim().slice(0, 300)}${description.trim().length > 300 ? "…" : ""}`;
+    `Subject: <b>${escTg(subject.trim())}</b>\n\n` +
+    `${escTg(description.trim().slice(0, 300))}${description.trim().length > 300 ? "…" : ""}`;
 
   // Ticket received confirmation email (fire-and-forget)
   ;(async () => {
@@ -400,11 +401,11 @@ router.post("/account/tickets", requireTicketCustomer, parseTicketImages, async 
         if (organiserAccount?.telegramChatId) {
           const organiserMsg =
             `🎫 <b>New ticket for your Group Buy</b>\n` +
-            `GB: <b>${gb.name}</b>\n` +
-            `From: @${username}\n` +
-            (issueType ? `Issue type: ${issueType}\n` : "") +
-            `Subject: <b>${subject.trim()}</b>\n\n` +
-            `${description.trim().slice(0, 300)}${description.trim().length > 300 ? "…" : ""}`;
+            `GB: <b>${escTg(gb.name)}</b>\n` +
+            `From: @${escTg(username)}\n` +
+            (issueType ? `Issue type: ${escTg(issueType)}\n` : "") +
+            `Subject: <b>${escTg(subject.trim())}</b>\n\n` +
+            `${escTg(description.trim().slice(0, 300))}${description.trim().length > 300 ? "…" : ""}`;
 
           sendTelegramMessageFull(
             organiserAccount.telegramChatId,
@@ -430,11 +431,11 @@ router.post("/account/tickets", requireTicketCustomer, parseTicketImages, async 
       if (organiserChatId) {
         const chatMsg =
           `🎫 <b>New GB ticket</b>\n` +
-          `GB: <b>${groupBuyId}</b>\n` +
-          `From: @${username}\n` +
-          (issueType ? `Issue: ${issueType}\n` : "") +
-          `Subject: <b>${subject.trim()}</b>\n\n` +
-          `${description.trim().slice(0, 200)}${description.trim().length > 200 ? "…" : ""}`;
+          `GB: <b>${escTg(groupBuyId)}</b>\n` +
+          `From: @${escTg(username)}\n` +
+          (issueType ? `Issue: ${escTg(issueType)}\n` : "") +
+          `Subject: <b>${escTg(subject.trim())}</b>\n\n` +
+          `${escTg(description.trim().slice(0, 200))}${description.trim().length > 200 ? "…" : ""}`;
         sendTelegramMessage(organiserChatId, chatMsg, "HTML", { recipientType: "admin" }).catch(() => {});
       }
     } catch {
@@ -484,10 +485,10 @@ router.post("/account/tickets", requireTicketCustomer, parseTicketImages, async 
           if (reshipperAcct?.telegramChatId) {
             const reshipMsg =
               `🎫 <b>New order-issue ticket</b>\n` +
-              `From: @${username}\n` +
-              (issueType ? `Issue type: ${issueType}\n` : "") +
-              `Subject: <b>${subject.trim()}</b>\n\n` +
-              `${description.trim().slice(0, 300)}${description.trim().length > 300 ? "…" : ""}`;
+              `From: @${escTg(username)}\n` +
+              (issueType ? `Issue type: ${escTg(issueType)}\n` : "") +
+              `Subject: <b>${escTg(subject.trim())}</b>\n\n` +
+              `${escTg(description.trim().slice(0, 300))}${description.trim().length > 300 ? "…" : ""}`;
 
             sendTelegramMessageFull(
               reshipperAcct.telegramChatId,
@@ -634,9 +635,9 @@ router.post("/account/tickets/:id/messages", requireTicketCustomer, parseTicketI
   // Notify admin and track message ID for reply routing
   const replyNotif =
     `💬 <b>Customer replied on ticket</b>\n` +
-    `From: @${username}\n` +
-    `Subject: ${ticket.subject}\n\n` +
-    `${body.trim().slice(0, 300)}${body.trim().length > 300 ? "…" : ""}\n\n` +
+    `From: @${escTg(username)}\n` +
+    `Subject: ${escTg(ticket.subject)}\n\n` +
+    `${escTg(body.trim().slice(0, 300))}${body.trim().length > 300 ? "…" : ""}\n\n` +
     `<i>Reply to this message in Telegram to post a reply on the ticket.</i>`;
 
   sendAdminMessageFull(replyNotif).then(({ ok, messageId, chatId }) => {
@@ -719,8 +720,8 @@ router.post("/admin/tickets", requireTicketAdmin, parseTicketImages, async (req,
     targetUsername,
     ticketId,
     `💬 <b>New message from support</b>\n` +
-    `Subject: <b>${subject.trim()}</b>\n\n` +
-    `${message.trim().slice(0, 300)}${message.trim().length > 300 ? "…" : ""}\n\n` +
+    `Subject: <b>${escTg(subject.trim())}</b>\n\n` +
+    `${escTg(message.trim().slice(0, 300))}${message.trim().length > 300 ? "…" : ""}\n\n` +
     `<i>Reply directly here in Telegram or via the app.</i>`,
   ).catch(() => {});
 
@@ -875,8 +876,8 @@ router.post("/admin/tickets/:id/messages", requireTicketAdmin, parseTicketImages
     ticket.accountUsername,
     id,
     `💬 <b>Support ticket reply</b>\n` +
-    `Subject: <b>${ticket.subject}</b>\n\n` +
-    `${excerpt}\n\n` +
+    `Subject: <b>${escTg(ticket.subject)}</b>\n\n` +
+    `${escTg(excerpt)}\n\n` +
     `<a href="${appUrl}/account?s=support&ticket=${id}">View in app →</a>\n` +
     `<i>Or reply directly here in Telegram.</i>`,
   ).catch(() => {});
@@ -1017,8 +1018,8 @@ router.post("/organiser/tickets/:id/messages", requireAccount, requireOrganiser,
     row.ticket.accountUsername,
     id,
     `💬 <b>Reply from your Group Buy organiser</b>\n` +
-    `Subject: <b>${row.ticket.subject}</b>\n\n` +
-    `${body.trim().slice(0, 300)}${body.trim().length > 300 ? "…" : ""}\n\n` +
+    `Subject: <b>${escTg(row.ticket.subject)}</b>\n\n` +
+    `${escTg(body.trim().slice(0, 300))}${body.trim().length > 300 ? "…" : ""}\n\n` +
     `<a href="${_appUrlOrg}/account?s=support&ticket=${id}">View in app →</a>\n` +
     `<i>Or reply directly here in Telegram.</i>`,
   ).catch(() => {});

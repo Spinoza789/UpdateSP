@@ -1,3 +1,4 @@
+import { escapeTelegramHtml } from "../lib/telegram-package-tracking";
 import { Router, type IRouter } from "express";
 import jwt from "jsonwebtoken";
 import { db, ordersTable, orderMessagesTable, accountsTable } from "@workspace/db";
@@ -138,7 +139,7 @@ router.post("/account/orders/:orderId/messages", async (req, res): Promise<void>
   // Notify admin
   const hasFile = !!attachmentData;
   sendAdminMessage(
-    `💬 <b>New message from @${username}</b>\nOrder: <code>${order.code}</code>\n\n${body.trim()}${hasFile ? "\n\n📎 <i>Attachment included</i>" : ""}`
+    `💬 <b>New message from @${escapeTelegramHtml(username)}</b>\nOrder: <code>${escapeTelegramHtml(order.code)}</code>\n\n${escapeTelegramHtml(body.trim())}${hasFile ? "\n\n📎 <i>Attachment included</i>" : ""}`
   ).catch(() => {});
 
   res.status(201).json({ id, orderId, senderRole: "customer", senderUsername: username, body: body.trim(), hasAttachment: hasFile, readByAdmin: false, readByCustomer: true, createdAt: now.toISOString() });
@@ -249,7 +250,7 @@ router.post("/admin/orders/:orderId/messages", async (req, res): Promise<void> =
   notifyUser(
     order.telegramUsername,
     "status",
-    `💬 <b>New message about your order ${order.code}</b>\n\n${body.trim()}${hasFile ? "\n\n📎 <i>Attachment included</i>" : ""}\n\n<i>Reply by visiting your order page.</i>`
+    `💬 <b>New message about your order ${escapeTelegramHtml(order.code)}</b>\n\n${escapeTelegramHtml(body.trim())}${hasFile ? "\n\n📎 <i>Attachment included</i>" : ""}\n\n<i>Reply by visiting your order page.</i>`
   ).catch(() => {});
 
   res.status(201).json({ id, orderId, senderRole: "admin", senderUsername: adminUsername, body: body.trim(), hasAttachment: hasFile, readByAdmin: true, readByCustomer: false, createdAt: now.toISOString() });
