@@ -150,7 +150,7 @@ vi.mock("../middleware/account-auth", () => ({
 
 import telegramRouter from "./telegram";
 
-async function webhook(text: string, authenticated = true, updateId = Math.floor(Math.random() * 1_000_000_000), callback?: string) {
+async function webhook(text: string, authenticated = true, updateId = Math.floor(Math.random() * 1_000_000_000), callback?: string, messageOverride: any = {}) {
   const app = express();
   app.use(express.json());
   app.use(telegramRouter);
@@ -164,7 +164,7 @@ async function webhook(text: string, authenticated = true, updateId = Math.floor
       headers: { "Content-Type": "application/json", ...(authenticated ? { "x-telegram-bot-api-secret-token": "test-webhook-secret" } : {}) },
       body: JSON.stringify(callback
         ? { update_id: updateId, callback_query: { id: "cb", data: callback, message: { chat: { id: 98765 } } } }
-        : { update_id: updateId, message: { text, chat: { id: 98765, username: "telegram-user", type: "private" } } }),
+        : { update_id: updateId, message: { text, chat: { id: 98765, username: "telegram-user", type: "private" }, ...messageOverride } }),
     });
   } finally {
     await new Promise<void>(resolve => server.close(() => resolve()));
@@ -270,5 +270,18 @@ describe("mounted Telegram account linking", () => {
     state.otherAccounts = ["old_account", "another_account"];
     await webhook(text);
     expect(state.sentMessages.join("\n")).toContain("This Telegram was unlinked from: @old_account, @another_account");
+  });
+  it.each(["photo", "document", "video", "voice", "sticker"])("explains how to send an unsupported private %s", async kind => {
+    await webhook("", true, 410, undefined, { text: undefined, [kind]: {} });
+    expect(state.sentMessages).toContain("I can only read text messages here. Please type your message, or add photos and files to your ticket on the website.");
+    expect(state.payloads.at(-1)?.reply_markup.inline_keyboard[0][0].url).toContain("/account?s=support");
+  });
+  it("uses a private media caption as text", async () => {
+    await webhook("", true, 411, undefined, { text: undefined, photo: [{}], caption: "/support" });
+    expect(state.sentMessages.join("\n")).toContain("New support request");
+  });
+  it("ignores media and captions in group chats", async () => {
+    await webhook("", true, 412, undefined, { text: undefined, photo: [{}], caption: "/support", chat: { id: -123, type: "supergroup" } });
+    expect(state.sentMessages).toEqual([]);
   });
 });

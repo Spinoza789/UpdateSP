@@ -2885,13 +2885,26 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
   // ── Text messages ─────────────────────────────────────────────────────────
   const message = req.body?.message;
-  if (!message?.text || !message?.chat?.id) {
+  if (!message?.chat?.id) {
     res.json({ ok: true });
     return;
   }
 
   const chatId = String(message.chat.id);
-  const text   = String(message.text).trim();
+  if (!message.text) {
+    if (message.chat.type !== "private") {
+      res.json({ ok: true }); return;
+    }
+    if (!message.caption) {
+      await sendTelegramMessageFull(chatId,
+        "I can only read text messages here. Please type your message, or add photos and files to your ticket on the website.",
+        "HTML", undefined, {
+          reply_markup: { inline_keyboard: [[{ text: "Open support", url: `${appUrl}/account?s=support` }]] },
+        });
+      res.json({ ok: true }); return;
+    }
+  }
+  const text   = String(message.text || message.caption).trim();
   console.log(`[telegram:webhook] message received from chatId=${chatId} username=@${message.chat.username ?? "?"}`);
 
   // ── /link command ─────────────────────────────────────────────────────────
