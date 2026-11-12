@@ -22,13 +22,39 @@ vi.mock("./telegram", () => ({
   renderTemplate: (template: string, vars: Record<string, string>) => template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? ""),
 }));
 vi.mock("./scheduler-registry", () => ({ registerScheduler: vi.fn() }));
-import { runPaymentReminders, registerPaymentReminderScheduler } from "./telegram-reminders";
+import { runPaymentReminders, registerPaymentReminderScheduler, runClosingReminders } from "./telegram-reminders";
 import { registerScheduler } from "./scheduler-registry";
 
 const eligible = () => ({
   id: "order1", code: "123", username: "member", chatId: "chat", status: "Submitted", paymentStatus: "unpaid",
   createdAt: new Date(Date.now() - 30 * 3_600_000), deletedAt: null, preferences: {}, groupName: "GB <99) & more",
   total: "120.00", currency: "USD",
+});
+
+describe("group-buy closing reminders", () => {
+  beforeEach(() => {
+    vi.stubEnv("PUBLIC_URL", "https://example.test"); state.claims.clear(); state.queries.length = 0;
+    state.send.mockReset().mockResolvedValue({ ok: true }); state.sleep.mockReset();
+    state.candidates = [{ id: "gb1", username: "member", chatId: "chat", preferences: {}, name: "GB <99) & more",
+      status: "active", hidden: false, hasOrder: false, closeDate: new Date(Date.now() + 12 * 3_600_000) }];
+  });
+  afterEach(() => vi.unstubAllEnvs());
+  it("sends once to a joined member with no order and links to that group", async () => {
+    expect(await runClosingReminders({ sleep: state.sleep })).toBe(1);
+    expect(await runClosingReminders({ sleep: state.sleep })).toBe(0);
+    expect(state.send).toHaveBeenCalledTimes(1);
+    expect(state.send.mock.calls[0][2]).toContain("GB &lt;99) &amp; more");
+    expect(state.send.mock.calls[0][3].inline_keyboard[0][0].url).toContain("/order?gbId=gb1");
+    expect(state.queries[0].sql).toContain("account_group_buys");
+    expect(state.queries[0].sql).toContain("NOT EXISTS");
+  });
+  it.each([{ status: "closed" }, { status: "draft" }, { hidden: true }, { hasOrder: true },
+    { closeDate: new Date(Date.now() + 72 * 3_600_000) }, { closeDate: new Date(0) }, { preferences: { reminders: false } }])
+  ("skips ineligible groups or members: %j", async patch => {
+    state.candidates = [{ ...state.candidates[0], ...patch }];
+    expect(await runClosingReminders({ sleep: state.sleep })).toBe(0);
+    expect(state.send).not.toHaveBeenCalled();
+  });
 });
 describe("unpaid Telegram reminders", () => {
   beforeEach(() => { vi.stubEnv("PUBLIC_URL", "https://example.test"); state.candidates = [eligible()];

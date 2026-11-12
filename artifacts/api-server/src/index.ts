@@ -36,7 +36,7 @@ import { registerCoaNotificationScheduler } from "./lib/coa-notifications";
 import { registerSupplierBatchScheduler } from "./lib/supplier-batch-worker";
 import { stopAllSchedulers } from "./lib/scheduler-registry";
 import { registerTelegramCleanupScheduler } from "./lib/telegram-bot-state";
-import { registerPaymentReminderScheduler } from "./lib/telegram-reminders";
+import { registerPaymentReminderScheduler, registerClosingReminderScheduler } from "./lib/telegram-reminders";
 import { ensureSupplierTestingSchema } from "./lib/supplier-testing-migration";
 import { db, ordersTable } from "@workspace/db";
 import { sql, and, eq, isNotNull, isNull, lt } from "drizzle-orm";
@@ -1457,6 +1457,7 @@ function startBackgroundServices(): void {
   registerCoaNotificationScheduler();
   registerTelegramCleanupScheduler();
   registerPaymentReminderScheduler();
+  registerClosingReminderScheduler();
   registerSupplierBatchScheduler();
   registerVendorPortalScheduler();
   registerVendorTelegramScheduler();
