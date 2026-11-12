@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { PlayCircle } from "lucide-react";
+import { GuideVideoPlayer } from "./GuideVideoPlayer";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "./ui/dialog";
 
 const GUIDES: Record<string, { name: string; title: string }> = {
@@ -9,12 +9,11 @@ const GUIDES: Record<string, { name: string; title: string }> = {
 
 /** Explicit group allowlist: never expose a group's video on other group buys. */
 export function HghBatchGuide({ groupBuyId }: { groupBuyId?: string | null }) {
-  const [failed, setFailed] = useState(false);
   const guide = groupBuyId ? GUIDES[groupBuyId] : undefined;
   if (!guide) return null;
 
   return (
-    <Dialog onOpenChange={() => setFailed(false)}>
+    <Dialog>
       <DialogTrigger asChild>
         <button
           type="button"
@@ -31,20 +30,10 @@ export function HghBatchGuide({ groupBuyId }: { groupBuyId?: string | null }) {
       <DialogDescription>
         Watch this short guide for your {guide.name} order.
       </DialogDescription>
-      <video
-        className="w-full aspect-video rounded-lg bg-black"
-        aria-label={`${guide.name} video guide`}
-        controls
-        playsInline
-        preload="none"
+      <GuideVideoPlayer
+        label={`${guide.name} video guide`}
         src={`/api/group-buys/${groupBuyId}/batch-guide.mp4`}
-        onError={() => setFailed(true)}
-      >
-        Your browser does not support video playback.
-      </video>
-      {failed && <p role="alert" className="mt-3 text-sm">
-        The video could not load. Please refresh the page and try again.
-      </p>}
+      />
       </DialogContent>
     </Dialog>
   );
