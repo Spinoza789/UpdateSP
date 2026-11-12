@@ -24,6 +24,7 @@ export const ticketsTable = pgTable("tickets", {
   status: text("status").$type<TicketStatus>().notNull().default("open"),
   customerUnread: boolean("customer_unread").notNull().default(false),
   groupBuyId: text("group_buy_id"),
+  orderId: text("order_id"),
   issueType: text("issue_type"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

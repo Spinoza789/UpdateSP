@@ -21,6 +21,16 @@ export interface TemplateEventMeta {
 
 export const TEMPLATE_REGISTRY: TemplateEventMeta[] = [
   {
+    eventKey: "customer_order_delivered", label: "Order delivered", audience: "customer", prefKey: "status",
+    description: "One delivery notification with an order-specific support shortcut.",
+    placeholders: ["code"], defaultTemplate: "✅ <b>Order #{{code}} delivered</b>\nIf something is wrong, report a problem below.",
+  },
+  {
+    eventKey: "bot_delivery_problem_denied", label: "Delivery support access refused", audience: "bot", prefKey: null,
+    description: "Shown when a delivery support button does not belong to the linked account.",
+    placeholders: [], defaultTemplate: "This delivery is not available for your linked account. Open /support if you need help.",
+  },
+  {
     eventKey: "customer_gb_closing_soon", label: "Group buy closing soon", audience: "customer", prefKey: "reminders",
     description: "One reminder for a joined member without an order, within 48 hours of closing.",
     placeholders: ["gb_name", "closing_date"],

@@ -17,6 +17,7 @@ import { projectTrackingPackages } from "@workspace/shipping/tracking";
 import { completeAccountVerificationInTransaction } from "../lib/account-verification";
 import { claimTelegramUpdate, getBotState, setBotState, clearBotState, incrementBotAiUsage } from "../lib/telegram-bot-state";
 import { pendingPaymentSql } from "../lib/telegram-reminders";
+import { getDeliveryTicketContext } from "../lib/telegram-delivery-support";
 import {
   decodeWholesaleTrackingCallback,
   encodeWholesaleTrackingCallback,
@@ -190,6 +191,7 @@ interface TicketConv {
   issueType?: string;
   groupBuyId?: string;
   groupBuyName?: string;
+  orderId?: string;
   wholesaleShareId?: string;
   wholesaleShareName?: string;
   subject?: string;
@@ -406,6 +408,7 @@ async function finaliseTicket(
     category,
     subject: conv.subject.slice(0, 100),
     groupBuyId: conv.groupBuyId ?? null,
+    orderId: conv.orderId ?? null,
     issueType: conv.issueType ?? null,
     status: "open",
     customerUnread: false,
@@ -908,6 +911,20 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     const cbData   = callbackQuery.data ?? "";
     const cbChatId = String(callbackQuery.message?.chat?.id ?? "");
     await answerCallbackQuery(callbackQuery.id);
+    if ((cbData.startsWith("tc:parcel:") || cbData.startsWith("tc:order:")) && cbChatId) {
+      const [linked] = await db.select({ telegramUsername: accountsTable.telegramUsername }).from(accountsTable)
+        .where(eq(accountsTable.telegramChatId, cbChatId)).orderBy(accountsTable.telegramUsername).limit(1);
+      const [, kind, id] = cbData.split(":");
+      const context = linked && id ? await getDeliveryTicketContext(linked.telegramUsername, kind as "order" | "parcel", id) : null;
+      if (!context) {
+        const { template } = await getTemplate("bot_delivery_problem_denied");
+        await sendTelegramMessage(cbChatId, template, "HTML");
+      } else {
+        await setConv(cbChatId, context);
+        await askForSubject(cbChatId);
+      }
+      res.json({ ok: true }); return;
+    }
 
     // ── Organiser "💬 Reply" button ─────────────────────────────────────────
     if (cbData.startsWith("org:rt:") && cbChatId) {

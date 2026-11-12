@@ -9,6 +9,7 @@ import { eq, and, ne, or, isNull, lt, inArray, sql } from "drizzle-orm";
 import { sendTelegramMessageFull, getTemplate, renderTemplate, notifyUser } from "./telegram";
 import type { TrackingPackage, TrackingEvent } from "@workspace/db";
 import { registerScheduler } from "./scheduler-registry";
+import { deliveryStatusKeyboard, notifyOrderDelivered } from "./telegram-delivery-support";
 import { translateZh } from "./translate-zh";
 import { resolveCarrierCode } from "../routes/gb-parcels";
 import { classifyTrackingStatus, hasWholesaleTrackingOptIn, shouldApplyWholesaleTrackingClassification } from "./wholesale-tracking";
@@ -191,12 +192,7 @@ async function fireParcelStatusNotifications(
   });
 
   const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
-  const notifMarkup = {
-    inline_keyboard: [[
-      { text: "📦 Check status", callback_data: `ps:${parcelId}` },
-      { text: "🌐 Track on site", url: `${appUrl}/track/parcel/${parcelId}` },
-    ]],
-  };
+  const notifMarkup = deliveryStatusKeyboard(parcelId, status);
 
   for (const optin of optins) {
     await sendTelegramMessageFull(
@@ -273,7 +269,7 @@ async function refreshGbParcels(): Promise<number> {
         console.log(`[tracking-auto-refresh] Parcel ${parcel.id} (${parcel.trackingNumber}) carrier=${parcel.carrier}(${effectiveCode}): ${status}`);
 
         // Fire notifications if status changed and is neither pending nor delivered
-        const SILENT_STATUSES = new Set(["pending", "delivered", "undeliverable", "expired"]);
+        const SILENT_STATUSES = new Set(["pending", "undeliverable", "expired"]);
         if (status !== oldStatus && !SILENT_STATUSES.has(status)) {
           await fireParcelStatusNotifications(parcel.id, parcel.label, parcel.trackingNumber ?? "", status, parcel.groupBuyId).catch(err => {
             console.error(`[tracking-auto-refresh] Notification error for parcel ${parcel.id}:`, err);
@@ -453,6 +449,7 @@ async function refreshIndividualOrders(): Promise<number> {
          if (!saved.length) continue;
          if (status !== oldStatus) {
            refreshed++;
+           await notifyOrderDelivered(order, oldStatus, status);
            const SILENT = new Set(["pending", "delivered", "undeliverable", "expired"]);
            if (!SILENT.has(status) && order.telegramUsername?.trim()) {
              const trackUrl = `https://t.17track.net/en#nums=${encodeURIComponent(num)}`;
@@ -504,6 +501,7 @@ async function refreshIndividualOrders(): Promise<number> {
        // A newer edit or another refresh won the race: no stale write or duplicate alert.
        if (!saved.length) continue;
        refreshed++;
+       await notifyOrderDelivered(order, order.trackingStatus, compatibility.trackingStatus);
        if (!order.telegramUsername?.trim()) continue;
        const views = projectTrackingPackages({ ...order, trackingDetails: mergedDetails });
        const previous = new Map(projectTrackingPackages(order).map(p => [p.id, p.status]));
@@ -932,7 +930,7 @@ export async function refreshSingleGbParcel(parcelId: string): Promise<{ status:
     .returning({ id: gbParcelsTable.id });
   if (!saved.length) return { status: parcel.status, updated: false };
 
-  const SILENT_STATUSES = new Set(["pending", "delivered", "undeliverable", "expired"]);
+  const SILENT_STATUSES = new Set(["pending", "undeliverable", "expired"]);
   if (status !== oldStatus && !SILENT_STATUSES.has(status)) {
     await fireParcelStatusNotifications(parcel.id, parcel.label, parcel.trackingNumber, status, parcel.groupBuyId).catch(() => {});
   }

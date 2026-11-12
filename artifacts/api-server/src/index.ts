@@ -91,6 +91,7 @@ async function runStartupRefundSafeRepair(
 }
 
 async function runStartupMigrations(): Promise<void> {
+    await db.execute(sql`ALTER TABLE IF EXISTS tickets ADD COLUMN IF NOT EXISTS order_id text`);
     await db.execute(sql`CREATE TABLE IF NOT EXISTS telegram_reminders_sent (
       kind text NOT NULL, ref_id text NOT NULL, username text NOT NULL,
       sent_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (kind, ref_id, username)
