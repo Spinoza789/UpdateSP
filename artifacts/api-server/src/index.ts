@@ -35,6 +35,7 @@ import { registerGroupBuyUpdateNotificationScheduler } from "./lib/group-buy-upd
 import { registerCoaNotificationScheduler } from "./lib/coa-notifications";
 import { registerSupplierBatchScheduler } from "./lib/supplier-batch-worker";
 import { stopAllSchedulers } from "./lib/scheduler-registry";
+import { registerTelegramCleanupScheduler } from "./lib/telegram-bot-state";
 import { ensureSupplierTestingSchema } from "./lib/supplier-testing-migration";
 import { db, ordersTable } from "@workspace/db";
 import { sql, and, eq, isNotNull, isNull, lt } from "drizzle-orm";
@@ -89,6 +90,11 @@ async function runStartupRefundSafeRepair(
 }
 
 async function runStartupMigrations(): Promise<void> {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS telegram_processed_updates (
+        update_id bigint PRIMARY KEY, created_at timestamptz DEFAULT now()
+      )
+    `);
     await ensureVendorAccountSchema(db);
     await ensureVendorEmailSchema(db);
     await ensureSupplierTestingSchema(db);
@@ -1437,6 +1443,7 @@ function startBackgroundServices(): void {
   registerRefundNotificationScheduler(db);
   registerGroupBuyUpdateNotificationScheduler();
   registerCoaNotificationScheduler();
+  registerTelegramCleanupScheduler();
   registerSupplierBatchScheduler();
   registerVendorPortalScheduler();
   registerVendorTelegramScheduler();

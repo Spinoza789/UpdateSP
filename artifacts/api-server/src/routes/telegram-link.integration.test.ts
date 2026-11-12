@@ -3,6 +3,7 @@ import express from "express";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
 import { getTableName } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 
 const state = vi.hoisted(() => ({
   account: null as any,
@@ -10,10 +11,17 @@ const state = vi.hoisted(() => ({
   expireAfterInitialLookup: false,
   completedUsernames: [] as string[],
   sentMessages: [] as string[],
+  updates: new Set<number>(),
 }));
 
 function makeDb(root: boolean, accountBox: { value: any }): any {
   return {
+    execute: async (query: any) => {
+      const id = new PgDialect().sqlToQuery(query).params[0] as number;
+      if (state.updates.has(id)) return { rows: [] };
+      state.updates.add(id);
+      return { rows: [{ update_id: id }] };
+    },
     select: () => {
       let table = "";
       const query: any = {
@@ -122,7 +130,7 @@ vi.mock("../middleware/account-auth", () => ({
 
 import telegramRouter from "./telegram";
 
-async function webhook(text: string, authenticated = true) {
+async function webhook(text: string, authenticated = true, updateId = Math.floor(Math.random() * 1_000_000_000)) {
   const app = express();
   app.use(express.json());
   app.use(telegramRouter);
@@ -134,7 +142,7 @@ async function webhook(text: string, authenticated = true) {
     return await fetch(`http://127.0.0.1:${port}/telegram/webhook`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(authenticated ? { "x-telegram-bot-api-secret-token": "test-webhook-secret" } : {}) },
-      body: JSON.stringify({ message: { text, chat: { id: 98765, username: "telegram-user" } } }),
+      body: JSON.stringify({ update_id: updateId, message: { text, chat: { id: 98765, username: "telegram-user" } } }),
     });
   } finally {
     await new Promise<void>(resolve => server.close(() => resolve()));
@@ -146,6 +154,7 @@ describe("mounted Telegram account linking", () => {
     expect((await webhook("/link", false)).status).toBe(401);
   });
   beforeEach(() => {
+    state.updates.clear();
     state.account = {
       telegramUsername: "Stored_UserName",
       telegramLinkToken: "ABCDEF12",
@@ -165,7 +174,7 @@ describe("mounted Telegram account linking", () => {
     async (text) => {
       state.completionFails = true;
       const failed = await webhook(text);
-      expect(failed.status).toBe(500);
+      expect(failed.status).toBe(200);
       expect(state.account.telegramChatId).toBeNull();
       expect(state.account.telegramLinkToken).toBe("ABCDEF12");
       expect(state.account.verifiedAt).toBeNull();
@@ -188,10 +197,15 @@ describe("mounted Telegram account linking", () => {
   it("does not bind or consume a token that expires while waiting for the account lock", async () => {
     state.expireAfterInitialLookup = true;
     const response = await webhook("/link ABCDEF12");
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(200);
     expect(state.account.telegramChatId).toBeNull();
     expect(state.account.telegramLinkToken).toBe("ABCDEF12");
     expect(state.account.verifiedAt).toBeNull();
     expect(state.completedUsernames).toEqual([]);
+  });
+  it("handles an update ID only once", async () => {
+    await webhook("/link ABCDEF12", true, 123);
+    await webhook("/link ABCDEF12", true, 123);
+    expect(state.completedUsernames).toEqual(["Stored_UserName"]);
   });
 });

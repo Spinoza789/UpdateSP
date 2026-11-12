@@ -15,6 +15,7 @@ import { GoogleGenAI } from "../lib/google-genai";
 import { callSageAI } from "../lib/sage-ai";
 import { projectTrackingPackages } from "@workspace/shipping/tracking";
 import { completeAccountVerificationInTransaction } from "../lib/account-verification";
+import { claimTelegramUpdate } from "../lib/telegram-bot-state";
 import {
   decodeWholesaleTrackingCallback,
   encodeWholesaleTrackingCallback,
@@ -904,6 +905,17 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
+  const logWebhookError = (error: unknown) => {
+    console.error("[telegram:webhook] update failed", {
+      update_id: req.body?.update_id,
+      input: req.body?.callback_query?.data ?? String(req.body?.message?.text ?? "").slice(0, 50),
+    }, error);
+  };
+  try {
+  if (!await claimTelegramUpdate(req.body?.update_id)) {
+    res.json({ ok: true });
+    return;
+  }
 
   // ── Inline button callback ────────────────────────────────────────────────
   const callbackQuery = req.body?.callback_query as {
@@ -1130,7 +1142,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       res.json({ ok: true });
 
       (async () => {
-        try { await refreshSingleGbParcel(parcelId); } catch { /* use cached */ }
+        try { await refreshSingleGbParcel(parcelId); } catch (error) { logWebhookError(error); }
 
         const [p] = await db
           .select({
@@ -1253,7 +1265,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         ].filter(Boolean).join("\n");
 
         await sendTelegramMessage(_cbChatId2, lines, "HTML");
-      })().catch(() => {});
+      })().catch(logWebhookError);
       return;
     }
 
@@ -1555,7 +1567,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
       (async () => {
         // Live refresh first (may be slow — that's why we ACKed above)
-        try { await refreshSingleGbParcel(parcelId); } catch { /* use cached data */ }
+        try { await refreshSingleGbParcel(parcelId); } catch (error) { logWebhookError(error); }
 
         const [parcel] = await db
           .select({
@@ -1678,7 +1690,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         ].filter(Boolean).join("\n");
 
         await sendTelegramMessage(_cbChatId, lines, "HTML");
-      })().catch(() => {});
+      })().catch(logWebhookError);
       return;
     }
 
@@ -2932,6 +2944,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       res.json({ ok: true }); return;
     }
 
+    try {
     await db.transaction(async (tx) => {
       const [lockedAccount] = await tx.select().from(accountsTable)
         .where(eq(accountsTable.telegramUsername, account.telegramUsername)).for("update");
@@ -2943,6 +2956,16 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         .where(eq(accountsTable.telegramUsername, lockedAccount.telegramUsername));
       await completeAccountVerificationInTransaction(tx, lockedAccount.telegramUsername, "telegram", lockedAccount);
     });
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== "Telegram link token changed") throw error;
+      const [current] = await db.select().from(accountsTable)
+        .where(eq(accountsTable.telegramUsername, account.telegramUsername));
+      if (current?.telegramChatId !== chatId) {
+        const { template } = await getTemplate("bot_link_already_used");
+        await sendTelegramMessage(chatId, template, "HTML");
+        res.json({ ok: true }); return;
+      }
+    }
     markTokenConsumed(code);
 
     await sendMainMenu(chatId, account.telegramUsername);
@@ -3045,6 +3068,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         res.json({ ok: true }); return;
       }
 
+      try {
       await db.transaction(async (tx) => {
         const [lockedAccount] = await tx.select().from(accountsTable)
           .where(eq(accountsTable.telegramUsername, tokenAccount.telegramUsername)).for("update");
@@ -3056,6 +3080,16 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           .where(eq(accountsTable.telegramUsername, lockedAccount.telegramUsername));
         await completeAccountVerificationInTransaction(tx, lockedAccount.telegramUsername, "telegram", lockedAccount);
       });
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== "Telegram link token changed") throw error;
+        const [current] = await db.select().from(accountsTable)
+          .where(eq(accountsTable.telegramUsername, tokenAccount.telegramUsername));
+        if (current?.telegramChatId !== chatId) {
+          const { template } = await getTemplate("bot_link_already_used");
+          await sendTelegramMessage(chatId, template, "HTML");
+          res.json({ ok: true }); return;
+        }
+      }
       markTokenConsumed(code);
 
       await sendMainMenu(chatId, tokenAccount.telegramUsername);
@@ -3627,6 +3661,10 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
   }
 
   res.json({ ok: true });
+  } catch (error) {
+    logWebhookError(error);
+    if (!res.headersSent) res.status(200).json({ ok: true });
+  }
 });
 
 // ── POST /api/account/telegram/link-init — generate a link token ─────────────
