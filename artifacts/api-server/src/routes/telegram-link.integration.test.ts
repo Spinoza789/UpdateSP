@@ -15,12 +15,22 @@ const state = vi.hoisted(() => ({
   rows: {} as Record<string, any[]>,
   payloads: [] as any[],
   otherAccounts: [] as string[],
+  botStates: new Map<string, unknown>(),
 }));
 
 function makeDb(root: boolean, accountBox: { value: any }): any {
   return {
     execute: async (query: any) => {
-      const id = new PgDialect().sqlToQuery(query).params[0] as number;
+      const compiled = new PgDialect().sqlToQuery(query);
+      if (compiled.sql.includes("telegram_bot_state")) {
+        const [chat, kind, value] = compiled.params;
+        const key = `${chat}:${kind}`;
+        if (compiled.sql.includes("INSERT")) state.botStates.set(key, JSON.parse(value as string));
+        if (compiled.sql.includes("DELETE")) state.botStates.delete(key);
+        return { rows: state.botStates.has(key) ? [{ state: state.botStates.get(key) }] : [] };
+      }
+      if (!compiled.sql.includes("telegram_processed_updates")) return { rows: [] };
+      const id = compiled.params[0] as number;
       if (state.updates.has(id)) return { rows: [] };
       state.updates.add(id);
       return { rows: [{ update_id: id }] };
@@ -170,6 +180,7 @@ describe("mounted Telegram account linking", () => {
     state.rows = {};
     state.payloads.length = 0;
     state.otherAccounts = [];
+    state.botStates.clear();
     state.account = {
       telegramUsername: "Stored_UserName",
       telegramLinkToken: "ABCDEF12",

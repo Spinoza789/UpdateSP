@@ -15,7 +15,7 @@ import { GoogleGenAI } from "../lib/google-genai";
 import { callSageAI } from "../lib/sage-ai";
 import { projectTrackingPackages } from "@workspace/shipping/tracking";
 import { completeAccountVerificationInTransaction } from "../lib/account-verification";
-import { claimTelegramUpdate } from "../lib/telegram-bot-state";
+import { claimTelegramUpdate, getBotState, setBotState, clearBotState, incrementBotAiUsage } from "../lib/telegram-bot-state";
 import {
   decodeWholesaleTrackingCallback,
   encodeWholesaleTrackingCallback,
@@ -33,21 +33,15 @@ async function parcelAccountUsername(chatId: string, fallback?: string): Promise
   return account?.telegramUsername ?? fallback ?? "";
 }
 
-// ── In-memory "consumed token" cache ─────────────────────────────────────────
-const _usedTokens = new Map<string, number>();
+// ── Persistent consumed link codes ──────────────────────────────────────────
 const USED_TOKEN_TTL_MS = 20 * 60 * 1000;
 
-function markTokenConsumed(code: string): void {
-  _usedTokens.set(code, Date.now());
-  const cutoff = Date.now() - USED_TOKEN_TTL_MS;
-  for (const [k, v] of _usedTokens) { if (v < cutoff) _usedTokens.delete(k); }
+async function markTokenConsumed(code: string): Promise<void> {
+  await setBotState(code, "used_token", { consumed: true });
 }
 
-function wasTokenConsumed(code: string): boolean {
-  const ts = _usedTokens.get(code);
-  if (!ts) return false;
-  if (Date.now() - ts > USED_TOKEN_TTL_MS) { _usedTokens.delete(code); return false; }
-  return true;
+async function wasTokenConsumed(code: string): Promise<boolean> {
+  return Boolean(await getBotState(code, "used_token", USED_TOKEN_TTL_MS));
 }
 
 // ── Gemini AI client ──────────────────────────────────────────────────────────
@@ -93,27 +87,16 @@ export function invalidateAiChatConfigCache(): void {
   _aiCfgCache = null;
 }
 
-// ── Per-user AI usage tracking (rolling 24h window, in-memory) ────────────────
+// ── Per-user AI usage tracking (persistent rolling 24h window) ───────────────
 
-interface UsageEntry { count: number; windowStart: number }
-const aiUsage = new Map<string, UsageEntry>();
 const AI_USAGE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-function getAiUsage(chatId: string): number {
-  const e = aiUsage.get(chatId);
-  if (!e) return 0;
-  if (Date.now() - e.windowStart > AI_USAGE_WINDOW_MS) { aiUsage.delete(chatId); return 0; }
-  return e.count;
+async function getAiUsage(chatId: string): Promise<number> {
+  return (await getBotState<{ count: number }>(chatId, "ai_usage", AI_USAGE_WINDOW_MS))?.count ?? 0;
 }
 
-function incrementAiUsage(chatId: string): number {
-  const e = aiUsage.get(chatId);
-  if (!e || Date.now() - e.windowStart > AI_USAGE_WINDOW_MS) {
-    aiUsage.set(chatId, { count: 1, windowStart: Date.now() });
-    return 1;
-  }
-  e.count++;
-  return e.count;
+async function incrementAiUsage(chatId: string): Promise<number> {
+  return incrementBotAiUsage(chatId);
 }
 
 // ── AI response generator ─────────────────────────────────────────────────────
@@ -155,21 +138,16 @@ interface FeedbackConv {
 }
 
 const FEEDBACK_CONV_TTL_MS = 10 * 60 * 1000;
-const feedbackConvs = new Map<string, FeedbackConv>();
-
-function getFbConv(chatId: string): FeedbackConv | null {
-  const s = feedbackConvs.get(chatId);
-  if (!s) return null;
-  if (Date.now() - s.ts > FEEDBACK_CONV_TTL_MS) { feedbackConvs.delete(chatId); return null; }
-  return s;
+async function getFbConv(chatId: string): Promise<FeedbackConv | null> {
+  return getBotState<FeedbackConv>(chatId, "feedback", FEEDBACK_CONV_TTL_MS);
 }
 
-function setFbConv(chatId: string, state: Omit<FeedbackConv, "ts">): void {
-  feedbackConvs.set(chatId, { ...state, ts: Date.now() });
+async function setFbConv(chatId: string, state: Omit<FeedbackConv, "ts">): Promise<void> {
+  await setBotState(chatId, "feedback", { ...state, ts: Date.now() });
 }
 
-function clearFbConv(chatId: string): void {
-  feedbackConvs.delete(chatId);
+async function clearFbConv(chatId: string): Promise<void> {
+  await clearBotState(chatId, "feedback");
 }
 
 const FEEDBACK_CATEGORY_LABELS: Record<string, string> = {
@@ -180,7 +158,7 @@ const FEEDBACK_CATEGORY_LABELS: Record<string, string> = {
 };
 
 async function startFeedbackFlow(chatId: string): Promise<void> {
-  setFbConv(chatId, { step: "awaiting_category" });
+  await setFbConv(chatId, { step: "awaiting_category" });
   await sendTelegramMessageFull(
     chatId,
     "📬 <b>Share your feedback</b>\n\nWhat kind of message is this?",
@@ -219,21 +197,16 @@ interface TicketConv {
 }
 
 const CONV_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const ticketConvs = new Map<string, TicketConv>();
-
-function getConv(chatId: string): TicketConv | null {
-  const s = ticketConvs.get(chatId);
-  if (!s) return null;
-  if (Date.now() - s.ts > CONV_TTL_MS) { ticketConvs.delete(chatId); return null; }
-  return s;
+async function getConv(chatId: string): Promise<TicketConv | null> {
+  return getBotState<TicketConv>(chatId, "ticket", CONV_TTL_MS);
 }
 
-function setConv(chatId: string, state: Omit<TicketConv, "ts">): void {
-  ticketConvs.set(chatId, { ...state, ts: Date.now() });
+async function setConv(chatId: string, state: Omit<TicketConv, "ts">): Promise<void> {
+  await setBotState(chatId, "ticket", { ...state, ts: Date.now() });
 }
 
-function clearConv(chatId: string): void {
-  ticketConvs.delete(chatId);
+async function clearConv(chatId: string): Promise<void> {
+  await clearBotState(chatId, "ticket");
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -250,7 +223,7 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
 // ── Guided flow helpers ───────────────────────────────────────────────────────
 
 async function startTicketFlow(chatId: string): Promise<void> {
-  setConv(chatId, { step: "awaiting_category" });
+  await setConv(chatId, { step: "awaiting_category" });
   await sendTelegramMessageFull(
     chatId,
     "👋 <b>New support request</b>\n\nWhat's this about?",
@@ -273,7 +246,7 @@ async function askGroupBuyIssueType(chatId: string): Promise<void> {
   // Only one issue type remains (order_issue); skip straight to GB picker
   // by setting category+issueType immediately. The back button from the
   // GB picker still returns here (tc:back:gbtype) which then re-triggers this.
-  setConv(chatId, { step: "awaiting_gbtype", category: "group_buy" });
+  await setConv(chatId, { step: "awaiting_gbtype", category: "group_buy" });
   await sendTelegramMessageFull(
     chatId,
     "🌍 <b>Group Buy</b>\n\nWhat kind of issue is this?",
@@ -291,7 +264,7 @@ async function askGroupBuyIssueType(chatId: string): Promise<void> {
 }
 
 async function offerGroupBuyPicker(chatId: string, username: string): Promise<void> {
-  setConv(chatId, { step: "awaiting_gb", category: "group_buy" });
+  await setConv(chatId, { step: "awaiting_gb", category: "group_buy" });
 
   const gbRows = await pool.query<{ group_buy_id: string; name: string }>(
     `SELECT agb.group_buy_id, gb.name
@@ -305,7 +278,7 @@ async function offerGroupBuyPicker(chatId: string, username: string): Promise<vo
 
   if (gbRows.rows.length === 0) {
     // No GB memberships — tell the user and offer a link to browse active GBs
-    clearConv(chatId);
+    await clearConv(chatId);
     await sendTelegramMessageFull(
       chatId,
       `🌍 <b>Group Buy Ticket</b>\n\nYou're not currently a member of any group buys, so there's no specific GB to route your ticket to.\n\nBrowse active group buys on the website to join one, or open a general support ticket.`,
@@ -338,7 +311,7 @@ async function offerGroupBuyPicker(chatId: string, username: string): Promise<vo
 }
 
 async function offerWholesaleOrderPicker(chatId: string, username: string): Promise<void> {
-  setConv(chatId, { step: "awaiting_ws", category: "wholesale" });
+  await setConv(chatId, { step: "awaiting_ws", category: "wholesale" });
 
   const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
 
@@ -998,13 +971,13 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     // ── Feedback flow callbacks ───────────────────────────────────────────────
     if ((cbData.startsWith("fb:cat:") || cbData === "fb:cancel") && cbChatId) {
       if (cbData === "fb:cancel") {
-        clearFbConv(cbChatId);
+        await clearFbConv(cbChatId);
         await sendTelegramMessage(cbChatId, "❌ Feedback cancelled.", "HTML");
         res.json({ ok: true }); return;
       }
       const category = cbData.slice("fb:cat:".length);
       if (!FEEDBACK_CATEGORY_LABELS[category]) { res.json({ ok: true }); return; }
-      setFbConv(cbChatId, { step: "awaiting_message", category });
+      await setFbConv(cbChatId, { step: "awaiting_message", category });
       const label = FEEDBACK_CATEGORY_LABELS[category];
       await sendTelegramMessageFull(
         cbChatId,
@@ -1033,7 +1006,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const username = account.telegramUsername;
 
       if (cbData === "tc:cancel") {
-        clearConv(cbChatId);
+        await clearConv(cbChatId);
         await sendTelegramMessage(cbChatId, "Cancelled. Send <b>/support</b> any time to open a support request.", "HTML");
 
       } else if (cbData.startsWith("tc:back:")) {
@@ -1043,21 +1016,21 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         } else if (dest === "gbtype") {
           await askGroupBuyIssueType(cbChatId);
         } else if (dest === "gb") {
-          const conv = getConv(cbChatId);
+          const conv = await getConv(cbChatId);
           await offerGroupBuyPicker(cbChatId, username);
-          if (conv?.issueType) setConv(cbChatId, { ...getConv(cbChatId)!, issueType: conv.issueType });
+          if (conv?.issueType) await setConv(cbChatId, { ...(await getConv(cbChatId))!, issueType: conv.issueType });
         } else if (dest === "ws") {
           await offerWholesaleOrderPicker(cbChatId, username);
         } else if (dest === "gb") {
-          const conv = getConv(cbChatId);
+          const conv = await getConv(cbChatId);
           await offerGroupBuyPicker(cbChatId, username);
-          if (conv?.issueType) setConv(cbChatId, { ...getConv(cbChatId)!, issueType: conv.issueType });
+          if (conv?.issueType) await setConv(cbChatId, { ...(await getConv(cbChatId))!, issueType: conv.issueType });
         }
 
       } else if (cbData.startsWith("tc:cat:")) {
         const category = cbData.slice("tc:cat:".length);
         if (!CATEGORY_LABELS[category]) {
-          clearConv(cbChatId);
+          await clearConv(cbChatId);
           res.json({ ok: true }); return;
         }
         if (category === "group_buy") {
@@ -1065,13 +1038,13 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         } else if (category === "wholesale") {
           await offerWholesaleOrderPicker(cbChatId, username);
         } else {
-          setConv(cbChatId, { step: "awaiting_subject", category });
+          await setConv(cbChatId, { step: "awaiting_subject", category });
           await askForSubject(cbChatId);
         }
 
       } else if (cbData === "tc:ws:general") {
         // General wholesale question — no specific order
-        setConv(cbChatId, { step: "awaiting_subject", category: "wholesale" });
+        await setConv(cbChatId, { step: "awaiting_subject", category: "wholesale" });
         await askForSubject(cbChatId);
 
       } else if (cbData.startsWith("tc:ws:")) {
@@ -1086,24 +1059,24 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           ? new Date(shareRow.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
           : "";
         const shareName = shareDateStr ? `${shareId} (${shareDateStr})` : shareId;
-        setConv(cbChatId, { step: "awaiting_subject", category: "wholesale", wholesaleShareId: shareId, wholesaleShareName: shareName });
+        await setConv(cbChatId, { step: "awaiting_subject", category: "wholesale", wholesaleShareId: shareId, wholesaleShareName: shareName });
         await askForSubject(cbChatId);
 
       } else if (cbData.startsWith("tc:gbtype:")) {
         const issueType = cbData.slice("tc:gbtype:".length);
         if (!ISSUE_TYPE_LABELS[issueType]) { res.json({ ok: true }); return; }
-        setConv(cbChatId, { step: "awaiting_gb", category: "group_buy", issueType });
+        await setConv(cbChatId, { step: "awaiting_gb", category: "group_buy", issueType });
         await offerGroupBuyPicker(cbChatId, username);
 
       } else if (cbData.startsWith("tc:gb:")) {
-        const conv = getConv(cbChatId);
+        const conv = await getConv(cbChatId);
         const gbId = cbData.slice("tc:gb:".length);
         const result = await pool.query<{ name: string }>(
           "SELECT name FROM group_buys WHERE id = $1 LIMIT 1",
           [gbId],
         );
         const gbName = result.rows[0]?.name ?? gbId;
-        setConv(cbChatId, { step: "awaiting_gbsubtype", category: "group_buy", issueType: conv?.issueType, groupBuyId: gbId, groupBuyName: gbName });
+        await setConv(cbChatId, { step: "awaiting_gbsubtype", category: "group_buy", issueType: conv?.issueType, groupBuyId: gbId, groupBuyName: gbName });
         await sendTelegramMessageFull(
           cbChatId,
           `🌍 <b>${escapeTelegramHtml(gbName)}</b>\n\nWhat is this about?`,
@@ -1126,10 +1099,10 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         const colonIdx = rest.indexOf(":");
         const subtype = rest.slice(0, colonIdx);   // "order" | "other"
         const gbId    = rest.slice(colonIdx + 1);
-        const conv    = getConv(cbChatId);
+        const conv    = await getConv(cbChatId);
         const gbName  = conv?.groupBuyName ?? gbId;
         const issueType = subtype === "order" ? "order_issue" : "general_support";
-        setConv(cbChatId, { step: "awaiting_subject", category: "group_buy", issueType, groupBuyId: gbId, groupBuyName: gbName });
+        await setConv(cbChatId, { step: "awaiting_subject", category: "group_buy", issueType, groupBuyId: gbId, groupBuyName: gbName });
         await askForSubject(cbChatId);
       }
 
@@ -2744,7 +2717,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       if (action === "labs" || action === "labs_search") {
         if (action === "labs_search") {
           const { template } = await getTemplate("bot_labs_search_prompt");
-          setConv(cbChatId, { step: "labs_search" });
+          await setConv(cbChatId, { step: "labs_search" });
           await sendTelegramMessage(cbChatId, template, "HTML");
           res.json({ ok: true }); return;
         }
@@ -2814,7 +2787,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           await sendTelegramMessage(cbChatId, notLinkedTpl, "HTML");
           res.json({ ok: true }); return;
         }
-        clearConv(cbChatId);
+        await clearConv(cbChatId);
         await startTicketFlow(cbChatId);
         res.json({ ok: true }); return;
       }
@@ -2838,7 +2811,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
       // ── 📬 Feedback shortcut ────────────────────────────────────────────────
       if (action === "feedback") {
-        clearFbConv(cbChatId);
+        await clearFbConv(cbChatId);
         await startFeedbackFlow(cbChatId);
         res.json({ ok: true }); return;
       }
@@ -2850,8 +2823,8 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           await sendTelegramMessage(cbChatId, notLinkedTpl, "HTML");
           res.json({ ok: true }); return;
         }
-        clearConv(cbChatId);
-        setConv(cbChatId, { step: "sage_chat" });
+        await clearConv(cbChatId);
+        await setConv(cbChatId, { step: "sage_chat" });
         await sendTelegramMessageFull(
           cbChatId,
           `🤖 <b>Sage — Health &amp; Compounds Advisor</b>\n\nAsk me anything about peptides, compounds, dosing protocols, or research. I'll do my best to help.\n\n<i>Send your question below, or tap Back to return to the menu.</i>`,
@@ -2945,7 +2918,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       .where(eq(accountsTable.telegramLinkToken, code));
 
     if (!account) {
-      if (wasTokenConsumed(code)) {
+      if (await wasTokenConsumed(code)) {
         const { template: alreadyUsedTpl } = await getTemplate("bot_link_already_used");
         await sendTelegramMessage(chatId, alreadyUsedTpl, "HTML");
       } else {
@@ -2991,7 +2964,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         res.json({ ok: true }); return;
       }
     }
-    markTokenConsumed(code);
+    await markTokenConsumed(code);
 
     await sendMainMenu(chatId, account.telegramUsername);
     const { template: linkSuccessTpl } = await getTemplate("bot_link_success");
@@ -3022,7 +2995,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       .set({ telegramChatId: null, telegramLinkToken: null, telegramLinkExpiresAt: null })
       .where(eq(accountsTable.telegramChatId, chatId));
 
-    clearConv(chatId);
+    await clearConv(chatId);
     const { template: unlinkedTpl } = await getTemplate("bot_unlinked");
     await sendTelegramMessage(chatId, unlinkedTpl, "HTML");
     writeLog("login", "info", "telegram_unlinked", `Telegram unlinked: ${rows[0].telegramUsername}`, { telegramUsername: rows[0].telegramUsername, chatId }).catch(() => {});
@@ -3077,7 +3050,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         .where(eq(accountsTable.telegramLinkToken, code));
 
       if (!tokenAccount) {
-        if (wasTokenConsumed(code)) {
+        if (await wasTokenConsumed(code)) {
           const { template: alreadyUsedTpl } = await getTemplate("bot_link_already_used");
           await sendTelegramMessage(chatId, alreadyUsedTpl, "HTML");
         } else {
@@ -3122,7 +3095,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           res.json({ ok: true }); return;
         }
       }
-      markTokenConsumed(code);
+      await markTokenConsumed(code);
 
       await sendMainMenu(chatId, tokenAccount.telegramUsername);
       const { template: linkSuccessTpl } = await getTemplate("bot_link_success");
@@ -3191,7 +3164,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       .from(accountsTable)
       .where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername).limit(1);
     if (alreadyLinked) {
-      clearConv(chatId);
+      await clearConv(chatId);
       await sendMainMenu(chatId, alreadyLinked.telegramUsername);
       res.json({ ok: true }); return;
     }
@@ -3217,8 +3190,8 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
   // ── /cancel ───────────────────────────────────────────────────────────────
   if (text === "/cancel") {
-    clearConv(chatId);
-    clearFbConv(chatId);
+    await clearConv(chatId);
+    await clearFbConv(chatId);
     const { template: cancelTpl } = await getTemplate("bot_cancel");
     await sendTelegramMessage(chatId, cancelTpl, "HTML");
     res.json({ ok: true }); return;
@@ -3226,8 +3199,8 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
   // ── /menu ─────────────────────────────────────────────────────────────────
   if (text === "/menu") {
-    clearConv(chatId);
-    clearFbConv(chatId);
+    await clearConv(chatId);
+    await clearFbConv(chatId);
     const [menuLinked] = await db
       .select({ telegramUsername: accountsTable.telegramUsername })
       .from(accountsTable)
@@ -3243,17 +3216,17 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
   // ── /feedback — open to all users (linked or not) ─────────────────────────
   if (text === "/feedback" || text.toLowerCase() === "/feedback") {
-    clearConv(chatId);
-    clearFbConv(chatId);
+    await clearConv(chatId);
+    await clearFbConv(chatId);
     await startFeedbackFlow(chatId);
     res.json({ ok: true }); return;
   }
 
   // ── Active feedback conversation ──────────────────────────────────────────
   {
-    const fbConv = getFbConv(chatId);
+    const fbConv = await getFbConv(chatId);
     if (fbConv && fbConv.step === "awaiting_message") {
-      clearFbConv(chatId);
+      await clearFbConv(chatId);
       const trimmed = text.trim().slice(0, 2000);
       if (trimmed.length < 3) {
         await sendTelegramMessage(chatId, "⚠️ Message too short. Please send at least a few words.", "HTML");
@@ -3374,7 +3347,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
   // ── /support and /new — explicitly start guided flow ─────────────────────
   if (text === "/support" || text === "/new" || text.toLowerCase() === "/support") {
-    clearConv(chatId);
+    await clearConv(chatId);
     await startTicketFlow(chatId);
     res.json({ ok: true }); return;
   }
@@ -3474,12 +3447,12 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
   }
 
   // ── Active conversation state ─────────────────────────────────────────────
-  const conv = getConv(chatId);
+  const conv = await getConv(chatId);
 
   if (conv) {
     // ── Labs search ───────────────────────────────────────────────────────────
     if (conv.step === "labs_search") {
-      clearConv(chatId);
+      await clearConv(chatId);
       const query = text.trim();
       const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
       const results = await db
@@ -3553,7 +3526,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
     if (conv.step === "awaiting_subject") {
       const subject = text.slice(0, 100);
-      setConv(chatId, { ...conv, step: "awaiting_body", subject });
+      await setConv(chatId, { ...conv, step: "awaiting_body", subject });
       await askForBody(chatId, subject);
       res.json({ ok: true }); return;
     }
@@ -3561,10 +3534,10 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     if (conv.step === "awaiting_body") {
       if (conv.subject) {
         await finaliseTicket(username, chatId, conv as TicketConv & { subject: string }, text);
-        clearConv(chatId);
+        await clearConv(chatId);
       } else {
         // Edge case: no subject somehow, restart
-        clearConv(chatId);
+        await clearConv(chatId);
         await startTicketFlow(chatId);
       }
       res.json({ ok: true }); return;
@@ -3619,7 +3592,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         }
 
         // Persist history in conv (also refreshes TTL)
-        setConv(chatId, { step: "sage_chat", sageHistory: updatedHistory });
+        await setConv(chatId, { step: "sage_chat", sageHistory: updatedHistory });
 
         await sendTelegramMessageFull(
           chatId,
@@ -3639,7 +3612,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         console.error("[telegram:sage] Gemini error:", err);
         if (sageUsername) await rollbackSageQuota(sageUsername);
         // Keep conv alive with existing history so user can retry
-        setConv(chatId, { step: "sage_chat", sageHistory: priorHistory });
+        await setConv(chatId, { step: "sage_chat", sageHistory: priorHistory });
         await sendTelegramMessageFull(
           chatId,
           `🤖 <b>Sage</b>\n\nI'm having trouble right now. Please try again in a moment.`,
@@ -3662,7 +3635,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
   const aiCfg = await getAiChatConfig();
 
   if (aiCfg.enabled) {
-    const usageCount = getAiUsage(chatId);
+    const usageCount = await getAiUsage(chatId);
 
     if (usageCount >= aiCfg.messageLimit) {
       await sendTelegramMessage(
@@ -3675,7 +3648,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
     try {
       const aiText = await generateAiResponse(aiCfg.transcript, aiCfg.contactHandle, text);
-      const newCount = incrementAiUsage(chatId);
+      const newCount = await incrementAiUsage(chatId);
       const remaining = aiCfg.messageLimit - newCount;
 
       let reply = escapeTelegramHtml(aiText);

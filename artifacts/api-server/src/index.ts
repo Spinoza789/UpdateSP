@@ -91,6 +91,12 @@ async function runStartupRefundSafeRepair(
 
 async function runStartupMigrations(): Promise<void> {
     await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS telegram_bot_state (
+        chat_id text NOT NULL, kind text NOT NULL, state jsonb NOT NULL,
+        updated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (chat_id, kind)
+      )
+    `);
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS telegram_processed_updates (
         update_id bigint PRIMARY KEY, created_at timestamptz DEFAULT now()
       )
