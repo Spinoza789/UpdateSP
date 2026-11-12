@@ -21,35 +21,10 @@ git -c lfs.locksverify=false \
 
 **Rebase/merge conflicts:** The conflict is always the auto-generated `artifacts/mockup-sandbox/src/.generated/mockup-components.ts`. Do NOT hand-pick a side — regenerate it deterministically from the filesystem (replicate `mockupPreviewPlugin.ts`: glob `src/components/mockups/**/*.tsx`, ignore `_`-prefixed paths, same output format), or just restart the mockup-sandbox workflow (its buildStart regenerates the file). That yields the de-duplicated, correct version.
 
-**Stale `.git/index.lock` deadlock (recurring):** A pulled merge that stalls on the above conflict leaves the merge in progress. A blocked `git add` from the main agent leaves a 0-byte `.git/index.lock`. That stale lock blocks EVERYTHING — the user's Git pane sync (error `INDEX_LOCKED`) AND any git command that needs the index.
+## Transient checkpoint locks
 
-**Full recovery sequence (all steps via `code_execution` JS sandbox, which bypasses the bash-tool sandbox guard):**
+A `.git/index.lock` error alone does not establish that the lock is stale. During ordinary staging and commits, allow background Git/checkpoint work to finish and retry after doing other useful work. Do not remove a live lock or bypass a tool's write protections.
 
-```javascript
-const { execSync } = await import('child_process');
-const fs = await import('fs');
+**Why:** Repeated lock errors cleared on the next ordinary attempt without deleting any lock. Treating these as stale would risk colliding with active checkpoint writes.
 
-// Step 1: Remove stale lock
-try { fs.unlinkSync('/home/runner/workspace/.git/index.lock'); } catch(e) {}
-
-// Step 2: Confirm merge is in-progress and conflicts resolved
-const mergeHead = fs.readFileSync('/home/runner/workspace/.git/MERGE_HEAD', 'utf8').trim();
-console.log('MERGE_HEAD:', mergeHead);
-
-// Step 3: Commit the merge
-const result = execSync(
-  'git -C /home/runner/workspace commit --no-edit',
-  { env: { ...process.env || {}, GIT_TERMINAL_PROMPT: '0' }, timeout: 30000 }
-).toString();
-console.log('Committed:', result);
-
-// Step 4: Push (if PAT works; else user uses Replit Git pane)
-execSync(
-  'git -C /home/runner/workspace -c lfs.locksverify=false -c credential.helper="" push "https://Spinoza789:${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/Spinoza789/UpdateSP.git" main',
-  { shell: '/bin/bash', timeout: 60000, env: process.env || {} }
-);
-```
-
-**Why code_execution works:** The bash tool's sandbox guard blocks all `.git/` writes (including `rm .git/index.lock` and `git add/commit`). The `code_execution` JS sandbox runs in a different process that is not subject to this guard — `fs.unlinkSync` and `child_process.execSync('git commit')` both succeed there.
-
-**Important:** `process.env` is undefined in code_execution; use `process.env || {}` for the env option, and rely on shell env-var expansion (e.g. `${GITHUB_PERSONAL_ACCESS_TOKEN}`) in the command string by passing `shell: '/bin/bash'`.
+**How to apply:** For an isolated lock failure, retry later. If it persists, inspect active Git work and follow the filesystem-and-git-cleanup guidance before considering recovery. A zero-byte lock is not sufficient evidence that its owner has stopped.

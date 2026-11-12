@@ -118,7 +118,7 @@ logical_id = "d8d78b7e-a6e6-4d4e-b479-6b9e5c8fd17a"
 [[outputs]]
 id = "KgT53WyRD2F7EP3Wi_Tla"
 uri = "file://previews/wholesale-tracking-layout.html"
-type = "text"
+type = "html"
 title = "Wholesale Tracking Layout"
 description = "Standalone preview of the proposed direct-wholesale tracking dashboard."
 logical_id = "81fc683d-8ba9-4992-882f-5a6d964a3284"
@@ -274,3 +274,17 @@ mtime_ms = 1789376016720
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:bbc34ef6-d242-429e-ba8d-882d8f2a859e/c3247651-4163-412e-8bf7-def5af10294d/f9daf40f-2c85-4e88-93b5-a41d8d96101d"
 storage_version_token = "1789376175678259"
 content_type = "video/mp4"
+
+[[outputs]]
+id = "dUgfaUuQclp8AQUAuTT29"
+uri = "file://artifacts/api-server/reports/telegram-bot-fixes.html"
+type = "html"
+title = "Telegram bot fixes — completion report"
+description = "Per-step changes and tests, verification results, duplicate-chat count, and all existing typecheck errors left unchanged."
+logical_id = "5967ca77-a42b-489c-8163-644d323cb64f"
+content_hash = "sha256:dc08706bae3cf511684c8c47eaaa5c5db1ceb361bcea6159e44733eaed9f0e92"
+size = 11955
+mtime_ms = 1794518600084
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:bbc34ef6-d242-429e-ba8d-882d8f2a859e/5967ca77-a42b-489c-8163-644d323cb64f/26d55f43-849f-44a3-991f-520d4bd4a941"
+storage_version_token = "1794518637631793"
+content_type = "text/html"
