@@ -20,6 +20,7 @@ import { pendingPaymentSql } from "../lib/telegram-reminders";
 import { getDeliveryTicketContext } from "../lib/telegram-delivery-support";
 import { readTelegramTicketImage, serializeTelegramMedia } from "../lib/telegram-ticket-media";
 import { persistCustomerTicketMessage, type CustomerTicketImage } from "../lib/ticket-message-attachments";
+import { changeTicketStatus } from "../lib/ticket-status";
 import {
   decodeWholesaleTrackingCallback,
   encodeWholesaleTrackingCallback,
@@ -1742,6 +1743,16 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       if (!admChatIdCheck || cbChatId !== admChatIdCheck) { res.json({ ok: true }); return; }
 
       const action = cbData.slice(4);
+      if (action.startsWith("tk:res:") || action.startsWith("tk:cls:")) {
+        const status = action.startsWith("tk:res:") ? "resolved" : "closed";
+        const result = await changeTicketStatus(action.slice(7), status);
+        const key = !result ? "bot_admin_ticket_missing" : result.changed ? "bot_admin_ticket_status" : "bot_admin_ticket_status_unchanged";
+        const { template } = await getTemplate(key);
+        await sendTelegramMessage(cbChatId, renderTemplate(template, {
+          subject: escapeTelegramHtml(result?.subject ?? ""), status: escapeTelegramHtml(status),
+        }), "HTML");
+        res.json({ ok: true }); return;
+      }
       const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
       const backRow = [{ text: "⬅️ Back to Menu", callback_data: "adm:menu" }];
 

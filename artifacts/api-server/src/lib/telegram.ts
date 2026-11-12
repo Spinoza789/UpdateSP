@@ -533,7 +533,10 @@ export async function sendAdminTicketNotification(
   if (!chatId) return { ok: false, chatId: "" };
   const result = await sendTelegramMessageFull(chatId, text, "HTML", { recipientType: "admin" }, {
     reply_markup: {
-      inline_keyboard: [[{ text: "💬 Reply", callback_data: `rt:${ticketId}` }]],
+      inline_keyboard: [
+        [{ text: "💬 Reply", callback_data: `rt:${ticketId}` }],
+        [{ text: "Resolve", callback_data: `adm:tk:res:${ticketId}` }, { text: "Close", callback_data: `adm:tk:cls:${ticketId}` }],
+      ],
     },
   });
   return { ...result, chatId };

@@ -18,6 +18,9 @@ const state = vi.hoisted(() => ({
   botStates: new Map<string, unknown>(),
   filters: [] as string[],
   adminChat: null as string | null,
+  statusChanges: [] as string[],
+  mediaReads: 0,
+  ticketWrites: [] as any[],
 }));
 
 function makeDb(root: boolean, accountBox: { value: any }): any {
@@ -139,6 +142,26 @@ vi.mock("../lib/telegram", () => ({
   renderTemplate: (template: string, values: Record<string, string>) =>
     template.replace(/\{\{(\w+)\}\}/g, (_match, key) => values[key] ?? ""),
 }));
+vi.mock("../lib/ticket-status", () => ({
+  changeTicketStatus: async (id: string, status: string) => {
+    state.statusChanges.push(`${id}:${status}`);
+    return { id, status, subject: "Help <99) & more", changed: true };
+  },
+}));
+vi.mock("../lib/telegram-ticket-media", async original => ({
+  ...await original<typeof import("../lib/telegram-ticket-media")>(),
+  readTelegramTicketImage: async () => {
+    state.mediaReads++;
+    return { buffer: Buffer.from("image"), originalName: "photo.jpg", reportedMimeType: "image/jpeg" };
+  },
+}));
+vi.mock("../lib/ticket-message-attachments", () => ({
+  persistCustomerTicketMessage: async (input: any) => {
+    state.ticketWrites.push(input);
+    if (input.newTicket) state.rows.tickets = [input.newTicket];
+    return 42;
+  },
+}));
 vi.mock("../lib/audit-log", () => ({ writeLog: async () => undefined }));
 vi.mock("../lib/google-genai", () => ({ GoogleGenAI: class {} }));
 vi.mock("../lib/sage-ai", () => ({ callSageAI: async () => "" }));
@@ -189,6 +212,9 @@ describe("mounted Telegram account linking", () => {
     state.botStates.clear();
     state.filters.length = 0;
     state.adminChat = null;
+    state.statusChanges.length = 0;
+    state.mediaReads = 0;
+    state.ticketWrites.length = 0;
     state.account = {
       telegramUsername: "Stored_UserName",
       telegramLinkToken: "ABCDEF12",
@@ -292,6 +318,31 @@ describe("mounted Telegram account linking", () => {
     state.account = null;
     await webhook("", true, 413, undefined, { text: undefined, photo: [{ file_id: "file" }] });
     expect(state.sentMessages).toContain("bot_ticket_media_link_required");
+    expect(state.mediaReads).toBe(0);
+  });
+  it("routes a photo reply to its owned ticket with the no-caption placeholder", async () => {
+    state.rows.ticket_telegram_messages = [{ ticketId: "t1" }];
+    state.rows.tickets = [{ id: "t1", accountUsername: "Stored_UserName", subject: "Help", status: "open" }];
+    await webhook("", true, 414, undefined, { text: undefined, photo: [{ file_id: "file" }], reply_to_message: { message_id: 9 } });
+    expect(state.ticketWrites[0]).toMatchObject({ ticketId: "t1", username: "Stored_UserName", body: "(photo attached)" });
+    expect(state.ticketWrites[0].image.originalName).toBe("photo.jpg");
+  });
+  it("refuses another account's tracked ticket before downloading", async () => {
+    state.rows.ticket_telegram_messages = [{ ticketId: "t1" }];
+    state.rows.tickets = [{ id: "t1", accountUsername: "other", status: "open" }];
+    await webhook("", true, 415, undefined, { text: undefined, photo: [{ file_id: "file" }], reply_to_message: { message_id: 9 } });
+    expect(state.mediaReads).toBe(0);
+    expect(state.ticketWrites).toEqual([]);
+    expect(state.sentMessages).toContain("bot_ticket_media_unavailable");
+  });
+  it("creates one ticket for an album and saves subsequent photos as separate messages", async () => {
+    state.botStates.set("98765:ticket", { step: "awaiting_body", category: "wholesale", subject: "Missing item", ts: Date.now() });
+    const image = { text: undefined, photo: [{ file_id: "file" }], media_group_id: "album1", caption: "Photo evidence" };
+    await Promise.all([webhook("", true, 416, undefined, image), webhook("", true, 417, undefined, image)]);
+    expect(state.ticketWrites).toHaveLength(2);
+    expect(state.ticketWrites.filter(row => row.newTicket)).toHaveLength(1);
+    expect(state.ticketWrites[1].ticketId).toBe(state.ticketWrites[0].ticketId);
+    expect(state.ticketWrites[1].body).toBe("Photo evidence");
   });
   it("ignores media and captions in group chats", async () => {
     await webhook("", true, 412, undefined, { text: undefined, photo: [{}], caption: "/support", chat: { id: -123, type: "supergroup" } });
@@ -324,5 +375,14 @@ describe("mounted Telegram account linking", () => {
     state.rows.tickets = [{ id: "ticket1", status: "closed" }];
     await webhook("Reply text", true, 421, undefined, { reply_to_message: { message_id: 9 } });
     expect(state.sentMessages).toContain("That ticket is closed.");
+  });
+  it("allows resolve/close callbacks only from the configured admin chat", async () => {
+    state.adminChat = "another-admin";
+    await webhook("", true, 430, "adm:tk:res:t1");
+    expect(state.statusChanges).toEqual([]);
+    state.adminChat = "98765";
+    await webhook("", true, 431, "adm:tk:res:t1");
+    await webhook("", true, 432, "adm:tk:cls:t1");
+    expect(state.statusChanges).toEqual(["t1:resolved", "t1:closed"]);
   });
 });

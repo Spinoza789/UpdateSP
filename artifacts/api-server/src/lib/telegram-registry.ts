@@ -21,6 +21,26 @@ export interface TemplateEventMeta {
 
 export const TEMPLATE_REGISTRY: TemplateEventMeta[] = [
   {
+    eventKey: "customer_ticket_status_changed", label: "Support ticket status changed", audience: "customer", prefKey: null,
+    description: "Direct support update after an Admin changes a ticket's status.", placeholders: ["subject", "status"],
+    defaultTemplate: "🎫 <b>Support ticket {{status}}</b>\n{{subject}}",
+  },
+  {
+    eventKey: "bot_admin_ticket_status", label: "Admin ticket action completed", audience: "admin", prefKey: null,
+    description: "Confirmation after resolving or closing a ticket in Telegram.", placeholders: ["subject", "status"],
+    defaultTemplate: "Ticket {{status}} — {{subject}}",
+  },
+  {
+    eventKey: "bot_admin_ticket_status_unchanged", label: "Admin ticket already updated", audience: "admin", prefKey: null,
+    description: "An idempotent repeated ticket action.", placeholders: ["subject", "status"],
+    defaultTemplate: "Ticket already {{status}} — {{subject}}",
+  },
+  {
+    eventKey: "bot_admin_ticket_missing", label: "Admin ticket not found", audience: "admin", prefKey: null,
+    description: "A ticket action references a ticket that no longer exists.", placeholders: [],
+    defaultTemplate: "Ticket not found.",
+  },
+  {
     eventKey: "bot_ticket_media_guidance", label: "Ticket photo guidance", audience: "bot", prefKey: null,
     description: "A photo without an active ticket or a tracked reply.", placeholders: [],
     defaultTemplate: "To send a photo, open a ticket first with /support, or reply to a ticket message.",

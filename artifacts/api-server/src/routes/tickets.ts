@@ -23,6 +23,7 @@ import {
 } from "@workspace/api-zod";
 import { z } from "zod";
 import { cleanupUncommittedTicketImages, insertTicketImageMetadata } from "../lib/ticket-message-attachments";
+import { changeTicketStatus } from "../lib/ticket-status";
 import {
   canViewTicketAttachment,
   deleteTicketImage,
@@ -782,19 +783,9 @@ router.put("/admin/tickets/:id/status", async (req, res): Promise<void> => {
     return;
   }
   const { status } = parsed.data;
-
-  const [ticket] = await db.select()
-    .from(ticketsTable)
-    .where(eq(ticketsTable.id, id));
-
-  if (!ticket) { res.status(404).json({ error: "Ticket not found" }); return; }
-
-  const now = new Date();
-  await db.update(ticketsTable)
-    .set({ status: status as TicketStatus, updatedAt: now })
-    .where(eq(ticketsTable.id, id));
-
-  res.json({ id, status, updatedAt: now.toISOString() });
+  const result = await changeTicketStatus(id, status as TicketStatus);
+  if (!result) { res.status(404).json({ error: "Ticket not found" }); return; }
+  res.json({ id, status, updatedAt: result.updatedAt.toISOString() });
 });
 
 // POST /api/admin/tickets/:id/messages — admin reply
