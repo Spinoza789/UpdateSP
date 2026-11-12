@@ -2249,7 +2249,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         }
 
         const GB_STATUS_EMOJI: Record<string, string> = {
-          open: "🟢", closed: "🔴", dispatching: "🚀", completed: "✅", cancelled: "❌",
+          active: "🟢", closed: "🔴", draft: "📝", archived: "🗄",
         };
         const gbs = gbIds.length ? await db
           .select({ id: groupBuysTable.id, name: groupBuysTable.name, status: groupBuysTable.status })
@@ -2601,7 +2601,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
         const gbMap = new Map(gbs.map(g => [g.id, g]));
         const STATUS_EMOJI: Record<string, string> = {
-          open: "🟢", closed: "🔴", dispatching: "🚀", completed: "✅", cancelled: "❌",
+          active: "🟢", closed: "🔴", draft: "📝", archived: "🗄",
         };
 
         const lines = memberships.map(m => {
@@ -2614,7 +2614,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         const keyboard: { text: string; url?: string; web_app?: { url: string }; callback_data?: string }[][] = (memberships.map(m => {
           const gb = gbMap.get(m.groupBuyId);
           if (!gb) return null;
-          const canOrder = gb.status === "open";
+          const canOrder = gb.status === "active";
           if (canOrder) {
             return [{ text: `🟢 ${gb.name}`, web_app: { url: `${appUrl}/order?gbId=${encodeURIComponent(gb.id)}` } }];
           }

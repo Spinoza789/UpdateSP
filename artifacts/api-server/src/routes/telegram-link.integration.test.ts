@@ -13,6 +13,7 @@ const state = vi.hoisted(() => ({
   sentMessages: [] as string[],
   updates: new Set<number>(),
   rows: {} as Record<string, any[]>,
+  payloads: [] as any[],
 }));
 
 function makeDb(root: boolean, accountBox: { value: any }): any {
@@ -104,7 +105,9 @@ vi.mock("../lib/telegram", () => ({
     state.sentMessages.push(message);
     return { ok: true };
   },
-  sendTelegramMessageFull: async (_chat: string, message: string) => { state.sentMessages.push(message); return { ok: true }; },
+  sendTelegramMessageFull: async (_chat: string, message: string, _mode?: string, _ctx?: any, payload?: any) => {
+    state.sentMessages.push(message); state.payloads.push(payload); return { ok: true };
+  },
   sendTelegramPhoto: async () => ({ ok: true }),
   sendAdminTicketNotification: async () => ({ ok: true }),
   answerCallbackQuery: async () => undefined,
@@ -160,6 +163,7 @@ describe("mounted Telegram account linking", () => {
   beforeEach(() => {
     state.updates.clear();
     state.rows = {};
+    state.payloads.length = 0;
     state.account = {
       telegramUsername: "Stored_UserName",
       telegramLinkToken: "ABCDEF12",
@@ -232,5 +236,12 @@ describe("mounted Telegram account linking", () => {
     await webhook("Please help with this missing item");
     expect(state.sentMessages.join("\n")).toContain("Support ticket opened");
     expect(state.sentMessages.join("\n")).toContain("Missing &lt;99) &amp; water");
+  });
+  it("offers ordering for active group buys and not closed/draft/archived ones", async () => {
+    state.rows.account_group_buys = ["active", "closed", "draft", "archived"].map(status => ({ groupBuyId: status }));
+    state.rows.group_buys = ["active", "closed", "draft", "archived"].map(status => ({ id: status, name: status, status }));
+    await webhook("", true, 324, "mn:gbs");
+    const buttons = state.payloads.flatMap(payload => payload?.reply_markup?.inline_keyboard?.flat() ?? []);
+    expect(buttons.filter(button => button.web_app).map(button => button.text)).toEqual(["🟢 active"]);
   });
 });
