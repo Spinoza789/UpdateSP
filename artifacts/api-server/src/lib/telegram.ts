@@ -281,9 +281,14 @@ export async function sendTelegramMessageFull(
   errorDescription?: string;
   permanentRecipientFailure?: boolean;
 }> {
-  const { token } = await getCredentials();
+  const { token, chatId: adminChatId } = await getCredentials();
+  const ctx: TgLogCtx = logCtx ?? { recipientType: adminChatId && chatId === adminChatId ? "admin" : "user" };
+  if (!process.env["PUBLIC_URL"] && process.env["TELEGRAM_ALLOW_DEV_SEND"] !== "1" && ctx.recipientType === "user") {
+    const errorDescription = "skipped: non-production server";
+    logTgMessage(chatId, text, false, errorDescription, ctx);
+    return { ok: false, errorDescription };
+  }
   if (!token) return { ok: false };
-  const ctx: TgLogCtx = logCtx ?? { recipientType: "user" };
   if (text.length > 4096) {
     // Plain text avoids breaking HTML tags/entities across message boundaries.
     const parts = splitTelegramText(parseMode === "HTML" ? telegramPlainText(text) : text);
@@ -376,8 +381,14 @@ export async function sendTelegramPhoto(
   caption: string,
   parseMode: "HTML" | "Markdown" | "" = "HTML",
   extraPayload?: Record<string, unknown>,
+  logCtx?: TgLogCtx,
 ): Promise<{ ok: boolean; messageId?: number }> {
-  const { token } = await getCredentials();
+  const { token, chatId: adminChatId } = await getCredentials();
+  const ctx: TgLogCtx = logCtx ?? { recipientType: adminChatId && chatId === adminChatId ? "admin" : "user" };
+  if (!process.env["PUBLIC_URL"] && process.env["TELEGRAM_ALLOW_DEV_SEND"] !== "1" && ctx.recipientType === "user") {
+    logTgMessage(chatId, caption, false, "skipped: non-production server", ctx);
+    return { ok: false };
+  }
   if (!token) return { ok: false };
 
   const isDataUrl = photoUrlOrBase64.startsWith("data:");

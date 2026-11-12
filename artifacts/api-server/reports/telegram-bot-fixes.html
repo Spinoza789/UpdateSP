@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Telegram bot fixes — completion report</title>
+<style>
+body{font:15px/1.6 system-ui,sans-serif;color:#19212b;background:#f5f7fa;margin:0;padding:32px}main{max-width:1150px;margin:auto;background:white;padding:32px;border:1px solid #dce2e9;border-radius:12px}h1{line-height:1.2}h2{margin-top:32px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;vertical-align:top;border:1px solid #dce2e9;padding:12px}th{background:#f0f3f7}code,pre{font:12px/1.6 ui-monospace,monospace}code{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f7fa;padding:16px;border-radius:8px}.ok{color:#17663c;font-weight:700}.notice{padding:16px;border-left:4px solid #ad7900;background:#fff8e5}small{color:#536171}@media(max-width:700px){body{padding:8px}main{padding:16px}.table-wrap{overflow:auto}table{min-width:760px}}
+</style>
+</head>
+<body><main>
+<h1>Telegram bot fixes</h1>
+<p>Completed 12 November 2026. Ten implementation commits, one per numbered step. Changes are limited to the API server and the requested Drizzle schema additions.</p>
+<p class="notice"><strong>Not published or deployed.</strong> No real Telegram messages were sent during testing, no manual webhook-registration/deletion or update-polling calls were made, and no bot token was changed. No existing account rows were modified. The production database was queried read-only for the duplicate count.</p>
+<h2>Per-step results</h2>
+<p>File paths below are relative to <code>artifacts/api-server/</code>, except paths beginning <code>lib/db/</code>, which are workspace-relative.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Step / status</th><th>Implemented</th><th>Files changed</th><th>Tests added or updated</th></tr></thead>
+<tbody>
+<tr><td><strong>1. Webhook secret</strong><br><span class="ok">Done</span></td><td>Namespaced SHA-256 secret, 48 hex characters; constant-time header verification; unauthorized requests return 401; registration includes secret_token.</td><td><code>src/lib/telegram.ts<br>src/routes/telegram.ts<br>src/lib/telegram-webhook-secret.test.ts<br>src/routes/telegram-link.integration.test.ts</code></td><td>Secret derivation; mounted webhook rejects absent secret; authenticated requests succeed.</td></tr>
+<tr><td><strong>2. Errors and duplicate updates</strong><br><span class="ok">Done</span></td><td>Authenticated handler catches errors, logs update ID and input context, and acknowledges 200. Background parcel errors are logged. Database receipts prevent repeated update handling; daily cleanup retains two days. Concurrent link-token changes resolve to success for the same linked chat or the already-used message.</td><td><code>src/routes/telegram.ts<br>src/lib/telegram-bot-state.ts<br>src/index.ts<br>lib/db/src/schema/telegram_bot_state.ts<br>lib/db/src/schema/index.ts<br>src/routes/telegram-link.integration.test.ts</code></td><td>Link transaction failure rollback with a 200 acknowledgement; expired locked token acknowledgement; duplicate update handled only once.</td></tr>
+<tr><td><strong>3. HTML and delivery</strong><br><span class="ok">Done</span></td><td>Escaped dynamic message values across bot flows and additional notification callers, including products, tickets, feedback, tracking, lab reports and AI replies. Entity parse failures get one plain-text retry and retain the original failure log. Long messages split at line breaks; only the final part has the keyboard. Long HTML is converted to readable plain text before splitting to avoid cutting markup.</td><td><code>src/routes/{telegram,tickets,order-messages,feedback,organiser,admin,reshipper,gb-entry-fee,testing-pools,account}.ts<br>src/lib/{telegram,tracking-auto-refresh,qiyunle-sync}.ts<br>src/lib/telegram-delivery.test.ts<br>src/routes/telegram-link.integration.test.ts</code></td><td>Order details and guided ticket confirmation with &lt;99) and &amp;; entity-error retry; original failure logging; message length and final-only keyboard.</td></tr>
+<tr><td><strong>4. Group-buy status</strong><br><span class="ok">Done</span></td><td>Active group buys offer ordering. My Group Buys and tracking status maps use active, closed, draft and archived.</td><td><code>src/routes/telegram.ts<br>src/routes/telegram-link.integration.test.ts</code></td><td>Only active groups get an order button; closed, draft and archived groups do not.</td></tr>
+<tr><td><strong>5. Parcel account identity</strong><br><span class="ok">Done</span></td><td>ps_menu, ps_all, ps_pending, ps and parcel opt-ins use the linked website account first, falling back to the Telegram username only if unlinked. Account names with an @ prefix are normalized for order matching.</td><td><code>src/routes/telegram.ts<br>src/routes/telegram-link.integration.test.ts</code></td><td>Pending/all-parcel callbacks work with a linked account that has no public Telegram username.</td></tr>
+<tr><td><strong>6. One account per chat</strong><br><span class="ok">Done</span></td><td>Both link paths clear other bindings in the same transaction and name detached accounts in the success message. Chat-level advisory locking serializes simultaneous links. Existing duplicates are left untouched; account-by-chat lookups choose deterministically by username.</td><td><code>src/routes/telegram.ts<br>src/lib/telegram.ts<br>src/routes/telegram-link.integration.test.ts</code></td><td>Both /link and /start report the accounts detached during relinking.</td></tr>
+<tr><td><strong>7. Persistent state</strong><br><span class="ok">Done</span></td><td>Ticket, feedback, used-token and AI-usage state moved from Maps to async database access. Expiry remains 10 minutes, 20 minutes and 24 hours respectively; active AI increments do not extend the window. Daily cleanup removes expired rows. Startup CREATE TABLE IF NOT EXISTS additions are mirrored in Drizzle.</td><td><code>src/routes/telegram.ts<br>src/lib/telegram-bot-state.ts<br>src/index.ts<br>lib/db/src/schema/telegram_bot_state.ts<br>src/lib/telegram-bot-state.test.ts<br>src/routes/telegram-link.integration.test.ts</code></td><td>Database-time expiry query; upsert/delete boundaries; atomic AI increment preserving the active window; cleanup TTLs; guided flow works through mocked persistent state.</td></tr>
+<tr><td><strong>8. Photos, files and voice</strong><br><span class="ok">Done</span></td><td>Private captions continue as text. Private media without captions receives the requested text-only explanation and website support button. Group media is ignored.</td><td><code>src/routes/telegram.ts<br>src/routes/telegram-link.integration.test.ts</code></td><td>Photo, document, video, voice and sticker handling; private caption; group caption ignored.</td></tr>
+<tr><td><strong>9. Lists, replies and commands</strong><br><span class="ok">Done</span></td><td>Deleted orders are excluded; test-confirmed payments show Paid; stray button separator removed. Admin receives the requested untracked/closed-ticket messages. Command words are case-insensitive and strip @BotUsername without changing arguments. Six commands are registered inside the PUBLIC_URL-gated startup path.</td><td><code>src/routes/telegram.ts<br>src/lib/telegram.ts<br>src/index.ts<br>src/routes/telegram-link.integration.test.ts<br>src/lib/telegram-webhook-secret.test.ts</code></td><td>/Start, /STOP and /menu@SaltPepsBot; deleted-order filter; paid label and separator; untracked and closed admin replies; mocked six-command registration.</td></tr>
+<tr><td><strong>10. Development-send protection</strong><br><span class="ok">Done</span></td><td>Member messages and photos are blocked without PUBLIC_URL unless TELEGRAM_ALLOW_DEV_SEND=1. Skips log delivered=false and the requested error. Admin-chat delivery remains available. Existing permanent-recipient tests explicitly opt into mocked transport.</td><td><code>src/lib/telegram.ts<br>src/lib/telegram-delivery.test.ts<br>src/lib/telegram-permanent-recipient-failure.test.ts</code></td><td>No fetch for blocked member text/photos; skip logging; production and override permits mocked sends; admin transport remains available.</td></tr>
+</tbody></table></div>
+<h2>Verification</h2>
+<ul>
+<li><strong>51 Telegram tests passed across 10 files</strong>, including existing tests and the new regressions.</li>
+<li>Ran the requested environment-loaded command from the API server: <code>node --env-file=../../.env ./node_modules/vitest/vitest.mjs run src/lib/telegram*.test.ts src/routes/telegram*.test.ts</code>.</li>
+<li>Shared-library type build passed. Full API typecheck was run before and after: <strong>123 pre-existing errors, zero added errors, zero removed errors</strong>, comparing diagnostics without shifted line numbers. These unrelated errors were not fixed.</li>
+<li><code>git diff --check</code> passed. Public app preview still rendered; signed-in flows and live Telegram delivery were not exercised.</li>
+<li><strong>43 production Telegram chat IDs currently have multiple account bindings.</strong> Count only; historical bindings were not changed.</li>
+</ul>
+<h2>Existing typecheck errors left unchanged</h2>
+<p>All paths below are relative to <code>artifacts/api-server/</code>. Counts are individual diagnostics, not failing tests.</p>
+<pre>src/lib/admin-2fa.ts: TS2554 ×2
+src/lib/bank-transfer.test.ts: TS18047 ×2, TS2531 ×1
+src/lib/broadcast-batch-filter.test.ts: TS2345 ×2, TS2493 ×2, TS2322 ×1
+src/lib/custom-postage.integration.test.ts: TS2769 ×1
+src/lib/google-drive-backup.ts: TS2345 ×7, TS18047 ×7
+src/lib/group-buy-refund-crypto.test.ts: TS2493 ×2
+src/lib/manual-tracking-refresh.test.ts: TS2741 ×2
+src/lib/order-addition.integration.test.ts: TS2571 ×1, TS18046 ×2
+src/lib/payment-verify.solana.test.ts: TS2322 ×1
+src/lib/qr-order-batches.test.ts: TS2345 ×1
+src/lib/refund-mutation-guard.test.ts: TS18048 ×1
+src/lib/refund-mutation-guard.ts: TS2322 ×1
+src/lib/refund-notifications.ts: TS2304 ×1
+src/lib/wholesale-organiser-payment-auto-verify.ts: TS2339 ×3
+src/middleware/half-kit-organiser-routing.test.ts: TS2571 ×1
+src/routes/__tests__/admin-products-stock.test.ts: TS18046 ×5
+src/routes/__tests__/cross-router-role-isolation.test.ts: TS2741 ×1
+src/routes/__tests__/group-buy-broadcast.test.ts: TS2493 ×1, TS2571 ×1
+src/routes/__tests__/group-buy-refunds.test.ts: TS2339 ×5
+src/routes/__tests__/wholesale-share-public-suppliers.test.ts: TS2488 ×1
+src/routes/__tests__/wholesale-tracking.test.ts: TS2741 ×1
+src/routes/account-verification.test.ts: TS18046 ×1
+src/routes/account.ts: TS2345 ×2
+src/routes/admin.ts: TS7006 ×2
+src/routes/gb-testing.ts: TS2741 ×1
+src/routes/group-buy-kit-fees.test.ts: TS2769 ×1
+src/routes/group-buys.active.test.ts: TS18046 ×2
+src/routes/orders.ts: TS18046 ×6, TS18047 ×2, TS18048 ×19, TS2769 ×2, TS2345 ×2
+src/routes/organiser-bank-transfer.test.ts: TS2769 ×1, TS18046 ×2, TS2571 ×2
+src/routes/organiser-create-group-buy.test.ts: TS2769 ×1
+src/routes/organiser-mark-paid.test.ts: TS2769 ×1, TS18046 ×1, TS2571 ×1
+src/routes/organiser.ts: TS7006 ×2
+src/routes/payment-country-independence.test.ts: TS2769 ×1, TS18046 ×5
+src/routes/payments.ts: TS2741 ×1
+src/routes/reshipper.ts: TS2345 ×1, TS2322 ×1
+src/routes/testmedaddy/core.browser.test.ts: TS2584 ×1, TS2304 ×1
+src/routes/vial-shop.ts: TS2345 ×2
+src/routes/wholesale-shares.ts: TS2345 ×2, TS2322 ×1</pre>
+<h2>Deliberately not performed</h2>
+<p>No publishing, live Telegram smoke tests, manual webhook API operations, account cleanup, or Drizzle push. The new tables are defined in startup migrations and Drizzle; startup migrations were not run separately during this work, to avoid executing unrelated account repairs or starting outbound workers. Database-state SQL and network transport were tested with mocks, not by altering real account data.</p>
+</main></body></html>

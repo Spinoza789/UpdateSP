@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
   account: {
@@ -44,7 +44,9 @@ vi.mock("./discord", () => ({
 import { notifyUserFull } from "./telegram";
 
 describe("permanent Telegram recipient failures", () => {
+  afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
   beforeEach(() => {
+    vi.stubEnv("TELEGRAM_ALLOW_DEV_SEND", "1");
     process.env["TELEGRAM_BOT_TOKEN"] = "test-token";
     process.env["TELEGRAM_ADMIN_CHAT_ID"] = "admin-chat";
     state.account.telegramChatId = "chat-1";

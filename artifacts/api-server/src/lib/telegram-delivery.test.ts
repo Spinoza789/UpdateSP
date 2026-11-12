@@ -8,12 +8,14 @@ vi.mock("@workspace/db", async (original) => ({
   },
 }));
 vi.mock("./discord", () => ({ notifyUserDiscord: vi.fn(), sendAdminDiscordMessage: vi.fn() }));
-import { sendTelegramMessageFull } from "./telegram";
+import { sendTelegramMessageFull, sendTelegramPhoto } from "./telegram";
 
 describe("Telegram HTML delivery", () => {
   beforeEach(() => {
     vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-token");
     vi.stubEnv("TELEGRAM_ADMIN_CHAT_ID", "admin");
+    vi.stubEnv("PUBLIC_URL", "");
+    vi.stubEnv("TELEGRAM_ALLOW_DEV_SEND", "");
     logs.length = 0;
   });
   afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
@@ -40,5 +42,33 @@ describe("Telegram HTML delivery", () => {
     expect(parts.every(part => part.text.length <= 4096)).toBe(true);
     expect(parts.slice(0, -1).every(part => !part.reply_markup)).toBe(true);
     expect(parts.at(-1).reply_markup).toBeDefined();
+  });
+  it("blocks and logs non-production member messages and photos without any fetch", async () => {
+    const transport = vi.fn();
+    vi.stubGlobal("fetch", transport);
+    expect(await sendTelegramMessageFull("member", "Hello", "HTML", { recipientType: "user", recipientUsername: "member" }))
+      .toMatchObject({ ok: false });
+    expect(await sendTelegramPhoto("member", "https://example.test/photo.png", "Caption"))
+      .toMatchObject({ ok: false });
+    expect(transport).not.toHaveBeenCalled();
+    expect(logs).toHaveLength(2);
+    expect(logs.every(row => row.delivered === false && row.errorMessage === "skipped: non-production server")).toBe(true);
+  });
+  it.each(["override", "production"])("permits member transport with %s enabled", async mode => {
+    if (mode === "override") vi.stubEnv("TELEGRAM_ALLOW_DEV_SEND", "1");
+    else vi.stubEnv("PUBLIC_URL", "https://example.test");
+    const transport = vi.fn().mockResolvedValue({ json: async () => ({ ok: true, result: { message_id: 11 } }) });
+    vi.stubGlobal("fetch", transport);
+    expect(await sendTelegramMessageFull("member", "Hello", "HTML", { recipientType: "user", recipientUsername: "member" }))
+      .toMatchObject({ ok: true });
+    expect(await sendTelegramPhoto("member", "https://example.test/photo.png", "Caption")).toMatchObject({ ok: true });
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
+  it("still sends to the admin chat in development", async () => {
+    const transport = vi.fn().mockResolvedValue({ json: async () => ({ ok: true }) });
+    vi.stubGlobal("fetch", transport);
+    expect(await sendTelegramMessageFull("admin", "Admin test")).toMatchObject({ ok: true });
+    expect(await sendTelegramPhoto("admin", "https://example.test/photo.png", "Caption")).toMatchObject({ ok: true });
+    expect(transport).toHaveBeenCalledTimes(2);
   });
 });
