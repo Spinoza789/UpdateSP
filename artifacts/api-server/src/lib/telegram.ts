@@ -304,7 +304,7 @@ export async function sendTelegramMessageFull(
       const [acct] = await db
         .select({ telegramUsername: accountsTable.telegramUsername })
         .from(accountsTable)
-        .where(eq(accountsTable.telegramChatId, chatId));
+        .where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername).limit(1);
       if (acct?.telegramUsername) ctx.recipientUsername = acct.telegramUsername;
     } catch { /* swallow — logging is best-effort */ }
   }

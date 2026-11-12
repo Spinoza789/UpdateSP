@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
   updates: new Set<number>(),
   rows: {} as Record<string, any[]>,
   payloads: [] as any[],
+  otherAccounts: [] as string[],
 }));
 
 function makeDb(root: boolean, accountBox: { value: any }): any {
@@ -52,8 +53,12 @@ function makeDb(root: boolean, accountBox: { value: any }): any {
       return {
         set(patch: Record<string, unknown>) {
           return {
-            where: async () => {
+            where: () => {
+              if (tableName === "accounts" && Object.keys(patch).length === 1 && patch.telegramChatId === null) {
+                return { returning: async () => state.otherAccounts.map(telegramUsername => ({ telegramUsername })) };
+              }
               if (tableName === "accounts" && accountBox.value) Object.assign(accountBox.value, patch);
+              return Promise.resolve();
             },
             returning: async () => {
               if (tableName === "accounts" && accountBox.value) {
@@ -164,6 +169,7 @@ describe("mounted Telegram account linking", () => {
     state.updates.clear();
     state.rows = {};
     state.payloads.length = 0;
+    state.otherAccounts = [];
     state.account = {
       telegramUsername: "Stored_UserName",
       telegramLinkToken: "ABCDEF12",
@@ -248,5 +254,10 @@ describe("mounted Telegram account linking", () => {
     await webhook("", true, 400, callback);
     expect(state.sentMessages).not.toContain("Could not identify your Telegram account.");
     expect(state.sentMessages.length).toBeGreaterThan(0);
+  });
+  it.each(["/link ABCDEF12", "/start ABCDEF12"])("reports other accounts unlinked by %s", async text => {
+    state.otherAccounts = ["old_account", "another_account"];
+    await webhook(text);
+    expect(state.sentMessages.join("\n")).toContain("This Telegram was unlinked from: @old_account, @another_account");
   });
 });

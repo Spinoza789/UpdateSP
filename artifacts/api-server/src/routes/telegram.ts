@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, pool } from "@workspace/db";
 import { accountsTable, ticketsTable, ticketMessagesTable, ticketTelegramMessagesTable, siteConfigTable, gbParcelOptinsTable, gbParcelsTable, groupBuysTable, accountGroupBuysTable, ordersTable, orderLineItemsTable, labTestsTable, gbCountryLegsTable, gbReshippersTable, feedbackTable, wholesaleChatTelegramMessagesTable, wholesaleSharesTable, wholesaleShareMembersTable } from "@workspace/db";
 import { postWholesaleChatMessage } from "../lib/wholesale-share-chat";
-import { eq, and, inArray, sql, desc, or, ilike, isNull, isNotNull, notInArray } from "drizzle-orm";
+import { eq, ne, and, inArray, sql, desc, or, ilike, isNull, isNotNull, notInArray } from "drizzle-orm";
 import { randomBytes, randomUUID, createHash, createHmac } from "crypto";
 import { requireAccount, requireAccountIdentity, issueAccountCookieForAccount } from "../middleware/account-auth";
 import { sendTelegramMessage, sendTelegramMessageFull, sendTelegramPhoto, sendAdminTicketNotification, answerCallbackQuery, getBotUsername, getAdminChatId, notifyUserTicket, getTemplate, renderTemplate, webhookSecretMatches } from "../lib/telegram";
@@ -29,7 +29,7 @@ const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/
 
 async function parcelAccountUsername(chatId: string, fallback?: string): Promise<string> {
   const [account] = await db.select({ telegramUsername: accountsTable.telegramUsername })
-    .from(accountsTable).where(eq(accountsTable.telegramChatId, chatId));
+    .from(accountsTable).where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername).limit(1);
   return account?.telegramUsername ?? fallback ?? "";
 }
 
@@ -1022,7 +1022,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const [account] = await db
         .select({ telegramUsername: accountsTable.telegramUsername })
         .from(accountsTable)
-        .where(eq(accountsTable.telegramChatId, cbChatId));
+        .where(eq(accountsTable.telegramChatId, cbChatId)).orderBy(accountsTable.telegramUsername).limit(1);
 
       if (!account) {
         await sendTelegramMessage(cbChatId, `Please link your account first with <code>/link YOUR_CODE</code>`, "HTML");
@@ -1896,7 +1896,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const [linked] = await db
         .select({ telegramUsername: accountsTable.telegramUsername })
         .from(accountsTable)
-        .where(eq(accountsTable.telegramChatId, cbChatId));
+        .where(eq(accountsTable.telegramChatId, cbChatId)).orderBy(accountsTable.telegramUsername).limit(1);
 
       const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
 
@@ -2962,17 +2962,24 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       res.json({ ok: true }); return;
     }
 
+    let unlinkedAccounts: string[] = [];
     try {
-    await db.transaction(async (tx) => {
+    unlinkedAccounts = await db.transaction(async (tx) => {
+      // Serialize simultaneous links from the same chat, even to different accounts.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${"telegram-chat:" + chatId}, 0))`);
       const [lockedAccount] = await tx.select().from(accountsTable)
         .where(eq(accountsTable.telegramUsername, account.telegramUsername)).for("update");
       if (!lockedAccount || lockedAccount.telegramLinkToken !== code || !lockedAccount.telegramLinkExpiresAt || lockedAccount.telegramLinkExpiresAt <= new Date()) {
         throw new Error("Telegram link token changed");
       }
+      const detached = await tx.update(accountsTable).set({ telegramChatId: null })
+        .where(and(eq(accountsTable.telegramChatId, chatId), ne(accountsTable.telegramUsername, lockedAccount.telegramUsername)))
+        .returning({ telegramUsername: accountsTable.telegramUsername });
       await tx.update(accountsTable)
         .set({ telegramChatId: chatId, telegramLinkToken: null, telegramLinkExpiresAt: null })
         .where(eq(accountsTable.telegramUsername, lockedAccount.telegramUsername));
       await completeAccountVerificationInTransaction(tx, lockedAccount.telegramUsername, "telegram", lockedAccount);
+      return detached.map(row => row.telegramUsername);
     });
     } catch (error) {
       if (!(error instanceof Error) || error.message !== "Telegram link token changed") throw error;
@@ -2990,7 +2997,8 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     const { template: linkSuccessTpl } = await getTemplate("bot_link_success");
     await sendTelegramMessage(
       chatId,
-      renderTemplate(linkSuccessTpl, { username: escapeTelegramHtml(account.telegramUsername) }),
+      renderTemplate(linkSuccessTpl, { username: escapeTelegramHtml(account.telegramUsername) }) +
+        (unlinkedAccounts.length ? `\nThis Telegram was unlinked from: ${unlinkedAccounts.map(name => `@${escapeTelegramHtml(name.replace(/^@/, ""))}`).join(", ")}` : ""),
       "HTML",
     );
     writeLog("login", "info", "telegram_linked", `Telegram linked: ${account.telegramUsername}`, { telegramUsername: account.telegramUsername, chatId }).catch(() => {});
@@ -3002,7 +3010,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     const rows = await db
       .select({ telegramUsername: accountsTable.telegramUsername })
       .from(accountsTable)
-      .where(eq(accountsTable.telegramChatId, chatId));
+      .where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername);
 
     if (rows.length === 0) {
       const { template: noAccountTpl } = await getTemplate("bot_no_account_linked");
@@ -3086,17 +3094,23 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         res.json({ ok: true }); return;
       }
 
+      let unlinkedAccounts: string[] = [];
       try {
-      await db.transaction(async (tx) => {
+      unlinkedAccounts = await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${"telegram-chat:" + chatId}, 0))`);
         const [lockedAccount] = await tx.select().from(accountsTable)
           .where(eq(accountsTable.telegramUsername, tokenAccount.telegramUsername)).for("update");
         if (!lockedAccount || lockedAccount.telegramLinkToken !== code || !lockedAccount.telegramLinkExpiresAt || lockedAccount.telegramLinkExpiresAt <= new Date()) {
           throw new Error("Telegram link token changed");
         }
+        const detached = await tx.update(accountsTable).set({ telegramChatId: null })
+          .where(and(eq(accountsTable.telegramChatId, chatId), ne(accountsTable.telegramUsername, lockedAccount.telegramUsername)))
+          .returning({ telegramUsername: accountsTable.telegramUsername });
         await tx.update(accountsTable)
           .set({ telegramChatId: chatId, telegramLinkToken: null, telegramLinkExpiresAt: null })
           .where(eq(accountsTable.telegramUsername, lockedAccount.telegramUsername));
         await completeAccountVerificationInTransaction(tx, lockedAccount.telegramUsername, "telegram", lockedAccount);
+        return detached.map(row => row.telegramUsername);
       });
       } catch (error) {
         if (!(error instanceof Error) || error.message !== "Telegram link token changed") throw error;
@@ -3114,7 +3128,8 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const { template: linkSuccessTpl } = await getTemplate("bot_link_success");
       await sendTelegramMessage(
         chatId,
-        renderTemplate(linkSuccessTpl, { username: escapeTelegramHtml(tokenAccount.telegramUsername) }),
+        renderTemplate(linkSuccessTpl, { username: escapeTelegramHtml(tokenAccount.telegramUsername) }) +
+          (unlinkedAccounts.length ? `\nThis Telegram was unlinked from: ${unlinkedAccounts.map(name => `@${escapeTelegramHtml(name.replace(/^@/, ""))}`).join(", ")}` : ""),
         "HTML",
       );
       writeLog("login", "info", "telegram_linked", `Telegram linked via deep-link: ${tokenAccount.telegramUsername}`, { telegramUsername: tokenAccount.telegramUsername, chatId }).catch(() => {});
@@ -3132,7 +3147,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       const [alreadyLinkedGb] = await db
         .select({ telegramUsername: accountsTable.telegramUsername })
         .from(accountsTable)
-        .where(eq(accountsTable.telegramChatId, chatId));
+        .where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername).limit(1);
 
       if (gbRow) {
         if (alreadyLinkedGb) {
@@ -3174,7 +3189,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     const [alreadyLinked] = await db
       .select({ telegramUsername: accountsTable.telegramUsername })
       .from(accountsTable)
-      .where(eq(accountsTable.telegramChatId, chatId));
+      .where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername).limit(1);
     if (alreadyLinked) {
       clearConv(chatId);
       await sendMainMenu(chatId, alreadyLinked.telegramUsername);
@@ -3216,7 +3231,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     const [menuLinked] = await db
       .select({ telegramUsername: accountsTable.telegramUsername })
       .from(accountsTable)
-      .where(eq(accountsTable.telegramChatId, chatId));
+      .where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername).limit(1);
     if (menuLinked) {
       await sendMainMenu(chatId, menuLinked.telegramUsername);
     } else {
@@ -3344,7 +3359,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
   const [linkedAccount] = await db
     .select({ telegramUsername: accountsTable.telegramUsername })
     .from(accountsTable)
-    .where(eq(accountsTable.telegramChatId, chatId));
+    .where(eq(accountsTable.telegramChatId, chatId)).orderBy(accountsTable.telegramUsername).limit(1);
 
   if (!linkedAccount) {
     await sendTelegramMessage(
@@ -3804,7 +3819,7 @@ router.post("/account/telegram/miniapp-login", async (req, res): Promise<void> =
   const [account] = await db
     .select({ telegramUsername: accountsTable.telegramUsername, accountStatus: accountsTable.accountStatus })
     .from(accountsTable)
-    .where(eq(accountsTable.telegramChatId, String(tgUser.id)));
+    .where(eq(accountsTable.telegramChatId, String(tgUser.id))).orderBy(accountsTable.telegramUsername).limit(1);
 
   if (!account) {
     // No account linked to this Telegram ID — tell frontend to show normal login
