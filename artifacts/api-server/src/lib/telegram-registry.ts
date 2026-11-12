@@ -20,6 +20,12 @@ export interface TemplateEventMeta {
 }
 
 export const TEMPLATE_REGISTRY: TemplateEventMeta[] = [
+  {
+    eventKey: "customer_payment_reminder", label: "Unpaid order reminder", audience: "customer", prefKey: "reminders",
+    description: "One reminder when an order has awaited payment for over 24 hours.",
+    placeholders: ["code", "gb_name", "total", "currency"],
+    defaultTemplate: "💳 <b>Payment reminder · #{{code}}</b>\n{{gb_name}}\nTotal: <b>{{currency}} {{total}}</b>\nYour order is awaiting payment.",
+  },
   // ── Customer notifications ──────────────────────────────────────────────────
   {
     eventKey: "customer_new_order",

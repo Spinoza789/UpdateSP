@@ -18,6 +18,7 @@ export async function webhookSecretMatches(header: unknown): Promise<boolean> {
 }
 
 export interface TelegramPrefs {
+  reminders: boolean;
   status: boolean;
   deleted: boolean;
   payment: boolean;
@@ -29,6 +30,7 @@ export interface TelegramPrefs {
 }
 
 const DEFAULT_PREFS: TelegramPrefs = {
+  reminders: true,
   status: true,
   deleted: true,
   payment: true,
@@ -43,6 +45,7 @@ function parsePrefKey(pref: unknown): TelegramPrefs {
   if (!pref || typeof pref !== "object") return { ...DEFAULT_PREFS };
   const p = pref as Record<string, unknown>;
   return {
+    reminders: typeof p.reminders === "boolean" ? p.reminders : true,
     status:           typeof p.status           === "boolean" ? p.status           : true,
     deleted:          typeof p.deleted          === "boolean" ? p.deleted          : true,
     payment:          typeof p.payment          === "boolean" ? p.payment          : true,

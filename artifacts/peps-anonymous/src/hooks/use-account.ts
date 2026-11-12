@@ -840,6 +840,7 @@ export function useProfile() {
 }
 
 export interface TelegramPrefs {
+  reminders: boolean;
   status: boolean;
   deleted: boolean;
   payment: boolean;

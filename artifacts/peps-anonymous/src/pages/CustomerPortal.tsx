@@ -873,9 +873,10 @@ function TelegramCard() {
     }
   }, [tgLoading, linked]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const prefs: TelegramPrefs = tgStatus?.prefs ?? { status: true, deleted: true, payment: true, profile: true, new_order: true, wholesale_chat: true };
+  const prefs: TelegramPrefs = { ...(tgStatus?.prefs ?? { status: true, deleted: true, payment: true, profile: true, new_order: true, wholesale_chat: true }), reminders: tgStatus?.prefs?.reminders ?? true };
 
   const PREF_LABELS: { key: keyof TelegramPrefs; label: string; desc: string }[] = [
+    { key: "reminders", label: "Reminders", desc: "Payment and closing-date reminders" },
     { key: "new_order",  label: "New Orders",     desc: "When you place an order" },
     { key: "status",     label: "Status Updates",  desc: "When your order status changes" },
     { key: "payment",    label: "Payments",        desc: "Payment confirmations & issues" },

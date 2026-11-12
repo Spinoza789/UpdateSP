@@ -16,6 +16,7 @@ import { callSageAI } from "../lib/sage-ai";
 import { projectTrackingPackages } from "@workspace/shipping/tracking";
 import { completeAccountVerificationInTransaction } from "../lib/account-verification";
 import { claimTelegramUpdate, getBotState, setBotState, clearBotState, incrementBotAiUsage } from "../lib/telegram-bot-state";
+import { pendingPaymentSql } from "../lib/telegram-reminders";
 import {
   decodeWholesaleTrackingCallback,
   encodeWholesaleTrackingCallback,
@@ -645,9 +646,7 @@ async function getAccountSnapshot(telegramUsername: string): Promise<AccountSnap
   const payR = await pool.query<{ count: string; single_code: string | null }>(
     `SELECT COUNT(*) AS count, MIN(code) AS single_code FROM orders
      WHERE regexp_replace(lower(telegram_username),'^@','') = $1
-       AND status IN ('Submitted','Processing')
-       AND payment_status NOT IN ('confirmed','test_confirmed')
-       AND deleted_at IS NULL`,
+       AND ${pendingPaymentSql()}`,
     [norm],
   );
   const pendingPayment = parseInt(payR.rows[0]?.count ?? "0", 10);
@@ -763,6 +762,7 @@ async function rollbackSageQuota(telegramUsername: string): Promise<void> {
 // ── Notification pref labels ───────────────────────────────────────────────────
 
 const NOTIF_PREF_LABELS: Record<string, string> = {
+  reminders: "Reminders",
   status:          "Order status updates",
   deleted:         "Order cancellations",
   payment:         "Payment confirmations",
@@ -780,7 +780,7 @@ async function sendNotifPrefs(chatId: string, telegramUsername: string): Promise
     .from(accountsTable)
     .where(sql`lower(${accountsTable.telegramUsername}) = ${norm}`);
 
-  const defaults: Record<string, boolean> = { status: true, deleted: true, payment: true, profile: true, new_order: true, wholesale_chat: true, wholesale_tracking: false };
+  const defaults: Record<string, boolean> = { status: true, deleted: true, payment: true, profile: true, new_order: true, wholesale_chat: true, wholesale_tracking: false, reminders: true };
   const prefs: Record<string, boolean> = { ...defaults, ...((acct?.telegramNotifications && typeof acct.telegramNotifications === "object") ? acct.telegramNotifications as Record<string, boolean> : {}) };
 
   const keyboard = NOTIF_PREF_KEYS.map(key => {
@@ -2864,7 +2864,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         const existing = (acctRow?.telegramNotifications && typeof acctRow.telegramNotifications === "object")
           ? acctRow.telegramNotifications as Record<string, boolean>
           : {};
-        const defaults: Record<string, boolean> = { status: true, deleted: true, payment: true, profile: true, new_order: true, wholesale_chat: true, wholesale_tracking: false };
+        const defaults: Record<string, boolean> = { status: true, deleted: true, payment: true, profile: true, new_order: true, wholesale_chat: true, wholesale_tracking: false, reminders: true };
         const resolved = { ...defaults, ...existing };
         const updated = prefKey === "wholesale_tracking"
           ? toggleWholesaleTrackingPreference(resolved)
@@ -3935,7 +3935,7 @@ router.get("/account/telegram/status", requireAccountIdentity, async (req, res):
     .from(accountsTable)
     .where(sql`lower(${accountsTable.telegramUsername}) = ${tg.toLowerCase()}`);
 
-  const defaultPrefs = { status: true, deleted: true, payment: true, profile: true, new_order: true, wholesale_chat: true, wholesale_tracking: false };
+  const defaultPrefs = { status: true, deleted: true, payment: true, profile: true, new_order: true, wholesale_chat: true, wholesale_tracking: false, reminders: true };
   const prefs = (account?.telegramNotifications && typeof account.telegramNotifications === "object")
     ? { ...defaultPrefs, ...(account.telegramNotifications as Record<string, boolean>) }
     : defaultPrefs;
@@ -3981,7 +3981,7 @@ router.patch("/account/telegram/prefs", requireAccount, async (req, res): Promis
     return;
   }
 
-  const validKeys = ["status", "deleted", "payment", "profile", "new_order", "wholesale_chat", "wholesale_tracking"];
+  const validKeys = ["status", "deleted", "payment", "profile", "new_order", "wholesale_chat", "wholesale_tracking", "reminders"];
   const sanitized: Record<string, boolean> = {};
   for (const key of validKeys) {
     if (typeof (prefs as Record<string, unknown>)[key] === "boolean") {
