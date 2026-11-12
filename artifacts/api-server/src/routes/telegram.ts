@@ -27,6 +27,12 @@ import {
 const router: IRouter = Router();
 const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
 
+async function parcelAccountUsername(chatId: string, fallback?: string): Promise<string> {
+  const [account] = await db.select({ telegramUsername: accountsTable.telegramUsername })
+    .from(accountsTable).where(eq(accountsTable.telegramChatId, chatId));
+  return account?.telegramUsername ?? fallback ?? "";
+}
+
 // ── In-memory "consumed token" cache ─────────────────────────────────────────
 const _usedTokens = new Map<string, number>();
 const USED_TOKEN_TTL_MS = 20 * 60 * 1000;
@@ -1136,7 +1142,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     if (cbData.startsWith("ps_menu:") && cbChatId) {
       const parcelId = cbData.slice(8);
       const _cbChatId2 = cbChatId;
-      const tgUsernamePsMenu = callbackQuery.from?.username ?? "";
+      const tgUsernamePsMenu = await parcelAccountUsername(cbChatId, callbackQuery.from?.username);
+      if (!tgUsernamePsMenu) {
+        await sendTelegramMessage(cbChatId, "Could not identify your Telegram account.", "HTML");
+        res.json({ ok: true }); return;
+      }
 
       // ACK immediately so the button clears; do the slow refresh in background
       res.json({ ok: true });
@@ -1198,7 +1208,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
             .from(ordersTable)
             .where(and(
               eq(ordersTable.groupBuyId, p.groupBuyId),
-              sql`lower(${ordersTable.telegramUsername}) = ${tgUsernamePsMenu.toLowerCase()}`,
+              sql`regexp_replace(lower(${ordersTable.telegramUsername}), '^@', '') = ${tgUsernamePsMenu.replace(/^@/, "").toLowerCase()}`,
               isNull(ordersTable.deletedAt),
             ));
           if (custOrdersPm.length > 0) {
@@ -1272,7 +1282,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     // ── All member parcels for a GB ───────────────────────────────────────────
     if (cbData.startsWith("ps_all:") && cbChatId) {
       const gbId = cbData.slice(7);
-      const viewerUsername = (req.body?.callback_query?.from?.username as string | undefined) ?? "";
+      const viewerUsername = await parcelAccountUsername(cbChatId, callbackQuery.from?.username);
 
       if (!viewerUsername) {
         await sendTelegramMessage(cbChatId, "Could not identify your Telegram account.", "HTML");
@@ -1429,7 +1439,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
     // ── Not yet dispatched items ─────────────────────────────────────────────
     if (cbData.startsWith("ps_pending:") && cbChatId) {
-      const tgUsernamePend = callbackQuery.from?.username ?? "";
+      const tgUsernamePend = await parcelAccountUsername(cbChatId, callbackQuery.from?.username);
       if (!tgUsernamePend) {
         await sendTelegramMessage(cbChatId, "Could not identify your Telegram account.", "HTML");
         res.json({ ok: true }); return;
@@ -1560,7 +1570,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     if (cbData.startsWith("ps:") && cbChatId) {
       const parcelId = cbData.slice(3);
       const _cbChatId = cbChatId;
-      const tgUsernamePsCheck = callbackQuery.from?.username ?? "";
+      const tgUsernamePsCheck = await parcelAccountUsername(cbChatId, callbackQuery.from?.username);
+      if (!tgUsernamePsCheck) {
+        await sendTelegramMessage(cbChatId, "Could not identify your Telegram account.", "HTML");
+        res.json({ ok: true }); return;
+      }
 
       // ACK webhook immediately so the button clears — refresh + send happens in background
       res.json({ ok: true });
@@ -1623,7 +1637,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
             .from(ordersTable)
             .where(and(
               eq(ordersTable.groupBuyId, parcel.groupBuyId),
-              sql`lower(${ordersTable.telegramUsername}) = ${tgUsernamePsCheck.toLowerCase()}`,
+              sql`regexp_replace(lower(${ordersTable.telegramUsername}), '^@', '') = ${tgUsernamePsCheck.replace(/^@/, "").toLowerCase()}`,
               isNull(ordersTable.deletedAt),
             ));
           if (custOrders.length > 0) {
@@ -1705,7 +1719,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         .where(eq(gbParcelsTable.id, parcelId));
 
       if (parcel) {
-        const username = callbackQuery.from?.username ?? null;
+        const username = await parcelAccountUsername(cbChatId, callbackQuery.from?.username);
+        if (!username) {
+          await sendTelegramMessage(cbChatId, "Could not identify your Telegram account.", "HTML");
+          res.json({ ok: true }); return;
+        }
         await db
           .insert(gbParcelOptinsTable)
           .values({

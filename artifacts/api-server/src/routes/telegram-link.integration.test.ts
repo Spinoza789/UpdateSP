@@ -244,4 +244,9 @@ describe("mounted Telegram account linking", () => {
     const buttons = state.payloads.flatMap(payload => payload?.reply_markup?.inline_keyboard?.flat() ?? []);
     expect(buttons.filter(button => button.web_app).map(button => button.text)).toEqual(["🟢 active"]);
   });
+  it.each(["ps_pending:gb", "ps_all:gb"])("uses the linked account without a public Telegram username for %s", async callback => {
+    await webhook("", true, 400, callback);
+    expect(state.sentMessages).not.toContain("Could not identify your Telegram account.");
+    expect(state.sentMessages.length).toBeGreaterThan(0);
+  });
 });
