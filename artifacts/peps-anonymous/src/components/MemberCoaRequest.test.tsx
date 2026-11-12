@@ -38,6 +38,14 @@ const request = (change: Partial<CoaRequest> = {}): CoaRequest => ({
   updatedAt: new Date().toISOString(), ...change,
 });
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+
+test("members can view their saved COA link without changing the payment status", async () => {
+  globalThis.fetch = async () => json({ ...blank, request: request({ status: "processing", reportUrl: "https://verify.janoshik.com/tests/example" }) });
+  await render();
+  const link = Array.from(container.querySelectorAll("a")).find(a => a.textContent?.includes("View COA"));
+  assert.equal(link?.getAttribute("href"), "https://verify.janoshik.com/tests/example");
+  assert.equal(link?.getAttribute("target"), "_blank");
+});
 before(async () => {
   dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/", pretendToBeVisual: true });
   const g = globalThis as any;

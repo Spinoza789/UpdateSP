@@ -50,3 +50,14 @@ Finished group-buy COAs are private to the order's current owner, not the accoun
 **Why:** The user explicitly requested current-owner downloads and a separate approval boundary for public reports.
 
 **How to apply:** Recheck live order ownership on each download; never distribute a public or reusable signed certificate URL. Treat an ownership change as immediate revocation for the previous owner.
+
+Staff may also save a laboratory's external HTTPS report link on a paid,
+processing or completed COA request; the current order owner can open it from
+their COA section. Saving/removing a link must not change payment or lifecycle
+status or publish the report to public lab lists.
+
+**Why:** The user requested a box for received COA links and member viewing.
+
+**How to apply:** Keep uploaded PDFs on the private download path. External lab
+links are distinct: the app controls who sees the link, but the laboratory
+controls access once someone has that URL.

@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { coaConfig, coaDetails, csvCell, holdsCoaPlace, coaCanClaim, publicCoaRequest } from "./coa-rules";
+import { coaConfig, coaDetails, csvCell, holdsCoaPlace, coaCanClaim, publicCoaRequest, coaReportUrl } from "./coa-rules";
+
+it("accepts HTTPS report links and clearing, but rejects unsafe links", () => {
+  expect(coaReportUrl(" https://verify.janoshik.com/tests/example ")).toBe("https://verify.janoshik.com/tests/example");
+  expect(coaReportUrl("")).toBeNull();
+  expect(coaReportUrl(null)).toBeNull();
+  for (const bad of ["javascript:alert(1)", "data:text/html,bad", "http://example.com", "https://user:password@example.com", {}, "not a url"])
+    expect(() => coaReportUrl(bad)).toThrow();
+});
 
 describe("separate group-buy COA commitments", () => {
   it("counts invites and payment evidence, but expires public unpaid reservations", () => {

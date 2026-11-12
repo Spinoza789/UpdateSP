@@ -15,6 +15,7 @@ export type CoaRequest = {
   txHash: string | null; reference: string | null; verificationMessage: string | null;
   internalNotes?: string; updatedAt: string;
   certificate?: { size: number; attachedAt: string } | null;
+  reportUrl?: string | null;
 };
 export type CoaMemberView = {
   eligible: boolean; reason: string | null; available: number;

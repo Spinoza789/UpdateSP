@@ -4,7 +4,7 @@ import {
   db, groupBuysTable as groups, ordersTable as orders, siteConfigTable,
   groupBuyCoaSettingsTable as settings, groupBuyCoaRequestsTable as requests, auditLogsTable,
 } from "@workspace/db";
-import { coaCanClaim, coaConfig, coaDetails, coaHash, CoaError, EMPTY_COA_CONFIG, holdsCoaPlace, publicCoaRequest } from "./coa-rules";
+import { coaCanClaim, coaConfig, coaDetails, coaHash, coaReportUrl, CoaError, EMPTY_COA_CONFIG, holdsCoaPlace, publicCoaRequest } from "./coa-rules";
 import { fetchFiatToUsd } from "./crypto-pricing";
 import { verifyTransaction } from "./payment-verify";
 import { validateOnwardTx, parseOnwardPaymentSettings } from "./gb-onward-payment-rules";
@@ -417,7 +417,10 @@ export async function manageCoa(requestId: string, actor: string, input: any, da
     await lockGroup(tx, hint.groupBuyId, access);
     const [r] = await tx.select().from(requests).where(eq(requests.id, requestId)).for("update");
     const update: Partial<RequestRow> = { updatedAt: new Date() };
-    if (input?.action === "notes") {
+    if (input?.action === "report_link") {
+      if (!paidStates.includes(r.status)) throw new CoaError("Confirm the COA payment before adding a report link.", 409);
+      update.reportUrl = coaReportUrl(input.reportUrl);
+    } else if (input?.action === "notes") {
       if (access) throw new CoaError("Internal notes are Admin only.", 403);
       if (typeof input.internalNotes !== "string" || input.internalNotes.length > 5000) throw new CoaError("Internal notes must be under 5,000 characters.");
       update.internalNotes = input.internalNotes;

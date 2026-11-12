@@ -45,6 +45,17 @@ export function holdsCoaPlace(r: any, now = Date.now()) {
 export function coaCanClaim(mode: string, available: number, hasPlace: boolean) {
   return hasPlace || (mode === "open" && available > 0);
 }
+export function coaReportUrl(value: unknown): string | null {
+  if (value === null || value === "") return null;
+  if (typeof value !== "string" || value.length > 2048) throw new CoaError("Enter a valid HTTPS COA link (up to 2,048 characters).");
+  if (!value.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== "https:" || url.username || url.password) throw new Error();
+    return url.href;
+  } catch { throw new CoaError("Enter a valid HTTPS COA link without a username or password."); }
+}
+
 export function publicCoaRequest(row: any) {
   if (!row) return null;
   const { internalNotes, createdBy, confirmedBy, confirmationNote, certificate, ...publicRow } = row;

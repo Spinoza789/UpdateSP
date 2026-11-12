@@ -160,6 +160,8 @@ function RequestRow({ r, secret, onDone }: { r: CoaRequest; secret: string; onDo
   const organiserRoot = useContext(OrganiserCoaRoot);
   const requestPath = organiserRoot ? `${organiserRoot}/requests/${encodeURIComponent(r.id)}` : `/admin/coa/${r.id}`;
   const [notes, setNotes] = useState(r.internalNotes ?? "");
+  const [reportUrl, setReportUrl] = useState(r.reportUrl ?? "");
+  const [linkSaved, setLinkSaved] = useState(false);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -171,6 +173,7 @@ function RequestRow({ r, secret, onDone }: { r: CoaRequest; secret: string; onDo
     return () => { ++operation.current; uploadAbort.current?.abort(); };
   }, [r.id, secret]);
   useEffect(() => { setNotes(r.internalNotes ?? ""); }, [r.internalNotes]);
+  useEffect(() => { setReportUrl(r.reportUrl ?? ""); setLinkSaved(false); }, [r.id, r.reportUrl]);
   const phase = coaPhase(r.status);
   const tone = COA_PHASE_TONE[phase];
   const upload = async (file: File) => {
@@ -191,14 +194,14 @@ function RequestRow({ r, secret, onDone }: { r: CoaRequest; secret: string; onDo
     } catch (e) { if (seq === operation.current) setErr(e instanceof Error ? e.message : "Certificate upload failed."); }
     finally { if (seq === operation.current) setBusy(null); }
   };
-  const act = async (action: "notes" | "confirm" | "processing" | "completed" | "release") => {
+  const act = async (action: "notes" | "confirm" | "processing" | "completed" | "release" | "report_link") => {
     if (action === "confirm" && !confirmNoteOk(note)) { setErr("Add a note (at least 5 characters) explaining how the payment was verified."); return; }
     if (action === "release" && !confirm("Release this unpaid COA place?")) return;
     setBusy(action); setErr(null);
     const seq = ++operation.current;
     try {
-      await coaApi(requestPath, { method: "PATCH", body: JSON.stringify({ action, ...(!organiserRoot ? { internalNotes: notes } : {}), ...(note.trim() ? { note: note.trim() } : {}) }) }, secret);
-      if (seq === operation.current) { setNote(""); onDone(); }
+      await coaApi(requestPath, { method: "PATCH", body: JSON.stringify({ action, ...(action === "report_link" ? { reportUrl: reportUrl.trim() } : {}), ...(!organiserRoot ? { internalNotes: notes } : {}), ...(note.trim() ? { note: note.trim() } : {}) }) }, secret);
+      if (seq === operation.current) { setNote(""); if (action === "report_link") setLinkSaved(true); onDone(); }
     } catch (e) { if (seq === operation.current) setErr(e instanceof Error ? e.message : "Action failed."); }
     if (seq === operation.current) setBusy(null);
   };
@@ -229,6 +232,19 @@ function RequestRow({ r, secret, onDone }: { r: CoaRequest; secret: string; onDo
         {r.verificationMessage && <p className="text-amber-700">{r.verificationMessage}</p>}
         <p className="text-muted-foreground">Updated {new Date(r.updatedAt).toLocaleString("en-GB")}</p>
       </div>
+      {["paid", "processing", "completed"].includes(r.status) && (
+        <form className="rounded-lg border p-3 space-y-2" onSubmit={e => { e.preventDefault(); void act("report_link"); }}>
+          <label className="block text-xs font-semibold" htmlFor={`coa-link-${r.id}`}>COA report link</label>
+          <Input id={`coa-link-${r.id}`} type="url" placeholder="https://verify.janoshik.com/tests/…"
+            value={reportUrl} disabled={!!busy} onChange={e => { setReportUrl(e.target.value); setLinkSaved(false); }} />
+          <p className="text-[11px] text-muted-foreground">Save the finished report link here. The member can view it in their order's COA request. Leave blank and save to remove it. This does not change payment or request status.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" size="sm" disabled={!!busy}>{busy === "report_link" ? "Saving…" : "Save COA link"}</Button>
+            {r.reportUrl && <a className="text-xs font-semibold underline" href={r.reportUrl} target="_blank" rel="noopener noreferrer">View saved COA</a>}
+            {linkSaved && <span role="status" className="text-xs text-green-600">COA link saved.</span>}
+          </div>
+        </form>
+      )}
       <div className="grid sm:grid-cols-2 gap-2">
         {!organiserRoot && <textarea className="min-h-[56px] rounded-md border border-input bg-background px-2.5 py-1.5 text-xs" placeholder="Internal notes (Admin only)" value={notes} onChange={e => setNotes(e.target.value)} />}
         <textarea className="min-h-[56px] rounded-md border border-input bg-background px-2.5 py-1.5 text-xs" placeholder="Action note, required to confirm payment" value={note} onChange={e => setNote(e.target.value)} />

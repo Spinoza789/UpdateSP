@@ -38,6 +38,7 @@ export const groupBuyCoaRequestsTable = pgTable("group_buy_coa_requests", {
   confirmedBy: text("confirmed_by"),
   confirmationNote: text("confirmation_note"),
   certificate: jsonb("certificate").$type<CoaCertificate>(),
+  reportUrl: text("report_url"),
   createdBy: text("created_by").notNull(),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),

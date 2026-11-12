@@ -15,6 +15,26 @@ vi.mock("../routes/payments", () => ({ getAdminCryptoOptions: async () => [rail]
 const details = { client: "Synthetic client", sample: "Synthetic sample", manufacturer: "Synthetic supplier", batch: "test-batch" };
 const cfg = { mode: "open", fee: 25, currency: "USD", cap: 2, rails: [rail], manualInstructions: "Synthetic manual payment details" };
 const rollback = new Error("ROLLBACK_COA_TEST");
+
+it("saves and clears COA links for the current owner without changing payment, and rejects other organisers", async () => {
+  await fixture(async ({ tx, database, group, ids, users }) => {
+    await saveCoaSettings(group, "staff", cfg, database);
+    await inviteCoa(group, "staff", { orderIds: [ids[0]] }, database);
+    const initial = (await getMemberCoa(ids[0], users[0], database)).request!;
+    await expect(manageCoa(initial.id, "staff", { action: "report_link", reportUrl: "https://verify.janoshik.com/tests/example" }, database)).rejects.toThrow(/payment/);
+    await tx.update(store.groupBuyCoaRequestsTable).set({ status: "processing" }).where(eq(store.groupBuyCoaRequestsTable.id, initial.id));
+    const input = { action: "report_link", reportUrl: "https://verify.janoshik.com/tests/example" };
+    await expect(manageCoa(initial.id, "other-organiser", input, database, { groupBuyId: group, username: "other-organiser" })).rejects.toThrow();
+    await manageCoa(initial.id, "staff", input, database);
+    const saved = (await getMemberCoa(ids[0], users[0], database)).request!;
+    expect(saved.reportUrl).toBe(input.reportUrl);
+    expect(saved.status).toBe("processing");
+    expect(Number(saved.fee)).toBe(25);
+    await expect(getMemberCoa(ids[0], users[1], database)).rejects.toThrow(/not found/i);
+    await manageCoa(initial.id, "staff", { action: "report_link", reportUrl: "" }, database);
+    expect((await getMemberCoa(ids[0], users[0], database)).request!.reportUrl).toBeNull();
+  });
+});
 function access(tx: any) { return { ...store.db, select: tx.select.bind(tx), transaction: (fn: any) => fn(tx) } as typeof store.db; }
 async function fixture(fn: (ctx: { tx: any; database: typeof store.db; group: string; ids: string[]; users: string[] }) => Promise<void>) {
   try {

@@ -150,10 +150,18 @@ export function MemberCoaRequest({ orderId }: { orderId: string }) {
               Download COA PDF
             </a>
             <p className="text-xs" style={{ color: "var(--t-muted)" }}>Private to your order. Attached {new Date(req.certificate.attachedAt).toLocaleDateString("en-GB")}.</p>
-          </> : <p className="text-sm" style={{ color: "var(--t-muted)" }}>Your request is completed. Admin has not attached the certificate yet.</p>}
+          </> : !req.reportUrl && <p className="text-sm" style={{ color: "var(--t-muted)" }}>Your request is completed. Admin has not attached the certificate yet.</p>}
         </div>
       )}
 
+      {req?.reportUrl && (
+        <div className="rounded-md p-3 space-y-2" style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)" }}>
+          <p className="text-sm font-semibold">Your COA report is available</p>
+          <a href={req.reportUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center h-10 px-4 rounded-xl text-sm font-bold text-white" style={{ background: "#1B3A7A" }}>View COA</a>
+          <p className="text-xs" style={{ color: "var(--t-muted)" }}>Opens your report on the laboratory's website.</p>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-md p-3" style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)" }}>
           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-subtle)" }}>COA fee</p>

@@ -38,6 +38,30 @@ async function mount() {
   await React.act(async () => root!.render(<CoaRequests secret="synthetic-admin" />));
   await React.act(async () => { await new Promise(resolve => setTimeout(resolve, 280)); });
 }
+it("saves a COA report link from the request card using the staff endpoint", async () => {
+  const request = { id: "r1", groupBuyId: "g1", orderId: "o1", orderCode: "12345", member: "synthetic",
+    groupName: "Synthetic group", source: "public", status: "paid", client: "Client", sample: "Sample",
+    manufacturer: "Maker", batch: "Batch", fee: 65, currency: "USD", updatedAt: new Date().toISOString() };
+  vi.mocked(coaApi).mockImplementation(async (path, options) => {
+    if (options?.method === "PATCH") return { ok: true } as any;
+    if (path === "/admin/coa/rails") return { rails: [] } as any;
+    return { requests: [request], groups: [{ id: "g1", name: "Synthetic group" }], config: null, orders: [], committed: 1 } as any;
+  });
+  try {
+    await mount();
+    await React.act(async () => {
+      change(container.querySelector<HTMLInputElement>("#coa-link-r1")!, "https://verify.janoshik.com/tests/example");
+    });
+    await React.act(async () => {
+      container.querySelector("#coa-link-r1")!.closest("form")!.dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    });
+    expect(coaApi).toHaveBeenCalledWith("/admin/coa/r1", expect.objectContaining({
+      method: "PATCH", body: expect.stringContaining('"reportUrl":"https://verify.janoshik.com/tests/example"'),
+    }), "synthetic-admin");
+  } finally {
+    vi.mocked(coaApi).mockResolvedValue({ requests: [], groups: [{ id: "g1", name: "Synthetic group" }], config: null, orders: [], committed: 0 } as any);
+  }
+});
 it("downloads paid TXT with group/search/batch filters but no unpaid-status restriction", async () => {
   await mount();
   await React.act(async () => {
