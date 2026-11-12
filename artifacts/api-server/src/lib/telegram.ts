@@ -3,6 +3,19 @@ import { accountsTable, siteConfigTable, telegramMessageLogsTable, ticketTelegra
 import { and, eq, inArray } from "drizzle-orm";
 import { REGISTRY_MAP } from "./telegram-registry";
 import { notifyUserDiscord, sendAdminDiscordMessage } from "./discord";
+import { createHash, timingSafeEqual } from "node:crypto";
+
+export function mainWebhookSecret(botToken: string): string {
+  return createHash("sha256").update(`main-webhook:${botToken}`).digest("hex").slice(0, 48);
+}
+
+export async function webhookSecretMatches(header: unknown): Promise<boolean> {
+  const { token } = await getCredentials();
+  if (!token || typeof header !== "string") return false;
+  const expected = Buffer.from(mainWebhookSecret(token));
+  const actual = Buffer.from(header);
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
 
 export interface TelegramPrefs {
   status: boolean;
@@ -713,6 +726,7 @@ export async function setWebhook(webhookUrl: string): Promise<boolean> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       url: webhookUrl,
+      secret_token: mainWebhookSecret(token),
       allowed_updates: ["message", "callback_query"],
     }),
   }).then(r => r.ok).catch(() => false);

@@ -89,6 +89,7 @@ vi.mock("../lib/account-verification", () => ({
   },
 }));
 vi.mock("../lib/telegram", () => ({
+  webhookSecretMatches: async (value: unknown) => value === "test-webhook-secret",
   sendTelegramMessage: async (_chatId: string, message: string) => {
     state.sentMessages.push(message);
     return { ok: true };
@@ -121,7 +122,7 @@ vi.mock("../middleware/account-auth", () => ({
 
 import telegramRouter from "./telegram";
 
-async function webhook(text: string) {
+async function webhook(text: string, authenticated = true) {
   const app = express();
   app.use(express.json());
   app.use(telegramRouter);
@@ -132,7 +133,7 @@ async function webhook(text: string) {
     const { port } = server.address() as AddressInfo;
     return await fetch(`http://127.0.0.1:${port}/telegram/webhook`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(authenticated ? { "x-telegram-bot-api-secret-token": "test-webhook-secret" } : {}) },
       body: JSON.stringify({ message: { text, chat: { id: 98765, username: "telegram-user" } } }),
     });
   } finally {
@@ -141,6 +142,9 @@ async function webhook(text: string) {
 }
 
 describe("mounted Telegram account linking", () => {
+  it("rejects webhook requests without the secret header", async () => {
+    expect((await webhook("/link", false)).status).toBe(401);
+  });
   beforeEach(() => {
     state.account = {
       telegramUsername: "Stored_UserName",
