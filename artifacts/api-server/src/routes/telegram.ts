@@ -1894,7 +1894,10 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
           })
           .from(ordersTable)
           .leftJoin(groupBuysTable, eq(groupBuysTable.id, ordersTable.groupBuyId))
-          .where(sql`regexp_replace(lower(${ordersTable.telegramUsername}), '^@', '') = ${normalizedUsername}`)
+          .where(and(
+            sql`regexp_replace(lower(${ordersTable.telegramUsername}), '^@', '') = ${normalizedUsername}`,
+            isNull(ordersTable.deletedAt),
+          ))
           .orderBy(desc(ordersTable.createdAt))
           .limit(5);
 
@@ -1910,7 +1913,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         };
         const lines = orders.map(o => {
           const emoji = STATUS_EMOJI[o.status] ?? "📦";
-          const paid = o.paymentStatus === "confirmed" ? "✅ Paid" : "⏳ Unpaid";
+          const paid = o.paymentStatus === "confirmed" || o.paymentStatus === "test_confirmed" ? "✅ Paid" : "⏳ Unpaid";
           const gb = o.gbName ? ` · ${o.gbName}` : o.groupBuyId ? ` · GB` : "";
           const cur = o.gbCurrency ?? "GBP";
           return `${emoji} <b>${escapeTelegramHtml(o.code)}</b>${escapeTelegramHtml(gb)} — ${escapeTelegramHtml(cur)} ${Number(o.grandTotal).toFixed(2)} · ${paid}`;
@@ -1918,10 +1921,10 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
         const keyboard: { text: string; url?: string; callback_data?: string }[][] = orders.map(o => {
           const emoji = STATUS_EMOJI[o.status] ?? "📦";
-          const paid = o.paymentStatus === "confirmed" ? "✅ Paid" : "⏳ Unpaid";
+          const paid = o.paymentStatus === "confirmed" || o.paymentStatus === "test_confirmed" ? "✅ Paid" : "⏳ Unpaid";
           const gb = o.gbName ? ` · ${o.gbName}` : o.groupBuyId ? ` · GB` : "";
           const cur = o.gbCurrency ?? "GBP";
-          const btnText = `${emoji} ${o.code} · ${cur} ${Number(o.grandTotal).toFixed(2)}${gb} — · ${paid}`;
+          const btnText = `${emoji} ${o.code} · ${cur} ${Number(o.grandTotal).toFixed(2)}${gb} · ${paid}`;
           return [{ text: btnText, callback_data: `mn:order:${o.code}` }];
         });
         keyboard.push([{ text: "⬅️ Back to Menu", callback_data: "mn:menu" }]);
@@ -2904,7 +2907,9 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       res.json({ ok: true }); return;
     }
   }
-  const text   = String(message.text || message.caption).trim();
+  const rawText = String(message.text || message.caption).trim();
+  // Normalize only the command word, not payloads or the member's message.
+  const text = rawText.replace(/^\/[^\s]+/, command => command.replace(/@[^@]+$/, "").toLowerCase());
   console.log(`[telegram:webhook] message received from chatId=${chatId} username=@${message.chat.username ?? "?"}`);
 
   // ── /link command ─────────────────────────────────────────────────────────
@@ -3289,6 +3294,9 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
   console.log(`[telegram:webhook] adminChatId="${adminChatId}" chatId="${chatId}" isAdmin=${adminChatId === chatId}`);
 
   if (adminChatId && chatId === adminChatId) {
+    if (text.startsWith("/")) {
+      res.json({ ok: true }); return;
+    }
     const replyToId = (message.reply_to_message as { message_id?: number } | undefined)?.message_id;
     console.log(`[telegram:webhook] admin message — replyToId=${replyToId ?? "none"}`);
     if (replyToId) {
@@ -3304,7 +3312,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
 
       if (mapping) {
         const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, mapping.ticketId));
-        if (ticket && ticket.status !== "closed") {
+        if (ticket?.status === "closed") {
+          await sendTelegramMessage(chatId, "That ticket is closed.", "HTML");
+          res.json({ ok: true }); return;
+        }
+        if (ticket) {
           const adminUsername = (message.from as { username?: string } | undefined)?.username ?? "admin";
           const now = new Date();
 
@@ -3334,9 +3346,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
             `<a href="${_appUrl}/account?s=support&ticket=${mapping.ticketId}">View in app →</a>\n` +
             `<i>Or reply directly here in Telegram.</i>`,
           ).catch(() => {});
+          res.json({ ok: true }); return;
         }
       }
     }
+    await sendTelegramMessage(chatId, "To reply to a ticket, use Reply on the ticket message.", "HTML");
     res.json({ ok: true });
     return;
   }

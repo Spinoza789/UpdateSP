@@ -768,6 +768,29 @@ export async function setWebhook(webhookUrl: string): Promise<boolean> {
   }).then(r => r.ok).catch(() => false);
 }
 
+export async function registerTelegramCommands(): Promise<boolean> {
+  const { token } = await getCredentials();
+  if (!token) return false;
+  const commands = [
+    { command: "start", description: "Start or link your account" },
+    { command: "menu", description: "Open the main menu" },
+    { command: "support", description: "Open a support ticket" },
+    { command: "feedback", description: "Send feedback" },
+    { command: "cancel", description: "Cancel the current conversation" },
+    { command: "stop", description: "Unlink Telegram notifications" },
+  ];
+  try {
+    const response = await fetchWithTimeout(`https://api.telegram.org/bot${token}/setMyCommands`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commands }),
+    });
+    const result = await response.json() as { ok?: boolean };
+    return result.ok === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function getWebhookInfo(): Promise<{ url: string } | null> {
   const { token } = await getCredentials();
   if (!token) return null;

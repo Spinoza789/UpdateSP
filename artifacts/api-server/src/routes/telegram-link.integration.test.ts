@@ -16,6 +16,8 @@ const state = vi.hoisted(() => ({
   payloads: [] as any[],
   otherAccounts: [] as string[],
   botStates: new Map<string, unknown>(),
+  filters: [] as string[],
+  adminChat: null as string | null,
 }));
 
 function makeDb(root: boolean, accountBox: { value: any }): any {
@@ -39,7 +41,7 @@ function makeDb(root: boolean, accountBox: { value: any }): any {
       let table = "";
       const query: any = {
         from(value: unknown) { table = getTableName(value as never); return query; },
-        where() { return query; },
+        where(filter?: any) { if (filter) state.filters.push(new PgDialect().sqlToQuery(filter).sql); return query; },
         leftJoin() { return query; },
         orderBy() { return query; },
         limit() { return query; },
@@ -127,7 +129,7 @@ vi.mock("../lib/telegram", () => ({
   sendAdminTicketNotification: async () => ({ ok: true }),
   answerCallbackQuery: async () => undefined,
   getBotUsername: async () => "test_bot",
-  getAdminChatId: async () => null,
+  getAdminChatId: async () => state.adminChat,
   notifyUserTicket: async () => undefined,
   getTemplate: async (key: string) => ({ template: key === "bot_link_success" ? "Linked {{username}}" : key }),
   renderTemplate: (template: string, values: Record<string, string>) =>
@@ -181,6 +183,8 @@ describe("mounted Telegram account linking", () => {
     state.payloads.length = 0;
     state.otherAccounts = [];
     state.botStates.clear();
+    state.filters.length = 0;
+    state.adminChat = null;
     state.account = {
       telegramUsername: "Stored_UserName",
       telegramLinkToken: "ABCDEF12",
@@ -283,5 +287,33 @@ describe("mounted Telegram account linking", () => {
   it("ignores media and captions in group chats", async () => {
     await webhook("", true, 412, undefined, { text: undefined, photo: [{}], caption: "/support", chat: { id: -123, type: "supergroup" } });
     expect(state.sentMessages).toEqual([]);
+  });
+  it.each(["/Start", "/menu@SaltPepsBot", "/STOP"])("normalizes the command word in %s", async text => {
+    state.account.telegramChatId = "98765";
+    await webhook(text);
+    if (text === "/STOP") {
+      expect(state.account.telegramChatId).toBeNull();
+      expect(state.sentMessages).toContain("bot_unlinked");
+    } else {
+      expect(state.sentMessages.join("\n")).toContain("bot_menu_header");
+    }
+  });
+  it("labels test-confirmed orders paid and excludes deleted orders", async () => {
+    state.rows.orders = [{ code: "123", status: "Submitted", paymentStatus: "test_confirmed", grandTotal: "40" }];
+    await webhook("", true, 420, "mn:orders");
+    expect(state.filters.join("\n")).toContain('"orders"."deleted_at" is null');
+    const buttons = state.payloads.flatMap(payload => payload?.reply_markup?.inline_keyboard?.flat() ?? []);
+    const orderButton = buttons.find(button => button.callback_data === "mn:order:123");
+    expect(orderButton.text).toContain("✅ Paid");
+    expect(orderButton.text).not.toContain("— ·");
+  });
+  it("guides untracked admin replies and identifies closed tickets", async () => {
+    state.adminChat = "98765";
+    await webhook("An untracked reply");
+    expect(state.sentMessages).toContain("To reply to a ticket, use Reply on the ticket message.");
+    state.rows.ticket_telegram_messages = [{ ticketId: "ticket1" }];
+    state.rows.tickets = [{ id: "ticket1", status: "closed" }];
+    await webhook("Reply text", true, 421, undefined, { reply_to_message: { message_id: 9 } });
+    expect(state.sentMessages).toContain("That ticket is closed.");
   });
 });

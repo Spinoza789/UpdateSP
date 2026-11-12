@@ -10,7 +10,7 @@ import {
 } from "./lib/refund-mutation-guard";
 import app, { markApplicationReady } from "./app";
 import { seedIfEmpty } from "./seed";
-import { setWebhook, getTelegramStatus, buildWebhookUrl } from "./lib/telegram";
+import { setWebhook, getTelegramStatus, buildWebhookUrl, registerTelegramCommands } from "./lib/telegram";
 import { startTrackingAutoRefresh } from "./lib/tracking-auto-refresh";
 import { startGbAutoClose } from "./lib/gb-auto-close";
 import { startWholesaleShareAutoLock } from "./lib/wholesale-share-auto-lock";
@@ -1392,6 +1392,7 @@ async function autoRegisterWebhook(): Promise<void> {
     }
     const webhookUrl = buildWebhookUrl(domain);
     const ok = await setWebhook(webhookUrl);
+    if (!await registerTelegramCommands()) console.error("[telegram] Command menu registration failed");
     if (ok) {
       console.log(`[telegram:webhook] Webhook registered successfully: ${webhookUrl}`);
     } else {
