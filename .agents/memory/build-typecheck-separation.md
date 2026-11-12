@@ -6,6 +6,17 @@ description: Why the build script was decoupled from typecheck, and the recurrin
 # Build vs typecheck separation
 
 ## Workspace build memory
+Distinguish a container kill from V8's “heap out of memory”: a low heap limit
+can itself prevent this large frontend from building. When the container has
+sufficient spare memory, a standalone build with a 4096 MB heap can succeed
+where a 1536 MB heap aborts.
+
+**Why:** Lowering the heap after an interrupted build produced a V8 allocation
+failure, while the larger heap completed without application changes.
+
+**How to apply:** Read the actual failure and available memory before adjusting
+the heap; do not repeatedly lower it for every memory-related failure.
+
 If a frontend production build exits 137 with only “Killed” and no compiler error,
 check container memory before changing application code. In a busy workspace,
 retrying the normal Vite build alone with `NODE_OPTIONS=--max-old-space-size=2048`

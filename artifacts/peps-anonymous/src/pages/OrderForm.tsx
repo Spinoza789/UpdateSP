@@ -1,4 +1,5 @@
 import { hasFreeDirectHomeShipping } from "@workspace/shipping/group-buy-direct";
+import { HghBatchGuide } from "@/components/HghBatchGuide";
 import { formatOrderPrice } from "@/lib/order-money";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -1337,6 +1338,7 @@ export default function OrderForm() {
         )}
       </AnimatePresence>
       <main className={`order-form-main flex-1 px-4 py-5 pb-24 ${contentWidth} mx-auto w-full space-y-4`}>
+        <HghBatchGuide groupBuyId={gbId} />
         {!gbId && (
           <header className="order-form-intro">
             <h1>Build your order</h1>

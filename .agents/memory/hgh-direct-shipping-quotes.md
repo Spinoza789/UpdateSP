@@ -3,6 +3,8 @@ name: HGH 36IU free direct shipping
 description: User-confirmed free direct-to-home shipping for HGH 36IU only.
 ---
 
+For the separately scoped batch explainer, see [HGH batch video placement](hgh-batch-video-scope.md).
+
 HGH 36IU direct-to-home shipping is free.
 
 **Why:** The user clarified twice: “For this group buy, direct to home is free
