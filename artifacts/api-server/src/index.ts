@@ -38,6 +38,7 @@ import { stopAllSchedulers } from "./lib/scheduler-registry";
 import { registerTelegramCleanupScheduler } from "./lib/telegram-bot-state";
 import { registerPaymentReminderScheduler, registerClosingReminderScheduler } from "./lib/telegram-reminders";
 import { registerLabReportNotificationScheduler } from "./lib/telegram-lab-report-notifications";
+import { registerDailyAdminSummaryScheduler } from "./lib/telegram-daily-summary";
 import { ensureSupplierTestingSchema } from "./lib/supplier-testing-migration";
 import { db, ordersTable } from "@workspace/db";
 import { sql, and, eq, isNotNull, isNull, lt } from "drizzle-orm";
@@ -92,6 +93,7 @@ async function runStartupRefundSafeRepair(
 }
 
 async function runStartupMigrations(): Promise<void> {
+    await db.execute(sql`INSERT INTO site_config(key, value) VALUES ('telegramDailySummaryEnabled', 'true') ON CONFLICT DO NOTHING`);
     await db.execute(sql`ALTER TABLE IF EXISTS tickets ADD COLUMN IF NOT EXISTS order_id text`);
     await db.execute(sql`CREATE TABLE IF NOT EXISTS telegram_reminders_sent (
       kind text NOT NULL, ref_id text NOT NULL, username text NOT NULL,
@@ -1461,6 +1463,7 @@ function startBackgroundServices(): void {
   registerPaymentReminderScheduler();
   registerClosingReminderScheduler();
   registerLabReportNotificationScheduler();
+  registerDailyAdminSummaryScheduler();
   registerSupplierBatchScheduler();
   registerVendorPortalScheduler();
   registerVendorTelegramScheduler();
