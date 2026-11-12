@@ -21,6 +21,12 @@ export interface TemplateEventMeta {
 
 export const TEMPLATE_REGISTRY: TemplateEventMeta[] = [
   {
+    eventKey: "customer_lab_report_published", label: "Group-buy lab report published", audience: "customer", prefKey: "status",
+    description: "A public lab report explicitly linked to a group buy with a paid member order.",
+    placeholders: ["gb_name", "report_name"],
+    defaultTemplate: "🔬 <b>Lab report available</b>\nGroup buy: {{gb_name}}\nReport: {{report_name}}\nOpen the report below.",
+  },
+  {
     eventKey: "customer_order_delivered", label: "Order delivered", audience: "customer", prefKey: "status",
     description: "One delivery notification with an order-specific support shortcut.",
     placeholders: ["code"], defaultTemplate: "✅ <b>Order #{{code}} delivered</b>\nIf something is wrong, report a problem below.",
