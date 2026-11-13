@@ -4,6 +4,7 @@ import {
   gbSupplierBatchesTable as batches, gbSupplierAllocationsTable as allocations,
   gbSupplierShipmentsTable as shipments, gbSupplierEventsTable as events,
   gbSupplierSettingsTable as settings,
+  gbHalfKitClaimsTable as claims,
 } from "@workspace/db";
 import { GroupBuyRefundError } from "./group-buy-refund-error";
 import { correctionSnapshots } from "./supplier-batch-correction-model";
@@ -27,6 +28,14 @@ async function activeAllocations(tx: any, order: Record<string, any>) {
 export async function assertRefundBeforeVendor(tx: any, order: Record<string, any>) {
   if (!order.id || !order.groupBuyId) throw new GroupBuyRefundError("not_group_buy_order");
   if (order.batchLocked) throw new GroupBuyRefundError("submitted_to_vendor");
+  // The refund transaction already holds the half-kit money mutex. Keep this
+  // check here rather than holding a second connection's session lock in HTTP.
+  if (Number(order.amountDue ?? 0) > 0 || order.paymentStatus !== "confirmed") {
+    const activeClaims = await tx.select({ id: claims.id }).from(claims).where(and(
+      eq(claims.orderId, order.id), eq(claims.groupBuyId, order.groupBuyId), eq(claims.state, "active"),
+    )).limit(1);
+    if (activeClaims.length) throw new GroupBuyRefundError("unpaid_half_kit_claims");
+  }
   const active = await activeAllocations(tx, order);
   if (active.some(submitted)) throw new GroupBuyRefundError("submitted_to_vendor");
   return active;

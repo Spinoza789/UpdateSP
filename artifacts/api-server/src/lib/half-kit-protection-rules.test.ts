@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { halfKitLegacyMutation } from "./half-kit-protection-rules";
 describe("half-kit legacy mutation protection", () => {
+  it("leaves customer refund locking to the transactional refund service", () => {
+    for (const path of ["/account/orders/o1/refund", "/ACCOUNT/ORDERS/O1/REFUND/"]) {
+      expect(halfKitLegacyMutation("POST", path)).toBeNull();
+    }
+    expect(halfKitLegacyMutation("POST", "/account/orders/o1/verify-balance")?.orderId).toBe("o1");
+  });
   it("locks the actual order ID for both shipping-address endpoints", () => {
     for (const path of ["/account/orders/actual-order-id/shipping-address", "/orders/actual-order-id/shipping-address"]) {
       expect(halfKitLegacyMutation("POST", path, {shippingCountry:"GB"}))

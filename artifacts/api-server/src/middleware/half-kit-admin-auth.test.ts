@@ -60,6 +60,7 @@ vi.mock("@workspace/db", async () => {
 
 import { adminAuthorizationMiddleware, requireAdmin } from "./require-admin";
 import { halfKitProtection } from "./half-kit-protection";
+import { lockHalfKitMoney } from "../lib/half-kit-lock";
 
 const routes = readFileSync(new URL("../routes/index.ts", import.meta.url), "utf8");
 let server: Server | undefined;
@@ -89,6 +90,19 @@ beforeEach(async () => {
     fixture.writes.push(req.body);
     res.json({ ok: true, ...req.body });
   });
+  app.post("/account/orders/:id/refund", async (_req, res) => {
+    await lockHalfKitMoney({
+      execute: async () => {
+        // Model the separate transaction connection: a legacy session lock
+        // owned by the HTTP guard cannot be re-entered from this connection.
+        if (fixture.queries.some(query => query.includes("pg_advisory_lock("))) {
+          throw new Error("Refund transaction blocked by HTTP session lock");
+        }
+        fixture.events.push("refund-transaction-lock");
+      },
+    }, "test-group");
+    res.status(201).json({ status: "requested" });
+  });
   server = app.listen(0, "127.0.0.1");
   await new Promise<void>(resolve => server!.once("listening", resolve));
   const address = server.address();
@@ -113,6 +127,15 @@ function route(headers: Record<string, string> = {}) {
 }
 
 describe("half-kit protection respects the admin-session boundary", () => {
+  it("lets the refund transaction own the money lock without a second session lock", async () => {
+    const response = await fetch(`${base}/account/orders/test-order/refund`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ method: "credit" }),
+    });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ status: "requested" });
+    expect(fixture.events).toEqual(["refund-transaction-lock"]);
+    expect(fixture.queries).toEqual([]);
+  });
   it("accepts an authenticated routing change and still acquires the half-kit money lock", async () => {
     const response = await route({ Cookie: "peps_admin_session=test-session", "x-admin-csrf": "test-csrf" });
     expect(response.status).toBe(200);

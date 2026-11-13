@@ -12,6 +12,9 @@ export function halfKitLegacyMutation(method: string, path: string, body: Record
   try { path = decodeURIComponent(path); } catch { return null; } // Express rejects malformed encodings.
   const lower = path.toLowerCase();
   if (lower.includes("/half-kit-offers")) return null;
+  // Refunds acquire this same mutex transactionally on the data connection.
+  // A session lock held here until response completion would block that handler.
+  if (method === "POST" && /^\/account\/orders\/[^/]+\/refund\/?$/i.test(path)) return null;
   const role: Role = lower.startsWith("/admin/") ? "admin" : lower.startsWith("/organiser/") ? "organiser" : "member";
   if (role === "admin" && lower.includes("credit") && typeof body.orderId === "string") {
     return { kind: "order", orderId: body.orderId, role, block: true };
