@@ -6,6 +6,7 @@ import { DirectSupplierDownload } from "./DirectSupplierDownload";
 import { BatchRefreshReview } from "./BatchRefreshReview";
 import { BatchCorrection } from "./BatchCorrection";
 import { BatchAdditions } from "./BatchAdditions";
+import { BatchWholesaleCheckout } from "./BatchWholesaleCheckout";
 import {
   EU_BATCH_COUNTRIES, supplierKey, supplierRequest, downloadSupplierCsv,
   downloadSupplierTxt,
@@ -35,6 +36,7 @@ export function parseCountries(s: string): string[] {
 
 interface Props {
   groupBuyId: string; scope: SupplierScope; headers?: Record<string, string>;
+  wholesaleConversionAvailable?: boolean;
   onViewOrders?: (batchId: string, orderId?: string) => void; onDispatch?: () => void;
 }
 type Draft = { enabled: boolean; telegramAlerts: boolean; showToMembers: boolean; regions: { id: string; name: string; countries: string; targetKits: string; hardLimitKits: string; autoPrepare: boolean }[] };
@@ -314,7 +316,7 @@ export function BatchCard({ b, batches = [], busy, act, exportCsv, exportTxt, co
     <div data-testid={`card-batch-${b.id}`} className="rounded-xl border p-3 space-y-2" style={{ borderColor: V.border }}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-sm font-bold font-mono" style={{ color: V.text }}>{b.reference}</span>
-        <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${b.state === "ordered" ? "bg-green-100 text-green-700" : b.state === "released" ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-800"}`}>{b.state === "ordered" ? "Submitted to vendor" : b.state}</span>
+        <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${b.state === "ordered" ? "bg-green-100 text-green-700" : b.state === "released" ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-800"}`}>{b.wholesaleOrder ? "Wholesale order placed" : b.state === "ordered" ? "Submitted to vendor" : b.state}</span>
       </div>
       {b.snapshot.refundRemovals?.map(r => (
         <div key={r.refundId} className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
@@ -338,6 +340,8 @@ export function BatchCard({ b, batches = [], busy, act, exportCsv, exportTxt, co
           requestPreview={(path, body) => supplierRequest<BatchRefreshPreview>(context.scope, context.groupBuyId, path, body, "POST", context.headers)}
           onConfirm={(path, body) => act(path, body, "Batch updated. Reference kept; orders and payments are unchanged.")} />
       )}
+      {(context.wholesaleConversionAvailable || b.wholesaleOrder) && <BatchWholesaleCheckout
+        batch={b} groupBuyId={context.groupBuyId} scope={context.scope} headers={context.headers} />}
       {b.state === "ordered" && <div className="space-y-3">
         <button type="button" className={btn} style={{ background: NAVY }} aria-expanded={showFulfilment} onClick={() => setShowFulfilment(v => !v)}>
           {showFulfilment ? "Close" : "Manage"} supplier packages &amp; receipt
@@ -488,7 +492,7 @@ function Body({ groupBuyId, scope, headers, onViewOrders, onDispatch }: Props) {
           <summary className="cursor-pointer text-sm font-semibold" style={{ color: V.text }}>Shipping &amp; receipt overview</summary>
           <div className="mt-3"><SupplierBatchFulfilment groupBuyId={groupBuyId} scope={scope} headers={headers} onViewOrders={onViewOrders} onDispatch={onDispatch} /></div>
         </details>
-        {d.batches.filter(b => b.state !== "released").map(b => <BatchCard key={b.id} b={b} batches={d.batches} busy={busy} act={(p, body) => act(p, body)} exportCsv={exportCsv} exportTxt={exportTxt} context={{ groupBuyId, scope, headers, onViewOrders, onDispatch }} />)}
+        {d.batches.filter(b => b.state !== "released").map(b => <BatchCard key={b.id} b={b} batches={d.batches} busy={busy} act={(p, body) => act(p, body)} exportCsv={exportCsv} exportTxt={exportTxt} context={{ groupBuyId, scope, headers, onViewOrders, onDispatch, wholesaleConversionAvailable: d.groupBuy.wholesaleConversionAvailable }} />)}
         {d.batches.some(b => b.state === "released") && <details data-testid="released-batch-history" className="rounded-xl border p-3" style={{ borderColor: V.border }}>
           <summary className="cursor-pointer text-sm font-semibold" style={{ color: V.muted }}>Released / undone history ({d.batches.filter(b => b.state === "released").length})</summary>
           <p className="my-2 text-xs" style={{ color: V.muted }}>Historical records only. These batches do not allocate kits to a current delivery. Contents show the old snapshot, not an active allocation.</p>

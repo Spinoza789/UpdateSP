@@ -64,6 +64,7 @@ import { centsToUsdString, subtractMoneyClamped, usdToCents } from "../lib/refun
 import { inferGroupBuyContext } from "../lib/group-buy-order-context";
 import { additionIsSeparate, getAdditionAvailability, createSeparateAddition, lockAddition, recordAddition, replayAddition, validateAdditionItems, type AdditionRequest } from "../lib/order-addition-submission";
 import { fingerprint, SupplierBatchError } from "../lib/supplier-batches-model";
+import { lockBatchWholesaleCheckout, commitBatchWholesaleCheckout } from "../lib/supplier-batch-wholesale";
 
 // ── Server-authoritative wholesale shipping ──────────────────────────────────
 // Wholesale shipping is priced by kit-count tiers per destination region, so it must
@@ -529,6 +530,16 @@ router.post("/orders", async (req, res, next): Promise<void> => {
     return;
   }
   const isWholesaleOrder = clientOrderType === "wholesale";
+  const batchCheckout = req.body.supplierBatchCheckout;
+  if (batchCheckout && (!isWholesaleOrder || !req.account || clientGroupBuyId || clientAdditionOfOrderId
+    || halfKitCheckout || Number(clientCreditsApplied ?? 0) !== 0 || clientCouponCode || Number(clientTip ?? 0) !== 0 || Number(clientTestingContribution ?? 0) !== 0)) {
+    res.status(400).json({ error: "Batch checkout requires the organiser's signed-in wholesale checkout without additions or discounts." }); return;
+  }
+  if (batchCheckout && ([clientShippingName, clientShippingPhone, clientShippingEmail, clientShippingAddress]
+    .some(value => typeof value !== "string" || !value.trim())
+    || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(clientShippingEmail)))) {
+    res.status(400).json({ error: "Enter the recipient name, phone, valid email and full delivery address." }); return;
+  }
   let wholesaleVendorId: string | null = null;
   if (isWholesaleOrder) {
     try { wholesaleVendorId = await validateWholesaleVendorItems(clientLineItems, req.body.wholesaleVendorId); }
@@ -549,7 +560,7 @@ router.post("/orders", async (req, res, next): Promise<void> => {
   // Guest/PIN submissions must not bypass an account suspension by omitting
   // the session cookie. Accounts are authoritative; customer-only records
   // retain the same protection for historical guest identities.
-  const [orderingAccount] = await db.select({ accountStatus: accountsTable.accountStatus })
+  const [orderingAccount] = await db.select({ accountStatus: accountsTable.accountStatus, organiserStatus: accountsTable.organiserStatus })
     .from(accountsTable).where(sql`lower(ltrim(${accountsTable.telegramUsername}, '@')) = ${tg.replace(/^@/, "").toLowerCase()}`).limit(1);
   const [legacyCustomer] = orderingAccount ? [] : await db.select({ accountStatus: customersTable.accountStatus })
     .from(customersTable).where(sql`lower(ltrim(${customersTable.telegramUsername}, '@')) = ${tg.replace(/^@/, "").toLowerCase()}`).limit(1);
@@ -557,6 +568,9 @@ router.post("/orders", async (req, res, next): Promise<void> => {
   if ((orderingAccount && orderingStatus !== "active") || orderingStatus === "suspended" || orderingStatus === "banned") {
     res.status(403).json({ error: "Account is not active" });
     return;
+  }
+  if (batchCheckout && orderingAccount?.organiserStatus !== "approved") {
+    res.status(403).json({ error: "An approved group-buy organiser account is required for batch checkout." }); return;
   }
 
   if (notes !== undefined && notes !== null && String(notes).length > MAX_NOTES_LENGTH) {
@@ -1654,6 +1668,10 @@ router.post("/orders", async (req, res, next): Promise<void> => {
   }
 
   const creation = await db.transaction(async tx => {
+  if (batchCheckout) {
+    await lockBatchWholesaleCheckout(tx, batchCheckout, req.account!.telegramUsername,
+      clientLineItems, String(clientShippingCountry ?? ""), wholesaleVendorId, vendorShipping);
+  }
   if (halfKitCheckout) {
     const selections = halfKitSelections(halfKitCheckout).sort((a, b) => a.offerId.localeCompare(b.offerId));
     for (const selection of selections) {
@@ -1760,12 +1778,14 @@ router.post("/orders", async (req, res, next): Promise<void> => {
   // Record coupon redemption if one was applied
   if (couponClaim) await recordCouponRedemption(tx, couponClaim, orderId, tg, couponDiscount);
   if (normalizedGroupBuyId) await saveOnwardOrderPreference(tx, orderId, req.body.onwardDeliveryMethod);
+  if (batchCheckout) await commitBatchWholesaleCheckout(tx, batchCheckout, order, req.account!.telegramUsername);
   return { order, insertedLineItems, lineItemsToInsert, halfCredits };
   }).catch(error => {
+    if (error instanceof SupplierBatchError) return { error: error.message, status: error.status, orderId: (error as any).orderId } as const;
     if (error instanceof CouponError || error instanceof HalfKitError || error instanceof OnwardDeliveryError) return { error: error.message, status: error instanceof HalfKitError || error instanceof OnwardDeliveryError ? error.status : 400, code: error instanceof HalfKitError ? error.code : undefined } as const;
     throw error;
   });
-  if ("error" in creation) { res.status(creation.status ?? 400).json({ error: creation.error, code: creation.code }); return; }
+  if ("error" in creation) { res.status(creation.status ?? 400).json({ error: creation.error, code: "code" in creation ? creation.code : undefined, orderId: "orderId" in creation ? creation.orderId : undefined }); return; }
   const { order, insertedLineItems, lineItemsToInsert } = creation;
 
   // ── Apply store credits atomically during order creation ──────────────

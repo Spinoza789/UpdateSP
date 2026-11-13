@@ -22,6 +22,9 @@ vi.mock("../lib/supplier-batches", () => ({
   previewSupplierBatchRefresh:calls.preview,refreshSupplierBatch:calls.refresh,
   moveSupplierBatchOrders:calls.move, undoSupplierBatchMove:calls.move,
 }));
+vi.mock("../lib/supplier-batch-wholesale", () => ({
+  previewBatchWholesale: vi.fn(async (id, batchId, actor, country) => ({ id, batchId, actor, country })),
+}));
 import router from "./supplier-batches";
 describe("supplier batch HTTP authentication", () => {
   it("only Admin can undo a move, and organiser paths expose no undo endpoint", async () => {
@@ -79,6 +82,15 @@ describe("supplier batch HTTP authentication", () => {
     expect((await fetch(`${base}/api/organiser/group-buys/gb/supplier-batches`)).status).toBe(401);
     const res=await fetch(`${base}/api/organiser/group-buys/gb/supplier-batches`,{headers:{"x-test-organiser":"yes"}});
     expect((await res.json() as any).actor).toMatchObject({username:"organiser",adminGbId:"gb"});
+  });
+  it("authenticates batch wholesale previews and takes only the destination from the request", async () => {
+    const path = `${base}/api/organiser/group-buys/gb/supplier-batches/batch/wholesale-preview`;
+    const init = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ shippingCountry: "Italy", username: "someone-else" }) };
+    expect((await fetch(path, init)).status).toBe(401);
+    const response = await fetch(path, { ...init, headers: { ...init.headers, "x-test-organiser": "yes" } });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toMatchObject({ id: "gb", batchId: "batch", actor: { username: "organiser" }, country: "Italy" });
   });
   for(const scope of ["admin","organiser"]) for(const suffix of ["refresh-preview","refresh"]) {
     it(`${scope}: authenticates ${suffix} and forwards the reviewed body and scoped actor`,async()=>{

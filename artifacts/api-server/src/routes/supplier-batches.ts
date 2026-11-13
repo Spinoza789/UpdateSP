@@ -8,6 +8,7 @@ import { type UpdateActor } from "../lib/group-buy-updates-model";
 import { supplierData, saveSupplierConfig, confirmSupplierBatch, appendSupplierBatch, previewSupplierBatchRefresh, refreshSupplierBatch, orderSupplierBatch, releaseSupplierBatch, reviewHistoricalSupplierOrder, exportSupplierBatch, supplierDirectOrders, exportSupplierTxt } from "../lib/supplier-batches";
 import { moveSupplierBatchOrders, undoSupplierBatchMove } from "../lib/supplier-batches";
 import { previewBatchMessage, queueBatchMessage, batchMessageHistory, listBatchMessageRecipients } from "../lib/supplier-batch-messages";
+import { previewBatchWholesale } from "../lib/supplier-batch-wholesale";
 
 const router = Router();
 const roots = ["/admin/group-buys/:id/supplier-batches", "/organiser/group-buys/:id/supplier-batches"];
@@ -28,6 +29,10 @@ router.get("/group-buys/:id/supplier-batches", (_req, res, next) => { res.setHea
   });
 router.use(roots, auth, (_req, res, next) => { res.setHeader("Cache-Control", "private, no-store"); next(); });
 router.get(paths(), async (req, res) => { res.json(await supplierData(param(req, "id"), actor(req))); });
+router.post(paths("/:batchId/wholesale-preview"), async (req, res) => {
+  res.json(await previewBatchWholesale(param(req, "id"), param(req, "batchId"), actor(req),
+    typeof req.body?.shippingCountry === "string" ? req.body.shippingCountry : ""));
+});
 router.get("/admin/group-buys/:id/supplier-batches/messages", async (req, res) => {
   res.json(await batchMessageHistory(param(req, "id"), actor(req)));
 });

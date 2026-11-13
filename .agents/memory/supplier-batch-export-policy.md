@@ -139,3 +139,15 @@ below-target queue waits for staff action rather than pretending it is full.
 Automatic preparation reserves each full batch once and continues with the next
 queue. Keep the existing manual supplier-placement confirmation and staff-only
 alerts. Do not reintroduce a separate batch-member message composer.
+
+Uther batch conversion creates **one combined wholesale order** for the organiser
+to review and pay through the normal wholesale checkout. It is not a migration
+of member orders or evidence that the organiser has already paid.
+
+**Why:** The user explicitly selected one combined order per processed batch,
+normal checkout payment, and the proposed prepared-but-not-yet-submitted scope.
+
+**How to apply:** Use only the batch's allocated quantities and current Uther
+catalogue prices/shipping. Keep member orders and payments unchanged. Preserve
+one durable order link per batch; commit the link with order creation and prevent
+duplicate purchases. Missing or ambiguous matches require correction, not guesses.

@@ -31,7 +31,7 @@ export async function supplierAccess(tx: any, id: string, actor: UpdateActor) {
   if (!actor.admin && (!group.organiserId || canonicalUsername(group.organiserId) !== canonicalUsername(actor.username))) throw new SupplierBatchError("You do not manage this group buy.", 403);
   return group;
 }
-async function locked<T>(id: string, actor: UpdateActor | null, fn: (tx: any, group: any) => Promise<T>, database: Database = db) {
+export async function locked<T>(id: string, actor: UpdateActor | null, fn: (tx: any, group: any) => Promise<T>, database: Database = db) {
   return database.transaction(async tx => {
     // Match every existing legacy/customer monetary mutation, BEFORE group/order row locks.
     await lockHalfKitMoney(tx, id);
@@ -82,7 +82,7 @@ function mismatch(batch: any, order: any, currentEligibility: any) {
   return fingerprint(refreshedOrderSnapshot(order, wholeSnapshot(old)))
     !== fingerprint(wholeSnapshot(old)) ? "Products, destination, member or order amounts changed since preparation" : null;
 }
-async function state(tx: any, group: any, reconcile = true) {
+export async function state(tx: any, group: any, reconcile = true) {
   const id = group.id, data = await load(tx, id), now = new Date();
   const { review, queues, eligible } = collectSupplierQueues(data);
   for (const snap of eligible) {
@@ -159,7 +159,10 @@ async function state(tx: any, group: any, reconcile = true) {
       sql`${auditLogsTable.metadata}->'before'->'lineItems' IS NOT NULL`,
       sql`${auditLogsTable.metadata}->'after'->'lineItems' IS NOT NULL`,
     )).orderBy(asc(auditLogsTable.createdAt), asc(auditLogsTable.id)) : [];
+  const wholesaleLinks = await tx.select({ detail: events.detail }).from(events)
+    .where(and(eq(events.groupBuyId, id), eq(events.kind, "wholesale_checkout")));
   const history = data.history.map((b: any) => ({
+    wholesaleOrder: (wholesaleLinks.find((e: any) => e.detail.batchId === b.id)?.detail as any)?.wholesaleOrder ?? null,
     undoMoves: additionHistory.filter(e => e.detail.batchId === b.id
       && ["orders_moved", "quantities_moved"].includes(e.kind)
       && !additionHistory.some(u => u.kind === "move_undone" && u.detail.moveEventId === e.id))
@@ -180,7 +183,7 @@ async function state(tx: any, group: any, reconcile = true) {
   // Per-member message deliveries have their own Admin history, not the shared batch event list.
   const eventRows = await tx.select().from(events).where(and(eq(events.groupBuyId, id),
     notInArray(events.kind, ["member_message", "member_message_request"]))).orderBy(sql`${events.createdAt} desc`).limit(100);
-  return { groupBuy: { id, name: group.name }, config: data.config, version: data.stored?.version ?? 0,
+  return { groupBuy: { id, name: group.name, wholesaleConversionAvailable: /\buther\b/i.test(group.name ?? "") || /^uther$/i.test(group.manufacturer?.trim() ?? "") }, config: data.config, version: data.stored?.version ?? 0,
     checkedAt: reconcile && data.stored ? now.toISOString() : asDate(data.stored?.checkedAt),
     proposals, batches: history.reverse(), review, events: eventRows };
 }
