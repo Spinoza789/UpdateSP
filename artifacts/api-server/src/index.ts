@@ -36,7 +36,7 @@ import { registerCoaNotificationScheduler } from "./lib/coa-notifications";
 import { registerSupplierBatchScheduler } from "./lib/supplier-batch-worker";
 import { stopAllSchedulers } from "./lib/scheduler-registry";
 import { registerTelegramCleanupScheduler } from "./lib/telegram-bot-state";
-import { registerPaymentReminderScheduler, registerClosingReminderScheduler } from "./lib/telegram-reminders";
+import { registerClosingReminderScheduler } from "./lib/telegram-reminders";
 import { registerLabReportNotificationScheduler } from "./lib/telegram-lab-report-notifications";
 import { registerDailyAdminSummaryScheduler } from "./lib/telegram-daily-summary";
 import { ensureSupplierTestingSchema } from "./lib/supplier-testing-migration";
@@ -1460,7 +1460,6 @@ function startBackgroundServices(): void {
   registerGroupBuyUpdateNotificationScheduler();
   registerCoaNotificationScheduler();
   registerTelegramCleanupScheduler();
-  registerPaymentReminderScheduler();
   registerClosingReminderScheduler();
   registerLabReportNotificationScheduler();
   registerDailyAdminSummaryScheduler();

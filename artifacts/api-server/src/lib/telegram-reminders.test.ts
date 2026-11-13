@@ -60,15 +60,13 @@ describe("unpaid Telegram reminders", () => {
   beforeEach(() => { vi.stubEnv("PUBLIC_URL", "https://example.test"); state.candidates = [eligible()];
     state.claims.clear(); state.queries.length = 0; state.send.mockReset().mockResolvedValue({ ok: true }); state.sleep.mockReset(); });
   afterEach(() => vi.unstubAllEnvs());
-  it("claims before transport and sends once across repeated runs", async () => {
-    expect(await runPaymentReminders({ sleep: state.sleep })).toBe(1);
+  it.each(["active", "closed", "completed", null])("never sends unpaid reminders, regardless of group status %s", async groupStatus => {
+    state.candidates = [{ ...eligible(), groupStatus }];
     expect(await runPaymentReminders({ sleep: state.sleep })).toBe(0);
-    expect(state.send).toHaveBeenCalledTimes(1);
-    expect(state.send.mock.calls[0][2]).toContain("GB &lt;99) &amp; more");
-    expect(state.send.mock.calls[0][1]).toBe("reminders");
-    expect(state.send.mock.calls[0][3].inline_keyboard[0][0]).toMatchObject({ text: "Pay now" });
-    expect(state.queries[1].sql).toContain("ON CONFLICT DO NOTHING");
-    expect(state.sleep).toHaveBeenCalledWith(300);
+    expect(await runPaymentReminders({ sleep: state.sleep })).toBe(0);
+    expect(state.send).not.toHaveBeenCalled();
+    expect(state.queries).toHaveLength(0);
+    expect(state.sleep).not.toHaveBeenCalled();
   });
   it.each([
     { paymentStatus: "confirmed" }, { paymentStatus: "test_confirmed" }, { paymentStatus: "pending_confirmation" },
@@ -79,13 +77,14 @@ describe("unpaid Telegram reminders", () => {
     expect(await runPaymentReminders({ sleep: state.sleep })).toBe(0);
     expect(state.send).not.toHaveBeenCalled();
   });
-  it("does nothing in development and registers an hourly production worker", async () => {
+  it("never registers a payment reminder worker in development or production", async () => {
+    vi.mocked(registerScheduler).mockClear();
     vi.stubEnv("PUBLIC_URL", "");
     expect(await runPaymentReminders({ sleep: state.sleep })).toBe(0);
     registerPaymentReminderScheduler();
     expect(registerScheduler).not.toHaveBeenCalled();
     vi.stubEnv("PUBLIC_URL", "https://example.test");
     registerPaymentReminderScheduler();
-    expect(vi.mocked(registerScheduler).mock.calls.at(-1)?.[0].defaultIntervalMs).toBe(3_600_000);
+    expect(registerScheduler).not.toHaveBeenCalled();
   });
 });
