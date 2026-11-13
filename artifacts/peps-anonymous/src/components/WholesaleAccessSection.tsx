@@ -15,7 +15,8 @@ type WARData = {
   createdAt: string;
   rejectionReason: string | null;
 };
-type ApiResp = { request: WARData | null; cryptoOptions?: unknown[]; accessFee?: number | null };
+type FeeReview = { outdatedHigherFee: boolean; canReplace: boolean; paymentStarted: boolean };
+type ApiResp = { request: WARData | null; cryptoOptions?: unknown[]; accessFee?: number | null; feeReview?: FeeReview | null };
 
 export function WholesaleAccessSection() {
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,11 @@ export function WholesaleAccessSection() {
   const [accessFee, setAccessFee] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [feeReview, setFeeReview] = useState<FeeReview | null>(null);
+  const [confirmsNoPayment, setConfirmsNoPayment] = useState(false);
+  const [replacing, setReplacing] = useState(false);
+  const [reviewedRequestId, setReviewedRequestId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -31,6 +37,7 @@ export function WholesaleAccessSection() {
         const d: ApiResp = await r.json();
         setRequest(d.request);
         setAccessFee(typeof d.accessFee === "number" && Number.isFinite(d.accessFee) && d.accessFee > 0 ? d.accessFee : null);
+        setFeeReview(d.feeReview ?? null);
       }
     } finally {
       setLoading(false);
@@ -46,9 +53,35 @@ export function WholesaleAccessSection() {
       if (r.ok) {
         const d: ApiResp = await r.json();
         setRequest(d.request);
+        await fetchStatus();
       }
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleReplace = async () => {
+    if (!request || accessFee === null || !confirmsNoPayment) return;
+    setReplacing(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/account/wholesale-access/replace-outdated", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: request.id, expectedFee: accessFee, confirmsNoPayment }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Could not replace this request.");
+      setRequest(data.request);
+      setAccessFee(data.accessFee);
+      setFeeReview(data.feeReview);
+      setConfirmsNoPayment(false);
+      setSubmitted(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not replace this request.");
+      await fetchStatus();
+    } finally {
+      setReplacing(false);
     }
   };
 
@@ -185,8 +218,46 @@ export function WholesaleAccessSection() {
         <p className="text-xs mt-0.5" style={{ color: "var(--t-muted)" }}>One-time fee · returned as store credit</p>
       </div>
 
-      <PaymentPanel
-        apiPrefix="/api/account/wholesale-access"
+      {feeReview?.outdatedHigherFee && (
+        <div role="alert" className="rounded-xl p-4 space-y-3" style={{ background: "var(--t-surface)", border: "1.5px solid var(--t-border)", color: "var(--t-text)" }}>
+          <h3 className="font-bold">This request has an older, higher fee</h3>
+          <p className="text-sm">
+            Your original request is for <strong>${request.amountUsd}</strong>.
+            The current access fee is <strong>${accessFee}</strong>.
+          </p>
+          {feeReview.canReplace ? (
+            <>
+              <p className="text-sm">Before paying, replace this untouched request at the current fee. The old request stays in your history.</p>
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" className="mt-1" checked={confirmsNoPayment} disabled={replacing}
+                  onChange={event => setConfirmsNoPayment(event.target.checked)} />
+                I have not sent any payment for this request, including a test payment.
+              </label>
+              <button type="button" onClick={handleReplace} disabled={!confirmsNoPayment || replacing}
+                className="rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                style={{ background: "var(--t-blue)" }}>
+                {replacing ? "Replacing request..." : `Replace with current $${accessFee} fee`}
+              </button>
+              <p className="text-xs" style={{ color: "var(--t-muted)" }}>Already sent money? Do not reset or pay again. Contact support with your transaction details.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm">Payment details or a transaction have already been recorded, so the original amount is preserved. If you have not paid, contact support before sending money. Do not start a second payment.</p>
+              {reviewedRequestId !== request.id && (
+                <button type="button" onClick={() => setReviewedRequestId(request.id)}
+                  className="rounded-lg border px-3 py-2 text-sm font-semibold">
+                  Continue original ${request.amountUsd} request
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+
+      {(!feeReview?.outdatedHigherFee || (!feeReview.canReplace && reviewedRequestId === request.id)) && <PaymentPanel
+        key={request.id}
+        apiPrefix={`/api/account/wholesale-access/requests/${request.id}`}
         grandTotal={request.amountUsd}
         paymentStatus={paymentStatus}
         paymentTxHash={request.paymentTxHash}
@@ -194,7 +265,7 @@ export function WholesaleAccessSection() {
         testPaymentTxHash={request.testPaymentTxHash}
         paymentsEnabled={true}
         onStatusChange={handleStatusChange}
-      />
+      />}
     </div>
   );
 }
