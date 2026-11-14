@@ -47,6 +47,16 @@ export function inferFs3Supplier(orders: Order[], products: Fs3Product[], vendor
   return ids.size === 1 ? [...ids][0] : "";
 }
 
+/** Display all actual suppliers, not the supplier currently selected for export. */
+export function fs3OrderVendorLabels(order: Order, products: Fs3Product[], vendors: Fs3Supplier[]): string[] {
+  const labels = new Set<string>();
+  for (const line of order.lineItems ?? []) {
+    const id = inferFs3Supplier([{ ...order, lineItems: [line] }], products, vendors);
+    labels.add(vendors.find(vendor => vendor.id === id)?.name || "Vendor unknown");
+  }
+  return labels.size ? [...labels] : ["Vendor unknown"];
+}
+
 /** Supplier-cost precedence matches the wholesale supplier export. */
 export function fs3ProductCost(
   name: string, productId: string | null | undefined, products: Fs3Product[],

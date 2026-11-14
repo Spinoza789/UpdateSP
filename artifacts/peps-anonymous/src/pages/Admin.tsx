@@ -5,7 +5,7 @@ import { AccountTypeFilter, type AccountType } from "@/components/admin/AccountT
 import { LinkedTelegramUsername } from "@/components/admin/LinkedTelegramUsername";
 import { ReshipperPayouts } from "@/components/reshipper-payouts";
 import { wholesaleStatusLabel } from "@/lib/wholesale-status-label";
-import { aggregateFs3Orders, findFs3SavedCost, fs3ProductCost, fs3ProfitRowKey, inferFs3Supplier, matchesFs3Order, type Fs3Product, type Fs3Supplier } from "@/lib/fs3-order-tools";
+import { aggregateFs3Orders, findFs3SavedCost, fs3ProductCost, fs3ProfitRowKey, fs3OrderVendorLabels, inferFs3Supplier, matchesFs3Order, type Fs3Product, type Fs3Supplier } from "@/lib/fs3-order-tools";
 import { Fs3WholesaleFilters } from "@/components/admin/Fs3WholesaleFilters";
 import { isMultipleGbOrder } from "@/lib/gb-multiple-orders";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
@@ -8693,6 +8693,11 @@ function Fs3Content({ secret, onLock }: { secret: string; onLock: () => void }) 
           className="rounded border-input accent-primary"
         />
         <span className="text-xs font-medium text-foreground min-w-0 truncate"><AccountHandle username={o.telegramUsername} /></span>
+        {fs3OrderVendorLabels(o, supplierProducts, supplierVendors).map(vendor => (
+          <span key={vendor} title={`Vendor: ${vendor}`} className="text-[10px] font-semibold rounded-full border border-primary/15 bg-primary/10 text-primary px-2 py-0.5 max-w-full break-words">
+            {vendor}
+          </span>
+        ))}
         <span className="text-[10px] text-slate-400 shrink-0 whitespace-nowrap inline-flex items-center gap-0.5">
           <CalendarDays className="w-2.5 h-2.5" />
           {new Date(o.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" })}

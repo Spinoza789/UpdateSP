@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateFs3Orders, findFs3SavedCost, fs3ProductCost, matchesFs3Order, inferFs3Supplier, fs3ProfitRowKey } from "./fs3-order-tools";
+import { aggregateFs3Orders, findFs3SavedCost, fs3ProductCost, matchesFs3Order, inferFs3Supplier, fs3ProfitRowKey, fs3OrderVendorLabels } from "./fs3-order-tools";
 import type { Fs3CostMatch } from "@workspace/api-zod/fs3-costs";
 
 const approvedMatches: Fs3CostMatch[] = [
@@ -16,6 +16,31 @@ const products = [
 ];
 const vendors = [{ id: "uther", name: "UR", legacyCatalogueVendor: "Uther" }, { id: "other", name: "Other" }];
 const cost = (name: string) => name === "Water 3ml" ? 10 : null;
+describe("FS3 order vendor pills", () => {
+  it("shows the supplier name without repeating it for each line", () => {
+    expect(fs3OrderVendorLabels({ lineItems: [
+      { productId: "p1", productName: "BPC 10mg", quantity: 1 },
+      { productId: "p1", productName: "BPC 10mg", quantity: 2 },
+    ] }, products, vendors)).toEqual(["UR"]);
+  });
+  it("shows every supplier on mixed orders", () => {
+    expect(fs3OrderVendorLabels({ lineItems: [
+      { productId: "p1", productName: "BPC 10mg", quantity: 1 },
+      { productId: "p2", productName: "BPC 10mg", quantity: 1 },
+    ] }, products, vendors)).toEqual(["UR", "Other"]);
+  });
+  it("resolves legacy catalogue suppliers", () => {
+    expect(fs3OrderVendorLabels({ lineItems: [
+      { productId: "old", productName: "Water 3ml", quantity: 1 },
+    ] }, products, vendors)).toEqual(["UR"]);
+  });
+  it("does not guess a supplier for an unlinked historical line", () => {
+    expect(fs3OrderVendorLabels({ lineItems: [
+      { productName: "BPC 10mg", quantity: 1 },
+    ] }, products, vendors)).toEqual(["Vendor unknown"]);
+    expect(fs3OrderVendorLabels({}, products, vendors)).toEqual(["Vendor unknown"]);
+  });
+});
 describe("FS3 selected-order profit", () => {
   it("never guesses a different product strength from a partial saved-cost match", () => {
     expect(findFs3SavedCost([{ productName: "BPC 10mg", unitCost: 45 }], "BPC")).toBeNull();
