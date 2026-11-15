@@ -172,7 +172,7 @@ export async function isVendorSubmissionStale(tx: Executor, row: any): Promise<b
   return (await inspectVendorSubmission(tx, row)).stale;
 }
 
-export async function prepareVendorShipments(tx: Executor, vendorId: string, orderCodes: string[], purpose: "submission" | "export" = "submission") {
+export async function prepareVendorShipments(tx: Executor, vendorId: string, orderCodes: string[], purpose: "submission" | "export" = "submission", replacingSubmissionId?: string) {
   const vendor = (await getVendors()).find(v => v.id === vendorId);
   if (!vendor) throw new VendorPortalError("Choose a configured wholesale vendor.");
   const codes = [...new Set(orderCodes)];
@@ -202,7 +202,7 @@ export async function prepareVendorShipments(tx: Executor, vendorId: string, ord
     if (existing) {
       if (existing.vendorId !== vendorId) throw new VendorPortalError("This shipment is already submitted to another vendor.", 409);
       const stale = existing.sourceFingerprint !== source.fingerprint;
-      if (stale && purpose === "submission") throw new VendorPortalError("This submission is stale. Recall it in Admin before resubmitting.", 409);
+      if (stale && purpose === "submission" && existing.id !== replacingSubmissionId) throw new VendorPortalError("This submission is stale. Review and update it in Peps Anon Payment before resubmitting.", 409);
       if (!stale) {
         prepared.push({ ...existing, alreadySubmitted: true,
           ...(purpose === "export" ? supplierTextDetails(String(source.orders[0]?.telegramUsername ?? ""), existing.snapshot, vendor) : {}),

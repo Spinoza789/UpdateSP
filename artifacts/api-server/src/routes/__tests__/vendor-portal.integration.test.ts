@@ -262,6 +262,74 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect(rows[0].vendorId).toBe("vendor-b");
     expect(rows[0].snapshot.shipping.email).toBe("");
   }), 60000);
+  it("reviews a removed item before updating an unpaid supplier submission in place", () => fixture(async f => {
+    const extraId = randomUUID();
+    await f.tx.insert(store.fs3CostsTable).values({ productName: `${f.name} removed`, unitCost: "48.00" });
+    await f.tx.insert(store.orderLineItemsTable).values({
+      id: extraId, orderId: f.orderId, vendorId: "vendor-a", productId: `${f.name} removed`,
+      productName: `${f.name} removed`, quantity: "4", unitPrice: "60", lineTotal: "240",
+    });
+    const { row } = await submit(f);
+    await f.tx.delete(store.orderLineItemsTable).where(eq(store.orderLineItemsTable.id, extraId));
+    const path = `/admin/vendor-portal/orders/${row.id}/update`;
+    expect((await request(path, f.a, {})).status).toBe(403);
+    const preview = await request(path, undefined, {}, true);
+    expect(preview.status).toBe(200);
+    expect(preview.data.before.totalCost).toBe("282.00");
+    expect(preview.data.after.totalCost).toBe("90.00");
+    expect(preview.data.after.items).toHaveLength(1);
+    expect((await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.id, row.id)))[0].snapshot).toEqual(row.snapshot);
+    expect((await request(path, undefined, { previewToken: preview.data.previewToken }, true)).status).toBe(200);
+    const updated = (await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.id, row.id)))[0];
+    expect(updated.snapshot.totalCost).toBe("90.00");
+    expect(updated.id).toBe(row.id);
+    expect(updated.submittedAt).toEqual(row.submittedAt);
+    const ledger = await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true);
+    const corrected = ledger.data.orders.find((o: any) => o.id === row.id);
+    expect(corrected.stale).toBe(false);
+    expect(corrected.eligible).toBe(true);
+    expect(corrected.profit.salesUsd).toBe("1998.00");
+    const audits = await f.tx.select().from(store.vendorAuditTable).where(eq(store.vendorAuditTable.submissionId, row.id));
+    const audit = audits.find((a: any) => a.action === "submission_updated");
+    expect(audit.details.before.snapshot.totalCost).toBe("282.00");
+    expect(audit.details.after.snapshot.totalCost).toBe("90.00");
+  }));
+  it("rejects an update preview if supplier costs change before confirmation", () => fixture(async f => {
+    const { row } = await submit(f);
+    await f.tx.update(store.orderLineItemsTable).set({ quantity: "1", lineTotal: "999" }).where(eq(store.orderLineItemsTable.orderId, f.orderId));
+    const path = `/admin/vendor-portal/orders/${row.id}/update`;
+    const preview = await request(path, undefined, {}, true);
+    expect(preview.status).toBe(200);
+    await f.tx.update(store.fs3CostsTable).set({ unitCost: "25.00" }).where(eq(store.fs3CostsTable.productName, f.name));
+    expect((await request(path, undefined, { previewToken: preview.data.previewToken }, true)).status).toBe(409);
+    expect((await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.id, row.id)))[0].snapshot).toEqual(row.snapshot);
+  }));
+  it.each(["Processing", "Shipped", "Completed"])("does not update a %s supplier shipment", status => fixture(async f => {
+    const { row } = await submit(f);
+    await f.tx.update(store.vendorSubmissionsTable).set({ status }).where(eq(store.vendorSubmissionsTable.id, row.id));
+    expect((await request(`/admin/vendor-portal/orders/${row.id}/update`, undefined, {}, true)).status).toBe(409);
+  }));
+  it("does not update a supplier submission with uploaded evidence", () => fixture(async f => {
+    const { row } = await submit(f);
+    await f.tx.insert(store.vendorImagesTable).values({
+      id: randomUUID(), submissionId: row.id, objectPath: "fixture-image", filename: "fixture.jpg", uploadedBy: f.a,
+    });
+    expect((await request(`/admin/vendor-portal/orders/${row.id}/update`, undefined, {}, true)).status).toBe(409);
+  }));
+  it("rechecks fulfilment and customer order changes at confirmation", () => fixture(async f => {
+    const { row } = await submit(f);
+    await f.tx.update(store.orderLineItemsTable).set({ quantity: "1" }).where(eq(store.orderLineItemsTable.orderId, f.orderId));
+    const path = `/admin/vendor-portal/orders/${row.id}/update`;
+    const preview = await request(path, undefined, {}, true);
+    expect(preview.status).toBe(200);
+    await f.tx.update(store.orderLineItemsTable).set({ quantity: "3" }).where(eq(store.orderLineItemsTable.orderId, f.orderId));
+    expect((await request(path, undefined, { previewToken: preview.data.previewToken }, true)).status).toBe(409);
+    const second = await request(path, undefined, {}, true);
+    expect(second.status).toBe(200);
+    await f.tx.update(store.vendorSubmissionsTable).set({ status: "Processing" }).where(eq(store.vendorSubmissionsTable.id, row.id));
+    expect((await request(path, undefined, { previewToken: second.data.previewToken }, true)).status).toBe(409);
+    expect((await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.id, row.id)))[0].snapshot).toEqual(row.snapshot);
+  }));
   it("records admin supplier payments against real source orders without changing customer payment state", () => fixture(async f => {
     const { row } = await submit(f);
     const walletId = randomUUID(), address = "0x" + "1".repeat(40);
@@ -284,6 +352,7 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     }, true)).status).toBe(409);
     const recorded = await request("/admin/vendor-payments", undefined, input, true);
     expect(recorded.status).toBe(201);
+    expect((await request(`/admin/vendor-portal/orders/${row.id}/update`, undefined, {}, true)).status).toBe(409);
     expect(recorded.data.payment.usdAmount).toBe("90.00");
     expect(recorded.data.payment.orders).toMatchObject([{ submissionId: row.id, reference: f.code, amountUsd: "90.00",
       detail: { sourceType: "order", sourceId: f.orderId, currency: "USD", totalCost: "90.00", items: row.snapshot.items },

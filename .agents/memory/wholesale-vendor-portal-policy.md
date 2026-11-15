@@ -44,6 +44,16 @@ Bind payment review to the reviewed supplier-cost snapshot so resubmission canno
 silently change what an Admin records. Require a reviewed snapshot for every new
 allocation; older Admin pages must refresh rather than bypass this financial guard.
 
+Customer item changes must not silently replace a supplier submission. Admin
+must review the old and corrected items, delivery and supplier costs, then confirm
+the update. Preserve the original in audit history and leave receipts untouched.
+
+**Why:** After removing an out-of-stock item, the owner approved a review-and-update
+flow directly in Peps Anon Payment rather than automatic replacement.
+
+**How to apply:** Recheck the reviewed change at confirmation. Paid submissions
+and shipments with started fulfilment, tracking or photos remain protected.
+
 Removing an order from Peps Anon Payment means recalling its supplier submission
 from the vendor portal and payment list, not cancelling or deleting the customer order.
 

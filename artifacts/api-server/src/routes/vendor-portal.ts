@@ -1,5 +1,6 @@
 import { track17Client } from "../lib/track17-service";
 import { assertVendorSubmissionUnpaid } from "../lib/vendor-payments";
+import { reviewVendorSubmissionUpdate } from "../lib/vendor-submission-update";
 import { Router, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "node:crypto";
@@ -297,6 +298,11 @@ router.get("/admin/vendor-portal/orders/:id", handled(async (req, res) => {
     ...publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "admin/vendor-portal")),
     vendorId: row.vendorId, vendorName: vendors.find(v => v.id === row.vendorId)?.name ?? row.vendorId,
   });
+}));
+router.post("/admin/vendor-portal/orders/:id/update", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.set("Cache-Control", "no-store").json(await db.transaction(tx =>
+    reviewVendorSubmissionUpdate(tx, String(req.params.id), getAdminUsername(res), req.body?.previewToken)));
 }));
 router.delete("/admin/vendor-portal/orders/:id", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;

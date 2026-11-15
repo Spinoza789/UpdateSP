@@ -67,7 +67,8 @@ export function siteDomainPolicy(options: { production: boolean; developmentHost
       const staticAsset = /^\/assets\/[a-z0-9_./-]+\.(?:js|css|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp3|mp4|wasm)$/i.test(path)
         || (path === "/favicon.svg" || path === "/favicon.ico") || /^\/brand\/[a-z0-9_-]+\.(?:svg|png)$/i.test(path);
       const vendorAdminApi = VENDOR_ADMIN_APIS.has(path)
-        || /^\/api\/admin\/vendor-portal\/(?:orders|vendor-images)\/[a-z0-9_-]+$/i.test(path);
+        || /^\/api\/admin\/vendor-portal\/(?:orders|vendor-images)\/[a-z0-9_-]+$/i.test(path)
+        || /^\/api\/admin\/vendor-portal\/orders\/[a-z0-9_-]+\/update$/i.test(path);
       if (!vendorApi && !vendorAdminApi && !VENDOR_PAGES.has(path) && !HEALTH_PATHS.has(path) && !staticAsset) {
         res.status(404).json({ error: "Not found" }); return;
       }

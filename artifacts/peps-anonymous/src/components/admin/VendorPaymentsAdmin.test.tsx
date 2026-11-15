@@ -141,6 +141,42 @@ async function mount() {
   await act(async () => root!.render(createElement(Component)));
   await change("payment-vendor", "v1");
 }
+test("reviews and confirms a corrected supplier submission then refreshes its cost and profit", async () => {
+  await mount();
+  const ledger = structuredClone(data);
+  ledger.orders[0].stale = true;
+  const path = "/api/admin/vendor-portal/orders/o1/update";
+  adminAuth.request = async (url, init = {}) => {
+    const body = init.body ? JSON.parse(String(init.body)) : null;
+    requests.push({ path: url, method: init.method, body });
+    if (url === path) {
+      if (body?.previewToken) {
+        assert.equal(body.previewToken, tok("updated"));
+        ledger.orders[0].stale = false;
+        ledger.orders[0].totalCost = "7.00";
+        return new Response(JSON.stringify({ ok: true }));
+      }
+      return new Response(JSON.stringify({
+        previewToken: tok("updated"),
+        before: { items: [{ productName: "ARA removed", quantity: 4, unitCost: "48.00", lineTotal: "192.00" }], productCost: "192.00", shippingCost: "80.00", totalCost: "272.00" },
+        after: { items: [{ productName: "Remaining item", quantity: 1, unitCost: "7.00", lineTotal: "7.00" }], productCost: "7.00", shippingCost: "80.00", totalCost: "87.00" },
+      }));
+    }
+    return new Response(JSON.stringify(ledger));
+  };
+  await click("payment-refresh");
+  await click("payment-expand-o1");
+  await click("payment-update-review");
+  assert.match(el("payment-update-preview").textContent!, /ARA removed/);
+  assert.match(el("payment-update-preview").textContent!, /Remaining item/);
+  assert.match(el("payment-update-preview").textContent!, /87\.00/);
+  assert.equal(requests.filter(r => r.path === path && r.body?.previewToken).length, 0);
+  await click("payment-update-confirm");
+  assert.equal(requests.filter(r => r.path === path && r.body?.previewToken).length, 1);
+  assert.equal(document.querySelector('[data-testid="payment-update-preview"]'), null);
+  assert.match(el("payment-order-detail-o1").textContent!, /7\.00/);
+  assert.ok(el("payment-detail-record"));
+});
 test("shows delivery and starts an external payment for only the opened order", async () => {
   await mount();
   await click("payment-order-o2");
@@ -151,6 +187,52 @@ test("shows delivery and starts an external payment for only the opened order", 
   assert.match(el("payment-record-dialog").textContent!, /1 order/);
   assert.equal(document.querySelector('[data-testid="payment-order-drawer"]'), null);
   assert.equal(requests.filter((r) => r.method === "POST").length, 0);
+});
+test("cancelled or failed submission updates do not change supplier costs", async () => {
+  await mount();
+  const ledger = structuredClone(data);
+  ledger.orders[0].stale = true;
+  let confirms = 0;
+  adminAuth.request = async (url, init = {}) => {
+    if (url.endsWith("/o1/update")) {
+      const body = JSON.parse(String(init.body));
+      if (body.previewToken) {
+        confirms++;
+        return new Response(JSON.stringify({ error: "Order changed. Review again." }), { status: 409 });
+      }
+      return new Response(JSON.stringify({
+        previewToken: tok("corrected"), before: { items: [], totalCost: "10.10" }, after: { items: [], totalCost: "5.00" },
+      }));
+    }
+    return new Response(JSON.stringify(ledger));
+  };
+  await click("payment-refresh");
+  await click("payment-expand-o1");
+  await click("payment-update-review");
+  await click("payment-update-cancel");
+  assert.equal(confirms, 0);
+  assert.equal(document.querySelector('[data-testid="payment-update-preview"]'), null);
+  await click("payment-update-review");
+  await click("payment-update-confirm");
+  assert.equal(confirms, 1);
+  assert.match(document.body.textContent!, /Order changed\. Review again/);
+  assert.equal(document.querySelector('[data-testid="payment-update-preview"]'), null);
+  assert.equal(document.querySelector('[data-testid="payment-detail-record"]'), null);
+});
+test("paid or started submissions cannot be updated from the payment drawer", async () => {
+  await mount();
+  const ledger = structuredClone(data);
+  ledger.orders[0].stale = true;
+  ledger.orders[0].paymentId = "paid";
+  ledger.orders[1].stale = true;
+  ledger.orders[1].status = "Shipped";
+  adminAuth.request = async () => new Response(JSON.stringify(ledger));
+  await click("payment-refresh");
+  await click("payment-expand-o1");
+  assert.equal(document.querySelector('[data-testid="payment-update-review"]'), null);
+  await click("payment-detail-close");
+  await click("payment-expand-o2");
+  assert.equal(document.querySelector('[data-testid="payment-update-review"]'), null);
 });
 test("per-order payment cannot replace an unsaved transfer and paid orders offer a receipt", async () => {
   await mount();

@@ -24,7 +24,8 @@ describe("site domain boundary", () => {
       "/api/admin/auth/login", "/api/admin/auth/verify", "/api/admin/auth/me", "/api/admin/auth/logout",
       "/api/admin/auth/legacy-login", "/api/admin/auth/legacy-me", "/api/admin/auth/legacy-logout",
       "/api/admin/vendor-portal/orders", "/api/admin/vendor-portal/orders/abc",
-      "/api/admin/vendor-portal/vendor-images/abc", "/api/admin/vendor-portal/preview", "/api/admin/vendor-portal/submit"]) {
+      "/api/admin/vendor-portal/vendor-images/abc", "/api/admin/vendor-portal/preview", "/api/admin/vendor-portal/submit",
+      "/api/admin/vendor-portal/orders/abc/update"]) {
       expect((await request("pepsanonymous.com", path)).status, path).toBe(200);
     }
     for (const path of ["/api/admin/orders", "/api/admin/vendor-accounts", "/api/admin/security/disable",

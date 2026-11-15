@@ -7,6 +7,7 @@ import { EMPTY_FILTERS, LedgerOrders } from "./peps-anon-payment/LedgerOrders";
 import { ReceiptDrawer, ReceiptHistory } from "./peps-anon-payment/ReceiptHistory";
 import { RecordPaymentPanel, type Draft, type PaymentForm } from "./peps-anon-payment/RecordPaymentPanel";
 import { OrderDrawer } from "./peps-anon-payment/OrderDrawer";
+import type { SubmissionUpdatePreview } from "./peps-anon-payment/SubmissionUpdateReview";
 import { Notice, Overlay } from "./peps-anon-payment/Overlay";
 import { WalletList } from "./peps-anon-payment/WalletList";
 import { tabKeys } from "./peps-anon-payment/tabKeys";
@@ -36,6 +37,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   const [voidId, setVoidId] = useState("");
   const [removeTarget, setRemoveTarget] = useState<LedgerOrder | null>(null);
   const [removeReason, setRemoveReason] = useState("");
+  const [updatePreview, setUpdatePreview] = useState<SubmissionUpdatePreview | null>(null);
   const [reason, setReason] = useState("");
   const [ledgerKey, setLedgerKey] = useState(0);
   // Navigation state (vendor-scoped, survives view switches and drawer close)
@@ -58,6 +60,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
     setLoading(true);
     setDraft(null);
     setRemoveTarget(null);
+    setUpdatePreview(null);
     setSelected(new Set());
     setSelNote(null);
     setLoadError(null);
@@ -87,7 +90,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   }, [vendorId, load]);
 
   const transferDirty = !!(draft || form.amount || form.txid || form.paidAt || form.note);
-  const dirty = !!(transferDirty || voidId || removeTarget || selected.size || busy);
+  const dirty = !!(transferDirty || voidId || removeTarget || updatePreview || selected.size || busy);
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
   const activeRef = useRef(active);
@@ -127,6 +130,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
     setSelected(new Set());
     setVoidId("");
     setRemoveTarget(null);
+    setUpdatePreview(null);
     setReason("");
     setMessage(null);
     setLoadError(null);
@@ -218,6 +222,39 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
     }
   }
 
+  async function updateSubmission(confirm = false) {
+    if (lock.current || busy || transferDirty || voidId || removeTarget || !detailId || (confirm && updatePreview?.id !== detailId)) return;
+    const forVendor = vendorId;
+    const id = detailId;
+    lock.current = true;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const result = await request(`/api/admin/vendor-portal/orders/${encodeURIComponent(id)}/update`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(confirm ? { previewToken: updatePreview!.previewToken } : {}),
+      });
+      if (vendorRef.current !== forVendor) return;
+      if (confirm) {
+        await load(forVendor);
+        setMessage({ ok: true, text: "Supplier submission updated. Costs and profit now reflect the corrected order. The original submission is retained in audit history." });
+      } else {
+        if (!/^[a-f0-9]{64}$/.test(result?.previewToken) || !Array.isArray(result?.before?.items) || !Array.isArray(result?.after?.items)) {
+          throw new Error("Could not load an update preview. Please try again.");
+        }
+        setUpdatePreview({ ...result, id });
+      }
+    } catch (error) {
+      if (vendorRef.current === forVendor) {
+        setUpdatePreview(null);
+        setMessage({ ok: false, text: error instanceof Error ? error.message : "Could not update supplier submission." });
+      }
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+
   function copy(address: string) {
     const fail = () => setMessage({ ok: false, text: "Could not copy address. Select and copy it above." });
     const clip = typeof navigator !== "undefined" ? navigator.clipboard : undefined;
@@ -230,18 +267,18 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   const detailOrder = detailId ? (visible[detailIndex] ?? ledger?.orders.find((o) => o.id === detailId) ?? null) : null;
   function openDetail(id: string) { setMessage(null); setDetailId(id); }
   function step(delta: number) {
-    if (removeTarget || busy) return;
+    if (removeTarget || updatePreview || busy) return;
     const next = visible[detailIndex + delta];
     if (!next) return;
     setDetailId(next.id);
     setPage(Math.floor((detailIndex + delta) / PAGE_SIZE) + 1);
   }
-  function closeDetail() { if (busy) return; setRemoveTarget(null); setDetailId(null); }
+  function closeDetail() { if (busy) return; setRemoveTarget(null); setUpdatePreview(null); setDetailId(null); }
 
   const voidTarget = ledger?.payments.find((p) => p.id === voidId);
   const receipt = receiptId ? ledger?.payments.find((p) => p.id === receiptId) ?? null : null;
   const overlayOpen = !!(recordOpen || (detailOrder && ledger) || receipt || walletsOpen);
-  const locked = busy || !!draft || !!voidId || !!removeTarget;
+  const locked = busy || !!draft || !!voidId || !!removeTarget || !!updatePreview;
 
   return <section className="pap-root space-y-4" data-testid="vendor-payments-admin">
     <header className="flex flex-wrap items-end justify-between gap-3">
@@ -317,6 +354,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
       </Overlay>}
 
       {active && detailOrder && <OrderDrawer order={detailOrder} index={detailIndex < 0 ? 0 : detailIndex} total={detailIndex < 0 ? 1 : visible.length}
+        updatePreview={updatePreview} onUpdateReview={() => void updateSubmission()} onUpdateConfirm={() => void updateSubmission(true)} onUpdateCancel={() => setUpdatePreview(null)}
         paymentLocked={locked || transferDirty}
         onRecord={() => {
           if (locked || transferDirty || lock.current || !isEligible(detailOrder)) return;

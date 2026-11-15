@@ -4,9 +4,12 @@ import { Overlay, Notice } from "./Overlay";
 import { OrderBreakdown } from "./OrderBreakdown";
 import { FulfilmentText, SupplierBadge } from "./StatusBadge";
 import { isEligible, moneyOf, orderState, signedMoneyOf, type LedgerOrder } from "./model";
+import { SubmissionUpdateReview, type SubmissionUpdatePreview } from "./SubmissionUpdateReview";
 
 export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, selected, onToggle, locked, message,
-  onRecord, onReceipt, paymentLocked, onRemove, removeTarget, onRemoveCancel, onRemoveConfirm, removeBusy, removeReason, onRemoveReason, busy }: {
+  onRecord, onReceipt, paymentLocked, onRemove, removeTarget, onRemoveCancel, onRemoveConfirm, removeBusy, removeReason, onRemoveReason, busy,
+  updatePreview, onUpdateReview, onUpdateConfirm, onUpdateCancel }: {
+  updatePreview: SubmissionUpdatePreview | null; onUpdateReview: () => void; onUpdateConfirm: () => void; onUpdateCancel: () => void;
   onRecord: () => void; onReceipt: () => void; paymentLocked: boolean;
   order: LedgerOrder; index: number; total: number; onPrev: () => void; onNext: () => void; onClose: () => void;
   selected: boolean; onToggle: () => void; locked: boolean; message: { ok: boolean; text: string } | null;
@@ -23,8 +26,8 @@ export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, sele
     title={<span className="font-mono">{o.reference}</span>}
     subtitle={<span>Order {index + 1} of {total} in current filter</span>}
     headerExtra={<div className="flex gap-1">
-      <button type="button" className="pap-btn !px-2" aria-label="Previous order" disabled={index <= 0 || removing} onClick={onPrev} data-testid="payment-detail-prev"><ChevronLeft className="h-4 w-4" /></button>
-      <button type="button" className="pap-btn !px-2" aria-label="Next order" disabled={index >= total - 1 || removing} onClick={onNext} data-testid="payment-detail-next"><ChevronRight className="h-4 w-4" /></button>
+      <button type="button" className="pap-btn !px-2" aria-label="Previous order" disabled={index <= 0 || removing || busy || !!updatePreview} onClick={onPrev} data-testid="payment-detail-prev"><ChevronLeft className="h-4 w-4" /></button>
+      <button type="button" className="pap-btn !px-2" aria-label="Next order" disabled={index >= total - 1 || removing || busy || !!updatePreview} onClick={onNext} data-testid="payment-detail-next"><ChevronRight className="h-4 w-4" /></button>
     </div>}
     footer={<div className="flex flex-wrap items-center justify-between gap-2">
       {isEligible(o) ? <button type="button" className="pap-btn pap-btn-primary" disabled={paymentLocked} onClick={onRecord} data-testid="payment-detail-record">Record payment for this order</button>
@@ -62,7 +65,12 @@ export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, sele
     {(o.stale || o.reviewReason) && <div className="mb-4 rounded-lg border-l-4 p-3 text-xs" style={{ borderColor: "#E9A020", background: "color-mix(in srgb, #E9A020 8%, var(--t-surface))" }}>
       {o.stale && <p className="font-semibold">Stale submission · awaiting resubmission</p>}
       {o.reviewReason && <p>{o.reviewReason}</p>}
+      {o.stale && !o.paymentId && o.status === "Submitted" && !updatePreview && <>
+        <button type="button" className="pap-btn mt-3" disabled={paymentLocked} onClick={onUpdateReview} data-testid="payment-update-review">Review updated submission</button>
+        {paymentLocked && <p className="mt-2">Finish or discard any payment draft or removal before reviewing an update.</p>}
+      </>}
     </div>}
+    {updatePreview && <SubmissionUpdateReview preview={updatePreview} busy={busy} onConfirm={onUpdateConfirm} onCancel={onUpdateCancel} />}
     <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
       {stat("Supplier cost", moneyOf(o.totalCost), "var(--t-blue-deep)")}
       {stat("Sold price · products only", moneyOf(p?.salesUsd))}
