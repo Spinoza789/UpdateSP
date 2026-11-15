@@ -6,6 +6,7 @@ import VendorTelegramAdmin from "./VendorTelegramAdmin";
 import VendorThreadsAdmin from "./VendorThreadsAdmin";
 import VendorBroadcastAdmin from "./VendorBroadcastAdmin";
 import { CostBreakdown, ShippingBlock, StatusPill, type VendorOrder } from "@/pages/VendorPortal";
+import { TrackingParcelList } from "@/components/VendorTrackingParcels";
 
 interface AdminData {
   vendors: { id: string; name: string }[];
@@ -162,7 +163,7 @@ export default function VendorPortalAdmin({ secret }: { secret: string }) {
           <div className="rounded-xl p-3 space-y-3" style={{ border: "1px solid var(--t-blue-25)" }} data-testid="submission-detail">
             <div className="flex items-center gap-2"><span className="font-mono font-bold">{detail.reference}</span><StatusPill status={detail.status} stale={detail.stale} />
               <button onClick={() => setDetail(null)} aria-label="Close detail" className="ml-auto p-1"><X className="w-4 h-4" /></button></div>
-            {detail.trackingNumber && <p className="text-sm">Tracking: <span className="font-mono">{detail.carrier} {detail.trackingNumber}</span></p>}
+            {detail.trackingNumber && <TrackingParcelList order={detail} />}
             {detail.status === "Submitted" && <button type="button" className="rounded-lg border px-3 py-2 text-sm disabled:opacity-50" disabled={recalling} onClick={recall}>Recall unstarted submission</button>}
             <div className="grid md:grid-cols-[1.4fr_1fr] gap-3"><CostBreakdown order={detail} /><ShippingBlock order={detail} /></div>
             {detail.images.length > 0 && <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">{detail.images.map(i => imgUrls[i.id]

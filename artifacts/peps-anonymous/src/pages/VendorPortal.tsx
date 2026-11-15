@@ -10,6 +10,7 @@ import VendorAccountAuth from "@/components/VendorAccountAuth";
 import { VendorSetupGuide, type VendorSetupStep } from "@/components/VendorSetupGuide";
 import { useVendorWallets, VendorWalletPanel, VendorPaymentHistory } from "@/components/VendorWallets";
 import VendorTrackingImport from "@/components/VendorTrackingImport";
+import { AdditionalTrackingParcels, TrackingParcelList, vendorTrackingParcels, type VendorTrackingParcel } from "@/components/VendorTrackingParcels";
 import { ClosedBanner, IssueBadge, OrderIssuePanel, SettingsNavIcon, VendorSettingsView, type VendorIssue, useVendorIssues, useVendorSettings } from "@/components/VendorExtras";
 import { VendorMessagesView, type MessageDraft, useVendorThreads } from "@/components/VendorMessages";
 import { CriticalBanner, NotificationBell, type NotificationTarget, useVendorNotifications } from "@/components/VendorNotifications";
@@ -26,6 +27,7 @@ export interface VendorOrder {
   items: VendorOrderItem[]; currency: string; productCost: string; shippingCost: string; totalCost: string;
   shipping: { name: string; address: string; country: string; phone: string; email: string };
   trackingNumber: string | null; carrier: string | null;
+  trackingPackages?: VendorTrackingParcel[];
   images: { id: string; filename: string; url: string; createdAt: string }[];
 }
 interface VendorMe { vendorId: string; vendorName: string; username: string }
@@ -244,7 +246,7 @@ export default function VendorPortal() {
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = (orders ?? []).filter(o => (tab === "all" || stage(o) === tab) && (!q ||
-      [o.reference, o.shipping.name, o.shipping.country, o.trackingNumber ?? "", ...o.items.map(i => i.productName)].some(v => v.toLowerCase().includes(q))));
+      [o.reference, o.shipping.name, o.shipping.country, ...vendorTrackingParcels(o).map(p => p.internationalTrackingNumber), ...o.items.map(i => i.productName)].some(v => v.toLowerCase().includes(q))));
     return list.sort((a, b) => sort === "value" ? Number(b.totalCost) - Number(a.totalCost) : sort === "newest" ? time(b) - time(a) : time(a) - time(b));
   }, [orders, tab, query, sort]);
 
@@ -703,6 +705,8 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [tracking, setTracking] = useState(order.trackingNumber ?? "");
+  const [extraParcels, setExtraParcels] = useState(() => vendorTrackingParcels(order).slice(1));
+  const [trackingBase, setTrackingBase] = useState(() => vendorTrackingParcels(order));
   const knownCarrier = !order.carrier || CARRIERS.includes(order.carrier);
   const [carrierPick, setCarrierPick] = useState(order.carrier ? (knownCarrier ? order.carrier : "other") : (defaultCarrier && CARRIERS.includes(defaultCarrier) ? defaultCarrier : ""));
   const [carrierOther, setCarrierOther] = useState(knownCarrier ? "" : order.carrier ?? "");
@@ -762,7 +766,13 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
     e.preventDefault();
     if (!carrier) { setMsg({ ok: false, text: "Choose a carrier." }); return; }
     if (!tracking.trim()) { setMsg({ ok: false, text: "Enter a tracking number." }); return; }
-    const saved = await run("tracking", () => patchOrder(order.id, { action: "tracking", trackingNumber: tracking.trim(), carrier }),
+    if (extraParcels.some(p => !p.courier.trim() || !p.internationalTrackingNumber.trim())) {
+      setMsg({ ok: false, text: "Enter a tracking number and carrier for every parcel." }); return;
+    }
+    const primary = trackingBase[0];
+    const trackingPackages = [{ id: primary?.id ?? "legacy-0", localTrackingNumber: primary?.localTrackingNumber ?? null,
+      internationalTrackingNumber: tracking.trim(), courier: carrier }, ...extraParcels.map(p => ({ ...p, courier: p.courier.trim(), internationalTrackingNumber: p.internationalTrackingNumber.trim() }))];
+    const saved = await run("tracking", () => patchOrder(order.id, { action: "tracking", trackingPackages, expectedTrackingPackages: trackingBase }),
       order.images.length ? "Tracking saved. The order is now marked fulfilled." : "Tracking saved. Add a packing photo so the customer can see their parcel.");
     if (saved) setEditTracking(false);
   };
@@ -877,13 +887,19 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
             </ul>
           </Card>
 
-          <Card title={t("Shipment")} actions={shipped && !editTracking && !locked ? <Btn variant="plain" onClick={() => setEditTracking(true)} data-testid="button-edit-tracking"><Pencil className="w-3.5 h-3.5" />{t("Edit")}</Btn> : undefined}>
+          <Card title={t("Shipment")} actions={shipped && !editTracking && !locked ? <Btn variant="plain" onClick={() => {
+            setTracking(order.trackingNumber ?? ""); setExtraParcels(vendorTrackingParcels(order).slice(1));
+            setTrackingBase(vendorTrackingParcels(order));
+            const currentCarrier = order.carrier ?? "";
+            setCarrierPick(CARRIERS.includes(currentCarrier) ? currentCarrier : currentCarrier ? "other" : "");
+            setCarrierOther(CARRIERS.includes(currentCarrier) ? "" : currentCarrier);
+            setEditTracking(true);
+          }} data-testid="button-edit-tracking"><Pencil className="w-3.5 h-3.5" />{t("Edit")}</Btn> : undefined}>
             {shipped && !editTracking ? (
               <div className="flex items-center gap-3 rounded-lg p-3" style={{ background: "var(--t-surface2)" }}>
                 <span className="w-9 h-9 rounded-lg grid place-items-center shrink-0" style={{ background: TONES.success.bg, color: TONES.success.fg }}><Truck className="w-4 h-4" /></span>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold" style={{ color: "var(--t-text)" }}>{order.carrier}</p>
-                  <p className="text-[13px] font-mono break-all" style={muted} data-testid="text-tracking">{order.trackingNumber}</p>
+                  <TrackingParcelList order={order} />
                 </div>
               </div>
             ) : (
@@ -901,8 +917,16 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
                 </div>
                 {carrierPick === "other" && <label className="text-xs font-medium sm:col-span-2" style={muted}>{t("Carrier name")}
                   <input value={carrierOther} onChange={e => setCarrierOther(e.target.value)} disabled={locked} required maxLength={120} className={`${fieldCls} mt-1`} style={field} data-testid="input-carrier" /></label>}
+                <div className="sm:col-span-2">
+                  <AdditionalTrackingParcels parcels={extraParcels} onChange={setExtraParcels} disabled={locked || !!busy}
+                    detect={async number => {
+                      const response = await vendorFetch(`/api/vendor/orders/${encodeURIComponent(order.id)}/detect-carrier`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ trackingNumber: number }) });
+                      if (!response.ok) throw new Error("Detection unavailable");
+                      return (await response.json()).carrierCode ?? null;
+                    }} />
+                </div>
                 <div className="sm:col-span-2 flex flex-wrap items-center justify-end gap-2">
-                  {shipped && <Btn onClick={() => { setEditTracking(false); setTracking(order.trackingNumber ?? ""); }}>{t("Cancel")}</Btn>}
+                  {shipped && <Btn onClick={() => { setEditTracking(false); setTracking(order.trackingNumber ?? ""); setExtraParcels(vendorTrackingParcels(order).slice(1)); }}>{t("Cancel")}</Btn>}
                   <Btn type="submit" variant="primary" disabled={locked || !!busy || detectingCarrier} data-testid="button-save-tracking">
                     {busy === "tracking" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}{t(shipped ? "Update tracking" : "Save tracking and mark fulfilled")}</Btn>
                 </div>

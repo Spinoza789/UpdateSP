@@ -108,6 +108,8 @@ export function publicVendorOrder(row: any, stale: boolean, images: any[]) {
       phone: snapshot.shipping.phone, email: snapshot.shipping.email,
     },
     trackingNumber: row.trackingNumber ?? null, carrier: row.carrier ?? null,
+    trackingPackages: row.trackingPackages?.length ? row.trackingPackages : row.trackingNumber
+      ? [{ id: "legacy-0", courier: row.carrier || "other", internationalTrackingNumber: row.trackingNumber, localTrackingNumber: null }] : [],
     images: images.map(i => ({ id: i.id, filename: i.filename, url: i.url, createdAt: i.createdAt })),
   };
 }

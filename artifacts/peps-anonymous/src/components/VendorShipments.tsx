@@ -1,6 +1,7 @@
 import { vendorTranslate as vt, useVendorLanguage, getVendorLanguage } from "@/lib/vendor-language";
 import { useEffect, useState } from "react";
 import { Package, AlertTriangle, ExternalLink } from "lucide-react";
+import { vendorTrackingParcels, type VendorTrackingParcel } from "./VendorTrackingParcels";
 
 export interface VendorShipmentImage { id: string; url: string; filename: string; createdAt: string }
 export interface VendorShipment {
@@ -9,6 +10,7 @@ export interface VendorShipment {
   status: string;
   trackingNumber: string | null;
   carrier: string | null;
+  trackingPackages?: VendorTrackingParcel[];
   trackingMasked: boolean;
   images: VendorShipmentImage[];
 }
@@ -64,15 +66,14 @@ export function VendorShipments({ orderId, showImages = true }: { orderId: strin
             <span className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>{s.vendorName}</span>
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full capitalize" style={{ background: "var(--t-blue-08)", color: "var(--t-blue)" }}>{vt(shipmentStatusLabel(s.status))}</span>
           </div>
-          {s.trackingNumber ? (
-            <div className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1" style={{ color: "var(--t-muted)" }}>
-              <span className="font-mono" style={{ color: "var(--t-text)" }} data-testid={`text-shipment-tracking-${s.id}`}>{s.trackingNumber}</span>
-              {s.carrier && <span>· {s.carrier}</span>}
-              {!s.trackingMasked && (
-                <a href={`https://t.17track.net/en#nums=${encodeURIComponent(s.trackingNumber)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold underline" style={{ color: "var(--t-blue)" }}>
-                  <ExternalLink className="w-3 h-3" /> {vt("Track")} </a>
-              )}
-            </div>
+          {s.trackingNumber && !s.trackingMasked ? (
+            <div className="space-y-2">{vendorTrackingParcels(s).map(p => <div key={p.id} className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1" style={{ color: "var(--t-muted)" }}>
+              <span className="font-mono break-all" style={{ color: "var(--t-text)" }} data-testid={`text-shipment-tracking-${s.id}`}>{p.internationalTrackingNumber}</span>
+              {p.courier && <span>· {p.courier}</span>}
+              <a href={`https://t.17track.net/en#nums=${encodeURIComponent(p.internationalTrackingNumber)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold underline" style={{ color: "var(--t-blue)" }}>
+                <ExternalLink className="w-3 h-3" /> {vt("Track")}</a>
+              {p.localTrackingNumber && <span className="font-mono break-all">{vt("Local tracking")}: {p.localTrackingNumber}</span>}
+            </div>)}</div>
           ) : (
             <p className="text-xs" style={{ color: "var(--t-muted)" }}>{vt("No tracking yet")}</p>
           )}

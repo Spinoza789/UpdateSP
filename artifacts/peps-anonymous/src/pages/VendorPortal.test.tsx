@@ -264,6 +264,40 @@ it("opens wallet Settings when the orders API requires wallet setup", async () =
   expect(fetchMock.mock.calls.filter(([url]) => url === "/api/vendor/orders")).toHaveLength(1);
 });
 
+it("adds separate tracking numbers and carriers in the vendor shipment form", async () => {
+  const { OrderDetail } = await import("./VendorPortal");
+  const { setVendorCsrfToken } = await import("../lib/vendor-auth-client");
+  setVendorCsrfToken("fixture-token");
+  const saved: any[] = [];
+  vi.stubGlobal("fetch", vi.fn(async (_url: string, options?: RequestInit) => {
+    if (options?.method === "PATCH") saved.push(JSON.parse(options.body as string));
+    return Response.json({ ok: true });
+  }));
+  const el = setup();
+  const order = { id: "multi", reference: "123", status: "Shipped", submittedAt: new Date().toISOString(), stale: false,
+    items: [], currency: "USD", productCost: "0", shippingCost: "0", totalCost: "0",
+    shipping: { name: "Test", address: "Street", country: "UK", phone: "", email: "" },
+    trackingNumber: "ABC123", carrier: "DHL", images: [] };
+  await act(async () => root.render(createElement(OrderDetail, { order, onBack: () => {}, onChanged: async () => {}, prev: null, next: null, onOpen: () => {} })));
+  await act(async () => (el.querySelector('[data-testid="button-edit-tracking"]') as HTMLElement).click());
+  await act(async () => (el.querySelector('[data-testid="button-add-tracking"]') as HTMLElement).click());
+  const setInput = (selector: string, value: string, tag: "input" | "select") => {
+    const node = el.querySelector(selector)!;
+    const proto = tag === "input" ? dom.window.HTMLInputElement.prototype : dom.window.HTMLSelectElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, "value")!.set!.call(node, value);
+    node.dispatchEvent(new dom.window.Event(tag === "input" ? "input" : "change", { bubbles: true }));
+  };
+  await act(async () => {
+    setInput('[data-testid="input-tracking-1"]', "RM123456GB", "input");
+    setInput('[data-testid="select-carrier-1"]', "Royal Mail", "select");
+  });
+  await act(async () => el.querySelector('[data-testid="button-save-tracking"]')!.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })));
+  await settle();
+  expect(saved).toHaveLength(1);
+  expect(saved[0].expectedTrackingPackages).toEqual([{id: "legacy-0", courier: "DHL", internationalTrackingNumber: "ABC123", localTrackingNumber: null}]);
+  expect(saved[0].trackingPackages.map((p: any) => [p.internationalTrackingNumber, p.courier])).toEqual([["ABC123", "DHL"], ["RM123456GB", "Royal Mail"]]);
+}, 20000);
+
  it("offers the 17TRACK catalogue and detects the carrier on tracking blur", async () => {
   const { OrderDetail } = await import("./VendorPortal");
   const { CARRIERS_17TRACK } = await import("../lib/carriers");

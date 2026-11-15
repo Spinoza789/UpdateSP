@@ -47,6 +47,9 @@ export const vendorSubmissionsTable = pgTable("vendor_submissions", {
   sourceFingerprint: text("source_fingerprint").notNull(),
   status: text("status").notNull().default("Submitted"),
   trackingNumber: text("tracking_number"),
+  trackingPackages: jsonb("tracking_packages").$type<Array<{
+    id: string; courier: string; internationalTrackingNumber: string; localTrackingNumber: string | null;
+  }>>(),
   carrier: text("carrier"),
   submittedBy: text("submitted_by").notNull(),
   submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),

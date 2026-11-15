@@ -488,6 +488,7 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     const shipments = await request(`/account/orders/${f.orderId}/vendor-shipments`,f.member);
     expect(shipments.data.shipments).toHaveLength(2);
     expect(shipments.data.shipments.map((s:any)=>s.trackingNumber).sort()).toEqual(["TESTA12345","TESTB12345"]);
+    expect(shipments.data.shipments.map((s:any)=>s.trackingPackages.length)).toEqual([1,1]);
     expect((await request(`/account/orders/${f.orderId}/vendor-shipments`,f.other)).status).toBe(404);
   }));
   it("exports saved costs with case-variant names without changing calculated vendor shipping", () => fixture(async f => {
@@ -998,6 +999,49 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     const audits = await f.tx.select().from(store.vendorAuditTable).where(eq(store.vendorAuditTable.submissionId, row.id));
     expect(audits.filter((a: any) => a.actor === f.a).map((a: any) => a.action)).toEqual(["processing", "tracking"]);
   }));
+  it("saves multiple parcels with their carriers for vendor, Admin and the recipient", () => fixture(async f => {
+    const { row } = await submit(f);
+    const trackingPackages = [
+      { id: "parcel-a", courier: "DHL", internationalTrackingNumber: "DHL123456", localTrackingNumber: null },
+      { id: "parcel-b", courier: "Royal Mail", internationalTrackingNumber: "RM123456GB", localTrackingNumber: null },
+    ];
+    const path = `/vendor/orders/${row.id}`;
+    expect((await request(path, f.b, { action: "tracking", trackingPackages }, false, "PATCH")).status).toBe(404);
+    expect((await request(path, f.a, { action: "tracking", trackingPackages }, false, "PATCH")).status).toBe(200);
+    expect((await request("/vendor/orders", f.a)).data.orders[0].trackingPackages).toEqual(trackingPackages);
+    const [order] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, f.orderId));
+    expect(order).toMatchObject({ trackingNumbers: ["DHL123456", "RM123456GB"], trackingPackages, status: "Shipped", grandTotal: "2048.00" });
+    const member = await request(`/account/orders/${f.orderId}/vendor-shipments`, f.member);
+    expect(member.data.shipments[0].trackingPackages).toEqual(trackingPackages);
+    const corrected = [...trackingPackages, { id: "parcel-c", courier: "FedEx", internationalTrackingNumber: "FEDEX12345", localTrackingNumber: null }];
+    expect((await request(`/admin/vendor-portal/orders/${row.id}`, undefined, { action: "tracking", trackingPackages: corrected, expectedTrackingPackages: trackingPackages }, true, "PATCH")).status).toBe(200);
+    expect((await request("/vendor/orders", f.a)).data.orders[0].trackingPackages).toEqual(corrected);
+    expect((await request(path, f.a, { action: "tracking", trackingPackages, expectedTrackingPackages: trackingPackages }, false, "PATCH")).status).toBe(409);
+    // Old clients must never silently erase the additional parcels.
+    expect((await request(path, f.a, { action: "tracking", carrier: "DHL", trackingNumber: "DHL123456" }, false, "PATCH")).status).toBe(409);
+  }));
+  it("preserves an independently recorded local tracking leg when adding vendor parcels", () => fixture(async f => {
+    const { row } = await submit(f);
+    const original = { id: "existing-bmurfs", courier: "bmurfs", internationalTrackingNumber: "BMURFS12345", localTrackingNumber: "LOCAL12345" };
+    await f.tx.update(store.ordersTable).set({
+      trackingPackages: [original], trackingNumber: original.internationalTrackingNumber,
+      trackingNumbers: [original.internationalTrackingNumber, original.localTrackingNumber],
+    }).where(eq(store.ordersTable.id, f.orderId));
+    expect((await request(`/vendor/orders/${row.id}`, f.a, {
+      action: "tracking", trackingPackages: [{ id: "new-dhl", courier: "DHL", internationalTrackingNumber: "DHL123456", localTrackingNumber: null }],
+    }, false, "PATCH")).status).toBe(200);
+    const [order] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, f.orderId));
+    expect(order.trackingPackages).toContainEqual(original);
+    expect(order.trackingNumbers).toEqual(["DHL123456", "BMURFS12345", "LOCAL12345"]);
+  }));
+  it("rejects empty, duplicate and invalid multi-parcel tracking without changing the shipment", () => fixture(async f => {
+    const { row } = await submit(f);
+    const pkg = { id: "parcel-a", courier: "DHL", internationalTrackingNumber: "DHL123456", localTrackingNumber: null };
+    for (const trackingPackages of [[], [pkg, { ...pkg, id: "parcel-b" }], [{ ...pkg, courier: "" }], [{ ...pkg, internationalTrackingNumber: "<script>" }]]) {
+      expect((await request(`/vendor/orders/${row.id}`, f.a, { action: "tracking", trackingPackages }, false, "PATCH")).status).toBe(400);
+    }
+    expect((await request("/vendor/orders", f.a)).data.orders[0].status).toBe("Submitted");
+  }));
   it("authorizes images on upload, listing and guessed direct URLs", () => fixture(async f => {
     const { row } = await submit(f);
     const form = new FormData(); form.append("file", new Blob(["fake jpeg"], { type: "image/jpeg" }), "packing.jpg");
@@ -1105,8 +1149,14 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect((await request(`/account/orders/${secondOrder}/vendor-images`, f.other)).data.images).toEqual([]);
     const privateUrl = recipientPhotos.data.images[0].url.replace("/api", "");
     expect((await request(privateUrl, f.other)).status).toBe(404);
-    const tracking = { action: "tracking", carrier: "Fixture", trackingNumber: "SHARED1234" };
+    const tracking = { action: "tracking", trackingPackages: [
+      {id: "shared-a", courier: "Fixture", internationalTrackingNumber: "SHARED1234", localTrackingNumber: null},
+      {id: "shared-b", courier: "DHL", internationalTrackingNumber: "SHARED5678", localTrackingNumber: null},
+    ] };
     expect((await request(`/vendor/orders/${row.id}`, f.a, tracking, false, "PATCH")).status).toBe(200);
+    expect((await request(`/account/orders/${f.orderId}/vendor-shipments`, f.member)).data.shipments[0].trackingPackages).toEqual(tracking.trackingPackages);
+    const masked = (await request(`/account/orders/${secondOrder}/vendor-shipments`, f.other)).data.shipments[0];
+    expect(masked).toMatchObject({ trackingNumber: null, carrier: null, trackingPackages: [], trackingMasked: true });
     const [other] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, secondOrder));
     expect(other).toMatchObject({ trackingNumber: "SHARED1234", status: "Shipped", grandTotal: "999.00" });
   }));

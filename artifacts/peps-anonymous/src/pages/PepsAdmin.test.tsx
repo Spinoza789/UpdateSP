@@ -161,9 +161,15 @@ it("loads detail and sends permitted processing and tracking mutations", async (
   expect(fetchMock.mock.calls.some(c => c[0] === "/api/admin/vendor-portal/orders/order-1" && c[1]?.method === "PATCH" && JSON.parse(c[1].body as string).action === "processing")).toBe(true);
   await setValue(byTestId("input-tracking") as HTMLInputElement, "TRACK-567");
   await setValue(byTestId("input-carrier") as HTMLInputElement, "Parcel Post");
+  await click("button-add-tracking");
+  await setValue(byTestId("input-tracking-1") as HTMLInputElement, "RM987654GB");
+  await setValue(byTestId("select-carrier-1") as HTMLSelectElement, "Royal Mail");
   await click("button-save-tracking");
   const track = fetchMock.mock.calls.find(c => c[0] === "/api/admin/vendor-portal/orders/order-1" && c[1]?.method === "PATCH" && JSON.parse(c[1].body as string).action === "tracking");
-  expect(JSON.parse(track?.[1]?.body as string)).toEqual({ action: "tracking", trackingNumber: "TRACK-567", carrier: "Parcel Post" });
+  expect(JSON.parse(track?.[1]?.body as string)).toEqual({ action: "tracking", trackingPackages: [
+    { id: "legacy-0", courier: "Parcel Post", internationalTrackingNumber: "TRACK-567", localTrackingNumber: null },
+    expect.objectContaining({ courier: "Royal Mail", internationalTrackingNumber: "RM987654GB", localTrackingNumber: null }),
+  ], expectedTrackingPackages: [] });
 });
 
 it("keeps the recall confirmation open on a failed recall", async () => {

@@ -23,6 +23,7 @@ import { publicVendorOrder, publicVendorApplication, vendorApplicationInput, Ven
 import { createAlert } from "../lib/create-alert";
 import { vendorSupplierText, vendorSupplierCsv } from "../lib/vendor-supplier-export";
 import { prepareTrackingWrite } from "../lib/tracking-write";
+import { normalizeTrackingPackages, getTrackingPackages } from "@workspace/shipping/tracking";
 import { refreshWholesaleMainParcelForShare } from "../lib/tracking-auto-refresh";
 import { notifyUser } from "../lib/telegram";
 import { storePageUpdateImage, downloadWholesaleUpdateImage, deleteWholesaleUpdateImage } from "../lib/wholesale-update-images";
@@ -112,7 +113,7 @@ router.post("/vendor/orders/:id/detect-carrier", requireVendorAccount, sameOrigi
 }));
 async function updateShipment(req: Request, res: Response, admin = false): Promise<void> {
   const body = req.body ?? {};
-  if (!["processing", "tracking"].includes(body.action) || Object.keys(body).some(k => !["action", "trackingNumber", "carrier"].includes(k))) {
+  if (!["processing", "tracking"].includes(body.action) || Object.keys(body).some(k => !["action", "trackingNumber", "carrier", "trackingPackages", "expectedTrackingPackages"].includes(k))) {
     throw new VendorPortalError("Only processing and tracking updates are permitted.");
   }
   let refreshShare: string | null = null;
@@ -140,12 +141,38 @@ async function updateShipment(req: Request, res: Response, admin = false): Promi
       await tx.update(ordersTable).set({ status: "Processing", updatedAt: now }).where(and(inArray(ordersTable.id, row.orderIds), eq(ordersTable.status, "Submitted")));
       await tx.update(vendorSubmissionsTable).set({ status: "Processing", updatedAt: now }).where(eq(vendorSubmissionsTable.id, row.id));
     } else {
-      if (typeof body.trackingNumber !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9 ._/-]{2,199}$/.test(body.trackingNumber.trim()) ||
-          typeof body.carrier !== "string" || !body.carrier.trim() || body.carrier.length > 120) {
-        throw new VendorPortalError("Enter a valid tracking number and carrier.");
+      let packages;
+      try {
+        if (body.expectedTrackingPackages !== undefined &&
+            JSON.stringify(normalizeTrackingPackages(body.expectedTrackingPackages)) !==
+            JSON.stringify(normalizeTrackingPackages(publicVendorOrder(row, false, []).trackingPackages))) {
+          throw new VendorPortalError("Tracking changed since you opened this order. Reload it before saving.", 409);
+        }
+        if (body.trackingPackages !== undefined && (body.trackingNumber !== undefined || body.carrier !== undefined)) {
+          throw new Error("Send parcel tracking or legacy tracking, not both.");
+        }
+        if (body.trackingPackages === undefined && (row.trackingPackages?.length ?? 0) > 1) {
+          throw new VendorPortalError("Reload the order and edit all tracking parcels together.", 409);
+        }
+        packages = normalizeTrackingPackages(body.trackingPackages ?? [{
+          id: row.trackingPackages?.[0]?.id ?? "legacy-0", courier: body.carrier,
+          internationalTrackingNumber: body.trackingNumber, localTrackingNumber: null,
+        }]);
+        if (!packages.length) throw new Error("Add at least one tracking number.");
+        if (packages.some(p => p.internationalTrackingNumber.length < 3)) throw new Error("Enter a valid tracking number.");
+        // An older/simpler editor must not erase an existing BMURFS local leg.
+        for (const old of row.trackingPackages ?? []) {
+          const next = packages.find(p => p.id === old.id);
+          if (old.localTrackingNumber && (!next || next.localTrackingNumber !== old.localTrackingNumber)) {
+            throw new VendorPortalError("Keep the existing local tracking leg; use the package editor to change it.", 409);
+          }
+        }
+      } catch (error) {
+        if (error instanceof VendorPortalError) throw error;
+        throw new VendorPortalError(error instanceof Error ? error.message : "Enter valid tracking parcels.");
       }
-      const trackingNumber = body.trackingNumber.trim();
-      const carrier = body.carrier.trim();
+      const trackingNumber = packages[0].internationalTrackingNumber;
+      const carrier = packages[0].courier;
       const mixed = source.share && (source.share.vendorShippingBreakdown?.length ?? 0) > 1;
       const otherSubmissions = mixed ? await tx.select().from(vendorSubmissionsTable)
         .where(eq(vendorSubmissionsTable.sharedOrderId, row.sharedOrderId!)) : [];
@@ -159,19 +186,32 @@ async function updateShipment(req: Request, res: Response, admin = false): Promi
           if (allShipped && order.status !== "Shipped") notifications.push({username:order.telegramUsername,code:order.code});
           continue;
         }
-        const changed = order.trackingNumber !== trackingNumber || order.shippingCarrier !== carrier || order.status !== "Shipped";
+        // Retain independently managed parcels/local legs on the customer order.
+        const previousVendorIds = new Set((row.trackingPackages ?? []).map(p => p.id));
+        const independent = getTrackingPackages(order).filter(p =>
+          !previousVendorIds.has(p.id) && p.internationalTrackingNumber !== row.trackingNumber &&
+          !packages.some(next => next.internationalTrackingNumber.toUpperCase() === p.internationalTrackingNumber.toUpperCase()));
+        const nextPackages = [...packages, ...independent];
+        for (const previous of getTrackingPackages(order)) {
+          if (previous.localTrackingNumber && !nextPackages.some(p =>
+            p.internationalTrackingNumber === previous.internationalTrackingNumber &&
+            p.courier === previous.courier && p.localTrackingNumber === previous.localTrackingNumber)) {
+            throw new VendorPortalError("This parcel has a local tracking leg. Keep it intact in the package editor before updating vendor tracking.", 409);
+          }
+        }
+        const changed = JSON.stringify(order.trackingPackages) !== JSON.stringify(nextPackages) || order.shippingCarrier !== carrier || order.status !== "Shipped";
         if (!changed) continue;
         let tracking;
         try {
-          tracking = prepareTrackingWrite(order, { trackingNumber, trackingNumbers: [trackingNumber] });
-        } catch {
-          throw new VendorPortalError("This order already uses multiple tracking packages. Ask Admin to update it in the package editor.", 409);
+          tracking = prepareTrackingWrite(order, { trackingPackages: nextPackages });
+        } catch (error) {
+          throw new VendorPortalError(error instanceof Error ? error.message : "Review the tracking packages.", 409);
         }
         await tx.update(ordersTable).set({ ...tracking.updates, shippingCarrier: carrier, status: "Shipped", updatedAt: now })
           .where(eq(ordersTable.id, order.id));
         if (tracking.shouldNotify || order.status !== "Shipped") notifications.push({ username: order.telegramUsername, code: order.code });
       }
-      await tx.update(vendorSubmissionsTable).set({ status: "Shipped", trackingNumber, carrier, updatedAt: now }).where(eq(vendorSubmissionsTable.id, row.id));
+      await tx.update(vendorSubmissionsTable).set({ status: "Shipped", trackingNumber, carrier, trackingPackages: packages, updatedAt: now }).where(eq(vendorSubmissionsTable.id, row.id));
       if (row.sharedOrderId && !mixed) refreshShare = row.sharedOrderId;
     }
     await auditVendor(tx, admin ? getAdminUsername(res) : username(req), body.action, row.id, admin ? { actorType: "admin" } : undefined);
@@ -386,6 +426,7 @@ router.get("/account/orders/:id/vendor-shipments", requireAccount, handled(async
       id:row.id, vendorName:vendors.find(v=>v.id===row.vendorId)?.name ?? "Vendor",
       status:row.status, trackingNumber:recipient ? row.trackingNumber : null,
       carrier:recipient ? row.carrier : null, trackingMasked:!recipient,
+      trackingPackages: recipient ? publicVendorOrder(row, false, []).trackingPackages : [],
       images:recipient ? await imageList(row,"account") : [],
     });
   }

@@ -9,6 +9,15 @@ Vendors must see only their own wholesale orders and supplier cost prices, never
 
 **How to apply:** Enforce ownership and field privacy server-side, not only through dashboard presentation.
 
+Vendors and Peps Anonymous Admin must be able to record multiple tracking numbers
+on a shipment, with a carrier for each number rather than one carrier for the order.
+
+**Why:** The owner requested multiple tracking numbers in both views and explicitly
+chose a separate carrier per number.
+
+**How to apply:** Preserve existing parcel identities and local legs; retain
+recipient-only visibility of shared supplier shipment tracking.
+
 Peps Anonymous also needs an Admin workspace that can view all submitted vendor
 orders, switch between vendors and manage orders. This must not expand vendor
 accounts' access or require staff to impersonate a vendor.

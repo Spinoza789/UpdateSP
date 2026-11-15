@@ -24,6 +24,26 @@ afterEach(async () => { if (root) await act(async () => root.unmount()); dom.win
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
 
+it("shows each parcel and its carrier, without exposing masked parcel numbers", async () => {
+  const trackingPackages = [
+    {id: "a", courier: "DHL", internationalTrackingNumber: "DHL123", localTrackingNumber: null},
+    {id: "b", courier: "Royal Mail", internationalTrackingNumber: "RM456GB", localTrackingNumber: null},
+  ];
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ shipments: [
+    { id: "visible", vendorName: "Alder", status: "Shipped", trackingNumber: "DHL123", carrier: "DHL", trackingPackages, trackingMasked: false, images: [] },
+    { id: "masked", vendorName: "Birch", status: "Shipped", trackingNumber: "HIDDEN123", carrier: "DHL", trackingPackages: [{ ...trackingPackages[0], internationalTrackingNumber: "SECRET123" }], trackingMasked: true, images: [] },
+  ] })));
+  const el = setup();
+  await act(async () => root.render(createElement(VendorShipments, { orderId: "multi" })));
+  await settle();
+  expect(el.textContent).toContain("DHL123");
+  expect(el.textContent).toContain("RM456GB");
+  expect(el.textContent).toContain("Royal Mail");
+  expect(el.querySelectorAll("a")).toHaveLength(2);
+  expect(el.textContent).not.toContain("HIDDEN123");
+  expect(el.textContent).not.toContain("SECRET123");
+});
+
 it("renders independent shipments and never links masked tracking", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ shipments: [
     { id: "s1", vendorName: "Alder", status: "shipped", trackingNumber: "RM123GB", carrier: "Royal Mail", trackingMasked: false, images: [] },

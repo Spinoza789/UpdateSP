@@ -7,6 +7,7 @@ import {
 import { AdminApiError, AdminSessionExpiredError, retryAdminAvailability } from "@/lib/admin-auth";
 import { pepsAdminAuth, pepsAdminJson } from "@/lib/peps-admin";
 import { Badge, Btn, Card } from "@/components/vendor-ui";
+import { AdditionalTrackingParcels, TrackingParcelList, vendorTrackingParcels, type VendorTrackingParcel } from "@/components/VendorTrackingParcels";
 import "./peps-admin.css";
 
 type Item = { productName: string; quantity: number; unitCost: string; lineTotal: string };
@@ -17,6 +18,7 @@ type Order = {
   productCost: string; shippingCost: string; totalCost: string;
   shipping: { name: string; address: string; country: string; phone: string; email: string };
   trackingNumber: string | null; carrier: string | null; images: Image[];
+  trackingPackages?: VendorTrackingParcel[];
 };
 type Vendor = { id: string; name: string };
 type ListResult = { vendors: Vendor[]; orders: Order[]; total: number; page: number; limit: number };
@@ -126,6 +128,7 @@ export default function PepsAdmin() {
   const [detailError, setDetailError] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [carrier, setCarrier] = useState("");
+  const [extraParcels, setExtraParcels] = useState<VendorTrackingParcel[]>([]);
   const [mutationBusy, setMutationBusy] = useState(false);
   const [actionError, setActionError] = useState("");
   const [dialog, setDialog] = useState<"recall" | "resubmit" | null>(null);
@@ -186,12 +189,13 @@ export default function PepsAdmin() {
     if (!detail || detail.id !== selectedId) return;
     setTrackingNumber(detail.trackingNumber ?? "");
     setCarrier(detail.carrier ?? "");
-  }, [detail?.id, selectedId]);
+    setExtraParcels(vendorTrackingParcels(detail).slice(1));
+  }, [detail, selectedId]);
 
   const filtered = useMemo(() => orders.filter(o => {
     const matchesStatus = statusFilter === "all" || stageKey(o) === statusFilter;
     const q = query.trim().toLowerCase();
-    return matchesStatus && (!q || [o.reference, o.vendorName, o.shipping.name, o.shipping.country, o.trackingNumber ?? "", ...o.items.map(i => i.productName)].some(x => x.toLowerCase().includes(q)));
+    return matchesStatus && (!q || [o.reference, o.vendorName, o.shipping.name, o.shipping.country, ...vendorTrackingParcels(o).map(p => p.internationalTrackingNumber), ...o.items.map(i => i.productName)].some(x => x.toLowerCase().includes(q)));
   }), [orders, query, statusFilter]);
   const pageCount = Math.max(1, Math.ceil(total / LIMIT));
   const visibleDetail = detail && detail.id === selectedId ? detail : null;
@@ -234,7 +238,17 @@ export default function PepsAdmin() {
     finally { if (epoch === identityEpoch.current) setMutationBusy(false); }
   };
   const startProcessing = () => detail && !detail.stale && !/complete|refund/i.test(detail.status) && !/ship/i.test(detail.status) && void mutate(detail.id, { action: "processing" });
-  const saveTracking = () => detail && !detail.stale && trackingNumber.trim() && carrier.trim() && void mutate(detail.id, { action: "tracking", trackingNumber: trackingNumber.trim(), carrier: carrier.trim() });
+  const saveTracking = () => {
+    if (!detail || detail.stale || !trackingNumber.trim() || !carrier.trim()) return;
+    if (extraParcels.some(p => !p.courier.trim() || !p.internationalTrackingNumber.trim())) {
+      setActionError("Enter a tracking number and carrier for every parcel."); return;
+    }
+    const primary = vendorTrackingParcels(detail)[0];
+    void mutate(detail.id, { action: "tracking", expectedTrackingPackages: vendorTrackingParcels(detail), trackingPackages: [{
+      id: primary?.id ?? "legacy-0", localTrackingNumber: primary?.localTrackingNumber ?? null,
+      internationalTrackingNumber: trackingNumber.trim(), courier: carrier.trim(),
+    }, ...extraParcels.map(p => ({ ...p, courier: p.courier.trim(), internationalTrackingNumber: p.internationalTrackingNumber.trim() }))] });
+  };
   const recall = async () => {
     if (!detail) return;
     const epoch = identityEpoch.current;
@@ -346,7 +360,7 @@ export default function PepsAdmin() {
           <div className="pa-pagination"><span>Showing <b>{total ? (page - 1) * LIMIT + 1 : 0}–{Math.min(page * LIMIT, total)}</b> of <b>{total}</b> orders</span><div><button className="pa-page-button" aria-label="Previous page" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1 || listLoading}><ChevronLeft size={16} /></button><span>Page <b>{page}</b> / {pageCount}</span><button className="pa-page-button" aria-label="Next page" onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page >= pageCount || listLoading}><ChevronRight size={16} /></button></div></div>
         </Card>
         <footer className="pa-footer"><span>PEPS ANONYMOUS <i>·</i> SUPPLIER FULFILMENT</span><span>Each action is checked against current server-side order state.</span></footer>
-      </> : <DetailView order={visibleDetail} loading={detailLoading} error={detailError} onBack={() => setSelectedId(null)} onRetry={() => void loadDetail(selectedId)} trackingNumber={trackingNumber} setTrackingNumber={setTrackingNumber} carrier={carrier} setCarrier={setCarrier} busy={mutationBusy} actionError={actionError} onProcess={startProcessing} onTracking={saveTracking} onRecall={() => { setDialog("recall"); setReason(""); setOverride(false); }} />}
+      </> : <DetailView order={visibleDetail} loading={detailLoading} error={detailError} onBack={() => setSelectedId(null)} onRetry={() => void loadDetail(selectedId)} trackingNumber={trackingNumber} setTrackingNumber={setTrackingNumber} carrier={carrier} setCarrier={setCarrier} extraParcels={extraParcels} setExtraParcels={setExtraParcels} busy={mutationBusy} actionError={actionError} onProcess={startProcessing} onTracking={saveTracking} onRecall={() => { setDialog("recall"); setReason(""); setOverride(false); }} />}
     </div>
     {dialog === "recall" && visibleDetail && <div className="pa-modal-backdrop" role="presentation"><section className="pa-modal" role="dialog" aria-modal="true" aria-labelledby="recall-title">
       <button className="pa-modal-close" onClick={() => setDialog(null)} aria-label="Close"><X size={18} /></button><span className="pa-modal-icon danger"><AlertTriangle size={19} /></span><div className="pa-kicker">RECALL FROM VENDOR</div><h2 id="recall-title">Recall order {visibleDetail.reference}?</h2>
@@ -385,9 +399,10 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
   return <div className={`pa-mark${compact ? " pa-mark-small" : ""}`} aria-label="Peps Anonymous"><span>P</span>{!compact && <div><strong>peps anonymous</strong><small>FULFILMENT WORKSPACE</small></div>}</div>;
 }
 
-function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, setTrackingNumber, carrier, setCarrier, busy, actionError, onProcess, onTracking, onRecall }: {
+function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, setTrackingNumber, carrier, setCarrier, extraParcels, setExtraParcels, busy, actionError, onProcess, onTracking, onRecall }: {
   order: Order | null; loading: boolean; error: string; onBack: () => void; onRetry: () => void;
   trackingNumber: string; setTrackingNumber: (s: string) => void; carrier: string; setCarrier: (s: string) => void;
+  extraParcels: VendorTrackingParcel[]; setExtraParcels: (value: VendorTrackingParcel[]) => void;
   busy: boolean; actionError: string; onProcess: () => void; onTracking: () => void; onRecall: () => void;
 }) {
   const canProcess = !!order && !order.stale && !terminalStatus(order) && !/ship/i.test(order.status) && !order.trackingNumber;
@@ -407,7 +422,9 @@ function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, se
           </section>
           <section className="pa-panel pa-management"><div className="pa-panel-head"><div><span className="pa-panel-index">02</span><h2>Fulfilment management</h2></div><span>Admin actions</span></div>
             {canProcess && <div className="pa-action-row"><div className="pa-action-icon"><PackageCheck size={17} /></div><div className="pa-action-copy"><strong>Mark as processing</strong><span>Tell the vendor to begin fulfilment.</span></div><Btn onClick={onProcess} disabled={busy} data-testid="button-process">{busy ? "Saving…" : "Start processing"}</Btn></div>}
-            {canTrack && <div className="pa-tracking-form"><div className="pa-action-icon"><Truck size={17} /></div><div className="pa-action-copy"><strong>Add tracking details</strong><span>Updates the shipment status for the vendor order.</span></div><div className="pa-tracking-fields"><input className="pa-input" aria-label="Tracking number" placeholder="Tracking number" value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} data-testid="input-tracking" /><input className="pa-input" aria-label="Carrier" placeholder="Carrier" value={carrier} onChange={e => setCarrier(e.target.value)} data-testid="input-carrier" /><button className="pa-button pa-primary" onClick={onTracking} disabled={busy || !trackingNumber.trim() || !carrier.trim()} data-testid="button-save-tracking">{busy ? "Saving…" : "Save tracking"}</button></div></div>}
+            {canTrack && <div className="space-y-3"><div className="pa-tracking-form"><div className="pa-action-icon"><Truck size={17} /></div><div className="pa-action-copy"><strong>Add tracking details</strong><span>Each parcel can use a different carrier.</span></div><div className="pa-tracking-fields"><input className="pa-input" aria-label="Tracking number" placeholder="Tracking number" value={trackingNumber} disabled={busy} onChange={e => setTrackingNumber(e.target.value)} data-testid="input-tracking" /><input className="pa-input" aria-label="Carrier" placeholder="Carrier" value={carrier} disabled={busy} onChange={e => setCarrier(e.target.value)} data-testid="input-carrier" /><button className="pa-button pa-primary" onClick={onTracking} disabled={busy || !trackingNumber.trim() || !carrier.trim() || extraParcels.some(p => !p.courier.trim() || !p.internationalTrackingNumber.trim())} data-testid="button-save-tracking">{busy ? "Saving…" : "Save tracking"}</button></div></div>
+              <AdditionalTrackingParcels parcels={extraParcels} onChange={setExtraParcels} disabled={busy} />
+            </div>}
             {!canProcess && !canTrack && !order.stale && <div className="pa-restricted"><ShieldCheck size={16} />No fulfilment updates are available for this order state.</div>}
             <div className="pa-recall-row"><div><strong>Recall shipment from vendor</strong><span>Removes it from the vendor and payment list. Customer order remains unchanged.</span></div><button className="pa-button pa-outline pa-recall-button" onClick={onRecall} data-testid="button-recall">Recall order</button></div>
           </section>
@@ -417,7 +434,7 @@ function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, se
         </div>
         <aside className="pa-side-col">
           <section className="pa-panel pa-ship-card"><div className="pa-panel-head"><div><span className="pa-panel-index">TO</span><h2>Shipping address</h2></div></div><address><strong>{order.shipping.name || "Recipient not provided"}</strong><span>{order.shipping.address || "Address not provided"}</span><span>{order.shipping.country}</span>{order.shipping.phone && <span>{order.shipping.phone}</span>}{order.shipping.email && <span>{order.shipping.email}</span>}</address></section>
-          <section className="pa-panel pa-side-meta"><span className="pa-kicker">SUPPLIER</span><strong>{order.vendorName}</strong><small>Vendor reference · {order.reference}</small><div className="pa-meta-line"><span>Tracking</span><b>{order.trackingNumber || "Not added"}</b></div><div className="pa-meta-line"><span>Carrier</span><b>{order.carrier || "Not set"}</b></div></section>
+          <section className="pa-panel pa-side-meta"><span className="pa-kicker">SUPPLIER</span><strong>{order.vendorName}</strong><small>Vendor reference · {order.reference}</small><div className="pa-meta-line"><span>Tracking</span><b>{vendorTrackingParcels(order).length || "Not added"}</b></div><TrackingParcelList order={order} /></section>
         </aside>
       </div>
     </>}

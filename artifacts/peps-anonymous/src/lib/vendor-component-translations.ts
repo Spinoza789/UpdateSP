@@ -1,4 +1,8 @@
 export const vendorComponentTranslations: Record<string, string> = {
+  "Add tracking number": "添加运单号",
+  "Local tracking": "本地运单号",
+  "Each parcel can use a different carrier. Maximum 20 tracking numbers.": "每个包裹可使用不同的承运商，最多支持 20 个运单号。",
+  "Enter a tracking number and carrier for every parcel.": "请为每个包裹填写运单号和承运商。",
   "Vendor setup": "供应商设置指南",
   "Set up your vendor account": "设置您的供应商账户",
   "Setup progress": "设置进度",
