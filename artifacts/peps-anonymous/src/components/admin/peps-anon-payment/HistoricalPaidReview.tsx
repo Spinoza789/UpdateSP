@@ -51,6 +51,7 @@ export function HistoricalPaidReview({ orders, vendorName, busy, message, onConf
       <p className="mt-1" style={{ color: "var(--t-subtle)" }}>
         This records that these existing orders were already paid outside Peps Anonymous Payment. It makes no transfer, creates no TXID or receipt, does not auto-pay future orders, and does not change customer order statuses. The acknowledgement uses each order’s existing submitted supplier amount, including stale amounts.
       </p>
+      <p className="mt-2 font-semibold">No buyer notifications are sent. This is an internal supplier-accounting update only.</p>
     </div>
     {orders.length === 0 ? <div className="rounded-lg border border-dashed p-6 text-center text-sm" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>
       No eligible existing processed orders were supplied for review.
@@ -60,6 +61,9 @@ export function HistoricalPaidReview({ orders, vendorName, busy, message, onConf
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{order.reference}</p>
             <p className="text-xs" style={{ color: "var(--t-subtle)" }}>{order.status} · submitted supplier amount{order.stale ? " · STALE" : ""}</p>
+            {(order.sourceOrders ?? []).map(source => source.status && <p key={source.id} className="text-xs" style={{ color: "var(--t-subtle)" }}>
+              Order {source.code ?? source.id}: {source.status}
+            </p>)}
           </div>
           <strong className="text-sm tabular-nums">{money(cents(order.totalCost))}</strong>
         </li>)}

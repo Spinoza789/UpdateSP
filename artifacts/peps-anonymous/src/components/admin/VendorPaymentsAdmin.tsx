@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Landmark, RefreshCw, Wallet as WalletIcon } from "lucide-react";
 import { adminAuth } from "../../lib/admin-auth";
-import { cents, filterOrders, hasReviewToken, isEligible, isLedger, money, orderState, PAGE_SIZE, parsePaidAt, selectedTotal, summarize, toggleExportOne, type Filters, type LedgerData, type LedgerOrder } from "./peps-anon-payment/model";
+import { cents, filterOrders, fulfilmentProgressed, hasReviewToken, isEligible, isLedger, money, orderState, PAGE_SIZE, parsePaidAt, selectedTotal, summarize, toggleExportOne, type Filters, type LedgerData, type LedgerOrder } from "./peps-anon-payment/model";
 import { LedgerSummary } from "./peps-anon-payment/LedgerSummary";
 import { EMPTY_FILTERS, LedgerOrders } from "./peps-anon-payment/LedgerOrders";
 import { ReceiptDrawer, ReceiptHistory } from "./peps-anon-payment/ReceiptHistory";
@@ -183,9 +183,9 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   }
   function reviewHistoricalPaid() {
     if (!ledger || lock.current || transferDirty) return;
-    const candidates = ledger.orders.filter(o => ["Processing", "Shipped", "Completed"].includes(o.status)
+    const candidates = ledger.orders.filter(o => fulfilmentProgressed(o) && !["Recalled", "Cancelled", "Canceled"].includes(o.status)
       && !o.paymentId && orderState(o) !== "paid" && (!selected.size || selected.has(o.id)));
-    if (!candidates.length) { setMessage({ ok: false, text: "No unpaid Processing, Shipped or Completed supplier submissions in this selection. Clear the selection to review all existing processed orders for this vendor." }); return; }
+    if (!candidates.length) { setMessage({ ok: false, text: "No unconfirmed processed orders in this selection. Either the original order or supplier submission must be Processing, Shipped or Completed. Clear the selection to review all existing processed orders for this vendor." }); return; }
     setMessage(null);
     // Bounded, explicit list frozen at review time. Later arrivals are never included.
     setHistoricalOrders(structuredClone(candidates.slice(0, 200)));
@@ -448,7 +448,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
         onClose={() => { if (!busy) setHistoricalOrders(null); }}
         onConfirm={note => void saveTool("/api/admin/vendor-payments/acknowledge-paid",
           { note, orderSnapshots: historicalOrders.map(o => ({ submissionId: o.id, reviewToken: o.reviewToken })) },
-          `${historicalOrders.length} existing supplier orders marked paid by Admin confirmation. No funds sent or customer statuses changed.`)} />}
+          `Historical supplier payments recorded for ${historicalOrders.length} existing orders. No buyer notifications sent, funds sent or customer statuses changed.`)} />}
       {active && clearPaidTarget && <Overlay side="center" title={`Clear paid confirmation · ${clearPaidTarget.reference}`} closeTestId="payment-clear-paid-close"
         canClose={!busy} onClose={() => setClearPaidTarget(null)}
         footer={<button className="pap-btn pap-btn-danger" type="button" disabled={busy || !clearPaidNote.trim()}

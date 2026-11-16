@@ -87,7 +87,7 @@ export const MAX_SELECTION = 200;
 export const PAGE_SIZE = 25;
 const PAYABLE_STATUSES = new Set(["Submitted", "Processing", "Shipped", "Completed"]);
 const PROGRESSED_STATUSES = new Set(["processing", "processed", "shipped", "completed"]);
-function fulfilmentProgressed(o: LedgerOrder) {
+export function fulfilmentProgressed(o: LedgerOrder) {
   return [o.status, ...(o.sourceOrders ?? []).map(source => source.status)]
     .some(status => typeof status === "string" && PROGRESSED_STATUSES.has(status.trim().toLowerCase()));
 }

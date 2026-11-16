@@ -74,6 +74,14 @@ chose “Move to Needs review” rather than treating missing records as paid.
 including each member of shared submissions. Never invent receipts or change
 customer payments or fulfilment to correct the supplier accounting display.
 
+Historical supplier-paid confirmations must not send any notifications to buyers.
+
+**Why:** The owner explicitly requested no buyer notifications when using
+“Review processed orders as paid”; this records an internal supplier-accounting fact.
+
+**How to apply:** Keep the review and acknowledgement paths separate from customer
+payment and fulfilment mutations, including Telegram, email and in-app notifications.
+
 **How to apply:** Keep cost corrections separate from selling prices and catalogue
 prices. Preserve frozen receipts; require clearing paid evidence before cost
 edits. Historical confirmations need an explicit reviewed list, actor and note,

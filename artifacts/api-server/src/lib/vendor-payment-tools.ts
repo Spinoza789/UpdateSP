@@ -73,8 +73,16 @@ export async function acknowledgeSupplierPaid(body: any, actor: string, database
     for (const row of rows) {
       reviewed(row, vendorId, expected.find((o: any) => o.submissionId === row.id)?.reviewToken);
       await assertVendorSubmissionUnpaid(tx, row.id);
-      if (!["Processing", "Shipped", "Completed"].includes(row.status))
-        throw new VendorPortalError("Only existing Processing, Shipped or Completed supplier orders can be acknowledged here.", 409);
+      if (["Recalled", "Cancelled", "Canceled"].includes(row.status))
+        throw new VendorPortalError("This supplier order is cancelled.", 409);
+      // The customer order may have progressed while vendor fulfilment still says Submitted.
+      // Lock and recheck live originals at confirmation, not just the list's displayed state.
+      const originals = row.orderIds?.length ? await tx.select({ id: ordersTable.id, status: ordersTable.status })
+        .from(ordersTable).where(inArray(ordersTable.id, row.orderIds)).orderBy(asc(ordersTable.id)).for("update") : [];
+      const processed = new Set(["processing", "processed", "shipped", "completed"]);
+      if (![row.status, ...originals.map((order: any) => order.status)]
+        .some(status => typeof status === "string" && processed.has(status.trim().toLowerCase())))
+        throw new VendorPortalError("Only existing Processing, Shipped or Completed original orders or supplier submissions can be acknowledged here.", 409);
       const detail = paymentOrderDetail(row);
       if (!supplierCostsValid(detail)) throw new VendorPortalError("Review missing or inconsistent supplier costs first.", 409);
       const paymentAcknowledgement = { amountUsd: detail.totalCost!, note, recordedAt: new Date().toISOString(), recordedBy: actor };

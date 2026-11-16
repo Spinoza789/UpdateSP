@@ -238,6 +238,37 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect((await request("/admin/vendor-payments/export",undefined,{vendorId:"vendor-b",submissionIds:[row.id]},true)).status).toBe(409);
     expect((await request("/admin/vendor-payments/export",f.a,{vendorId:"vendor-a",submissionIds:[row.id]})).status).toBe(403);
   }));
+  it("acknowledges processed original orders without changing customer orders or sending buyer notifications", () => fixture(async f => {
+    const { row } = await submit(f);
+    const { notifyUser } = await import("../../lib/telegram");
+    for (const status of ["Processing", "Shipped", "Completed"]) {
+      await f.tx.update(store.ordersTable).set({ status }).where(inArray(store.ordersTable.id, row.orderIds));
+      const [original] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, row.orderIds[0]));
+      const current = (await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true)).data.orders.find((o:any) => o.id === row.id);
+      expect(current.status).toBe("Submitted");
+      const calls = vi.mocked(notifyUser).mock.calls.length;
+      const result = await request("/admin/vendor-payments/acknowledge-paid", undefined, {
+        vendorId: "vendor-a", note: "Previously paid externally",
+        orderSnapshots: [{ submissionId: row.id, reviewToken: current.reviewToken }],
+      }, true);
+      expect(result.status).toBe(200);
+      expect(vi.mocked(notifyUser).mock.calls.length).toBe(calls);
+      const [after] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, original.id));
+      expect(after).toEqual(original);
+      const paid = (await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true)).data.orders.find((o:any) => o.id === row.id);
+      expect(paid).toMatchObject({ paymentState: "paid", paymentId: null });
+      expect((await request(`/admin/vendor-payments/orders/${row.id}/clear-paid`, undefined, {
+        vendorId: "vendor-a", note: "Test next status", reviewToken: paid.reviewToken,
+      }, true)).status).toBe(200);
+    }
+    const current = (await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true)).data.orders.find((o:any) => o.id === row.id);
+    // The original can change after review; validate its live state again at save.
+    await f.tx.update(store.ordersTable).set({ status: "Submitted" }).where(inArray(store.ordersTable.id, row.orderIds));
+    expect((await request("/admin/vendor-payments/acknowledge-paid", undefined, {
+      vendorId: "vendor-a", note: "Outdated review",
+      orderSnapshots: [{ submissionId: row.id, reviewToken: current.reviewToken }],
+    }, true)).status).toBe(409);
+  }));
   it("records and clears historical supplier paid confirmations without fabricating receipts or changing customer payments", () => fixture(async f => {
     const { row } = await submit(f);
     const path = "/admin/vendor-payments/acknowledge-paid";
@@ -263,7 +294,7 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     const clear = `/admin/vendor-payments/orders/${row.id}/clear-paid`;
     expect((await request(clear,undefined,{vendorId:"vendor-a",reviewToken:paid.reviewToken,note:"Incorrect selection"},true)).status).toBe(200);
     const after = (await request("/admin/vendor-payments?vendorId=vendor-a",undefined,undefined,true)).data.orders.find((o:any)=>o.id===row.id);
-    expect(after.paymentState).toBe("owed");
+    expect(after.paymentState).toBe("needs_review");
     const customer = (await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id,f.orderId)))[0];
     expect(customer).toMatchObject({status:"Submitted",paymentStatus:"confirmed"});
   }));

@@ -94,7 +94,8 @@ const data = {
       profit: { currency: "USD", basis: "product_gross", salesUsd: "15.00", supplierProductsUsd: "20.00", amountUsd: "-5.00", reason: null, definition: "Customer product line sales for this supplier minus submitted supplier product cost, before shipping, fees, credits, discounts, tax, or overheads." },
       reference: "REF2",
       totalCost: "20.20",
-      status: "Shipped",
+      // Ordinary transfer tests need an owed order; progressed orders now need historical review.
+      status: "Submitted",
       stale: false,
       paymentId: null,
     },
@@ -274,6 +275,39 @@ test("reviews historical supplier-paid orders and can clear the audited confirma
   await change("payment-clear-paid-note","Wrong confirmation");
   await click("payment-clear-paid-confirm");
   assert.equal(requests.filter(r=>r.path.endsWith("/clear-paid")).length,1);
+});
+test("reviews selected processed original orders even when supplier fulfilment is Submitted", async () => {
+  const ledger:any = detailedData("v1", 4);
+  for (const [index, status] of ["Processing", "Shipped", "Completed", "Submitted"].entries()) {
+    ledger.orders[index].status = "Submitted";
+    ledger.orders[index].sourceOrders = [{ id: `original-${index}`, code: `12${index}`, status }];
+    ledger.orders[index].paymentState = index < 3 ? "needs_review" : "owed";
+  }
+  await mountWith(async (path, init = {}) => {
+    if (path.endsWith("/acknowledge-paid")) {
+      const body = JSON.parse(String(init.body));
+      assert.deepEqual(body.orderSnapshots.map((o:any) => o.submissionId), ["v1-o0", "v1-o1"]);
+      for (const order of ledger.orders.slice(0, 2)) {
+        order.paymentAcknowledgement = { amountUsd: order.totalCost, note: body.note };
+        order.paymentState = "paid";
+      }
+      return new Response(JSON.stringify({ ok: true, count: 2 }));
+    }
+    return new Response(JSON.stringify(ledger));
+  });
+  await change("payment-vendor", "v1");
+  await click("payment-order-v1-o0");
+  await click("payment-order-v1-o1");
+  await click("payment-historical-paid");
+  assert.ok(el("historical-paid-order-v1-o0"));
+  assert.ok(el("historical-paid-order-v1-o1"));
+  assert.equal(document.querySelector('[data-testid="historical-paid-order-v1-o2"]'), null);
+  assert.match(el("historical-paid-review").textContent!, /No buyer notifications/);
+  assert.equal(requests.filter(r => r.method === "POST").length, 0);
+  await change("historical-paid-note", "Supplier was already paid");
+  await click("historical-paid-confirm");
+  assert.equal(requests.filter(r => r.method === "POST").length, 1);
+  assert.match(document.body.textContent!, /Historical supplier payments recorded/);
 });
 test("cancelled or failed submission updates do not change supplier costs", async () => {
   await mount();
