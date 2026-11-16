@@ -65,6 +65,8 @@ describe.skipIf(process.env.WHOLESALE_CSV_DB_TESTS !== "1")("wholesale price CSV
       expect(downloaded.status).toBe(200);
       expect(downloaded.headers.get("content-type")).toContain("text/csv");
       const file = await downloaded.text();
+      expect(file).toContain(`"${a}","CSV, ""first""","","40.00"`);
+      expect(file).toContain(`"${b}","CSV legacy","10.00","25.00"`);
       expect(file).toContain(a); expect(file).toContain(b);
       expect(file).not.toContain(other); expect(file).not.toContain(archived);
       expect((await post({ vendorId, csv: file, apply: false })).body).toMatchObject({ rows: 2, unchanged: 2, changes: [] });
@@ -73,6 +75,10 @@ describe.skipIf(process.env.WHOLESALE_CSV_DB_TESTS !== "1")("wholesale price CSV
       const review = await post(body);
       expect(review.status).toBe(200); expect(review.body.changes).toHaveLength(2);
       expect(await tx.select().from(store.productsTable).where(inArray(store.productsTable.id, [a, b, other]))).toEqual(productsBefore);
+      // A product-tab price change also invalidates a review when wholesale uses that price.
+      await tx.update(store.productsTable).set({ price: "41.00" }).where(eq(store.productsTable.id, a));
+      expect((await post({ ...body, apply: true, previewToken: review.body.previewToken })).status).toBe(409);
+      await tx.update(store.productsTable).set({ price: "40.00", updatedAt: productsBefore.find((p: any) => p.id === a).updatedAt }).where(eq(store.productsTable.id, a));
       // The file cannot be edited between review and Apply.
       expect((await post({ ...body, csv: csv.replace(",7,20", ",8,20"), apply: true, previewToken: review.body.previewToken })).status).toBe(409);
       // All rows must validate before any row is written, including valid rows preceding a foreign supplier's row.

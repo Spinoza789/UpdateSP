@@ -21,7 +21,7 @@ async function catalogue(tx: any, vendorId: string, apply: boolean) {
       and(isNull(productsTable.wholesaleVendorId), inArray(sql`lower(trim(${productsTable.vendor}))`, names))));
   const query = tx.select({ id: productsTable.id, name: productsTable.name, vendor: productsTable.vendor,
     wholesaleVendorId: productsTable.wholesaleVendorId, wholesaleCost: productsTable.wholesaleCost,
-    wholesalePrice: productsTable.wholesalePrice }).from(productsTable).where(scope).orderBy(asc(productsTable.id));
+    wholesalePrice: productsTable.wholesalePrice, price: productsTable.price }).from(productsTable).where(scope).orderBy(asc(productsTable.id));
   const all = await (apply ? query.for("update") : query);
   return { vendor, products: all.filter((p: any) => resolveProductVendor(p, vendors)?.id === vendorId), scope };
 }

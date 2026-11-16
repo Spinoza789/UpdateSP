@@ -1,9 +1,11 @@
 import { createHash } from "node:crypto";
 import { VendorPortalError } from "./vendor-portal-model";
 
-export interface PriceProduct { id: string; name: string; wholesaleCost: string | number | null; wholesalePrice: string | number | null }
+export interface PriceProduct { id: string; name: string; wholesaleCost: string | number | null; wholesalePrice: string | number | null; price?: string | number | null }
 const HEADERS = ["Product ID", "Product name", "Supplier cost (USD)", "Selling price (USD)"];
 const normal = (n: string | number | null) => n == null ? null : Number(n).toFixed(2);
+// Match wholesale checkout: an explicit wholesale override wins, including zero.
+const sellingPrice = (p: PriceProduct) => normal(p.wholesalePrice ?? p.price ?? null);
 export function exportPriceCsv(products: PriceProduct[]) {
   const cell = (v: unknown) => {
     let s = String(v ?? "");
@@ -11,7 +13,7 @@ export function exportPriceCsv(products: PriceProduct[]) {
     return `"${s.replace(/"/g, '""')}"`;
   };
   return "\uFEFF" + [HEADERS, ...products.map(p =>
-    [p.id, p.name, normal(p.wholesaleCost), normal(p.wholesalePrice)])]
+    [p.id, p.name, normal(p.wholesaleCost), sellingPrice(p)])]
     .map(row => row.map(cell).join(",")).join("\r\n") + "\r\n";
 }
 
@@ -79,7 +81,7 @@ export function planPriceCsv(text: string, products: PriceProduct[], vendorId: s
       return Number(s).toFixed(2);
     };
     const cost = amount(2, "supplier cost"), price = amount(3, "selling price");
-    const beforeCost = normal(p.wholesaleCost), beforePrice = normal(p.wholesalePrice);
+    const beforeCost = normal(p.wholesaleCost), beforePrice = sellingPrice(p);
     reviewed.push({ id, name: p.name, beforeCost, beforePrice, cost, price });
     const changedCost = cost !== undefined && cost !== beforeCost;
     const changedPrice = price !== undefined && price !== beforePrice;

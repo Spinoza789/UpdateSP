@@ -7,6 +7,24 @@ const products = [
 ];
 const header = "Product ID,Product name,Supplier cost (USD),Selling price (USD)\r\n";
 describe("wholesale price CSV", () => {
+  it("exports the effective selling price, preserving explicit zero overrides and genuinely missing costs", () => {
+    const catalogue = [
+      { ...products[0], price: "44.00" },
+      { ...products[1], wholesalePrice: "0.00", price: "99.00" },
+    ];
+    const csv = exportPriceCsv(catalogue);
+    expect(csv).toContain('"p1","Product, ""one""","","44.00"');
+    expect(csv).toContain('"p2","Product two","10.00","0.00"');
+    expect(planPriceCsv(csv, catalogue, "vendor")).toMatchObject({ unchanged: 2, changes: [] });
+  });
+  it("compares imported selling prices against the effective product price and binds review to fallback changes", () => {
+    const catalogue = [{ ...products[0], price: "44.00" }];
+    expect(planPriceCsv(header + "p1,Name,,44", catalogue, "vendor")).toMatchObject({ unchanged: 1, changes: [] });
+    const csv = header + "p1,Name,,46";
+    expect(planPriceCsv(csv, catalogue, "vendor").changes[0]).toMatchObject({ beforePrice: "44.00", price: "46.00" });
+    expect(planPriceCsv(csv, catalogue, "vendor").previewToken)
+      .not.toBe(planPriceCsv(csv, [{ ...catalogue[0], price: "45.00" }], "vendor").previewToken);
+  });
   it("round trips every product, including empty prices and quoted names, without changes", () => {
     const csv = exportPriceCsv(products);
     expect(csv).toContain('"Product, ""one"""');
