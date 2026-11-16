@@ -44,4 +44,30 @@ describe("London product profit reporting", () => {
     const report = aggregateProfitReport([row("loss", "0.00", "-75.00")], "2026-11-01", "2026-11-30");
     expect(report.summary).toMatchObject({ profitUsd: "-75.00", marginPercent: null });
   });
+  it("subtracts reviewed product refunds from sales, retaining incurred supplier costs", () => {
+    const original = row("partial", "100.00", "25.00", {
+      refundAffected: true, refundAdjustment: { salesUsd: "40.00", reason: null },
+    });
+    const report = aggregateProfitReport([original], "2026-11-01", "2026-11-30");
+    expect(report.summary).toMatchObject({ salesUsd: "60.00", matchedSalesUsd: "60.00", costUsd: "75.00",
+      profitUsd: "-15.00", marginPercent: "-25.00", includedCount: 1, excludedCount: 0, refundCount: 1,
+      refundExcludedCount: 0, productRefundUsd: "40.00" });
+    expect(report.periods[0].productRefundUsd).toBe("40.00");
+    expect(original.profit.salesUsd).toBe("100.00");
+  });
+  it("rejects invalid or excessive adjustments without leaking unadjusted sales", () => {
+    for (const salesUsd of ["101.00", "-1.00", "bad"]) {
+      const report = aggregateProfitReport([row("bad", "100.00", "25.00", {
+        refundAffected: true, refundAdjustment: { salesUsd, reason: null },
+      })], "2026-11-01", "2026-11-30");
+      expect(report.summary).toMatchObject({ salesUsd: "0.00", excludedCount: 1, refundExcludedCount: 1 });
+    }
+  });
+  it("retains the full supplier loss and a null margin after all product revenue is refunded", () => {
+    const report = aggregateProfitReport([row("full", "100.00", "25.00", {
+      refundAffected: true, refundAdjustment: { salesUsd: "100.00", reason: null },
+    })], "2026-11-01", "2026-11-30");
+    expect(report.summary).toMatchObject({ salesUsd: "0.00", costUsd: "75.00",
+      profitUsd: "-75.00", marginPercent: null, includedCount: 1, productRefundUsd: "100.00" });
+  });
 });

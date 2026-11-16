@@ -26,13 +26,14 @@ export function londonReportRange(from: unknown, to: unknown) {
   return { start: midnight(first), end: midnight(next) };
 }
 function counts() {
-  return { sales: 0n, costs: 0n, profit: 0n, matched: 0n, totalCount: 0, includedCount: 0, excludedCount: 0, unavailableCount: 0, refundCount: 0 };
+  return { sales: 0n, costs: 0n, profit: 0n, matched: 0n, refunds: 0n, totalCount: 0, includedCount: 0, excludedCount: 0, unavailableCount: 0, refundCount: 0, refundExcludedCount: 0 };
 }
 function project(c: ReturnType<typeof counts>) {
   return { salesUsd: signedUsd(c.sales), costUsd: signedUsd(c.costs), profitUsd: signedUsd(c.profit),
     matchedSalesUsd: signedUsd(c.matched), marginPercent: productMargin(c.profit, c.matched),
     totalCount: c.totalCount, includedCount: c.includedCount, excludedCount: c.excludedCount,
-    unavailableCount: c.unavailableCount, refundCount: c.refundCount };
+    unavailableCount: c.unavailableCount, refundCount: c.refundCount, refundExcludedCount: c.refundExcludedCount,
+    productRefundUsd: signedUsd(c.refunds) };
 }
 export function aggregateProfitReport(rows: any[], from: string, to: string) {
   const range = londonReportRange(from, to), summary = counts();
@@ -52,17 +53,28 @@ export function aggregateProfitReport(rows: any[], from: string, to: string) {
     if (["Cancelled", "Canceled", "Recalled"].includes(row.status)) {
       groups.forEach(g => g.excludedCount++); issue("Cancelled or recalled submission excluded."); continue;
     }
-    if (row.refundAffected) {
-      groups.forEach(g => { g.refundCount++; g.excludedCount++; });
-      issue("Refund-affected order excluded pending a reliable product-only adjustment."); continue;
-    }
     let sales: bigint | null = null;
     try { if (row.profit?.salesUsd != null) sales = usdToCents(row.profit.salesUsd); } catch { /* Explicit unavailable count below. */ }
+    let adjustment = 0n;
+    if (row.refundAffected) {
+      groups.forEach(g => g.refundCount++);
+      try {
+        if (!row.refundAdjustment || row.refundAdjustment.reason || sales == null) throw Error();
+        adjustment = usdToCents(row.refundAdjustment.salesUsd);
+        if (adjustment > sales) throw Error();
+      } catch {
+        groups.forEach(g => { g.refundExcludedCount++; g.excludedCount++; });
+        issue(row.refundAdjustment?.reason ?? "Refund-affected order excluded pending a reliable product-only adjustment."); continue;
+      }
+    }
+    const originalSales = sales;
+    if (sales != null) sales -= adjustment;
+    groups.forEach(g => g.refunds += adjustment);
     if (sales != null) groups.forEach(g => g.sales += sales!);
     try {
       if (sales == null || row.profit?.supplierProductsUsd == null || row.profit?.amountUsd == null) throw Error();
       const cost = usdToCents(row.profit.supplierProductsUsd), profit = sales - cost;
-      if (signedUsd(profit) !== row.profit.amountUsd) throw Error();
+      if (signedUsd(originalSales! - cost) !== row.profit.amountUsd) throw Error();
       groups.forEach(g => { g.costs += cost; g.profit += profit; g.matched += sales!; g.includedCount++; });
     } catch {
       groups.forEach(g => g.unavailableCount++);

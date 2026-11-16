@@ -1,5 +1,6 @@
 import { centsToUsdString, usdToCents } from "./refund-money";
 import { paymentOrderDetail, supplierCostsValid } from "./vendor-payment-ledger";
+import type { VendorSnapshot } from "@workspace/db";
 
 const definition = "Customer product sales for this supplier minus submitted supplier product costs. Before shipping, order-level discounts, credits, fees, tax and overheads; not net profit.";
 
@@ -14,7 +15,7 @@ export function productMargin(profit: bigint, sales: bigint): string | null {
   return `${profit < 0n && rounded > 0n ? "-" : ""}${rounded / 100n}.${String(rounded % 100n).padStart(2, "0")}`;
 }
 
-export function snapshotProductSales(items: any[]) {
+export function snapshotProductSales(items: any[], memberIdentities?: Array<{ orderId: string; vendorId: string }>): NonNullable<VendorSnapshot["productSales"]> {
   const groups = new Map<string, { productName: string; quantity: number; salesUsd: string }>();
   for (const item of items) {
     if (!item.productName || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0) throw new Error("Invalid product sales");
@@ -26,7 +27,19 @@ export function snapshotProductSales(items: any[]) {
   }
   if (!groups.size) throw new Error("Missing product sales");
   const lines = [...groups.values()].sort((a, b) => a.productName.localeCompare(b.productName));
-  return { currency: "USD" as const, salesUsd: centsToUsdString(lines.reduce((sum, line) => sum + usdToCents(line.salesUsd), 0n)), lines };
+  const result = { currency: "USD" as const, salesUsd: centsToUsdString(lines.reduce((sum, line) => sum + usdToCents(line.salesUsd), 0n)), lines };
+  if (!memberIdentities) return result;
+  if (memberIdentities.length !== items.length || memberIdentities.some(i => !i.orderId || !i.vendorId))
+    throw new Error("Missing member identity for submitted product sales");
+  const members = new Map<string, { orderId: string; vendorId: string; productName: string; quantity: number; salesUsd: string }>();
+  items.forEach((item, index) => {
+    const identity = memberIdentities[index], key = JSON.stringify([identity.orderId, identity.vendorId, item.productName]);
+    const previous = members.get(key);
+    members.set(key, { ...identity, productName: item.productName,
+      quantity: ((previous ? Math.round(previous.quantity * 100) : 0) + Math.round(Number(item.quantity) * 100)) / 100,
+      salesUsd: centsToUsdString(usdToCents(previous?.salesUsd ?? "0") + usdToCents(String(item.lineTotal))) });
+  });
+  return { ...result, orderLines: [...members.values()].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))) };
 }
 
 /** Admin-only estimate. Never allocate an entire mixed/shared customer order to each supplier. */

@@ -6,7 +6,11 @@ export type VendorCostItem = { productName: string; quantity: number; unitCost: 
 export type VendorShipping = { name: string; address: string; country: string; phone: string; email: string };
 export type VendorSnapshot = {
   productCostHistoryMissing?: boolean;
-  productSales?: { currency: "USD"; salesUsd: string; lines: Array<{ productName: string; quantity: number; salesUsd: string }> };
+  productSales?: {
+    currency: "USD"; salesUsd: string; lines: Array<{ productName: string; quantity: number; salesUsd: string }>;
+    /** Frozen on supplier submission; current order financials may be edited later. */
+    orderLines?: Array<{ orderId: string; vendorId: string; productName: string; quantity: number; salesUsd: string }>;
+  };
   items: VendorCostItem[]; shipping: VendorShipping; currency: "USD";
   productCost: string; shippingCost: string; totalCost: string;
   /** Admin-only historical acknowledgement. Not a transaction or a customer payment. */

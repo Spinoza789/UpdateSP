@@ -48,3 +48,15 @@ it("shows missing history as unavailable rather than zero profit", () => {
   expect(html.match(/Unavailable/g)?.length).toBe(3);
   expect(html).toContain("unknown costs are not zero");
 });
+it("shows reviewed refunds separately from excluded refunds without negative counts", () => {
+  const html = renderToStaticMarkup(createElement(ReportBody, { report: { ...report,
+    summary: { ...sum, excludedCount: 0, refundCount: 2, refundExcludedCount: 0, productRefundUsd: "40.00" },
+    adjustments: [{ submissionId: "s1", reference: "PA-101", vendorId: "v1", affected: true, salesUsd: "40.00", reason: null,
+      reviews: [{ refundId: "r1", reviewedBy: "reviewer", reviewedAt: "2026-11-04", productRefundUsd: "40.00", note: "Products only" }] }],
+  }, showDaily: false }));
+  expect(html).toContain("Product refunds applied");
+  expect(html).toContain("$40.00");
+  expect(html).toContain("reviewer");
+  expect(html).not.toContain(">-2<");
+  expect(html).toContain("Supplier costs remain unchanged");
+});

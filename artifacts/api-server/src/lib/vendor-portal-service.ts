@@ -277,7 +277,10 @@ export async function prepareVendorShipments(tx: Executor, vendorId: string, ord
     const snapshot: VendorSnapshot = { items, shipping: source.shipping, currency: "USD",
       productCost: centsToUsdString(productCents), shippingCost, totalCost: centsToUsdString(productCents + usdToCents(shippingCost)),
       ...(missingHistory ? { productCostHistoryMissing: true } : {}),
-      ...(purpose === "submission" ? { productSales: snapshotProductSales(committed.map((line: any) => ({ ...line, lineTotal: line.salesUsd }))) } : {}) };
+      ...(purpose === "submission" ? { productSales: snapshotProductSales(
+        committed.map((line: any) => ({ ...line, lineTotal: line.salesUsd })),
+        source.items.map((line: any) => ({ orderId: line.orderId, vendorId })),
+      ) } : {}) };
     prepared.push({
       id: sourceKey, sourceKey, reference: source.reference, vendorId,
       sharedOrderId: source.share?.id ?? null, orderIds: source.orderIds,

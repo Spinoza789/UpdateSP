@@ -1,4 +1,5 @@
 - [GB multiple-order review](gb-multiple-order-policy.md) — recurring repeated orders disrupt organiser counts; flag for review in organiser/Admin, without automatic reconciliation.
+- [Product refund reporting](product-refund-reporting.md) — customer refunds reduce product sales only; supplier costs remain incurred; shared-member attribution needs historical evidence.
 - [Telegram unpaid reminders](telegram-unpaid-reminders.md) — no automatic unpaid-order Telegram reminders; preserve other alerts and member-requested information.
 - [Admin / half-kit guard order](admin-half-kit-guard-order.md) — validate session and CSRF before half-kit protection; reversed order causes 401 on writes while previews work.
 - [GB excess half-kit offers](gb-half-kit-offers.md) — organiser controls publication before/after closing; claimed halves leave the list and join the member’s existing order.

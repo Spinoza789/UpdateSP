@@ -3,16 +3,21 @@ import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { moneyOf, signedMoneyOf } from "./model";
 import { formatPercent, londonToday, presetRange, PRESETS, reportPath, shiftRange, validRange, type Preset, type Range } from "./reportDates";
 import { inputCls, inputStyle, Skeleton } from "../../reshipper-payouts/ui";
+import { ProductRefundReview, type RefundRequest, type RefundToReview } from "./ProductRefundReview";
 
 export type ReportSummary = {
   salesUsd: string; costUsd: string; profitUsd: string; marginPercent: string | null; matchedSalesUsd: string;
   totalCount: number; includedCount: number; excludedCount: number; unavailableCount: number; refundCount: number;
+  refundExcludedCount?: number; productRefundUsd?: string;
 };
 export type ProfitReport = {
   currency: "USD"; timeZone: string; dateBasis: string; from: string; to: string;
   summary: ReportSummary;
   periods: Array<{ date: string } & ReportSummary>;
   issues: Array<{ id: string; reference: string; vendorId: string; reason: string }>;
+  refundReviews?: RefundToReview[];
+  adjustments?: Array<{ submissionId: string; reference: string; vendorId: string; affected: boolean; salesUsd: string; reason: string | null;
+    reviews: Array<{ refundId: string; reviewedBy: string; reviewedAt: string; productRefundUsd: string; note: string }> }>;
 };
 
 export function isReport(v: unknown): v is ProfitReport {
@@ -55,11 +60,22 @@ export function ReportBody({ report, showDaily }: { report: ProfitReport; showDa
       <Stat label="Margin" value={formatPercent(s.marginPercent)} hint="Profit ÷ matched sales" color={tone(s.marginPercent)} />
     </div>
     <div className="flex flex-wrap gap-2 text-[11.5px]" data-testid="report-counts">
-      {[["Submissions", s.totalCount, "var(--t-text)"], ["Included", s.includedCount, "#15803D"], ["Excluded (cancelled/recalled)", s.excludedCount - s.refundCount, "var(--t-subtle)"],
+      {[["Submissions", s.totalCount, "var(--t-text)"], ["Included", s.includedCount, "#15803D"], ["Excluded (cancelled/recalled)", s.excludedCount - (s.refundExcludedCount ?? s.refundCount), "var(--t-subtle)"],
         ["Unknown historical values", s.unavailableCount, "#B4770E"], ["Refund affected", s.refundCount, "#B42318"]].map(([l, n, c]) =>
         <span key={l as string} className="rounded-full border px-2.5 py-1" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)" }}>
           {l} <strong className="tabular-nums" style={{ color: c as string }}>{n}</strong></span>)}
     </div>
+    {s.productRefundUsd != null && <p data-testid="product-refunds-applied" className="text-xs">
+      Product refunds applied: <strong>{moneyOf(s.productRefundUsd)}</strong>. Supplier costs remain unchanged.
+      {" "}{s.refundExcludedCount ?? 0} refund-affected submission(s) still excluded.
+    </p>}
+    {report.adjustments?.some(a => !a.reason && a.reviews.length > 0) && <details className="rounded-lg border p-3 text-xs" style={{ borderColor: "var(--t-border)" }}>
+      <summary data-testid="product-refund-history">Reviewed product refund evidence</summary>
+      <ul className="mt-2 space-y-2">{report.adjustments.filter(a => !a.reason).flatMap(a => a.reviews.map(review =>
+        <li key={`${a.submissionId}-${review.refundId}`} data-testid={`product-refund-evidence-${a.submissionId}-${review.refundId}`}>
+          {a.reference} · {review.refundId} · {moneyOf(review.productRefundUsd)} · Reviewed by {review.reviewedBy} on {new Date(review.reviewedAt).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}. {review.note}
+        </li>))}</ul>
+    </details>}
     {s.unavailableCount > 0 && <p role="status" className="rounded-lg border p-3 text-xs" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>Partial historical data: {s.unavailableCount} submission(s) have unknown sales or supplier costs. Only known amounts are included; unknown costs are not zero.</p>}
     {showDaily && <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--t-border)" }}>
       <table className="w-full min-w-[760px] text-left text-xs tabular-nums" data-testid="report-daily">
@@ -86,12 +102,12 @@ export function ReportBody({ report, showDaily }: { report: ProfitReport; showDa
       </ul>
     </section>}
     <p className="text-[11px]" style={{ color: "var(--t-subtle)" }}>
-      USD · Dated by supplier submission date ({report.timeZone}), not payment date. {report.from} to {report.to} inclusive. Revenue is known product sales; cost and profit only include submissions with matched sales and supplier product costs, before shipping, discounts, credits, fees, tax and overheads—not net profit. Cancelled, recalled and refund-affected rows are excluded; refunds need a reliable product-only adjustment before inclusion.
+      USD · Dated by supplier submission date ({report.timeZone}), not payment date. {report.from} to {report.to} inclusive. Revenue is known product sales less reviewed completed product refunds; cost and profit only include submissions with matched sales and supplier product costs, before shipping, discounts, credits, fees, tax and overheads—not net profit. Refund adjustments restate the original submission period, not the refund date. Cancelled, recalled and unresolved refund-affected rows are excluded.
     </p>
   </div>;
 }
 
-type Request = (path: string) => Promise<unknown>;
+type Request = RefundRequest;
 
 export function RevenueProfitReport({ vendors, request }: { vendors: { id: string; name: string }[]; request: Request }) {
   const [preset, setPreset] = useState<Preset>("monthly");
@@ -168,6 +184,10 @@ export function RevenueProfitReport({ vendors, request }: { vendors: { id: strin
     {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm" style={{ borderColor: "#ef4444", background: "color-mix(in srgb, #ef4444 7%, var(--t-surface))" }} data-testid="report-error">
       <span>{error}</span><button type="button" className="font-semibold underline" onClick={() => void load(key)}>Retry</button></div>}
     {valid && loading && !report && <><p role="status" className="text-sm" style={{ color: "var(--t-subtle)" }}>Loading {vendorName} revenue and profit…</p><Skeleton /></>}
-    {report && <div style={{ opacity: loading ? 0.6 : 1 }} aria-busy={loading}><ReportBody report={report} showDaily={showDaily} /></div>}
+    {report && <div style={{ opacity: loading ? 0.6 : 1 }} aria-busy={loading}>
+      <ReportBody report={report} showDaily={showDaily} />
+      {!loading && <ProductRefundReview key={key} refunds={report.refundReviews ?? []} request={request}
+        onSaved={() => { void load(keyRef.current); }} />}
+    </div>}
   </section>;
 }

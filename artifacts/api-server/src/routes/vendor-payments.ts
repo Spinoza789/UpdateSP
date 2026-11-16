@@ -7,7 +7,7 @@ import { vendorAccess } from "../lib/vendor-portal-service";
 import { VendorPortalError } from "../lib/vendor-portal-model";
 import { paymentLedgerSummary, publicVendorReceipt } from "../lib/vendor-payment-ledger";
 import { acknowledgeSupplierPaid, clearSupplierPaid, editSupplierCosts, exportSupplierPayments } from "../lib/vendor-payment-tools";
-import { vendorProfitReport } from "../lib/vendor-profit-report-service";
+import { vendorProfitReport, productRefundReviewOptions, reviewProductRefund } from "../lib/vendor-profit-report-service";
 import {
   listVendorPayments,
   recordVendorPayment,
@@ -44,8 +44,18 @@ router.get("/admin/vendor-payments/report", handled(async (req, res) => {
   if (vendorId && !(await getVendors()).some(vendor => vendor.id === vendorId)) throw new VendorPortalError("Vendor not found.", 404);
   const from = typeof req.query.from === "string" ? req.query.from : "";
   const to = typeof req.query.to === "string" ? req.query.to : "";
-  const report = await db.transaction(tx => vendorProfitReport(tx, vendorId, from, to), { isolationLevel: "repeatable read", readOnly: true });
+  const report = await db.transaction(tx => vendorProfitReport(tx, vendorId, from, to), { isolationLevel: "repeatable read", accessMode: "read only" });
   res.set("Cache-Control", "no-store").json(report);
+}));
+router.get("/admin/vendor-payments/product-refunds/:id", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.set("Cache-Control", "no-store").json(await db.transaction(
+    tx => productRefundReviewOptions(tx, String(req.params.id)), { isolationLevel: "repeatable read", accessMode: "read only" }));
+}));
+router.post("/admin/vendor-payments/product-refunds/:id/review", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.set("Cache-Control", "no-store").json(await db.transaction(
+    tx => reviewProductRefund(tx, String(req.params.id), req.body, getAdminUsername(res))));
 }));
 router.post("/admin/vendor-payments/export", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;
