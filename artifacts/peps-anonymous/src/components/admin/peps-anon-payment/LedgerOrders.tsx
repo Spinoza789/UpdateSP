@@ -116,7 +116,12 @@ export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage
       ? <div className="m-3 rounded-lg border border-dashed p-8 text-center text-sm" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>
           {orders.length ? <>No orders match this tab or filter.{(filtered || f.payment !== "all") && <button type="button" className="ml-2 font-semibold underline" onClick={() => { onFilters({ ...f, query: "", payment: "all", fulfilment: "all", from: "", to: "" }); onPage(1); }}>Show all orders</button>}</> : "No supplier submissions for this vendor yet."}
         </div>
-      : <div className="relative overflow-x-auto"><table className="pap-table">
+      : <div className="relative overflow-x-auto"><table className="pap-table pap-ledger-table">
+        <colgroup>
+          <col className="pap-col-select" /><col className="pap-col-order" /><col className="pap-col-date" />
+          <col className="pap-col-status" /><col className="pap-col-payment" />
+          <col className="pap-col-money" /><col className="pap-col-money" /><col /><col className="pap-col-open" />
+        </colgroup>
         <thead><tr>
           <th className="w-8"><span className="sr-only">Select</span></th><th>Order</th><th>Submitted</th><th>Fulfilment</th><th>Supplier payment</th>
           <th className="pap-num">Supplier cost</th><th className="pap-num">Sold (products)</th><th className="pap-num">Est. product profit</th><th className="w-8"><span className="sr-only">Open</span></th>
@@ -137,6 +142,12 @@ export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage
                 <p className="max-w-[260px] truncate text-[11.5px]" style={{ color: "var(--t-subtle)" }} title={codes.join(", ")}>
                   {o.sourceType === "shared" ? `Shared · ${codes.length} orders · ` : ""}{codes.length ? codes.slice(0, 2).join(", ") + (codes.length > 2 ? ` +${codes.length - 2}` : "") : "No order code"}
                 </p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(o.sourceOrders ?? []).map(source => source.status && <span key={source.id} data-testid={`payment-source-status-${source.id}`} title={`Order ${source.code ?? source.id} status: ${source.status}`} className="inline-flex items-center gap-1 text-[11px]">
+                    <span style={{ color: "var(--t-subtle)" }}>Order status{o.sourceOrders!.length > 1 ? ` · ${source.code ?? source.id}` : ""}</span>
+                    <FulfilmentText status={source.status} />
+                  </span>)}
+                </div>
                 <p className="truncate text-[11px]" style={{ color: "var(--t-subtle)" }}>{(o.sourceOrders ?? []).map(s => s.username).filter(Boolean).join(", ")}</p>
               </td>
               <td className="whitespace-nowrap text-[12.5px]"><span className="pap-ml">Submitted</span>{fmtDate(o.submittedAt)}</td>

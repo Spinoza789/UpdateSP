@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   rows: [] as any[], allocations: [] as any[], payments: [] as any[], written: [] as any[],
-  identities: [{ id: "o1", code: "12656", telegramUsername: "member" }], images: [] as any[],
+  identities: [{ id: "o1", code: "12656", telegramUsername: "member", status: "Submitted" }], images: [] as any[],
 }));
 vi.mock("@workspace/db", async () => ({
   ...(await import("../../../../../lib/db/src/schema/index")), db: {},
@@ -45,11 +45,26 @@ const tx: any = {
 };
 const database: any = { transaction: (fn: any) => fn(tx) };
 beforeEach(() => {
+  state.identities = [{ id: "o1", code: "12656", telegramUsername: "member", status: "Submitted" }];
   state.rows = [{ id: "s1", sourceKey: "order:o1", orderIds: ["o1"], vendorId: "v1", reference: "12656",
     status: "Submitted", sourceFingerprint: "original", submittedAt: new Date("2026-11-01"), snapshot: snapshot() }];
   state.allocations = []; state.payments = []; state.written = []; state.images = [];
 });
 describe("Admin supplier ledger integration without a database", () => {
+  it("uses live original order statuses for ledger totals and rechecks them before payment writes", async () => {
+    for (const status of ["Processing", "Shipped", "Completed"]) {
+      state.identities[0].status = status;
+      const result = await vendorPaymentDashboard(tx, "v1");
+      expect(result.orders[0]).toMatchObject({
+        status: "Submitted", paymentState: "needs_review", eligible: false,
+        sourceOrders: [{ id: "o1", status }],
+      });
+      expect(result.summary.owed.count).toBe(0);
+      expect(result.summary.needsReview.count).toBe(1);
+      await expect(recordVendorPayment(body(), "admin", database)).rejects.toThrow(/fulfilment.*progressed/i);
+      expect(state.written).toHaveLength(0);
+    }
+  });
   it("rejects unreviewed legacy requests before any receipt or allocation write", async () => {
     await expect(recordVendorPayment({ ...body(), orderSnapshots: undefined }, "admin", database)).rejects.toThrow(/review/i);
     expect(state.written).toHaveLength(0);

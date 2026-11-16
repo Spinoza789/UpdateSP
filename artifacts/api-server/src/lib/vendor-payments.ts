@@ -157,7 +157,7 @@ export async function vendorPaymentDashboard(tx: any, vendorId: string) {
   const allocationBySubmission = new Map<string, any>(allocations.map((a: any) => [a.submissionId, a]));
   const orderIds = [...new Set<string>(rows.flatMap((row: any) => row.orderIds ?? []))];
   const identities: any[] = orderIds.length ? await tx.select({
-    id: ordersTable.id, code: ordersTable.code, telegramUsername: ordersTable.telegramUsername,
+    id: ordersTable.id, code: ordersTable.code, telegramUsername: ordersTable.telegramUsername, status: ordersTable.status,
   }).from(ordersTable).where(inArray(ordersTable.id, orderIds)) : [];
   const identityById = new Map(identities.map(order => [order.id, order]));
   const images: { submissionId: string }[] = rows.length ? await tx.select({ submissionId: vendorImagesTable.submissionId })
@@ -308,7 +308,8 @@ export async function recordVendorPayment(
         const reviewed = input.orderSnapshots.find(expected => expected.submissionId === row.id);
         if (!reviewed || reviewed.reviewToken !== paymentReviewToken(row))
           throw new VendorPortalError("Supplier shipment changed since your review. Refresh and review the payment again.", 409);
-        const payable = paymentOrderRow(row, false);
+        const payable = paymentOrderRow(row, false, null,
+          new Map((source.orders ?? []).map((order: any) => [order.id, order])));
         if (!payable.eligible)
           throw new VendorPortalError(payable.reviewReason ?? "This shipment is not payable.", 409);
       }

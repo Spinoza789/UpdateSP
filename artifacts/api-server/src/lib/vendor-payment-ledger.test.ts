@@ -60,12 +60,24 @@ describe("supplier payment ledger", () => {
   it("only offers unpaid, current, valid supplier orders for selection", () => {
     const eligible = paymentOrderRow(row(), false, null, identities);
     expect(eligible).toMatchObject({ eligible: true, paymentState: "owed", paymentId: null });
-    for (const status of ["Submitted", "Processing", "Shipped", "Completed"])
+    for (const status of ["Submitted"])
       expect(paymentOrderRow(row({ status }), false).eligible).toBe(true);
     for (const status of ["On hold", "Recalled", "Cancelled", "unknown"])
       expect(paymentOrderRow(row({ status }), false).eligible).toBe(false);
     expect(paymentOrderRow(row(), true).paymentState).toBe("needs_review");
     expect(paymentOrderRow(row({ status: "Cancelled" }), true).paymentState).toBe("not_owed");
+  });
+  it("holds progressed supplier and original orders for review without inventing payment evidence", () => {
+    for (const status of ["Processing", "Processed", "Shipped", "Completed"]) {
+      expect(paymentOrderRow(row({ status }), false)).toMatchObject({
+        paymentState: "needs_review", eligible: false, paymentId: null, paidAmountUsd: null,
+      });
+      const originals = new Map([["o1", { id: "o1", code: "12656", status }]]);
+      const projected = paymentOrderRow(row(), false, null, originals);
+      expect(projected).toMatchObject({ status: "Submitted", paymentState: "needs_review", eligible: false });
+      expect(projected.sourceOrders[0]).toMatchObject({ status });
+      expect(paymentOrderRow(row(), false, { paymentId: "p1", amountUsd: "25.20" }, originals).paymentState).toBe("paid");
+    }
   });
   it("holds inconsistent snapshot totals instead of offering them as payable", () => {
     expect(paymentOrderRow(row({ snapshot: { ...snapshot, totalCost: "100.00" } }), false)).toMatchObject({ eligible: false, paymentState: "needs_review" });

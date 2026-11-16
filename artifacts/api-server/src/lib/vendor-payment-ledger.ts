@@ -2,9 +2,10 @@ import type { VendorPaymentOrderDetail } from "@workspace/db";
 import { createHash } from "node:crypto";
 import { centsToUsdString, usdToCents } from "./refund-money";
 
-const PAYABLE_STATUSES = new Set(["Submitted", "Processing", "Shipped", "Completed"]);
+const PAYABLE_STATUSES = new Set(["Submitted"]);
+const PROGRESSED_STATUSES = new Set(["processing", "processed", "shipped", "completed"]);
 const NOT_OWED_STATUSES = new Set(["Recalled", "Cancelled", "Canceled"]);
-type Identity = { id: string; code?: string | null; telegramUsername?: string | null };
+type Identity = { id: string; code?: string | null; telegramUsername?: string | null; status?: string | null };
 type Allocation = { paymentId: string; amountUsd: string };
 
 function money(value: unknown): string | null {
@@ -65,8 +66,14 @@ export function paymentOrderRow(row: any, stale: boolean, allocation: Allocation
   let paymentState: "owed" | "paid" | "needs_review" | "not_owed";
   let reviewReason: string | null = null;
   const acknowledgement = row.snapshot?.paymentAcknowledgement ?? null;
+  const sourceOrders = detail.sourceOrders.map(order => ({
+    ...order, status: identities.get(order.id)?.status ?? null,
+  }));
+  const progressed = [row.status, ...sourceOrders.map(order => order.status)]
+    .some(status => typeof status === "string" && PROGRESSED_STATUSES.has(status.trim().toLowerCase()));
   if (allocation || acknowledgement) paymentState = "paid";
   else if (NOT_OWED_STATUSES.has(row.status)) { paymentState = "not_owed"; reviewReason = "This supplier shipment is no longer payable."; }
+  else if (progressed) { paymentState = "needs_review"; reviewReason = "Order fulfilment has progressed but no supplier payment is recorded. Review the payment history before recording payment."; }
   else if (stale) { paymentState = "needs_review"; reviewReason = "Shipment changed after submission. Review and resubmit before recording payment."; }
   else if (!PAYABLE_STATUSES.has(row.status)) { paymentState = "needs_review"; reviewReason = "Shipment is on hold or its fulfilment status needs review."; }
   else if (!supplierCostsValid(detail)) { paymentState = "needs_review"; reviewReason = "Submitted supplier costs are missing or inconsistent. Review before recording payment."; }
@@ -82,7 +89,7 @@ export function paymentOrderRow(row: any, stale: boolean, allocation: Allocation
       phone: text(shipping.phone), email: text(shipping.email),
       carrier: text(row.carrier), trackingNumber: text(row.trackingNumber),
     },
-    ...detail, paymentId: allocation?.paymentId ?? null,
+    ...detail, sourceOrders, paymentId: allocation?.paymentId ?? null,
     reviewToken: paymentReviewToken(row),
     paidAmountUsd: allocation ? money(allocation.amountUsd) : acknowledgement ? money(acknowledgement.amountUsd) : null,
     paymentAcknowledgement: acknowledgement,

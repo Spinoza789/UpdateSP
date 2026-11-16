@@ -49,6 +49,16 @@ test("fallback eligibility only for safe nonstale unpaid valid statuses", () => 
   assert.equal(orderState({ ...base, paymentState: "needs_review" }), "needs_review");
 });
 
+test("progressed orders stay out of owed even when a stale response still offers payment", () => {
+  for (const status of ["Processing", "Processed", "Shipped", "Completed"]) {
+    const o = { ...base, eligible: true, paymentState: "owed" as const,
+      sourceOrders: [{ id: "source", code: "12896", username: null, status }] };
+    assert.equal(isEligible(o), false);
+    assert.equal(orderState(o), "needs_review");
+    assert.equal(orderState({ ...o, paymentId: "paid" }), "paid");
+  }
+});
+
 test("summary prefers server summary and falls back with exact cents", () => {
   const server = {
     currency: "USD" as const,

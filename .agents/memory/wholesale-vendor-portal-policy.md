@@ -62,6 +62,18 @@ to Peps Anon Payment, not a change to customer checkout or payment rules.
 “This is only for the peps anon place.” Existing processed/shipped orders had
 already been paid; that is not permission to auto-pay future orders.
 
+Processing, Shipped and Completed original orders or vendor submissions must not
+appear as Owed without supplier-payment evidence. Put them in Needs review;
+existing receipts and explicit paid confirmations remain Paid. Show the original
+order status separately from the vendor submission's fulfilment status.
+
+**Why:** The owner reported progressed orders appearing as owed and explicitly
+chose “Move to Needs review” rather than treating missing records as paid.
+
+**How to apply:** Check both current original orders and the supplier submission,
+including each member of shared submissions. Never invent receipts or change
+customer payments or fulfilment to correct the supplier accounting display.
+
 **How to apply:** Keep cost corrections separate from selling prices and catalogue
 prices. Preserve frozen receipts; require clearing paid evidence before cost
 edits. Historical confirmations need an explicit reviewed list, actor and note,

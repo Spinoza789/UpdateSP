@@ -1,5 +1,5 @@
 export type PaymentState = "owed" | "paid" | "needs_review" | "not_owed";
-export type SourceOrder = { id: string; code: string | null; username: string | null };
+export type SourceOrder = { id: string; code: string | null; username: string | null; status?: string | null };
 export type LineItem = { productName: string; quantity: number | null; unitCost: string | null; lineTotal: string | null };
 export type Wallet = { id: string; currency: string; network: string; address: string; label?: string };
 export type OrderProfit = {
@@ -86,6 +86,11 @@ export type Filters = { query: string; payment: string; fulfilment: string; from
 export const MAX_SELECTION = 200;
 export const PAGE_SIZE = 25;
 const PAYABLE_STATUSES = new Set(["Submitted", "Processing", "Shipped", "Completed"]);
+const PROGRESSED_STATUSES = new Set(["processing", "processed", "shipped", "completed"]);
+function fulfilmentProgressed(o: LedgerOrder) {
+  return [o.status, ...(o.sourceOrders ?? []).map(source => source.status)]
+    .some(status => typeof status === "string" && PROGRESSED_STATUSES.has(status.trim().toLowerCase()));
+}
 export const STATE_LABEL: Record<PaymentState, string> = { owed: "Owed", paid: "Paid", needs_review: "Needs review", not_owed: "Not owed" };
 export const STATE_TONE: Record<PaymentState, string> = { owed: "#1B3A7A", paid: "#15803D", needs_review: "#B4770E", not_owed: "#6B7280" };
 
@@ -117,15 +122,16 @@ export function signedMoneyOf(value: string | number | null | undefined) {
 }
 
 export function isEligible(o: LedgerOrder) {
-  if (o.paymentAcknowledgement) return false;
+  if (o.paymentAcknowledgement || o.paymentId || fulfilmentProgressed(o)) return false;
   if (typeof o.eligible === "boolean") return o.eligible;
   const c = cents(o.totalCost);
   return !o.stale && !o.paymentId && c !== null && c > 0n && PAYABLE_STATUSES.has(o.status);
 }
 export function orderState(o: LedgerOrder): PaymentState {
   if (o.paymentAcknowledgement) return "paid";
-  if (o.paymentState) return o.paymentState;
   if (o.paymentId) return "paid";
+  if (fulfilmentProgressed(o) && o.paymentState !== "paid" && o.paymentState !== "not_owed") return "needs_review";
+  if (o.paymentState) return o.paymentState;
   if (o.stale) return "needs_review";
   if (isEligible(o)) return "owed";
   if (PAYABLE_STATUSES.has(o.status)) return "needs_review";
