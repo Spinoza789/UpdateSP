@@ -153,6 +153,66 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect((await request("/admin/vendor-portal/submit", undefined, body, true)).status).toBe(200);
     return { body, preview: preview.data, row: (await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.sourceKey, preview.data.shipments[0].id)))[0] };
   }
+  it("freezes commercial costs before submission and gives only a new order the updated supplier price", () => fixture(async f => {
+    const { captureWholesaleFinancials } = await import("../../lib/wholesale-financials");
+    await captureWholesaleFinancials(f.tx, f.orderId, true);
+    await f.tx.update(store.fs3CostsTable).set({ unitCost: "90.00" }).where(eq(store.fs3CostsTable.productName, f.name));
+    const { row } = await submit(f);
+    expect(row.snapshot.items[0]).toMatchObject({ unitCost: "20.00", lineTotal: "40.00" });
+    expect(row.snapshot.productSales).toMatchObject({ salesUsd: "1998.00" });
+    const [oldOrder] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, f.orderId));
+    const nextId = randomUUID();
+    await f.tx.insert(store.ordersTable).values({ ...oldOrder, id: nextId, code: f.code + "1" });
+    await f.tx.insert(store.orderLineItemsTable).values({ id: randomUUID(), orderId: nextId, productId: f.name,
+      productName: f.name, vendorId: "vendor-a", quantity: "2", unitPrice: "999", lineTotal: "1998" });
+    await captureWholesaleFinancials(f.tx, nextId, true);
+    const [newValues] = await f.tx.select().from(store.wholesaleOrderFinancialsTable).where(eq(store.wholesaleOrderFinancialsTable.orderId, nextId));
+    expect(newValues.lines[0].unitCost).toBe("90.00");
+    const ledger = await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true);
+    expect(ledger.data.orders.find((o: any) => o.id === row.id).profit).toMatchObject({ amountUsd: "1958.00", marginPercent: "98.00" });
+    const visible = await request("/vendor/orders/" + row.id, f.a);
+    expect(JSON.stringify(visible.data)).not.toContain("productSales");
+    expect(JSON.stringify(visible.data)).not.toContain("salesUsd");
+  }));
+  it("reports full-period gross profit independently of supplier payment and keeps saved sales after edits", () => fixture(async f => {
+    const { row } = await submit(f);
+    await f.tx.update(store.orderLineItemsTable).set({ lineTotal: "5000.00" }).where(eq(store.orderLineItemsTable.orderId, f.orderId));
+    await f.tx.update(store.fs3CostsTable).set({ unitCost: "90.00" }).where(eq(store.fs3CostsTable.productName, f.name));
+    const day = new Date(row.submittedAt).toISOString().slice(0, 10);
+    const path = `/admin/vendor-payments/report?from=${day}&to=${day}&vendorId=vendor-a`;
+    expect((await request(path, f.a)).status).toBe(403);
+    expect((await request(path)).status).toBe(403);
+    const response = await request(path, undefined, undefined, true);
+    expect(response.status).toBe(200);
+    expect(response.data.summary).toMatchObject({ salesUsd: "1998.00", costUsd: "40.00", profitUsd: "1958.00", includedCount: 1 });
+    await f.tx.update(store.vendorSubmissionsTable).set({ status: "Shipped", snapshot: { ...row.snapshot,
+      paymentAcknowledgement: { amountUsd: row.snapshot.totalCost, note: "Historical payment", recordedAt: new Date().toISOString(), recordedBy: "test" } } })
+      .where(eq(store.vendorSubmissionsTable.id, row.id));
+    expect((await request(path, undefined, undefined, true)).data.summary.profitUsd).toBe("1958.00");
+    expect((await request(`/admin/vendor-payments/report?from=${day}&to=${day}`, undefined, undefined, true)).data.summary.includedCount).toBeGreaterThanOrEqual(1);
+    await f.tx.update(store.vendorSubmissionsTable).set({ status: "Cancelled" }).where(eq(store.vendorSubmissionsTable.id, row.id));
+    expect((await request(path, undefined, undefined, true)).data.summary).toMatchObject({ salesUsd: "0.00", profitUsd: "0.00", excludedCount: 1 });
+    expect((await request("/admin/vendor-payments/report?from=2026-02-30&to=2026-03-01", undefined, undefined, true)).status).toBe(400);
+    expect((await request(path + "unknown", undefined, undefined, true)).status).toBe(404);
+  }));
+  it("flags a cost missing at checkout until an explicit audited supplier-cost review", () => fixture(async f => {
+    const { captureWholesaleFinancials } = await import("../../lib/wholesale-financials");
+    await f.tx.delete(store.fs3CostsTable).where(eq(store.fs3CostsTable.productName, f.name));
+    await captureWholesaleFinancials(f.tx, f.orderId, true);
+    await f.tx.insert(store.fs3CostsTable).values({ productName: f.name, unitCost: "90.00" });
+    const { row } = await submit(f);
+    expect(row.snapshot.productCostHistoryMissing).toBe(true);
+    const ledger = (await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true)).data;
+    const order = ledger.orders.find((o: any) => o.id === row.id);
+    expect(order.profit).toMatchObject({ salesUsd: "1998.00", amountUsd: null, marginPercent: null });
+    const result = await request(`/admin/vendor-payments/orders/${row.id}/costs`, undefined, {
+      vendorId: "vendor-a", reviewToken: order.reviewToken, items: [{ productName: f.name, unitCost: "90.00" }],
+      shippingCost: "50.00", note: "Confirmed actual supplier unit cost for this order",
+    }, true);
+    expect(result.status).toBe(200);
+    const updated = (await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true)).data.orders.find((o: any) => o.id === row.id);
+    expect(updated.profit.amountUsd).toBe("1818.00");
+  }));
   it("edits only supplier snapshot prices with review protection and exports selected paid or unpaid orders in FS3 format", () => fixture(async f => {
     const { row } = await submit(f);
     const ledger = await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true);
@@ -374,15 +434,17 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect(audit.details.before.snapshot.totalCost).toBe("282.00");
     expect(audit.details.after.snapshot.totalCost).toBe("90.00");
   }));
-  it("rejects an update preview if supplier costs change before confirmation", () => fixture(async f => {
+  it("keeps original costs during a reviewed item change despite a later catalogue price change", () => fixture(async f => {
     const { row } = await submit(f);
     await f.tx.update(store.orderLineItemsTable).set({ quantity: "1", lineTotal: "999" }).where(eq(store.orderLineItemsTable.orderId, f.orderId));
     const path = `/admin/vendor-portal/orders/${row.id}/update`;
     const preview = await request(path, undefined, {}, true);
     expect(preview.status).toBe(200);
     await f.tx.update(store.fs3CostsTable).set({ unitCost: "25.00" }).where(eq(store.fs3CostsTable.productName, f.name));
-    expect((await request(path, undefined, { previewToken: preview.data.previewToken }, true)).status).toBe(409);
-    expect((await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.id, row.id)))[0].snapshot).toEqual(row.snapshot);
+    expect((await request(path, undefined, { previewToken: preview.data.previewToken }, true)).status).toBe(200);
+    const [updated] = await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.id, row.id));
+    expect(updated.snapshot.items[0]).toMatchObject({ unitCost: "20.00", lineTotal: "20.00", quantity: 1 });
+    expect(updated.snapshot.productSales.salesUsd).toBe("999.00");
   }));
   it.each(["Processing", "Shipped", "Completed"])("does not update a %s supplier shipment", status => fixture(async f => {
     const { row } = await submit(f);
@@ -1239,5 +1301,63 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect(masked).toMatchObject({ trackingNumber: null, carrier: null, trackingPackages: [], trackingMasked: true });
     const [other] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, secondOrder));
     expect(other).toMatchObject({ trackingNumber: "SHARED1234", status: "Shipped", grandTotal: "999.00" });
+  }));
+  it("keeps member-specific historical costs when a shared shipment quantity changes, retaining only audited cost overrides", () => fixture(async f => {
+    const { captureWholesaleFinancials } = await import("../../lib/wholesale-financials");
+    const shareId = `TEST${randomUUID().slice(0, 6).toUpperCase()}`, secondOrder = randomUUID();
+    await f.tx.insert(store.wholesaleSharesTable).values({
+      id: shareId, creatorUsername: f.member, status: "submitted", vendorId: "vendor-a",
+      organiserPaymentStatus: "confirmed", deliveryUsername: f.member,
+      shippingName: "Shared Recipient", shippingAddress: "Combined supplier address", shippingCountry: "United Kingdom", shippingPhone: "+441234",
+    });
+    await f.tx.update(store.ordersTable).set({ orderType: "wholesale_shared", wholesaleVendorId: "vendor-a", sharedOrderId: shareId }).where(eq(store.ordersTable.id, f.orderId));
+    await f.tx.update(store.orderLineItemsTable).set({ quantity: "1", lineTotal: "999.00" }).where(eq(store.orderLineItemsTable.orderId, f.orderId));
+    await f.tx.update(store.fs3CostsTable).set({ unitCost: "10.00" }).where(eq(store.fs3CostsTable.productName, f.name));
+    await captureWholesaleFinancials(f.tx, f.orderId, true);
+    await f.tx.insert(store.ordersTable).values({
+      id: secondOrder, code: String(Number(f.code) + 1), telegramUsername: f.other, deliveryMethod: "Vendor",
+      status: "Submitted", paymentStatus: "confirmed", productSubtotal: "999", grandTotal: "999",
+      orderType: "wholesale_shared", wholesaleVendorId: "vendor-a", sharedOrderId: shareId,
+    });
+    await f.tx.insert(store.orderLineItemsTable).values({
+      id: randomUUID(), orderId: secondOrder, productId: f.name, productName: f.name, quantity: "1", unitPrice: "999", lineTotal: "999",
+    });
+    await f.tx.update(store.fs3CostsTable).set({ unitCost: "20.00" }).where(eq(store.fs3CostsTable.productName, f.name));
+    await captureWholesaleFinancials(f.tx, secondOrder, true);
+    await f.tx.insert(store.wholesaleShareMembersTable).values([
+      { id: randomUUID(), shareId, username: f.member, orderId: f.orderId },
+      { id: randomUUID(), shareId, username: f.other, orderId: secondOrder },
+    ]);
+    const input = { vendorId: "vendor-a", orderCodes: [f.code, String(Number(f.code) + 1)] };
+    const initialPreview = await request("/admin/vendor-portal/preview", undefined, input, true);
+    expect(initialPreview.status, JSON.stringify(initialPreview.data)).toBe(200);
+    expect((await request("/admin/vendor-portal/submit", undefined, { ...input, previewToken: initialPreview.data.previewToken }, true)).status).toBe(200);
+    const [row] = await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.sharedOrderId, shareId));
+    expect(row.snapshot.items[0]).toMatchObject({ quantity: 2, unitCost: "15.00", lineTotal: "30.00" });
+    const updateQuantity = async (quantity: number, expectedCost: string) => {
+      await f.tx.update(store.orderLineItemsTable).set({ quantity: String(quantity), lineTotal: `${quantity * 999}.00` }).where(eq(store.orderLineItemsTable.orderId, f.orderId));
+      await captureWholesaleFinancials(f.tx, f.orderId);
+      const path = `/admin/vendor-portal/orders/${row.id}/update`;
+      const preview = await request(path, undefined, {}, true);
+      expect(preview.status, JSON.stringify(preview.data)).toBe(200);
+      expect(preview.data.after.productCost).toBe(expectedCost);
+      expect((await request(path, undefined, { previewToken: preview.data.previewToken }, true)).status).toBe(200);
+    };
+    await updateQuantity(2, "40.00");
+    const ledgerPath = "/admin/vendor-payments?vendorId=vendor-a";
+    let current = (await request(ledgerPath, undefined, undefined, true)).data.orders.find((o: any) => o.id === row.id);
+    expect(current.profit).toMatchObject({ salesUsd: "2997.00", supplierProductsUsd: "40.00", amountUsd: "2957.00", marginPercent: "98.67" });
+    // A shipping-only correction is not an override of the members' saved unit costs.
+    expect((await request(`/admin/vendor-payments/orders/${row.id}/costs`, undefined, {
+      vendorId: "vendor-a", reviewToken: current.reviewToken, items: [{ productName: f.name, unitCost: "13.33" }],
+      shippingCost: "60.00", note: "Shipping-only supplier correction",
+    }, true)).status).toBe(200);
+    await updateQuantity(3, "50.00");
+    current = (await request(ledgerPath, undefined, undefined, true)).data.orders.find((o: any) => o.id === row.id);
+    expect((await request(`/admin/vendor-payments/orders/${row.id}/costs`, undefined, {
+      vendorId: "vendor-a", reviewToken: current.reviewToken, items: [{ productName: f.name, unitCost: "15.00" }],
+      shippingCost: "50.00", note: "Confirmed replacement supplier price for this combined shipment",
+    }, true)).status).toBe(200);
+    await updateQuantity(4, "75.00");
   }));
 });

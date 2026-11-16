@@ -3,7 +3,7 @@ import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   db, accountsTable, fs3CostsTable, ordersTable, orderLineItemsTable,
   wholesaleSharesTable, wholesaleShareMembersTable, vendorPortalAccessTable, vendorPortalRequestsTable,
-  vendorAccountsTable, vendorSessionsTable, vendorSubmissionsTable, vendorAuditTable, productsTable, type VendorSnapshot,
+  vendorAccountsTable, vendorSessionsTable, vendorSubmissionsTable, vendorAuditTable, productsTable, wholesaleOrderFinancialsTable, type VendorSnapshot,
 } from "@workspace/db";
 import { getVendors } from "../routes/config";
 import { calcTotalShipping, pickRegionForCountry } from "./wholesale-shipping";
@@ -15,6 +15,8 @@ import { loadFs3CostMatches } from "./fs3-cost-matches";
 import { resolveFs3SupplierId } from "@workspace/api-zod/fs3-costs";
 import { assertVendorOpen, VendorClosedError } from "./vendor-portal-extras";
 import type { VendorSourceReads } from "./vendor-source-reads";
+import { supplierFinancialItems } from "./wholesale-financial-snapshot";
+import { snapshotProductSales } from "./vendor-payment-profit";
 
 export type Executor = any;
 export async function auditVendor(tx: Executor, actor: string, action: string, submissionId: string | null, details: Record<string, unknown> = {}) {
@@ -216,8 +218,54 @@ export async function prepareVendorShipments(tx: Executor, vendorId: string, ord
       // overwriting the committed vendor snapshot. Real resubmission stays blocked.
     }
     if (purpose === "submission" && source.orders.some(o => ["Shipped", "Completed"].includes(o.status))) throw new VendorPortalError("An already shipped or completed order cannot be submitted as a new supplier shipment.", 409);
-    const distinctCosts = supplierCatalogueCosts(source.items, source.products, costs, costMatches);
-    const items = supplierItems(source.items, distinctCosts);
+    const financials = await tx.select().from(wholesaleOrderFinancialsTable)
+      .where(inArray(wholesaleOrderFinancialsTable.orderId, source.orderIds));
+    // Commercial snapshots cover new orders before payment/submission. Legacy
+    // submissions keep their already saved costs; only an explicitly reviewed
+    // first submission of a legacy order may use the current quoted supplier cost.
+    const financialById = new Map<string, any>(financials.map((f: any) => [f.orderId, f]));
+    const overrides = new Map<string, string>();
+    if (existing) {
+      const edits = await tx.select().from(vendorAuditTable).where(and(
+        eq(vendorAuditTable.submissionId, existing.id), eq(vendorAuditTable.action, "supplier_costs_edited"),
+      )).orderBy(asc(vendorAuditTable.createdAt));
+      for (const edit of edits) {
+        const details = edit.details as any;
+        for (const item of details?.after?.items ?? []) {
+          const before = details?.before?.items?.find((old: any) => old.productName === item.productName);
+          const currentCost = existing.snapshot.items.find((current: any) => current.productName === item.productName)?.unitCost;
+          if (currentCost != null && (details?.before?.productCostHistoryMissing || (before && usdToCents(before.unitCost) !== usdToCents(item.unitCost))))
+            overrides.set(item.productName, currentCost);
+        }
+      }
+    }
+    const committed = source.items.map((line: any) => {
+      const financial = financialById.get(line.orderId);
+      const priorCost = existing?.snapshot?.items?.find((item: any) => item.productName === line.productName)?.unitCost;
+      if (!financial) {
+        const unitCost = priorCost ?? supplierCatalogueCosts([line], source.products, costs, costMatches)[0].unitCost;
+        return { ...line, salesUsd: line.lineTotal, unitCost };
+      }
+      const saved = financial.lines.find((i: any) => i.productId === line.productId && i.vendorId === vendorId);
+      const overrideCost = overrides.get(line.productName);
+      if (purpose === "export") {
+        if (saved) return { ...saved, quantity: String(line.quantity), ...(overrideCost == null ? {} : { unitCost: overrideCost }) };
+        return { ...line, unitCost: supplierCatalogueCosts([line], source.products, costs, costMatches)[0].unitCost };
+      }
+      if (!saved || Number(saved.quantity) !== Number(line.quantity) || saved.salesUsd !== line.lineTotal)
+        throw new VendorPortalError("Commercial order values changed without a reviewed snapshot. Review the order before submitting.", 409);
+      // A previous shipment's unit cost may be a weighted average across members.
+      // Never apply that average back to individual committed commercial lines.
+      return overrideCost == null ? saved : { ...saved, unitCost: overrideCost };
+    });
+    const missingHistory = committed.some((line: any) => line.unitCost == null);
+    // Missing cost at checkout is not permission to invent historical profit.
+    // A current quote can still fulfil the shipment; Admin must explicitly review
+    // its order-specific costs before that quote becomes usable profit evidence.
+    const quoted = committed.map((line: any) => line.unitCost != null ? line : {
+      ...line, unitCost: supplierCatalogueCosts([line], source.products, costs, costMatches)[0].unitCost,
+    });
+    const items = supplierFinancialItems(quoted);
     const kits = items.reduce((total, i) => total + i.quantity, 0);
     const region = pickRegionForCountry(vendor, source.shipping.country);
     const shippingAmount = region && calcTotalShipping(vendor, region.region, kits);
@@ -227,7 +275,9 @@ export async function prepareVendorShipments(tx: Executor, vendorId: string, ord
     const productCents = items.reduce((sum, i) => sum + usdToCents(i.lineTotal), 0n);
     const shippingCost = shippingAmount.toFixed(2);
     const snapshot: VendorSnapshot = { items, shipping: source.shipping, currency: "USD",
-      productCost: centsToUsdString(productCents), shippingCost, totalCost: centsToUsdString(productCents + usdToCents(shippingCost)) };
+      productCost: centsToUsdString(productCents), shippingCost, totalCost: centsToUsdString(productCents + usdToCents(shippingCost)),
+      ...(missingHistory ? { productCostHistoryMissing: true } : {}),
+      ...(purpose === "submission" ? { productSales: snapshotProductSales(committed.map((line: any) => ({ ...line, lineTotal: line.salesUsd }))) } : {}) };
     prepared.push({
       id: sourceKey, sourceKey, reference: source.reference, vendorId,
       sharedOrderId: source.share?.id ?? null, orderIds: source.orderIds,

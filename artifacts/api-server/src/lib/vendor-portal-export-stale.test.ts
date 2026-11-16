@@ -79,7 +79,14 @@ describe("FS3 download of orders with stale vendor submissions", () => {
   });
   it("still rejects missing supplier costs instead of substituting customer prices", async () => {
     cost = null;
+    submission.snapshot.items[0].unitCost = null;
     await expect(prepareVendorShipments(tx, "uther", [order.code], "export")).rejects.toThrow(/supplier costs/);
+    expect(tx.update).not.toHaveBeenCalled();
+  });
+  it("uses an existing historical cost even when the current catalogue cost is blank", async () => {
+    cost = null;
+    const rows = await prepareVendorShipments(tx, "uther", [order.code], "export");
+    expect(rows[0].snapshot.items[0].unitCost).toBe("10.00");
     expect(tx.update).not.toHaveBeenCalled();
   });
   it.each(["unpaid", "pending", "confirmed"])("exports stale %s orders without payment or fulfilment writes", async paymentStatus => {

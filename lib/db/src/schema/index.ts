@@ -69,3 +69,4 @@ export * from "./testmedaddy";
 export * from "./group_buy_coa";
 export * from "./group_buy_order_revisions";
 export * from "./telegram_bot_state";
+export * from "./wholesale_financials";

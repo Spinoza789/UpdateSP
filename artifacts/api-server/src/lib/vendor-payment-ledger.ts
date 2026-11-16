@@ -55,6 +55,8 @@ export function paymentReviewToken(row: any): string {
     id: row.id, vendorId: row.vendorId, status: row.status,
     sourceFingerprint: row.sourceFingerprint, detail: paymentOrderDetail(row),
     paymentAcknowledgement: row.snapshot?.paymentAcknowledgement ?? null,
+    productSales: row.snapshot?.productSales ?? null,
+    productCostHistoryMissing: row.snapshot?.productCostHistoryMissing ?? false,
   })).digest("hex");
 }
 

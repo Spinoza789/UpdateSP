@@ -42,3 +42,11 @@ it("keeps historical supplier-only receipt details unchanged", () => {
   expect(html).not.toContain("Product profit");
   expect(html).toContain("$25.20");
 });
+
+it("shows product margin beside profit with two decimals", () => {
+  const html = renderToStaticMarkup(createElement(OrderBreakdown, { src: { ...src, profit: { ...src.profit, marginPercent: "33.3333" } } }));
+  expect(html).toContain("33.33%");
+  expect(html).toContain("Margin");
+  const none = renderToStaticMarkup(createElement(OrderBreakdown, { src: { ...src, profit: { ...src.profit, marginPercent: null } } }));
+  expect(none).toContain("Margin");
+});

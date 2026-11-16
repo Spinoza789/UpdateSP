@@ -1,5 +1,6 @@
 import React from "react";
 import { moneyOf, signedMoneyOf, fmtDate, type LineItem, type SourceOrder, type OrderProfit } from "./model";
+import { formatPercent } from "./reportDates";
 import { subtle } from "../../reshipper-payouts/ui";
 
 export type BreakdownSource = {
@@ -63,6 +64,8 @@ export function OrderBreakdown({ src, testId }: { src: BreakdownSource; testId?:
           <tr><td colSpan={3} className="p-2 text-right" style={subtle}>Product subtotal</td><td className="p-2 text-right">{moneyOf(src.productCost)}</td>
             {showSales && <><td className="p-2 text-right font-semibold">{moneyOf(src.profit?.salesUsd)}</td><td className="p-2 text-right font-semibold">{signedMoneyOf(src.profit?.amountUsd)}</td></>}
           </tr>
+          {showSales && <tr data-testid="breakdown-margin"><td colSpan={5} className="p-2 text-right" style={subtle}>Margin on product sales</td>
+            <td className="p-2 text-right font-semibold" style={{ color: src.profit?.marginPercent == null ? "#B4770E" : "var(--t-text)" }}>{formatPercent(src.profit?.marginPercent)}</td></tr>}
           <tr><td colSpan={3} className="p-2 text-right" style={subtle}>Supplier shipping</td><td className="p-2 text-right">{moneyOf(src.shippingCost)}</td>{showSales && <td colSpan={2} />}</tr>
           <tr><td colSpan={3} className="p-2 text-right font-bold">Supplier cost total (USD)</td><td className="p-2 text-right font-bold" style={{ color: "var(--t-blue-deep)" }}>{moneyOf(src.totalCost)}</td>{showSales && <td colSpan={2} />}</tr>
         </tfoot>

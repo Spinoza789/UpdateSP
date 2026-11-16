@@ -72,6 +72,7 @@ import {
 } from "../lib/wholesale-organiser-wallets";
 import { orphanedSharedOrderMembershipWhere } from "../lib/shared-order-active-membership";
 import { buildSharedOrderCosts } from "../lib/shared-order-costs";
+import { captureWholesaleFinancials } from "../lib/wholesale-financials";
 
 function escHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -2729,6 +2730,7 @@ export async function attemptLockShare(
           await tx.update(wholesaleShareMembersTable)
             .set({ shippingShare: shippingShare.toFixed(2), vendorShippingShares: partsByMember.get(m.id) })
             .where(eq(wholesaleShareMembersTable.id, m.id));
+          await captureWholesaleFinancials(tx, existingOrder.id);
           continue;
         }
 
@@ -2781,6 +2783,7 @@ export async function attemptLockShare(
         await tx.update(wholesaleShareMembersTable)
           .set({ orderId, shippingShare: shippingShare.toFixed(2), vendorShippingShares: partsByMember.get(m.id) })
           .where(eq(wholesaleShareMembersTable.id, m.id));
+        await captureWholesaleFinancials(tx, orderId, true);
       }
 
       // CONDITIONAL parent transition: only lock if still "open". If a concurrent
@@ -3832,6 +3835,7 @@ router.put("/admin/wholesale-shares/:id/adjustments", async (req, res): Promise<
             grandTotal: calculation.grandTotal.toFixed(2),
             paymentUsdAmount: null,
           }).where(refundMutableOrderWhere(and(eq(ordersTable.id, order.id), eq(ordersTable.paymentStatus, "unpaid"))));
+          await captureWholesaleFinancials(tx, order.id);
         }
       }
 

@@ -1,3 +1,4 @@
+import { captureWholesaleFinancials } from "../lib/wholesale-financials";
 import { escapeTelegramHtml as escTg } from "../lib/telegram-package-tracking";
 import { qrOrderBatches } from "../lib/qr-order-batches";
 import { qrPostedOrderUpdate } from "../lib/qr-posted-order";
@@ -3396,6 +3397,7 @@ router.put("/admin/orders/:id/line-items", async (req: any, res: any) => {
     }))
   );
 
+  await captureWholesaleFinancials(tx, String(req.params.id));
   // Recalculate order totals
   const productSubtotal = validated.reduce((s, li) => s + li.lineTotal, 0);
   const deliveryPrice = parseFloat(String(existing.deliveryPrice ?? "0"));

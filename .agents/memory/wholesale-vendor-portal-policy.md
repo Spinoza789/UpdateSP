@@ -182,3 +182,14 @@ then approved all those setup steps.
 
 **How to apply:** Reuse the existing Settings actions and saved connection
 states. Do not reset existing accounts or silently enable optional notifications.
+
+Shared supplier shipments can combine the same product bought at different
+historical costs. Their displayed unit cost may be a rounded weighted average,
+not a cost that belongs to any individual member's order.
+
+**Why:** Reusing that average after a quantity change produces incorrect costs
+and profit even when the original combined total was correct.
+
+**How to apply:** Preserve order/product-specific commercial costs through
+quantity changes and re-locking. Only explicit audited product-cost corrections
+justify replacing them; a shipping-only correction does not.

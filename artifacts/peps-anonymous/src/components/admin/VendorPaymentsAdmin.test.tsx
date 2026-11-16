@@ -348,6 +348,46 @@ async function click(id: string) {
     fireEvent.click(el(id));
   });
 }
+test("opens all-vendor profit reporting without selecting a ledger vendor and supports date and vendor controls", async () => {
+  requests.length = 0;
+  await mountWith(async (path) => {
+    requests.push({ path, body: null });
+    if (!path.startsWith("/api/admin/vendor-payments/report?")) return new Response(JSON.stringify(data));
+    const query = new URL(path, "http://localhost").searchParams;
+    const summary = { salesUsd: "100.00", matchedSalesUsd: "100.00", costUsd: "75.00", profitUsd: "25.00", marginPercent: "25.00",
+      totalCount: 1, includedCount: 1, excludedCount: 0, unavailableCount: 0, refundCount: 0 };
+    return new Response(JSON.stringify({ currency: "USD", timeZone: "Europe/London", dateBasis: "supplier_submission",
+      from: query.get("from"), to: query.get("to"), summary, periods: [{ date: query.get("from"), ...summary }], issues: [] }));
+  });
+  assert.equal((el("payment-vendor") as HTMLSelectElement).value, "");
+  await click("payment-tab-report");
+  assert.match(el("report-body").textContent!, /25\.00%/);
+  assert.ok(!requests.find(r => r.path.includes("report?"))!.path.includes("vendorId="));
+  await change("report-vendor", "v1");
+  assert.ok(requests.at(-1)!.path.includes("vendorId=v1"));
+  assert.equal((el("payment-vendor") as HTMLSelectElement).value, "");
+  await click("report-preset-weekly");
+  const from = (el("report-from") as HTMLInputElement).value;
+  assert.equal(new Date(from + "T12:00:00Z").getUTCDay(), 1);
+  await click("report-next");
+  assert.notEqual((el("report-from") as HTMLInputElement).value, from);
+  await change("report-from", "2099-01-01");
+  assert.ok(document.querySelector('[data-testid="report-range-error"]'));
+  assert.equal(document.querySelector('[data-testid="report-body"]'), null);
+  assert.equal(requests.filter(r => r.method === "POST").length, 0);
+});
+test("preserves payment drafts and selections while switching to profit reporting", async () => {
+  await mount();
+  await click("payment-order-o1");
+  await click("payment-record-open");
+  await change("payment-txid", "unfinished-transfer");
+  await click("payment-record-close");
+  await click("payment-tab-report");
+  await click("payment-tab-orders");
+  assert.match(el("payment-selected-count").textContent!, /1 selected/);
+  await click("payment-record-open");
+  assert.equal((el("payment-txid") as HTMLInputElement).value, "unfinished-transfer");
+});
 async function review() {
   await click("payment-order-o1");
   await click("payment-order-o2");

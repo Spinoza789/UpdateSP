@@ -13,6 +13,7 @@ import { WalletList } from "./peps-anon-payment/WalletList";
 import { SupplierCostEditor } from "./peps-anon-payment/SupplierCostEditor";
 import { HistoricalPaidReview } from "./peps-anon-payment/HistoricalPaidReview";
 import { tabKeys } from "./peps-anon-payment/tabKeys";
+import { RevenueProfitReport } from "./peps-anon-payment/RevenueProfitReport";
 import { inputCls, inputStyle, Skeleton } from "../reshipper-payouts/ui";
 
 const EMPTY_FORM: PaymentForm = { walletId: "", amount: "", txid: "", paidAt: "", note: "" };
@@ -43,7 +44,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   const [reason, setReason] = useState("");
   const [ledgerKey, setLedgerKey] = useState(0);
   // Navigation state (vendor-scoped, survives view switches and drawer close)
-  const [view, setView] = useState<"orders" | "history">("orders");
+  const [view, setView] = useState<"orders" | "history" | "report">("orders");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
@@ -154,7 +155,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
     setRecordOpen(false);
     setWalletsOpen(false);
     setPendingVendor(null);
-    setView("orders");
+    setView((v) => (v === "report" ? v : "orders"));
   }
   function changeVendor(id: string) {
     if (id === vendorId) return;
@@ -365,18 +366,21 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
       <span>{loadError}</span>
       <button type="button" className="font-semibold underline" onClick={() => void load(vendorId)} data-testid="payment-retry">Retry</button>
     </div>}
-    {!vendorId && !loadError && <p className="rounded-xl border border-dashed p-10 text-center text-sm" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>Choose a vendor to see their supplier-cost ledger.</p>}
-    {vendorId && loading && !ledger && <><p role="status" className="text-sm" style={{ color: "var(--t-subtle)" }}>Loading {vendorName} orders and supplier payment records…</p><Skeleton /></>}
+    <div role="tablist" onKeyDown={tabKeys} aria-label="Peps Anon Payment views" className="inline-flex flex-wrap rounded-lg border p-0.5" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)" }}>
+      {([...(ledger ? [["orders", `Orders (${ledger.orders.length})`], ["history", `Payment history (${ledger.payments.length})`]] as const : []), ["report", "Revenue & Profit"] as const]).map(([k, label]) =>
+        <button key={k} id={`payment-tab-${k}`} aria-controls={`payment-panel-${k}`} tabIndex={(view === k || (!ledger && k === "report" && view !== "report")) ? 0 : -1} type="button" role="tab" aria-selected={view === k} onClick={() => setView(k)} data-testid={`payment-tab-${k}`}
+          className="rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
+          style={view === k ? { background: "var(--t-blue-deep)", color: "#fff" } : { color: "var(--t-subtle)" }}>{label}</button>)}
+    </div>
+    {active && view === "report" && <div id="payment-panel-report" role="tabpanel" aria-labelledby="payment-tab-report">
+      <RevenueProfitReport vendors={vendors} request={request} />
+    </div>}
+
+    {view !== "report" && !vendorId && !loadError && <p className="rounded-xl border border-dashed p-10 text-center text-sm" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>Choose a vendor to see their supplier-cost ledger.</p>}
+    {view !== "report" && vendorId && loading && !ledger && <><p role="status" className="text-sm" style={{ color: "var(--t-subtle)" }}>Loading {vendorName} orders and supplier payment records…</p><Skeleton /></>}
 
     {ledger && summary && <>
-      <LedgerSummary summary={summary} />
-
-      <div role="tablist" onKeyDown={tabKeys} aria-label="Peps Anon Payment views" className="inline-flex rounded-lg border p-0.5" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)" }}>
-        {([["orders", `Orders (${ledger.orders.length})`], ["history", `Payment history (${ledger.payments.length})`]] as const).map(([k, label]) =>
-          <button key={k} id={`payment-tab-${k}`} aria-controls={`payment-panel-${k}`} tabIndex={view === k ? 0 : -1} type="button" role="tab" aria-selected={view === k} onClick={() => setView(k)} data-testid={`payment-tab-${k}`}
-            className="rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
-            style={view === k ? { background: "var(--t-blue-deep)", color: "#fff" } : { color: "var(--t-subtle)" }}>{label}</button>)}
-      </div>
+      {view !== "report" && <LedgerSummary summary={summary} />}
 
       <div id="payment-panel-orders" hidden={view !== "orders"} role="tabpanel" aria-labelledby="payment-tab-orders">
         <LedgerOrders orders={ledger.orders} visible={visible} filters={filters} onFilters={setFilters} page={page} onPage={setPage}

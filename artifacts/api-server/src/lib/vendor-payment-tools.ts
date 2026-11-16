@@ -48,6 +48,7 @@ export async function editSupplierCosts(id: string, body: any, actor: string, da
     const productCents = items.reduce((sum, i) => sum + usdToCents(i.lineTotal), 0n);
     const snapshot = { ...row.snapshot, items, shippingCost, productCost: centsToUsdString(productCents),
       totalCost: centsToUsdString(productCents + usdToCents(shippingCost)) };
+    delete snapshot.productCostHistoryMissing;
     await auditVendor(tx, actor, "supplier_costs_edited", id, { vendorId, note, before: row.snapshot, after: snapshot });
     await tx.update(vendorSubmissionsTable).set({ snapshot, updatedAt: new Date() }).where(eq(vendorSubmissionsTable.id, id));
     return { ok: true };

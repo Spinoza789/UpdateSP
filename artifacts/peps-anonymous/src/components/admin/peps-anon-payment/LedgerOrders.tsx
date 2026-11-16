@@ -6,6 +6,7 @@ import {
 } from "./model";
 import { FulfilmentText, SupplierBadge, TAB_LABEL } from "./StatusBadge";
 import { tabKeys } from "./tabKeys";
+import { formatPercent } from "./reportDates";
 import { inputCls, inputStyle } from "../../reshipper-payouts/ui";
 
 export const EMPTY_FILTERS: Filters = { query: "", payment: "all", fulfilment: "all", from: "", to: "" };
@@ -145,6 +146,7 @@ export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage
               <td className="pap-num" data-testid={`payment-sold-price-${o.id}`}><span className="pap-ml">Sold price · products only</span><span style={{ color: sold === "Unavailable" ? "#B4770E" : "var(--t-text)" }}>{sold}</span><span className="sr-only"> Sold price, products only</span></td>
               <td className="pap-num pap-c-wide" data-testid={`payment-profit-${o.id}`}><span className="pap-ml">Est. product profit</span>
                 <span className="font-semibold" style={{ color: profitTone }}>{signedMoneyOf(p?.amountUsd)}</span>
+                <span className="ml-1.5 text-[11px] font-medium" style={{ color: p?.marginPercent == null ? "#B4770E" : "var(--t-subtle)" }} data-testid={`payment-margin-${o.id}`}>{p?.marginPercent == null ? "margin unavailable" : `${formatPercent(p.marginPercent)} margin`}</span>
                 {(p?.reason || !p) && <span className="block max-w-[180px] truncate text-[10.5px] md:ml-auto" style={{ color: "#8A5A00" }} title={p?.reason || undefined}>{p?.reason || "Profit details unavailable; refresh."}</span>}
               </td>
               <td className="pap-c-go" onClick={(e) => e.stopPropagation()}>

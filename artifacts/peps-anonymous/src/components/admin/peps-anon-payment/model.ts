@@ -8,6 +8,8 @@ export type OrderProfit = {
   salesUsd: string | null;
   supplierProductsUsd: string | null;
   amountUsd: string | null;
+  /** Product margin percent (profit / sales). Null when unavailable. */
+  marginPercent?: string | null;
   reason: string | null;
   definition: string;
   lines?: Array<{ productName: string; salesUsd: string; amountUsd: string }> | null;

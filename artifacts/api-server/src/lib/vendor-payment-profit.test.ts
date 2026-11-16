@@ -11,6 +11,26 @@ const source = (items = [{ vendorId: "v1", lineTotal: "30.30" }]) => ({
   orders: [{ grandTotal: "999", productSubtotal: "888", vendorShipping: "50", creditsApplied: 100 }],
 });
 describe("Admin supplier-scoped product profit", () => {
+  it("shows margin on sales rather than markup on costs, including losses and zero sales", () => {
+    expect(vendorProductProfit(row(), source(), false)).toMatchObject({ marginPercent: "33.33" });
+    expect(vendorProductProfit(row(), source([{ vendorId: "v1", lineTotal: "10.10" }]), false)).toMatchObject({ marginPercent: "-100.00" });
+    expect(vendorProductProfit(row(), source([{ vendorId: "v1", lineTotal: "0.00" }]), false)).toMatchObject({ marginPercent: null });
+  });
+  it("keeps committed sales and supplier costs when live order sales change or become unavailable", () => {
+    const committed = { ...row(), snapshot: { ...row().snapshot, productSales: {
+      currency: "USD", salesUsd: "30.30", lines: [{ productName: "Product", quantity: 2, salesUsd: "30.30" }],
+    } } };
+    expect(vendorProductProfit(committed, source([{ vendorId: "v1", lineTotal: "900.00" }]), false))
+      .toMatchObject({ salesUsd: "30.30", amountUsd: "10.10", marginPercent: "33.33" });
+    expect(vendorProductProfit(committed, null, true)).toMatchObject({ salesUsd: "30.30", amountUsd: "10.10" });
+  });
+  it("keeps revenue but does not treat a later fulfilment quote as a missing historical cost", () => {
+    const committed = { ...row(), snapshot: { ...row().snapshot, productCostHistoryMissing: true, productSales: {
+      currency: "USD", salesUsd: "30.30", lines: [{ productName: "Product", quantity: 2, salesUsd: "30.30" }],
+    } } };
+    expect(vendorProductProfit(committed, null, true)).toMatchObject({ salesUsd: "30.30", amountUsd: null, marginPercent: null,
+      reason: expect.stringMatching(/order-specific supplier costs/) });
+  });
   it("includes per-product sales and profit, combining shared members by product name", () => {
     const detail = vendorProductProfit(row(), source([
       { vendorId: "v1", productName: "Product", quantity: "0.5", lineTotal: "10.00" },

@@ -7,6 +7,7 @@ import { vendorAccess } from "../lib/vendor-portal-service";
 import { VendorPortalError } from "../lib/vendor-portal-model";
 import { paymentLedgerSummary, publicVendorReceipt } from "../lib/vendor-payment-ledger";
 import { acknowledgeSupplierPaid, clearSupplierPaid, editSupplierCosts, exportSupplierPayments } from "../lib/vendor-payment-tools";
+import { vendorProfitReport } from "../lib/vendor-profit-report-service";
 import {
   listVendorPayments,
   recordVendorPayment,
@@ -37,6 +38,15 @@ function handled(fn: (req: Request, res: Response) => Promise<void>) {
     }
   };
 }
+router.get("/admin/vendor-payments/report", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const vendorId = typeof req.query.vendorId === "string" && req.query.vendorId ? req.query.vendorId : undefined;
+  if (vendorId && !(await getVendors()).some(vendor => vendor.id === vendorId)) throw new VendorPortalError("Vendor not found.", 404);
+  const from = typeof req.query.from === "string" ? req.query.from : "";
+  const to = typeof req.query.to === "string" ? req.query.to : "";
+  const report = await db.transaction(tx => vendorProfitReport(tx, vendorId, from, to), { isolationLevel: "repeatable read", readOnly: true });
+  res.set("Cache-Control", "no-store").json(report);
+}));
 router.post("/admin/vendor-payments/export", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;
   res.set("Cache-Control", "no-store").json(await exportSupplierPayments(req.body));

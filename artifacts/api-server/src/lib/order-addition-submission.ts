@@ -1,3 +1,4 @@
+import { captureWholesaleFinancials } from "./wholesale-financials";
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
@@ -157,6 +158,7 @@ export async function createSeparateAddition(tx: Tx, parent: typeof ordersTable.
     quantity: Number(item.quantity).toFixed(2), unitPrice: Number(item.unitPrice).toFixed(2),
     lineTotal: (Number(item.quantity) * Number(item.unitPrice)).toFixed(2),
   }))).returning();
+  if (["wholesale", "wholesale_shared"].includes(order.orderType ?? "")) await captureWholesaleFinancials(tx, id, true);
   if (credits > 0n) {
     const [account] = await tx.select({ username: accountsTable.telegramUsername }).from(accountsTable).where(
       sql`lower(ltrim(${accountsTable.telegramUsername}, '@')) = ${owner(parent.telegramUsername)}`);

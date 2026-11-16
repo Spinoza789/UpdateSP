@@ -5,6 +5,8 @@ import { vendorAccountsTable } from "./vendor_accounts";
 export type VendorCostItem = { productName: string; quantity: number; unitCost: string; lineTotal: string };
 export type VendorShipping = { name: string; address: string; country: string; phone: string; email: string };
 export type VendorSnapshot = {
+  productCostHistoryMissing?: boolean;
+  productSales?: { currency: "USD"; salesUsd: string; lines: Array<{ productName: string; quantity: number; salesUsd: string }> };
   items: VendorCostItem[]; shipping: VendorShipping; currency: "USD";
   productCost: string; shippingCost: string; totalCost: string;
   /** Admin-only historical acknowledgement. Not a transaction or a customer payment. */

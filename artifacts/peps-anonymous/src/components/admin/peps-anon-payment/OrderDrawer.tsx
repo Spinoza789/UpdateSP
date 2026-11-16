@@ -5,6 +5,7 @@ import { OrderBreakdown } from "./OrderBreakdown";
 import { FulfilmentText, SupplierBadge } from "./StatusBadge";
 import { isEligible, moneyOf, orderState, signedMoneyOf, type LedgerOrder } from "./model";
 import { SubmissionUpdateReview, type SubmissionUpdatePreview } from "./SubmissionUpdateReview";
+import { formatPercent } from "./reportDates";
 
 export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, selected, onToggle, locked, message,
   onRecord, onReceipt, paymentLocked, onRemove, removeTarget, onRemoveCancel, onRemoveConfirm, removeBusy, removeReason, onRemoveReason, busy,
@@ -87,6 +88,7 @@ export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, sele
       {stat("Supplier cost", moneyOf(o.totalCost), "var(--t-blue-deep)")}
       {stat("Sold price · products only", moneyOf(p?.salesUsd))}
       {stat("Est. product profit", signedMoneyOf(p?.amountUsd), !p?.amountUsd ? "#B4770E" : p.amountUsd.startsWith("-") ? "#B42318" : "#15803D")}
+      {stat("Product margin", formatPercent(p?.marginPercent), p?.marginPercent == null ? "#B4770E" : p.marginPercent.startsWith("-") ? "#B42318" : "#15803D")}
     </div>
     {removing && removeTarget && <section className="mb-4 space-y-3 rounded-lg border p-4" style={{ borderColor: "#D7A3A0", background: "color-mix(in srgb, #B42318 4%, var(--t-surface))" }} data-testid="payment-remove-confirmation" aria-label="Confirm supplier submission removal">
       <p className="text-sm font-bold">Remove supplier submission · <span className="font-mono">{removeTarget.reference}</span></p>
@@ -108,7 +110,7 @@ export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, sele
     </section>}
     <OrderBreakdown src={o} testId={`payment-order-detail-${o.id}`} />
     {p && <div className="mt-4 rounded-lg border p-3 text-xs" style={{ borderColor: "var(--t-border)", background: "var(--t-bg)" }} data-testid={`payment-profit-detail-${o.id}`}>
-      <p className="font-semibold">Estimated product profit · {signedMoneyOf(p.amountUsd)}</p>
+      <p className="font-semibold">Estimated product profit · {signedMoneyOf(p.amountUsd)} · Margin {formatPercent(p.marginPercent)}</p>
       <p className="mt-1" style={{ color: "var(--t-subtle)" }}>Customer product sales: {moneyOf(p.salesUsd)} · Supplier product cost: {moneyOf(p.supplierProductsUsd)}</p>
       <p className="mt-1" style={{ color: "var(--t-subtle)" }}>{p.definition}</p>
       {p.reason && <p className="mt-1 font-medium" style={{ color: "#B4770E" }}>{p.reason}</p>}

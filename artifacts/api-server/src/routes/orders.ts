@@ -65,6 +65,7 @@ import { inferGroupBuyContext } from "../lib/group-buy-order-context";
 import { additionIsSeparate, getAdditionAvailability, createSeparateAddition, lockAddition, recordAddition, replayAddition, validateAdditionItems, type AdditionRequest } from "../lib/order-addition-submission";
 import { fingerprint, SupplierBatchError } from "../lib/supplier-batches-model";
 import { lockBatchWholesaleCheckout, commitBatchWholesaleCheckout } from "../lib/supplier-batch-wholesale";
+import { captureWholesaleFinancials } from "../lib/wholesale-financials";
 
 // ── Server-authoritative wholesale shipping ──────────────────────────────────
 // Wholesale shipping is priced by kit-count tiers per destination region, so it must
@@ -1744,6 +1745,7 @@ router.post("/orders", async (req, res, next): Promise<void> => {
     .values(lineItemsToInsert)
     .returning();
 
+  if (clientOrderType === "wholesale") await captureWholesaleFinancials(tx, orderId, true);
   let halfCredits = 0;
   if (halfKitCheckout) {
     // The new order, credit spend and one-time offer allocation commit together.
@@ -2763,6 +2765,7 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
     .values(lineItemsToInsert)
     .returning();
   if (order.groupBuyId) await saveOnwardOrderPreference(tx, rawId, req.body.onwardDeliveryMethod);
+  if (isWholesaleOrder) await captureWholesaleFinancials(tx, rawId);
   return { updatedOrder, insertedLineItems, lineItemsToInsert };
   });
 
