@@ -8,6 +8,7 @@ import { VendorPortalError } from "../lib/vendor-portal-model";
 import { paymentLedgerSummary, publicVendorReceipt } from "../lib/vendor-payment-ledger";
 import { acknowledgeSupplierPaid, clearSupplierPaid, editSupplierCosts, exportSupplierPayments } from "../lib/vendor-payment-tools";
 import { vendorProfitReport, productRefundReviewOptions, reviewProductRefund } from "../lib/vendor-profit-report-service";
+import { vendorOrderComparison } from "../lib/vendor-order-comparison";
 import {
   listVendorPayments,
   recordVendorPayment,
@@ -38,6 +39,16 @@ function handled(fn: (req: Request, res: Response) => Promise<void>) {
     }
   };
 }
+router.get("/admin/vendor-payments/order-comparison", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const vendorId = typeof req.query.vendorId === "string" && req.query.vendorId ? req.query.vendorId : undefined;
+  if (vendorId && !(await getVendors()).some(vendor => vendor.id === vendorId)) throw new VendorPortalError("Vendor not found.", 404);
+  const date = (key: string) => typeof req.query[key] === "string" ? req.query[key] as string : "";
+  const report = await db.transaction(tx => vendorOrderComparison(
+    tx, vendorId, date("from"), date("to"), date("compareFrom"), date("compareTo"),
+  ), { isolationLevel: "repeatable read", accessMode: "read only" });
+  res.set("Cache-Control", "no-store").json(report);
+}));
 router.get("/admin/vendor-payments/report", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const vendorId = typeof req.query.vendorId === "string" && req.query.vendorId ? req.query.vendorId : undefined;

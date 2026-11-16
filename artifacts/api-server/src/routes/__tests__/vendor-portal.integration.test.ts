@@ -238,6 +238,40 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect((await request("/admin/vendor-payments/export",undefined,{vendorId:"vendor-b",submissionIds:[row.id]},true)).status).toBe(409);
     expect((await request("/admin/vendor-payments/export",f.a,{vendorId:"vendor-a",submissionIds:[row.id]})).status).toBe(403);
   }));
+  it("compares all supplier submissions with London dates, vendor isolation and no page limit", () => fixture(async f => {
+    const { row } = await submit(f);
+    // Use a quiet historical date and isolate from any existing non-fixture data.
+    await f.tx.update(store.vendorSubmissionsTable).set({ submittedAt: new Date("1901-07-01T00:00:00Z") }).where(eq(store.vendorSubmissionsTable.id, row.id));
+    const path = "/admin/vendor-payments/order-comparison?from=1901-07-01&to=1901-07-01&compareFrom=1901-06-30&compareTo=1901-06-30";
+    expect((await request(path, f.a)).status).toBe(403);
+    expect((await request(path + "&vendorId=unknown", undefined, undefined, true)).status).toBe(404);
+    const before = (await request(path, undefined, undefined, true)).data;
+    const copies = Array.from({ length: 30 }, (_, i) => ({
+      ...row, id: randomUUID(), sourceKey: `fixture-compare:${randomUUID()}`,
+      vendorId: i === 0 ? "vendor-b" : "vendor-a",
+      status: i === 1 ? "Recalled" : i === 2 ? "Cancelled" : "Submitted",
+      // Include a multi-member/shared shipment and missing financial data: still one submission.
+      orderIds: [f.orderId, f.orderId], snapshot: {},
+      submittedAt: new Date("1901-07-01T12:00:00Z"),
+    }));
+    await f.tx.insert(store.vendorSubmissionsTable).values(copies);
+    const all = (await request(path, undefined, undefined, true)).data;
+    expect(all.current.total - before.current.total).toBe(28);
+    expect(all.current.excluded - before.current.excluded).toBe(2);
+    const vendor = (await request(path + "&vendorId=vendor-b", undefined, undefined, true)).data;
+    expect(vendor.current.total).toBe(1);
+    await f.tx.insert(store.vendorSubmissionsTable).values({
+      ...row, id: randomUUID(), sourceKey: `fixture-london:${randomUUID()}`,
+      vendorId: "vendor-b", submittedAt: new Date("2099-06-30T23:30:00Z"),
+    });
+    const london = (await request("/admin/vendor-payments/order-comparison?from=2099-07-01&to=2099-07-01&compareFrom=2099-06-30&compareTo=2099-06-30&vendorId=vendor-b", undefined, undefined, true)).data;
+    expect(london.current.total).toBe(1);
+    expect(london.previous.total).toBe(0);
+    expect(london.current.daily).toEqual([{ date: "2099-07-01", count: 1 }]);
+    expect((await request(path.replace("1901-07-01&to", "1901-02-30&to"), undefined, undefined, true)).status).toBe(400);
+    const [unchanged] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id, f.orderId));
+    expect(unchanged).toMatchObject({ status: "Submitted", paymentStatus: "confirmed" });
+  }));
   it("acknowledges processed original orders without changing customer orders or sending buyer notifications", () => fixture(async f => {
     const { row } = await submit(f);
     const { notifyUser } = await import("../../lib/telegram");

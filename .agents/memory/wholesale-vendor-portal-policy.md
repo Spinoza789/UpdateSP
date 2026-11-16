@@ -109,6 +109,16 @@ unchanged when supplier price lists change; only future orders use the new costs
 costs. Margin is profit divided by product selling price, not markup on cost.
 Shipping, fees and overheads remain outside this product-profit measure.
 
+Peps Anon order comparisons count supplier submissions by their submission date,
+not individual customer orders. A combined shared shipment counts once; cancelled
+and recalled submissions are excluded.
+
+**Why:** The owner explicitly selected “Supplier orders” for daily through
+six-monthly and custom period comparisons.
+
+**How to apply:** Keep counts independent of financial completeness and payment
+eligibility, across the full filtered ledger rather than the displayed page.
+
 Removing an order from Peps Anon Payment means recalling its supplier submission
 from the vendor portal and payment list, not cancelling or deleting the customer order.
 

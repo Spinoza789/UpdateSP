@@ -410,6 +410,22 @@ test("opens all-vendor profit reporting without selecting a ledger vendor and su
   assert.equal(document.querySelector('[data-testid="report-body"]'), null);
   assert.equal(requests.filter(r => r.method === "POST").length, 0);
 });
+test("opens order comparisons without a selected vendor and preserves existing payment drafts", async () => {
+  await mount();
+  await click("payment-order-o1");
+  await click("payment-record-open");
+  await change("payment-txid", "keep-comparison-draft");
+  await click("payment-record-close");
+  await click("payment-tab-comparison");
+  assert.ok(el("orders-comparison"));
+  assert.equal(document.querySelector('[data-testid="payment-summary-selected"]'), null);
+  assert.equal(document.querySelector('[data-testid="revenue-profit-report"]'), null);
+  await click("payment-tab-orders");
+  assert.equal((el("payment-order-o1") as HTMLInputElement).checked, true);
+  await click("payment-record-open");
+  assert.equal((el("payment-txid") as HTMLInputElement).value, "keep-comparison-draft");
+  assert.equal(requests.filter(r => r.method === "POST").length, 0);
+});
 test("preserves payment drafts and selections while switching to profit reporting", async () => {
   await mount();
   await click("payment-order-o1");
