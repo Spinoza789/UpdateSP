@@ -178,6 +178,55 @@ test("reviews and confirms a corrected supplier submission then refreshes its co
   assert.match(el("payment-order-detail-o1").textContent!, /7\.00/);
   assert.ok(el("payment-detail-record"));
 });
+test("record payment footer separates saved supplier totals, selling prices and weighted profit from crypto sent", async () => {
+  await mount();
+  const ledger: any = structuredClone(data);
+  Object.assign(ledger.orders[0], { productCost: "7.00", shippingCost: "3.10" });
+  Object.assign(ledger.orders[1], { productCost: "20.00", shippingCost: "0.20" });
+  ledger.wallets = [{ id: "w1", currency: "ETH", network: "Ethereum", address: "saved-eth-address" }];
+  adminAuth.request = async (path, init = {}) => {
+    requests.push({ path, method: init.method, body: init.body ? JSON.parse(String(init.body)) : null });
+    return Response.json(ledger);
+  };
+  await click("payment-refresh");
+  await click("payment-order-o1");
+  await click("payment-order-o2");
+  await click("payment-record-open");
+  const summary = el("payment-summary");
+  assert.ok(summary.closest("footer"));
+  assert.match(el("payment-summary-products").textContent!, /\$27\.00/);
+  assert.match(el("payment-summary-shipping").textContent!, /\$3\.30/);
+  assert.match(el("payment-summary-total").textContent!, /\$30\.30/);
+  assert.match(el("payment-summary-sales").textContent!, /\$33\.20/);
+  assert.match(el("payment-summary-profit").textContent!, /\$6\.20/);
+  assert.match(el("payment-summary-margin").textContent!, /18\.67%/);
+  assert.match(summary.textContent!, /USD.*not the crypto amount/s);
+  await change("payment-wallet", "w1");
+  await change("payment-amount", "0.0123");
+  await change("payment-txid", "external-transaction");
+  await click("payment-review");
+  assert.match(el("payment-draft").textContent!, /0\.0123 ETH/);
+  assert.match(el("payment-summary-total").textContent!, /\$30\.30/);
+  assert.match(el("payment-summary-profit").textContent!, /\$6\.20/);
+  assert.equal(requests.filter(r => r.method === "POST").length, 0);
+  await click("payment-edit");
+  assert.equal((el("payment-amount") as HTMLInputElement).value, "0.0123");
+});
+test("record payment summary labels incomplete historical values without presenting partial sales or profit as totals", async () => {
+  await mount();
+  const ledger: any = structuredClone(data);
+  ledger.orders[1].profit = { ...ledger.orders[1].profit, salesUsd: null, amountUsd: null };
+  adminAuth.request = async () => Response.json(ledger);
+  await click("payment-refresh");
+  await click("payment-order-o1");
+  await click("payment-order-o2");
+  await click("payment-record-open");
+  assert.match(el("payment-summary-sales").textContent!, /Unavailable/);
+  assert.match(el("payment-summary-profit").textContent!, /Unavailable/);
+  assert.match(el("payment-summary-margin").textContent!, /Unavailable/);
+  assert.match(el("payment-summary-history-warning").textContent!, /not treated as zero/);
+  assert.match(el("payment-summary-total").textContent!, /\$30\.30/);
+});
 test("shows delivery and starts an external payment for only the opened order", async () => {
   await mount();
   await click("payment-order-o2");

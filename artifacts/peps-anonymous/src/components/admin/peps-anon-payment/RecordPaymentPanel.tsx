@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { OrderBreakdown } from "./OrderBreakdown";
 import { Overlay, Notice } from "./Overlay";
 import { WalletList } from "./WalletList";
+import { PaymentSummary } from "./PaymentSummary";
 import { money, moneyOf, type LedgerOrder, type Wallet } from "./model";
 import { inputCls, inputStyle } from "../../reshipper-payouts/ui";
 
@@ -30,7 +31,9 @@ export function RecordPaymentPanel({ wallets, form, onForm, chosen, total, draft
   return <Overlay side="center" testId="payment-record-dialog" closeTestId="payment-record-close" canClose={canClose} onClose={onClose}
     title={draft ? "Confirm payment record" : "Record payment"}
     subtitle={<>Records an external transfer already sent to {vendorName}. It never sends funds or verifies blockchain receipt.</>}
-    footer={draft
+    footer={<>
+      <PaymentSummary chosen={chosen} total={total} />
+      {draft
       ? <div className="flex flex-wrap items-center justify-end gap-2">
           <button type="button" data-testid="payment-edit" disabled={busy} className="pap-btn" onClick={onEdit}>Edit</button>
           <button type="button" data-testid="payment-confirm" disabled={busy} className="pap-btn pap-btn-primary" onClick={onConfirm}>{busy ? "Recording" : "Confirm record"}</button>
@@ -38,7 +41,8 @@ export function RecordPaymentPanel({ wallets, form, onForm, chosen, total, draft
       : <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs" style={sub}>{chosen.length} {chosen.length === 1 ? "order" : "orders"} · <strong className="tabular-nums" style={{ color: "var(--t-text)" }}>{money(total)}</strong> USD supplier cost</span>
           <button type="button" data-testid="payment-review" disabled={!ready} className="pap-btn pap-btn-primary" onClick={onReview}>Review payment record</button>
-        </div>}>
+        </div>}
+    </>}>
     <section aria-label="Record external transfer" className="space-y-4">
       <Notice message={message} />
       {discarding ? <div role="alert" className="space-y-2 rounded-lg border p-3 text-sm" style={{ borderColor: "var(--t-border)" }}>
