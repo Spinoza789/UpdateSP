@@ -1,6 +1,38 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supplierKey, supplierRequest, type SupplierScope } from "@/lib/supplier-batches";
+import { supplierKey, supplierRequest, type SupplierScope, type SupplierData, type SupplierBatch } from "@/lib/supplier-batches";
+
+/** Use the server's exact proposed allocations, never infer inclusion from country alone. */
+export function buildOrderBatchIndex(data?: SupplierData) {
+  const batches = data?.batches.filter(b => b.state !== "released") ?? [];
+  const batchesByOrder = new Map<string, SupplierBatch[]>();
+  const parts = new Map<string, string[]>();
+  const append = (id: string, label: string) => {
+    const labels = parts.get(id) ?? [];
+    if (!labels.includes(label)) labels.push(label);
+    parts.set(id, labels);
+  };
+  for (const batch of batches) {
+    for (const order of batch.snapshot.orders) {
+      const assigned = batchesByOrder.get(order.id) ?? [];
+      if (!assigned.some(b => b.id === batch.id)) assigned.push(batch);
+      batchesByOrder.set(order.id, assigned);
+      append(order.id, `${batch.reference} · ${batch.state}${batch.exceptions.length ? " · Review" : ""}`);
+    }
+  }
+  if (data?.config.enabled) {
+    for (const proposal of data.proposals) {
+      const included = new Set(proposal.orders.map(order => order.id));
+      for (const id of included) append(id, `Open batch · ${proposal.region.name}`);
+      for (const order of proposal.allQueued?.orders ?? []) {
+        if (!included.has(order.id)) append(order.id, `Queued for next batch · ${proposal.region.name}`);
+      }
+    }
+  }
+  const labels = new Map([...parts].map(([id, values]) => [id, values.join(" | ")]));
+  const byOrder = new Map([...batchesByOrder].map(([id, assigned]) => [id, assigned[0]]));
+  return { batches, batchesByOrder, byOrder, labels };
+}
 
 const filterKey = (scope: SupplierScope, id?: string) => `supplier-order-filter:${scope}:${id ?? ""}`;
 const savedFilter = (scope: SupplierScope, id?: string) => { try { return sessionStorage.getItem(filterKey(scope, id)) ?? "all"; } catch { return "all"; } };
@@ -32,8 +64,8 @@ export function useOrderBatches(scope: SupplierScope, groupBuyId?: string, heade
     queryFn: () => supplierRequest(scope, groupBuyId!, "", undefined, "GET", headers),
     enabled: !!groupBuyId, staleTime: 15_000, refetchInterval: 60_000, refetchIntervalInBackground: false,
   });
-  const batches = query.data?.batches.filter(b => b.state !== "released") ?? [];
-  const byOrder = new Map(batches.flatMap(b => b.snapshot.orders.map(o => [o.id, b] as const)));
+  const index = buildOrderBatchIndex(query.data);
+  const { batches, byOrder, batchesByOrder } = index;
   useEffect(() => {
     if (query.data && filter !== "all" && filter !== "unallocated" && !batches.some(b => b.id === filter)) setFilter("all");
   }, [query.data, filter]);
@@ -43,8 +75,8 @@ export function useOrderBatches(scope: SupplierScope, groupBuyId?: string, heade
     try { sessionStorage.setItem(filterKey(scope, groupBuyId), value); sessionStorage.removeItem(`${filterKey(scope, groupBuyId)}:order`); } catch {}
   };
   return {
-    filter, setFilter: changeFilter, batches, byOrder, error: query.isError, requestedOrderId,
-    matches: (id: string) => (!requestedOrderId || requestedOrderId === id) && (filter === "all" || (filter === "unallocated" ? !byOrder.has(id) : byOrder.get(id)?.id === filter)),
+    ...index, filter, setFilter: changeFilter, error: query.isError, requestedOrderId,
+    matches: (id: string) => (!requestedOrderId || requestedOrderId === id) && (filter === "all" || (filter === "unallocated" ? !byOrder.has(id) : !!batchesByOrder.get(id)?.some(b => b.id === filter))),
   };
 }
 export function OrderBatchFilter({ model }: {model: ReturnType<typeof useOrderBatches>}) {
@@ -61,7 +93,7 @@ export function OrderBatchFilter({ model }: {model: ReturnType<typeof useOrderBa
   </label>;
 }
 export function OrderBatchBadge({ model, orderId }: { model: ReturnType<typeof useOrderBatches>; orderId: string }) {
-  const b = model.byOrder.get(orderId);
-  return b ? <span className="inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold"
-    style={{background:"rgba(45,107,204,.12)",color:"var(--t-blue, #2D6BCC)"}}>{b.reference} · {b.state}{b.exceptions.length ? " · Review" : ""}</span> : null;
+  const label = model.labels.get(orderId);
+  return label ? <span className="inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold break-words"
+    style={{background:"rgba(45,107,204,.12)",color:"var(--t-blue, #2D6BCC)"}}>{label}</span> : null;
 }

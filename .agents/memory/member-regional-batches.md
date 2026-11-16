@@ -44,3 +44,10 @@ Keep batch/vendor-submission status separate from the member's individual order 
 **Why:** The user requested both their actual batch and their order status, plus an explicit Admin confirmation that the purchase has been submitted to the vendor.
 
 **How to apply:** Reuse the existing supplier-placement transaction and lifecycle. Show only the signed-in member's own current order codes/statuses inside an assigned batch, never all orders in that batch.
+
+Staff order rows should display both assigned supplier batches and current open-batch inclusion, including multiple allocations for one order.
+
+**Why:** The user clarified they want “the batches whether they're in a batch or in an open batch” directly on the orders.
+
+**How to apply:** Use actual server-proposed order inclusion for open batches, not regional membership alone. Do not invent a saved batch reference before preparation or imply later queued orders are already included.
+

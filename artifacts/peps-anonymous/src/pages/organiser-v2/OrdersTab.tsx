@@ -72,7 +72,7 @@ const DEFAULT_FILTER_VALUES: OrderFilterValues = {
 
 export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, canMarkPaid = false }: { selectedGbId?: string; highlightId?: string; onOpenDispatch?: () => void; canMarkPaid?: boolean } = {}) {
   const supplierBatches = useOrderBatches("organiser", selectedGbId);
-  const batchLabels = Object.fromEntries([...supplierBatches.byOrder].map(([id, b]) => [id, `${b.reference} · ${b.state}${b.exceptions.length ? " · Review" : ""}`]));
+  const batchLabels = Object.fromEntries(supplierBatches.labels);
   const [searchQuery, setSearchQuery] = useState("");
   const [multipleOnly, setMultipleOnly] = useState(false);
   const [statusFilters, setStatusFilters] = useState<OrderStatusFilter[]>(["all"]);
