@@ -8,7 +8,8 @@ import { SubmissionUpdateReview, type SubmissionUpdatePreview } from "./Submissi
 
 export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, selected, onToggle, locked, message,
   onRecord, onReceipt, paymentLocked, onRemove, removeTarget, onRemoveCancel, onRemoveConfirm, removeBusy, removeReason, onRemoveReason, busy,
-  updatePreview, onUpdateReview, onUpdateConfirm, onUpdateCancel }: {
+  updatePreview, onUpdateReview, onUpdateConfirm, onUpdateCancel, onEditCosts, onClearPaid }: {
+  onEditCosts?: () => void; onClearPaid?: () => void;
   updatePreview: SubmissionUpdatePreview | null; onUpdateReview: () => void; onUpdateConfirm: () => void; onUpdateCancel: () => void;
   onRecord: () => void; onReceipt: () => void; paymentLocked: boolean;
   order: LedgerOrder; index: number; total: number; onPrev: () => void; onNext: () => void; onClose: () => void;
@@ -35,14 +36,25 @@ export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, sele
         : <span className="text-xs" style={{ color: "var(--t-subtle)" }}>{o.reviewReason || "This order is not payable."}</span>}
       {paymentLocked && isEligible(o) && <p className="w-full text-xs" style={{ color: "var(--t-subtle)" }}>Finish or discard the existing payment record before starting a different order.</p>}
       <label className="inline-flex items-center gap-2 text-sm font-medium">
-        <input type="checkbox" className="h-4 w-4 accent-[var(--t-blue-deep)]" checked={selected} disabled={locked || (!selected && !isEligible(o))} onChange={onToggle} data-testid={`payment-detail-select-${o.id}`} />
-        {isEligible(o) || selected ? "Include in payment selection" : "Not eligible for payment"}
+        <input type="checkbox" className="h-4 w-4 accent-[var(--t-blue-deep)]" checked={selected} disabled={locked} onChange={onToggle} data-testid={`payment-detail-select-${o.id}`} />
+        Include in selection / FS3 download
       </label>
       {o.canRemove === true
         ? <button type="button" disabled={locked || removing} onClick={() => onRemove(o)} className="pap-btn" style={{ color: "#A12924", borderColor: "#D7A3A0" }} data-testid={`payment-remove-${o.id}`}><Trash2 className="h-3.5 w-3.5" />{o.requiresRemovalOverride ? "Remove (Admin override)" : "Remove supplier submission"}</button>
         : <button type="button" disabled title={o.removalReason ?? undefined} className="max-w-full cursor-not-allowed text-left text-xs break-words" style={{ color: "#8A5A00" }} data-testid={`payment-remove-${o.id}`}>{o.removalReason || (o.canRemove === false ? "Removal unavailable" : "Refresh to check removal permission")}</button>}
     </div>}>
     <Notice message={message} />
+    {onEditCosts && <div className="mb-4 flex flex-wrap items-center gap-2">
+      <button type="button" className="pap-btn" disabled={paymentLocked || st === "paid"} onClick={onEditCosts} data-testid="payment-edit-costs">Edit supplier costs</button>
+      {st === "paid" && <p className="text-xs" style={{ color: "var(--t-subtle)" }}>Clear the historical paid confirmation or void the receipt before editing costs. Recorded payment evidence stays unchanged.</p>}
+    </div>}
+    {o.paymentAcknowledgement && <section className="mb-4 rounded-lg border p-3 text-xs" style={{ borderColor: "#86B895", background: "rgba(21,128,61,.05)" }} data-testid="payment-paid-acknowledgement">
+      <p className="font-semibold">Supplier paid · confirmed by Admin · {moneyOf(o.paymentAcknowledgement.amountUsd)}</p>
+      <p className="mt-1">{o.paymentAcknowledgement.recordedBy} · {new Date(o.paymentAcknowledgement.recordedAt).toLocaleString()}</p>
+      <p className="mt-1 whitespace-pre-wrap">{o.paymentAcknowledgement.note}</p>
+      <p className="mt-1">Historical confirmation only; no transaction ID was supplied and no funds were sent.</p>
+      {onClearPaid && <button type="button" className="pap-btn mt-2" disabled={paymentLocked} onClick={onClearPaid} data-testid="payment-clear-paid">Clear paid confirmation</button>}
+    </section>}
     <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
       <span style={{ color: "var(--t-subtle)" }}>Supplier payment</span><SupplierBadge state={st} />
       <span className="ml-2" style={{ color: "var(--t-subtle)" }}>Fulfilment</span><FulfilmentText status={o.status} />

@@ -115,3 +115,15 @@ test("payment date validates before toISOString", () => {
   const r = parsePaidAt("2026-01-02T03:04");
   assert.equal(r.ok, true);
 });
+
+test("export selection includes paid and stale orders without making them payable", async () => {
+  const { selectExportPage, toggleExportOne } = await import("./model");
+  const rows = [{ ...base, id: "paid", paymentId: "receipt" }, { ...base, id: "stale", stale: true }];
+  const selected = selectExportPage(new Set<string>(), rows).next;
+  assert.equal(selected.size, 2);
+  assert.equal(selectedTotal(rows, selected).orders.length, 0);
+  assert.equal(toggleExportOne(selected, rows[0]).size, 1);
+  const max = new Set(Array.from({ length: MAX_SELECTION }, (_, i) => `old${i}`));
+  assert.equal(selectExportPage(max, rows).skipped, 2);
+  assert.equal(toggleExportOne(max, rows[0]).size, MAX_SELECTION);
+});

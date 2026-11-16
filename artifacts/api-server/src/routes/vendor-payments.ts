@@ -6,6 +6,7 @@ import { getVendors } from "./config";
 import { vendorAccess } from "../lib/vendor-portal-service";
 import { VendorPortalError } from "../lib/vendor-portal-model";
 import { paymentLedgerSummary, publicVendorReceipt } from "../lib/vendor-payment-ledger";
+import { acknowledgeSupplierPaid, clearSupplierPaid, editSupplierCosts, exportSupplierPayments } from "../lib/vendor-payment-tools";
 import {
   listVendorPayments,
   recordVendorPayment,
@@ -36,6 +37,22 @@ function handled(fn: (req: Request, res: Response) => Promise<void>) {
     }
   };
 }
+router.post("/admin/vendor-payments/export", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.set("Cache-Control", "no-store").json(await exportSupplierPayments(req.body));
+}));
+router.post("/admin/vendor-payments/acknowledge-paid", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.set("Cache-Control", "no-store").json(await acknowledgeSupplierPaid(req.body, getAdminUsername(res)));
+}));
+router.post("/admin/vendor-payments/orders/:id/costs", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.set("Cache-Control", "no-store").json(await editSupplierCosts(String(req.params.id), req.body, getAdminUsername(res)));
+}));
+router.post("/admin/vendor-payments/orders/:id/clear-paid", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.set("Cache-Control", "no-store").json(await clearSupplierPaid(String(req.params.id), req.body, getAdminUsername(res)));
+}));
 router.get(
   "/admin/vendor-payments",
   handled(async (req, res) => {

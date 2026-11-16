@@ -54,6 +54,7 @@ export function paymentReviewToken(row: any): string {
   return createHash("sha256").update(JSON.stringify({
     id: row.id, vendorId: row.vendorId, status: row.status,
     sourceFingerprint: row.sourceFingerprint, detail: paymentOrderDetail(row),
+    paymentAcknowledgement: row.snapshot?.paymentAcknowledgement ?? null,
   })).digest("hex");
 }
 
@@ -61,7 +62,8 @@ export function paymentOrderRow(row: any, stale: boolean, allocation: Allocation
   const detail = paymentOrderDetail(row, identities);
   let paymentState: "owed" | "paid" | "needs_review" | "not_owed";
   let reviewReason: string | null = null;
-  if (allocation) paymentState = "paid";
+  const acknowledgement = row.snapshot?.paymentAcknowledgement ?? null;
+  if (allocation || acknowledgement) paymentState = "paid";
   else if (NOT_OWED_STATUSES.has(row.status)) { paymentState = "not_owed"; reviewReason = "This supplier shipment is no longer payable."; }
   else if (stale) { paymentState = "needs_review"; reviewReason = "Shipment changed after submission. Review and resubmit before recording payment."; }
   else if (!PAYABLE_STATUSES.has(row.status)) { paymentState = "needs_review"; reviewReason = "Shipment is on hold or its fulfilment status needs review."; }
@@ -80,7 +82,8 @@ export function paymentOrderRow(row: any, stale: boolean, allocation: Allocation
     },
     ...detail, paymentId: allocation?.paymentId ?? null,
     reviewToken: paymentReviewToken(row),
-    paidAmountUsd: allocation ? money(allocation.amountUsd) : null,
+    paidAmountUsd: allocation ? money(allocation.amountUsd) : acknowledgement ? money(acknowledgement.amountUsd) : null,
+    paymentAcknowledgement: acknowledgement,
     paymentState, eligible: paymentState === "owed", reviewReason,
   };
 }

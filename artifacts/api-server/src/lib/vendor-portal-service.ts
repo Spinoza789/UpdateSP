@@ -14,6 +14,7 @@ import { supplierTextDetails } from "./vendor-supplier-export";
 import { loadFs3CostMatches } from "./fs3-cost-matches";
 import { resolveFs3SupplierId } from "@workspace/api-zod/fs3-costs";
 import { assertVendorOpen, VendorClosedError } from "./vendor-portal-extras";
+import type { VendorSourceReads } from "./vendor-source-reads";
 
 export type Executor = any;
 export async function auditVendor(tx: Executor, actor: string, action: string, submissionId: string | null, details: Record<string, unknown> = {}) {
@@ -98,19 +99,20 @@ export function validateSourceOrders(orders: any[], purpose: "submission" | "exp
 }
 
 // Locks use the same parent→member-order direction as shared-order workflows.
-export async function loadVendorSource(tx: Executor, sourceKey: string, lock = false, purpose: "submission" | "export" = "submission") {
+export async function loadVendorSource(tx: Executor, sourceKey: string, lock = false, purpose: "submission" | "export" = "submission", reads?: VendorSourceReads) {
+  if (reads && lock) throw new Error("Preloaded vendor sources are read-only.");
   const [baseKey, selectedVendorId] = sourceKey.split(":vendor:");
   const sharedId = baseKey.startsWith("share:") ? baseKey.slice(6) : null;
   let share: any = null;
   let orderIds: string[];
   if (sharedId) {
-    let query = tx.select().from(wholesaleSharesTable).where(eq(wholesaleSharesTable.id, sharedId));
+    let query = reads ? null : tx.select().from(wholesaleSharesTable).where(eq(wholesaleSharesTable.id, sharedId));
     if (lock) query = query.for("update");
-    [share] = await query;
+    share = reads ? reads.shares.get(sharedId) : (await query)[0];
     if (!share || (purpose === "submission" && (share.status !== "submitted" || share.organiserPaymentStatus !== "confirmed"))) {
       throw new VendorPortalError("Shared order must be submitted and its platform payment confirmed.", 409);
     }
-    const members = await tx.select({ orderId: wholesaleShareMembersTable.orderId }).from(wholesaleShareMembersTable)
+    const members = reads ? reads.members.get(sharedId) ?? [] : await tx.select({ orderId: wholesaleShareMembersTable.orderId }).from(wholesaleShareMembersTable)
       .where(eq(wholesaleShareMembersTable.shareId, sharedId));
     if (!members.length || members.some((m: any) => !m.orderId)) throw new VendorPortalError("Shared order membership is incomplete.", 409);
     orderIds = members.map((m: any) => m.orderId).sort();
@@ -118,9 +120,9 @@ export async function loadVendorSource(tx: Executor, sourceKey: string, lock = f
     if (!sourceKey.startsWith("order:")) throw new VendorPortalError("Invalid order source.");
     orderIds = [sourceKey.slice(6)];
   }
-  let query = tx.select().from(ordersTable).where(inArray(ordersTable.id, orderIds)).orderBy(asc(ordersTable.id));
+  let query = reads ? null : tx.select().from(ordersTable).where(inArray(ordersTable.id, orderIds)).orderBy(asc(ordersTable.id));
   if (lock) query = query.for("update");
-  let orders: any[] = await query;
+  let orders: any[] = reads ? orderIds.map(id => reads.orders.get(id)).filter(Boolean) : await query;
   if (orders.length !== orderIds.length) throw new VendorPortalError("Order membership changed. Review the order.", 409);
   validateSourceOrders(orders, purpose);
   if (orders.some(o => (sharedId ? o.sharedOrderId !== sharedId || o.orderType !== "wholesale_shared" : o.sharedOrderId || o.orderType !== "wholesale"))) {
@@ -129,16 +131,17 @@ export async function loadVendorSource(tx: Executor, sourceKey: string, lock = f
   // Downloads are read-only documents, not permission to fulfil or submit orders.
   if (purpose === "submission" && lock) await assertNoActiveRefunds(tx, orderIds);
   else if (purpose === "submission") {
-    const mutable = await tx.select({ id: ordersTable.id }).from(ordersTable).where(and(inArray(ordersTable.id, orderIds), refundMutationPredicate()));
+    const mutable = reads ? orderIds.filter(id => reads.mutable.has(id)) : await tx.select({ id: ordersTable.id }).from(ordersTable).where(and(inArray(ordersTable.id, orderIds), refundMutationPredicate()));
     if (mutable.length !== orderIds.length) throw new VendorPortalError("Order has an active refund.", 409);
   }
-  const allItems = await tx.select({
+  const allItems = reads ? orderIds.flatMap(id => reads.items.get(id) ?? []) : await tx.select({
     productId: orderLineItemsTable.productId, productName: orderLineItemsTable.productName,
     quantity: orderLineItemsTable.quantity, vendorId: orderLineItemsTable.vendorId, orderId: orderLineItemsTable.orderId,
     lineTotal: orderLineItemsTable.lineTotal,
   }).from(orderLineItemsTable).where(inArray(orderLineItemsTable.orderId, orderIds));
-  const vendors = await getVendors();
-  const products: any[] = await tx.select().from(productsTable).where(inArray(productsTable.id, allItems.map((i: any) => i.productId)));
+  const vendors = reads ? reads.vendors : await getVendors();
+  const products: any[] = reads ? [...new Set<string>(allItems.map((i: any) => i.productId))].map(id => reads.products.get(id)).filter(Boolean)
+    : await tx.select().from(productsTable).where(inArray(productsTable.id, allItems.map((i: any) => i.productId)));
   const resolvedItems = allItems.map((i: any) => ({
     ...i, vendorId: resolveFs3SupplierId({
       vendorId: i.vendorId, shareVendorId: share?.vendorId,
@@ -159,9 +162,9 @@ export async function loadVendorSource(tx: Executor, sourceKey: string, lock = f
   };
 }
 
-export async function inspectVendorSubmission(tx: Executor, row: any) {
+export async function inspectVendorSubmission(tx: Executor, row: any, reads?: VendorSourceReads) {
   try {
-    const source = await loadVendorSource(tx, row.sourceKey);
+    const source = await loadVendorSource(tx, row.sourceKey, false, "submission", reads);
     return { source, stale: source.fingerprint !== row.sourceFingerprint || source.vendorIds.some(id => id !== row.vendorId) };
   } catch (error) {
     if (error instanceof VendorPortalError || (error as any)?.name === "RefundMutationBlockedError") return { source: null, stale: true };

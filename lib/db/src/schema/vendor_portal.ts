@@ -7,6 +7,8 @@ export type VendorShipping = { name: string; address: string; country: string; p
 export type VendorSnapshot = {
   items: VendorCostItem[]; shipping: VendorShipping; currency: "USD";
   productCost: string; shippingCost: string; totalCost: string;
+  /** Admin-only historical acknowledgement. Not a transaction or a customer payment. */
+  paymentAcknowledgement?: { amountUsd: string; note: string; recordedAt: string; recordedBy: string };
 };
 
 export const vendorPortalAccessTable = pgTable("vendor_portal_access", {

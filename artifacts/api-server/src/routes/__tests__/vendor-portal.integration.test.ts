@@ -153,6 +153,86 @@ describe.skipIf(process.env.VENDOR_PORTAL_DB_TESTS !== "1")("vendor portal / rea
     expect((await request("/admin/vendor-portal/submit", undefined, body, true)).status).toBe(200);
     return { body, preview: preview.data, row: (await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.sourceKey, preview.data.shipments[0].id)))[0] };
   }
+  it("edits only supplier snapshot prices with review protection and exports selected paid or unpaid orders in FS3 format", () => fixture(async f => {
+    const { row } = await submit(f);
+    const ledger = await request("/admin/vendor-payments?vendorId=vendor-a", undefined, undefined, true);
+    const reviewed = ledger.data.orders.find((o:any) => o.id === row.id);
+    const input = { vendorId:"vendor-a", reviewToken:reviewed.reviewToken, items:[{productName:f.name,unitCost:"12.35"}], shippingCost:"50.00", note:"Agreed supplier correction" };
+    const path = `/admin/vendor-payments/orders/${row.id}/costs`;
+    expect((await request(path,f.a,input,false)).status).toBe(403);
+    expect((await request(path,undefined,{...input,vendorId:"vendor-b"},true)).status).toBe(409);
+    expect((await request(path,undefined,{...input,items:[]},true)).status).toBe(400);
+    expect((await request(path,undefined,input,true)).status).toBe(200);
+    expect((await request(path,undefined,input,true)).status).toBe(409);
+    const updated = (await f.tx.select().from(store.vendorSubmissionsTable).where(eq(store.vendorSubmissionsTable.id,row.id)))[0];
+    expect(updated.snapshot).toMatchObject({productCost:"24.70",shippingCost:"50.00",totalCost:"74.70"});
+    expect(Number((await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id,f.orderId)))[0].grandTotal)).toBe(2048);
+    expect(Number((await f.tx.select().from(store.orderLineItemsTable).where(eq(store.orderLineItemsTable.orderId,f.orderId)))[0].unitPrice)).toBe(999);
+    const exported = await request("/admin/vendor-payments/export",undefined,{vendorId:"vendor-a",submissionIds:[row.id]},true);
+    expect(exported.status).toBe(200);
+    expect(exported.data.text).toContain(`Order no. ${f.code} (@${f.member})\nNew Order 1:`);
+    expect(exported.data.text).toContain(`${f.name} x2 = $24.70`);
+    expect(exported.data.text).toContain("Package: 1 x $50.00 = $50.00");
+    expect(exported.data.text).toContain("Grand Total: $74.70");
+    expect(exported.data.text).not.toContain("fixture@example.invalid");
+    expect((await request("/admin/vendor-payments/export",undefined,{vendorId:"vendor-b",submissionIds:[row.id]},true)).status).toBe(409);
+    expect((await request("/admin/vendor-payments/export",f.a,{vendorId:"vendor-a",submissionIds:[row.id]})).status).toBe(403);
+  }));
+  it("records and clears historical supplier paid confirmations without fabricating receipts or changing customer payments", () => fixture(async f => {
+    const { row } = await submit(f);
+    const path = "/admin/vendor-payments/acknowledge-paid";
+    const before = (await request("/admin/vendor-payments?vendorId=vendor-a",undefined,undefined,true)).data.orders.find((o:any)=>o.id===row.id);
+    const body = { vendorId:"vendor-a", orderSnapshots:[{submissionId:row.id,reviewToken:before.reviewToken}], note:"Already paid before this ledger was introduced" };
+    expect((await request(path,undefined,body,true)).status).toBe(409); // Submitted isn't historical fulfilment.
+    await f.tx.update(store.vendorSubmissionsTable).set({status:"Shipped"}).where(eq(store.vendorSubmissionsTable.id,row.id));
+    const current = (await request("/admin/vendor-payments?vendorId=vendor-a",undefined,undefined,true)).data.orders.find((o:any)=>o.id===row.id);
+    const input = {...body,orderSnapshots:[{submissionId:row.id,reviewToken:current.reviewToken}]};
+    expect((await request(path,f.a,input)).status).toBe(403);
+    expect((await request(path,undefined,{...input,vendorId:"vendor-b"},true)).status).toBe(409);
+    expect((await request(path,undefined,body,true)).status).toBe(409); // status changed since review
+    expect((await request(path,undefined,input,true)).status).toBe(200);
+    const paid = (await request("/admin/vendor-payments?vendorId=vendor-a",undefined,undefined,true)).data.orders.find((o:any)=>o.id===row.id);
+    expect(paid).toMatchObject({paymentState:"paid",eligible:false,paymentId:null,paidAmountUsd:row.snapshot.totalCost});
+    expect(paid.paymentAcknowledgement).toMatchObject({note:body.note,recordedBy:"test-admin",amountUsd:row.snapshot.totalCost});
+    expect(paid.canRemove).toBe(false);
+    const vendor = await request(`/vendor/orders/${row.id}`,f.a);
+    expect(JSON.stringify(vendor.data)).not.toContain("Already paid before");
+    expect((await request(`/admin/vendor-payments/orders/${row.id}/costs`,undefined,{vendorId:"vendor-a",reviewToken:paid.reviewToken,items:[{productName:f.name,unitCost:"1.00"}],shippingCost:"50.00",note:"test"},true)).status).toBe(409);
+    expect((await request("/admin/vendor-payments/export",undefined,{vendorId:"vendor-a",submissionIds:[row.id]},true)).status).toBe(200);
+    expect((await request(path,undefined,input,true)).status).toBe(409); // no overwrite or duplicate acknowledgement
+    const clear = `/admin/vendor-payments/orders/${row.id}/clear-paid`;
+    expect((await request(clear,undefined,{vendorId:"vendor-a",reviewToken:paid.reviewToken,note:"Incorrect selection"},true)).status).toBe(200);
+    const after = (await request("/admin/vendor-payments?vendorId=vendor-a",undefined,undefined,true)).data.orders.find((o:any)=>o.id===row.id);
+    expect(after.paymentState).toBe("owed");
+    const customer = (await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id,f.orderId)))[0];
+    expect(customer).toMatchObject({status:"Submitted",paymentStatus:"confirmed"});
+  }));
+  it("loads a large payment ledger with batched source reads while still detecting changed orders", () => fixture(async f => {
+    const { row } = await submit(f);
+    const [order] = await f.tx.select().from(store.ordersTable).where(eq(store.ordersTable.id,f.orderId));
+    const [line] = await f.tx.select().from(store.orderLineItemsTable).where(eq(store.orderLineItemsTable.orderId,f.orderId));
+    const ids:string[] = [];
+    for (let i=0;i<8;i++) {
+      const id=randomUUID(); ids.push(id);
+      await f.tx.insert(store.ordersTable).values({...order,id,code:`${f.code}${i}`});
+      await f.tx.insert(store.orderLineItemsTable).values({...line,id:randomUUID(),orderId:id,...(i===1?{quantity:"3"}:{})});
+      await f.tx.insert(store.vendorSubmissionsTable).values({...row,id:randomUUID(),sourceKey:`order:${id}`,reference:`${f.code}${i}`,orderIds:[id]});
+    }
+    // Change the source fingerprint on cloned rows to match their new order identities.
+    const { loadVendorSource } = await import("../../lib/vendor-portal-service");
+    for (let i=0;i<ids.length;i++) {
+      const source=await loadVendorSource(f.tx,`order:${ids[i]}`);
+      if(i!==1) await f.tx.update(store.vendorSubmissionsTable).set({sourceFingerprint:source.fingerprint}).where(eq(store.vendorSubmissionsTable.sourceKey,`order:${ids[i]}`));
+    }
+    const spy=vi.spyOn(f.tx,"select");
+    try {
+      const ledger=await request("/admin/vendor-payments?vendorId=vendor-a",undefined,undefined,true);
+      expect(ledger.status).toBe(200);
+      expect(ledger.data.orders.find((o:any)=>o.reference===`${f.code}1`).stale).toBe(true);
+      expect(ledger.data.orders.find((o:any)=>o.reference===`${f.code}0`).stale).toBe(false);
+      expect(spy.mock.calls.length).toBeLessThanOrEqual(15);
+    } finally {spy.mockRestore();}
+  }));
   it("gives only Admin a paginated all-vendor order view and vendor-scoped filtering", () => fixture(async f => {
     const { row } = await submit(f);
     await f.tx.insert(store.vendorSubmissionsTable).values({

@@ -188,6 +188,93 @@ test("shows delivery and starts an external payment for only the opened order", 
   assert.equal(document.querySelector('[data-testid="payment-order-drawer"]'), null);
   assert.equal(requests.filter((r) => r.method === "POST").length, 0);
 });
+test("opens an order-specific supplier cost modal and refreshes saved supplier costs", async () => {
+  await mount();
+  const ledger:any = structuredClone(data);
+  Object.assign(ledger.orders[0], {items:[{productName:"Example",quantity:2,unitCost:"3.50",lineTotal:"7.00"}],productCost:"7.00",shippingCost:"3.10"});
+  adminAuth.request = async (url, init = {}) => {
+    const body=init.body ? JSON.parse(String(init.body)):null;
+    requests.push({path:url,method:init.method,body});
+    if(url==="/api/admin/vendor-payments/orders/o1/costs") {
+      assert.equal(body.vendorId,"v1"); assert.equal(body.reviewToken,tok("o1"));
+      assert.equal(body.note,"Correct supplier price");
+      ledger.orders[0].items[0].unitCost="4.00"; ledger.orders[0].totalCost="11.10";
+      return new Response(JSON.stringify({ok:true}));
+    }
+    return new Response(JSON.stringify(ledger));
+  };
+  await click("payment-refresh");
+  await click("payment-expand-o1");
+  await click("payment-edit-costs");
+  assert.match(document.body.textContent!,/supplier costs/i);
+  await change("supplier-cost-unit-0","4.00");
+  await change("supplier-cost-note","Correct supplier price");
+  await click("supplier-cost-save");
+  assert.equal(requests.filter(r=>r.path.endsWith("/o1/costs")).length,1);
+  assert.equal(document.querySelector('[data-testid="supplier-cost-editor"]'),null);
+  assert.match(document.body.textContent!,/11\.10/);
+});
+test("downloads selected paid and stale orders without enabling a new payment", async () => {
+  await mount();
+  let blob:Blob|undefined;
+  const create=URL.createObjectURL, revoke=URL.revokeObjectURL;
+  const anchorClick=dom.window.HTMLAnchorElement.prototype.click;
+  URL.createObjectURL=(value:any)=>{blob=value;return "blob:fs3";};
+  URL.revokeObjectURL=()=>{};
+  dom.window.HTMLAnchorElement.prototype.click=()=>{};
+  try {
+    adminAuth.request=async (path,init={})=>{
+      const body=init.body?JSON.parse(String(init.body)):null;
+      requests.push({path,method:init.method,body});
+      if(path.endsWith("/export")) return new Response(JSON.stringify({filename:"supplier.txt",text:"Exact FS3 supplier TXT"}));
+      return new Response(JSON.stringify(data));
+    };
+    await click("payment-order-paid"); await click("payment-order-stale");
+    assert.equal((el("payment-record-open") as HTMLButtonElement).disabled,true);
+    await click("payment-export-fs3");
+    const posted=requests.find(r=>r.path.endsWith("/export"))!;
+    assert.deepEqual(posted.body,{vendorId:"v1",submissionIds:["paid","stale"]});
+    assert.equal(await blob!.text(),"Exact FS3 supplier TXT");
+    assert.equal((el("payment-order-paid") as HTMLInputElement).checked,true);
+  } finally {URL.createObjectURL=create;URL.revokeObjectURL=revoke;dom.window.HTMLAnchorElement.prototype.click=anchorClick;}
+});
+test("reviews historical supplier-paid orders and can clear the audited confirmation", async () => {
+  const ledger:any=detailedData("v1",3);
+  ledger.orders[0].status="Shipped";
+  ledger.orders[1].status="Processing";
+  await mountWith(async (path,init={})=>{
+    const body=init.body?JSON.parse(String(init.body)):null;
+    if(path.endsWith("/acknowledge-paid")) {
+      assert.deepEqual(body.orderSnapshots.map((o:any)=>o.submissionId).sort(),["v1-o0","v1-o1"]);
+      assert.equal(body.vendorId,"v1"); assert.equal(body.note,"Already paid to supplier");
+      assert.ok(body.orderSnapshots.every((o:any)=>o.reviewToken===tok(o.submissionId)));
+      for(const o of ledger.orders.slice(0,2)) {o.paymentState="paid";o.eligible=false;
+        o.paymentAcknowledgement={amountUsd:o.totalCost,note:body.note,recordedBy:"Admin",recordedAt:"2026-11-16T12:00:00Z"};}
+      return new Response(JSON.stringify({ok:true,count:2}));
+    }
+    if(path.endsWith("/clear-paid")) {
+      assert.equal(body.note,"Wrong confirmation");assert.equal(body.vendorId,"v1");
+      ledger.orders[0].paymentAcknowledgement=null;ledger.orders[0].paymentState="owed";ledger.orders[0].eligible=true;
+      return new Response(JSON.stringify({ok:true}));
+    }
+    return new Response(JSON.stringify(ledger));
+  });
+  await change("payment-vendor","v1");
+  await click("payment-historical-paid");
+  assert.equal(document.querySelector('[data-testid="historical-paid-order-v1-o2"]'),null);
+  assert.equal((el("historical-paid-confirm") as HTMLButtonElement).disabled,true);
+  await change("historical-paid-note","Already paid to supplier");
+  await click("historical-paid-confirm");
+  assert.equal(document.querySelector('[data-testid="historical-paid-review"]'),null);
+  await click("payment-state-paid");
+  await click("payment-expand-v1-o0");
+  assert.match(el("payment-paid-acknowledgement").textContent!,/Already paid to supplier/);
+  assert.equal((el("payment-edit-costs") as HTMLButtonElement).disabled,true);
+  await click("payment-clear-paid");
+  await change("payment-clear-paid-note","Wrong confirmation");
+  await click("payment-clear-paid-confirm");
+  assert.equal(requests.filter(r=>r.path.endsWith("/clear-paid")).length,1);
+});
 test("cancelled or failed submission updates do not change supplier costs", async () => {
   await mount();
   const ledger = structuredClone(data);
@@ -272,8 +359,9 @@ async function review() {
 }
 test("records selected orders with reviewed wallet snapshot", async () => {
   await mount();
-  assert.equal((el("payment-order-paid") as HTMLInputElement).disabled, true);
-  assert.equal((el("payment-order-stale") as HTMLInputElement).disabled, true);
+  // Paid/stale rows remain selectable for read-only FS3 downloads.
+  assert.equal((el("payment-order-paid") as HTMLInputElement).disabled, false);
+  assert.equal((el("payment-order-stale") as HTMLInputElement).disabled, false);
   await review();
   assert.ok(document.body.textContent!.includes("30.30"));
   assert.equal(requests.filter((r) => r.method).length, 0);

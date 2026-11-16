@@ -13,6 +13,7 @@ export type OrderProfit = {
   lines?: Array<{ productName: string; salesUsd: string; amountUsd: string }> | null;
 };
 export type LedgerOrder = {
+  paymentAcknowledgement?: { amountUsd: string; note: string; recordedAt: string; recordedBy: string } | null;
   id: string;
   reference: string;
   status: string;
@@ -114,11 +115,13 @@ export function signedMoneyOf(value: string | number | null | undefined) {
 }
 
 export function isEligible(o: LedgerOrder) {
+  if (o.paymentAcknowledgement) return false;
   if (typeof o.eligible === "boolean") return o.eligible;
   const c = cents(o.totalCost);
   return !o.stale && !o.paymentId && c !== null && c > 0n && PAYABLE_STATUSES.has(o.status);
 }
 export function orderState(o: LedgerOrder): PaymentState {
+  if (o.paymentAcknowledgement) return "paid";
   if (o.paymentState) return o.paymentState;
   if (o.paymentId) return "paid";
   if (o.stale) return "needs_review";
@@ -194,6 +197,23 @@ export function toggleOne(selected: Set<string>, o: LedgerOrder) {
   const next = new Set(selected);
   if (next.has(o.id)) next.delete(o.id);
   else if (isEligible(o) && next.size < MAX_SELECTION) next.add(o.id);
+  return next;
+}
+/** Downloads may include any status; this must not widen payment eligibility. */
+export function selectExportPage(selected: Set<string>, rows: LedgerOrder[]) {
+  const next = new Set(selected);
+  let skipped = 0;
+  for (const row of rows) {
+    if (next.has(row.id)) continue;
+    if (next.size >= MAX_SELECTION) skipped++;
+    else next.add(row.id);
+  }
+  return { next, skipped };
+}
+export function toggleExportOne(selected: Set<string>, row: LedgerOrder) {
+  const next = new Set(selected);
+  if (next.has(row.id)) next.delete(row.id);
+  else if (next.size < MAX_SELECTION) next.add(row.id);
   return next;
 }
 export function selectedTotal(orders: LedgerOrder[], selected: Set<string>) {

@@ -1,8 +1,8 @@
-import React, { useMemo } from "react";
-import { ChevronRight, Search, X } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { ChevronRight, Download, Search, X } from "lucide-react";
 import {
-  clearPage, dateFilterValid, fmtDate, isEligible, MAX_SELECTION, moneyOf, orderState, paginate, selectPage,
-  signedMoneyOf, toggleOne, type Filters, type LedgerOrder, type PaymentState,
+  clearPage, dateFilterValid, fmtDate, MAX_SELECTION, moneyOf, orderState, paginate, selectExportPage,
+  signedMoneyOf, toggleExportOne, type Filters, type LedgerOrder, type PaymentState,
 } from "./model";
 import { FulfilmentText, SupplierBadge, TAB_LABEL } from "./StatusBadge";
 import { tabKeys } from "./tabKeys";
@@ -20,11 +20,16 @@ export function Pager({ page, pages, onPage, prefix }: { page: number; pages: nu
   </div>;
 }
 
-export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage, selected, onSelected, locked, note, onNote, onOpen, activeId }: {
+const FULFILMENT_TABS = ["all", "Submitted", "Processing", "Shipped", "Completed"] as const;
+
+export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage, selected, onSelected, locked, note, onNote, onOpen, activeId, pageSize, onPageSize, onExport, exportBusy = false, onHistoricalPaid }: {
   orders: LedgerOrder[]; visible: LedgerOrder[]; filters: Filters; onFilters: (f: Filters) => void; page: number; onPage: (p: number) => void;
   selected: Set<string>; onSelected: (next: Set<string>) => void; locked: boolean; note: string | null; onNote: (n: string | null) => void;
   onOpen: (id: string) => void; activeId: string | null;
+  pageSize?: number; onPageSize?: (n: number) => void; onExport?: () => void; exportBusy?: boolean; onHistoricalPaid?: () => void;
 }) {
+  const [localPageSize, setLocalPageSize] = useState(25);
+  const size = pageSize ?? localPageSize;
   const f = filters;
   const statuses = useMemo(() => Array.from(new Set(orders.map((o) => o.status))).sort(), [orders]);
   const counts = useMemo(() => {
@@ -32,19 +37,43 @@ export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage
     orders.forEach((o) => { c[orderState(o)]++; });
     return c;
   }, [orders]);
-  const view = paginate(visible, page);
+  const fulfilmentCounts = useMemo(() => {
+    const c: Record<string, number> = { all: orders.length, Submitted: 0, Processing: 0, Shipped: 0, Completed: 0 };
+    orders.forEach((o) => { if (o.status in c && o.status !== "all") c[o.status]++; });
+    return c;
+  }, [orders]);
+  const view = paginate(visible, page, size);
   const pageIds = new Set(view.rows.map((o) => o.id));
   const hidden = Array.from(selected).filter((id) => !pageIds.has(id)).length;
-  const pageEligible = view.rows.filter(isEligible);
   const set = (k: keyof Filters, v: string) => { onFilters({ ...f, [k]: v }); onPage(1); };
   const badDate = !dateFilterValid(f.from) || !dateFilterValid(f.to);
   const filtered = !!(f.query || f.fulfilment !== "all" || f.from || f.to);
-  const allOnPageSelected = pageEligible.length > 0 && pageEligible.every((o) => selected.has(o.id));
+  const allOnPageSelected = view.rows.length > 0 && view.rows.every((o) => selected.has(o.id));
+  const selectRowsPerPage = (prefix: string) => <label className="flex items-center gap-2 whitespace-nowrap">
+    <span>Rows per page</span>
+    <select aria-label="Rows per page" className={inputCls + " !min-h-[30px] !w-[76px] !py-0"} style={inputStyle} value={size}
+      onChange={(e) => {
+        const next = Number(e.target.value);
+        if (pageSize === undefined) setLocalPageSize(next);
+        onPageSize?.(next);
+        onPage(1);
+      }} data-testid={`${prefix}-size`}>
+      {[25, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}
+    </select>
+  </label>;
+  const paginationBar = (prefix: string, resultTestId: string) => <div className="flex flex-wrap items-center justify-between gap-2 border-t px-3 py-2 text-xs" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>
+    <span data-testid={resultTestId}>{visible.length} of {orders.length} orders{visible.length ? ` · showing ${(view.page - 1) * size + 1}–${(view.page - 1) * size + view.rows.length}` : ""}</span>
+    <div className="flex flex-wrap items-center justify-end gap-3">{selectRowsPerPage(prefix)}<Pager page={view.page} pages={view.pages} onPage={onPage} prefix={prefix} /></div>
+  </div>;
 
   return <section aria-label="Order ledger" className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)" }}>
     <div role="tablist" onKeyDown={tabKeys} aria-label="Supplier payment status" className="pap-tabs border-b px-2 pt-1" style={{ borderColor: "var(--t-border)" }}>
       {TABS.map((t) => <button key={t} type="button" role="tab" tabIndex={f.payment === t ? 0 : -1} aria-selected={f.payment === t} className="pap-tab" data-testid={`payment-state-${t}`}
         onClick={() => set("payment", t)}>{t === "all" ? "All" : TAB_LABEL[t]}<span className="pap-count">{counts[t]}</span></button>)}
+    </div>
+    <div role="tablist" onKeyDown={tabKeys} aria-label="Fulfilment status" className="pap-tabs border-b px-2 pt-1" style={{ borderColor: "var(--t-border)" }}>
+      {FULFILMENT_TABS.map((t) => <button key={t} type="button" role="tab" tabIndex={f.fulfilment === t ? 0 : -1} aria-selected={f.fulfilment === t} className="pap-tab"
+        data-testid={`fulfilment-state-${t.toLowerCase()}`} onClick={() => set("fulfilment", t)}>{t === "all" ? "All fulfilment" : t}<span className="pap-count">{fulfilmentCounts[t]}</span></button>)}
     </div>
     <div className="grid gap-2 border-b p-3 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_180px_150px_150px_auto] lg:items-end" style={{ borderColor: "var(--t-border)" }}>
       <label className="relative block">
@@ -62,15 +91,23 @@ export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage
     </div>
     {badDate && <p role="alert" className="px-3 pt-2 text-xs" style={{ color: "#B42318" }}>Date filter is invalid and has been ignored.</p>}
 
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 text-xs" style={{ background: "var(--t-blue-03)" }}>
-      <button type="button" disabled={locked || !pageEligible.length || allOnPageSelected} className="pap-btn !min-h-[28px] !text-xs"
-        onClick={() => { const r = selectPage(selected, view.rows); onSelected(r.next); onNote(r.skipped ? `${r.skipped} eligible on this page not added: the ${MAX_SELECTION}-order receipt limit is reached.` : null); }} data-testid="payment-select-page">
-        Select eligible on this page ({pageEligible.length})
+    {paginationBar("payment-page-top", "payment-result-count-top")}
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 text-xs" style={{ background: "var(--t-blue-03)" }}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      <button type="button" disabled={locked || !view.rows.length || allOnPageSelected || selected.size >= MAX_SELECTION} className="pap-btn !min-h-[28px] !text-xs"
+        onClick={() => { const r = selectExportPage(selected, view.rows); onSelected(r.next); onNote(r.skipped ? `${r.skipped} orders not added: the ${MAX_SELECTION}-order selection limit is reached.` : null); }} data-testid="payment-select-page">
+        Select this page ({view.rows.length})
       </button>
       <button type="button" disabled={locked || !view.rows.some((o) => selected.has(o.id))} className="font-semibold underline-offset-2 hover:underline disabled:opacity-40" onClick={() => { onSelected(clearPage(selected, view.rows)); onNote(null); }} data-testid="payment-clear-page">Clear this page</button>
       {selected.size > 0 && <button type="button" disabled={locked} className="font-semibold underline-offset-2 hover:underline disabled:opacity-40" onClick={() => { onSelected(new Set()); onNote(null); }} data-testid="payment-clear-all">Clear all</button>}
-      <span style={{ color: "var(--t-subtle)" }}>Selection is page-scoped · max {MAX_SELECTION} orders per receipt</span>
+      <span style={{ color: "var(--t-subtle)" }}>Selection is page-scoped · max {MAX_SELECTION} orders</span>
       {hidden > 0 && <span className="font-semibold" style={{ color: "#B4770E" }} data-testid="payment-hidden-selected">{hidden} selected on other pages or hidden by filters</span>}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-semibold" data-testid="payment-table-selected-count">{selected.size} selected</span>
+        {onExport && <button type="button" className="pap-btn" disabled={locked || exportBusy || !selected.size} onClick={onExport} data-testid="payment-export-fs3"><Download className="h-3.5 w-3.5" />Download FS3 TXT</button>}
+        {onHistoricalPaid && <button type="button" className="pap-btn" disabled={locked} onClick={onHistoricalPaid} data-testid="payment-historical-paid">Review processed orders as paid</button>}
+      </div>
     </div>
     {note && <p role="status" className="px-3 pb-2 text-xs" style={{ color: "#B4770E" }}>{note}</p>}
 
@@ -91,8 +128,8 @@ export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage
             const profitTone = !p?.amountUsd ? "#B4770E" : p.amountUsd.startsWith("-") ? "#B42318" : "#15803D";
             return <tr key={o.id} data-selected={sel} aria-current={activeId === o.id ? "true" : undefined} onClick={() => onOpen(o.id)}>
               <td className="pap-c-sel" onClick={(e) => e.stopPropagation()}>
-                <input type="checkbox" className="h-4 w-4 accent-[var(--t-blue-deep)]" aria-label={`Select ${o.reference}`} checked={sel} disabled={locked || (!sel && !isEligible(o))}
-                  onChange={() => onSelected(toggleOne(selected, o))} data-testid={`payment-order-${o.id}`} />
+                <input type="checkbox" className="h-4 w-4 accent-[var(--t-blue-deep)]" aria-label={`Select ${o.reference}`} checked={sel} disabled={locked || (!sel && selected.size >= MAX_SELECTION)}
+                  onChange={() => onSelected(toggleExportOne(selected, o))} data-testid={`payment-order-${o.id}`} />
               </td>
               <td className="pap-c-ref min-w-0">
                 <button type="button" className="font-mono text-[13px] font-semibold break-all text-left hover:underline" aria-label={`Details for ${o.reference}`} onClick={(e) => { e.stopPropagation(); onOpen(o.id); }} data-testid={`payment-expand-${o.id}`}>{o.reference}</button>
@@ -117,9 +154,6 @@ export function LedgerOrders({ orders, visible, filters, onFilters, page, onPage
           })}
         </tbody>
       </table></div>}
-    <div className="flex flex-wrap items-center justify-between gap-2 border-t px-3 py-2 text-xs" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>
-      <span data-testid="payment-result-count">{visible.length} of {orders.length} orders{visible.length ? ` · showing ${(view.page - 1) * 25 + 1}–${(view.page - 1) * 25 + view.rows.length}` : ""}</span>
-      <Pager page={view.page} pages={view.pages} onPage={onPage} prefix="payment-page" />
-    </div>
+    {paginationBar("payment-page", "payment-result-count")}
   </section>;
 }

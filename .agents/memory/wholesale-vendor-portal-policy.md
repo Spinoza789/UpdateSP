@@ -53,6 +53,21 @@ Bind payment review to the reviewed supplier-cost snapshot so resubmission canno
 silently change what an Admin records. Require a reviewed snapshot for every new
 allocation; older Admin pages must refresh rather than bypass this financial guard.
 
+Peps Anon Payment supports order-specific supplier-cost corrections, FS3 downloads
+for selected submissions regardless of payment status, and reviewed historical
+paid confirmations for existing processed/shipped orders. These tools are scoped
+to Peps Anon Payment, not a change to customer checkout or payment rules.
+
+**Why:** The owner requested these supplier-accounting controls and clarified
+“This is only for the peps anon place.” Existing processed/shipped orders had
+already been paid; that is not permission to auto-pay future orders.
+
+**How to apply:** Keep cost corrections separate from selling prices and catalogue
+prices. Preserve frozen receipts; require clearing paid evidence before cost
+edits. Historical confirmations need an explicit reviewed list, actor and note,
+never an invented transaction ID or blockchain verification claim. Downloads
+reuse the existing wholesale FS3 format and never submit or mutate orders.
+
 Customer item changes must not silently replace a supplier submission. Admin
 must review the old and corrected items, delivery and supplier costs, then confirm
 the update. Preserve the original in audit history and leave receipts untouched.

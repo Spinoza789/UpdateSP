@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Landmark, RefreshCw, Wallet as WalletIcon } from "lucide-react";
 import { adminAuth } from "../../lib/admin-auth";
-import { filterOrders, hasReviewToken, isEligible, isLedger, money, PAGE_SIZE, parsePaidAt, selectedTotal, summarize, toggleOne, type Filters, type LedgerData, type LedgerOrder } from "./peps-anon-payment/model";
+import { cents, filterOrders, hasReviewToken, isEligible, isLedger, money, orderState, PAGE_SIZE, parsePaidAt, selectedTotal, summarize, toggleExportOne, type Filters, type LedgerData, type LedgerOrder } from "./peps-anon-payment/model";
 import { LedgerSummary } from "./peps-anon-payment/LedgerSummary";
 import { EMPTY_FILTERS, LedgerOrders } from "./peps-anon-payment/LedgerOrders";
 import { ReceiptDrawer, ReceiptHistory } from "./peps-anon-payment/ReceiptHistory";
@@ -10,6 +10,8 @@ import { OrderDrawer } from "./peps-anon-payment/OrderDrawer";
 import type { SubmissionUpdatePreview } from "./peps-anon-payment/SubmissionUpdateReview";
 import { Notice, Overlay } from "./peps-anon-payment/Overlay";
 import { WalletList } from "./peps-anon-payment/WalletList";
+import { SupplierCostEditor } from "./peps-anon-payment/SupplierCostEditor";
+import { HistoricalPaidReview } from "./peps-anon-payment/HistoricalPaidReview";
 import { tabKeys } from "./peps-anon-payment/tabKeys";
 import { inputCls, inputStyle, Skeleton } from "../reshipper-payouts/ui";
 
@@ -44,6 +46,11 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   const [view, setView] = useState<"orders" | "history">("orders");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
+  const [costTarget, setCostTarget] = useState<LedgerOrder | null>(null);
+  const [historicalOrders, setHistoricalOrders] = useState<LedgerOrder[] | null>(null);
+  const [clearPaidTarget, setClearPaidTarget] = useState<LedgerOrder | null>(null);
+  const [clearPaidNote, setClearPaidNote] = useState("");
   const [selNote, setSelNote] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [receiptId, setReceiptId] = useState<string | null>(null);
@@ -90,7 +97,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   }, [vendorId, load]);
 
   const transferDirty = !!(draft || form.amount || form.txid || form.paidAt || form.note);
-  const dirty = !!(transferDirty || voidId || removeTarget || updatePreview || selected.size || busy);
+  const dirty = !!(transferDirty || voidId || removeTarget || updatePreview || costTarget || historicalOrders || clearPaidTarget || selected.size || busy);
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
   const activeRef = useRef(active);
@@ -114,6 +121,8 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   const summary = useMemo(() => (ledger ? summarize(ledger.orders, ledger.summary) : null), [ledger]);
   const { orders: chosen, total } = useMemo(() => selectedTotal(ledger?.orders ?? [], selected), [ledger, selected]);
   const visible = useMemo(() => filterOrders(ledger?.orders ?? [], filters), [ledger, filters]);
+  const exportTotal = useMemo(() => (ledger?.orders ?? []).filter(o => selected.has(o.id))
+    .reduce((sum, o) => sum + (cents(o.totalCost) ?? 0n), 0n), [ledger, selected]);
   const wallet = ledger?.wallets.find((w) => w.id === form.walletId);
   const paid = parsePaidAt(form.paidAt);
   const tokenProblem = chosen.filter((o) => !hasReviewToken(o)).length;
@@ -136,6 +145,9 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
     setLoadError(null);
     setFilters(EMPTY_FILTERS);
     setPage(1);
+    setCostTarget(null);
+    setHistoricalOrders(null);
+    setClearPaidTarget(null);
     setSelNote(null);
     setDetailId(null);
     setReceiptId(null);
@@ -146,8 +158,47 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   }
   function changeVendor(id: string) {
     if (id === vendorId) return;
+    if (costTarget || historicalOrders || clearPaidTarget) return;
     if (transferDirty) { setPendingVendor(id); return; }
     applyVendor(id);
+  }
+
+  async function downloadSelected() {
+    if (lock.current || !selected.size || !vendorId) return;
+    lock.current = true; setBusy(true); setMessage(null);
+    try {
+      const result = await request("/api/admin/vendor-payments/export", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendorId, submissionIds: Array.from(selected) }),
+      });
+      if (typeof result?.text !== "string" || typeof result?.filename !== "string") throw new Error("The supplier download was incomplete.");
+      const url = URL.createObjectURL(new Blob([result.text], { type: "text/plain;charset=utf-8" }));
+      const anchor = document.createElement("a");
+      anchor.href = url; anchor.download = result.filename; document.body.appendChild(anchor); anchor.click(); anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setMessage({ ok: true, text: "FS3 supplier order TXT downloaded. No orders or payments were changed." });
+    } catch (error) { setMessage({ ok: false, text: error instanceof Error ? error.message : "Could not download supplier orders." }); }
+    finally { lock.current = false; setBusy(false); }
+  }
+  function reviewHistoricalPaid() {
+    if (!ledger || lock.current || transferDirty) return;
+    const candidates = ledger.orders.filter(o => ["Processing", "Shipped", "Completed"].includes(o.status)
+      && !o.paymentId && orderState(o) !== "paid" && (!selected.size || selected.has(o.id)));
+    if (!candidates.length) { setMessage({ ok: false, text: "No unpaid Processing, Shipped or Completed supplier submissions in this selection. Clear the selection to review all existing processed orders for this vendor." }); return; }
+    setMessage(null);
+    // Bounded, explicit list frozen at review time. Later arrivals are never included.
+    setHistoricalOrders(structuredClone(candidates.slice(0, 200)));
+  }
+  async function saveTool(path: string, payload: Record<string, unknown>, success: string) {
+    if (lock.current || !vendorId) return;
+    lock.current = true; setBusy(true); setMessage(null);
+    try {
+      await request(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, vendorId }) });
+      setCostTarget(null); setHistoricalOrders(null); setClearPaidTarget(null); setClearPaidNote("");
+      await load(vendorId);
+      setMessage({ ok: true, text: success });
+    } catch (error) { setMessage({ ok: false, text: error instanceof Error ? error.message : "Could not save the supplier record." }); }
+    finally { lock.current = false; setBusy(false); }
   }
 
   function review() {
@@ -271,14 +322,14 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
     const next = visible[detailIndex + delta];
     if (!next) return;
     setDetailId(next.id);
-    setPage(Math.floor((detailIndex + delta) / PAGE_SIZE) + 1);
+    setPage(Math.floor((detailIndex + delta) / pageSize) + 1);
   }
   function closeDetail() { if (busy) return; setRemoveTarget(null); setUpdatePreview(null); setDetailId(null); }
 
   const voidTarget = ledger?.payments.find((p) => p.id === voidId);
   const receipt = receiptId ? ledger?.payments.find((p) => p.id === receiptId) ?? null : null;
-  const overlayOpen = !!(recordOpen || (detailOrder && ledger) || receipt || walletsOpen);
-  const locked = busy || !!draft || !!voidId || !!removeTarget || !!updatePreview;
+  const overlayOpen = !!(recordOpen || (detailOrder && ledger) || receipt || walletsOpen || costTarget || historicalOrders || clearPaidTarget);
+  const locked = busy || !!draft || !!voidId || !!removeTarget || !!updatePreview || !!costTarget || !!historicalOrders || !!clearPaidTarget;
 
   return <section className="pap-root space-y-4" data-testid="vendor-payments-admin">
     <header className="flex flex-wrap items-end justify-between gap-3">
@@ -315,7 +366,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
       <button type="button" className="font-semibold underline" onClick={() => void load(vendorId)} data-testid="payment-retry">Retry</button>
     </div>}
     {!vendorId && !loadError && <p className="rounded-xl border border-dashed p-10 text-center text-sm" style={{ borderColor: "var(--t-border)", color: "var(--t-subtle)" }}>Choose a vendor to see their supplier-cost ledger.</p>}
-    {vendorId && loading && !ledger && <Skeleton />}
+    {vendorId && loading && !ledger && <><p role="status" className="text-sm" style={{ color: "var(--t-subtle)" }}>Loading {vendorName} orders and supplier payment records…</p><Skeleton /></>}
 
     {ledger && summary && <>
       <LedgerSummary summary={summary} />
@@ -329,6 +380,8 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
 
       <div id="payment-panel-orders" hidden={view !== "orders"} role="tabpanel" aria-labelledby="payment-tab-orders">
         <LedgerOrders orders={ledger.orders} visible={visible} filters={filters} onFilters={setFilters} page={page} onPage={setPage}
+          pageSize={pageSize} onPageSize={n => { setPageSize(n); setPage(1); }}
+          onExport={() => void downloadSelected()} exportBusy={busy} onHistoricalPaid={reviewHistoricalPaid}
           selected={selected} onSelected={setSelected} locked={locked} note={selNote} onNote={setSelNote} onOpen={openDetail} activeId={detailId} />
       </div>
       <div id="payment-panel-history" hidden={view !== "history"} role="tabpanel" aria-labelledby="payment-tab-history">
@@ -339,13 +392,19 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
         style={{ borderColor: selected.size ? "var(--t-blue-30)" : "var(--t-border)", background: "var(--t-surface)" }} data-testid="payment-summary-selected">
         <p className="text-sm">
           {selected.size > 0
-            ? <><strong data-testid="payment-selected-count">{selected.size} selected</strong><span style={{ color: "var(--t-subtle)" }}> · supplier total </span><strong className="tabular-nums" style={{ color: "var(--t-blue-deep)" }}>{money(total)}</strong> <span className="text-xs" style={{ color: "var(--t-subtle)" }}>USD</span></>
+            ? <><strong data-testid="payment-selected-count">{selected.size} selected</strong><span style={{ color: "var(--t-subtle)" }}> · supplier total </span><strong className="tabular-nums" style={{ color: "var(--t-blue-deep)" }}>{money(exportTotal)}</strong> <span className="text-xs" style={{ color: "var(--t-subtle)" }}>USD</span></>
             : <span style={{ color: "var(--t-subtle)" }}>Select eligible orders in To pay to record a payment.</span>}
           {draft && <span className="ml-2 text-xs font-semibold" style={{ color: "#B4770E" }}>Draft awaiting confirmation</span>}
         </p>
-        <button type="button" className="pap-btn pap-btn-primary" disabled={!selected.size || !!removeTarget || !!voidId || busy} onClick={() => { setMessage(null); setRecordOpen(true); }} data-testid="payment-record-open">
+        <div className="flex flex-wrap gap-2">
+        <button type="button" className="pap-btn" disabled={busy} onClick={() => void downloadSelected()} data-testid="payment-selected-export">Download FS3 TXT</button>
+        <button type="button" className="pap-btn pap-btn-primary" disabled={!selected.size || chosen.length !== selected.size || !!removeTarget || !!voidId || busy}
+          title={chosen.length !== selected.size ? "Payment recording requires only payable orders. Paid or stale orders can still be downloaded." : undefined}
+          onClick={() => { setMessage(null); setRecordOpen(true); }} data-testid="payment-record-open">
           {draft ? "Continue payment record" : "Record payment"}
         </button>
+        </div>
+        {chosen.length !== selected.size && <p className="w-full text-xs" style={{ color: "var(--t-subtle)" }}>This selection includes paid or non-payable orders. FS3 downloads remain available; select only payable orders to record a transfer.</p>}
       </div>}
 
       {active && walletsOpen && <Overlay title="Vendor receiving wallets" subtitle={`Saved by ${vendorName} in their Settings`} closeTestId="payment-wallets-close" onClose={() => setWalletsOpen(false)}>
@@ -353,7 +412,9 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
         <WalletList wallets={ledger.wallets} activeId={form.walletId} onCopy={copy} />
       </Overlay>}
 
-      {active && detailOrder && <OrderDrawer order={detailOrder} index={detailIndex < 0 ? 0 : detailIndex} total={detailIndex < 0 ? 1 : visible.length}
+      {active && detailOrder && !costTarget && !clearPaidTarget && <OrderDrawer order={detailOrder} index={detailIndex < 0 ? 0 : detailIndex} total={detailIndex < 0 ? 1 : visible.length}
+        onEditCosts={() => { if (!locked && !transferDirty) { setCostTarget(structuredClone(detailOrder)); setMessage(null); } }}
+        onClearPaid={() => { if (!locked && !transferDirty) { setClearPaidTarget(structuredClone(detailOrder)); setClearPaidNote(""); setMessage(null); } }}
         updatePreview={updatePreview} onUpdateReview={() => void updateSubmission()} onUpdateConfirm={() => void updateSubmission(true)} onUpdateCancel={() => setUpdatePreview(null)}
         paymentLocked={locked || transferDirty}
         onRecord={() => {
@@ -370,10 +431,31 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
           setReceiptId(payment.id);
         }}
         onPrev={() => step(-1)} onNext={() => step(1)} onClose={closeDetail} message={message}
-        selected={selected.has(detailOrder.id)} onToggle={() => setSelected((s) => toggleOne(s, detailOrder))} locked={locked} busy={busy}
+        selected={selected.has(detailOrder.id)} onToggle={() => setSelected((s) => toggleExportOne(s, detailOrder))} locked={locked} busy={busy}
         onRemove={(order) => { if (order.canRemove === true && !busy && !draft && !voidId && !lock.current) { setRemoveTarget(order); setRemoveReason(""); setMessage(null); } }}
         removeTarget={removeTarget} onRemoveCancel={() => setRemoveTarget(null)} onRemoveConfirm={() => void removeSubmission()} removeBusy={busy}
         removeReason={removeReason} onRemoveReason={setRemoveReason} />}
+
+      {active && costTarget && <SupplierCostEditor key={`${costTarget.id}:${costTarget.reviewToken}`} order={costTarget} busy={busy} message={message}
+        onClose={() => { if (!busy) setCostTarget(null); }}
+        onSave={input => void saveTool(`/api/admin/vendor-payments/orders/${encodeURIComponent(costTarget.id)}/costs`,
+          { ...input, reviewToken: costTarget.reviewToken }, "Supplier costs updated. Customer prices and catalogue costs were not changed.")} />}
+      {active && historicalOrders && <HistoricalPaidReview orders={historicalOrders} vendorName={vendorName} busy={busy} message={message}
+        onClose={() => { if (!busy) setHistoricalOrders(null); }}
+        onConfirm={note => void saveTool("/api/admin/vendor-payments/acknowledge-paid",
+          { note, orderSnapshots: historicalOrders.map(o => ({ submissionId: o.id, reviewToken: o.reviewToken })) },
+          `${historicalOrders.length} existing supplier orders marked paid by Admin confirmation. No funds sent or customer statuses changed.`)} />}
+      {active && clearPaidTarget && <Overlay side="center" title={`Clear paid confirmation · ${clearPaidTarget.reference}`} closeTestId="payment-clear-paid-close"
+        canClose={!busy} onClose={() => setClearPaidTarget(null)}
+        footer={<button className="pap-btn pap-btn-danger" type="button" disabled={busy || !clearPaidNote.trim()}
+          onClick={() => void saveTool(`/api/admin/vendor-payments/orders/${encodeURIComponent(clearPaidTarget.id)}/clear-paid`,
+            { reviewToken: clearPaidTarget.reviewToken, note: clearPaidNote }, "Historical supplier paid confirmation cleared. No transfer was reversed.")}
+          data-testid="payment-clear-paid-confirm">Clear confirmation</button>}>
+        <Notice message={message} />
+        <p className="mb-4 text-sm">This corrects an Admin historical paid confirmation only. It does not reverse a transfer or change the customer order. The original confirmation remains in the audit history.</p>
+        <label className="block text-sm">Reason (required)<textarea maxLength={2000} className={inputCls} style={inputStyle} value={clearPaidNote} disabled={busy}
+          onChange={e => setClearPaidNote(e.target.value)} data-testid="payment-clear-paid-note" /></label>
+      </Overlay>}
 
       {active && recordOpen && <RecordPaymentPanel wallets={ledger.wallets} form={form} onForm={(p) => setForm((f) => ({ ...f, ...p }))} chosen={chosen} total={total}
         draft={draft} busy={busy || !!removeTarget || !!voidId} ready={ready && !removeTarget && !voidId} dateError={!paid.ok} tokenProblem={tokenProblem}

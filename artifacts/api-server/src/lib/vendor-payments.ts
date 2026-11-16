@@ -23,6 +23,7 @@ import {
 } from "./vendor-wallet-input";
 import { paymentLedgerSummary, paymentOrderDetail, paymentOrderRow, paymentReviewToken, paymentRemovalPermission } from "./vendor-payment-ledger";
 import { vendorProductProfit } from "./vendor-payment-profit";
+import { preloadVendorSources } from "./vendor-source-reads";
 export function paymentOrderTotal(
   rows: Array<{ snapshot: { totalCost: string } }>,
 ) {
@@ -117,6 +118,10 @@ export async function assertVendorSubmissionUnpaid(
       "Void the vendor payment before recalling this paid shipment.",
       409,
     );
+  const [submission] = await tx.select({ snapshot: vendorSubmissionsTable.snapshot }).from(vendorSubmissionsTable)
+    .where(eq(vendorSubmissionsTable.id, submissionId));
+  if (submission?.snapshot?.paymentAcknowledgement)
+    throw new VendorPortalError("Clear the historical paid confirmation before changing or paying this supplier order.", 409);
 }
 export async function listVendorPayments(tx: any, vendorId: string) {
   return tx
@@ -158,18 +163,20 @@ export async function vendorPaymentDashboard(tx: any, vendorId: string) {
   const images: { submissionId: string }[] = rows.length ? await tx.select({ submissionId: vendorImagesTable.submissionId })
     .from(vendorImagesTable).where(inArray(vendorImagesTable.submissionId, rows.map((row: any) => row.id))) : [];
   const withImages = new Set(images.map(image => image.submissionId));
+  const sourceReads = await preloadVendorSources(tx, rows);
   const orders = [];
   for (const row of rows) {
     const allocation = allocationBySubmission.get(row.id);
     const active = allocation && activePayments.has(allocation.paymentId) ? allocation : null;
     const orphan = !!allocation && !active;
-    const inspection = await inspectVendorSubmission(tx, row);
+    const inspection = await inspectVendorSubmission(tx, row, sourceReads);
     const order = {
       ...paymentOrderRow(row, inspection.stale || orphan, active, identityById),
-      ...paymentRemovalPermission(row, !!allocation, withImages.has(row.id)),
+      ...paymentRemovalPermission(row, !!allocation || !!row.snapshot?.paymentAcknowledgement, withImages.has(row.id)),
       profit: vendorProductProfit(row, inspection.source, inspection.stale),
     };
     if (orphan) order.reviewReason = "Payment allocation needs review: its receipt is missing or voided.";
+    if (row.snapshot?.paymentAcknowledgement) order.removalReason = "Clear the historical paid confirmation before removing this submission.";
     orders.push(order);
   }
   return {

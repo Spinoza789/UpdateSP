@@ -6,6 +6,8 @@ const state = vi.hoisted(() => ({
 vi.mock("@workspace/db", async () => ({
   ...(await import("../../../../../lib/db/src/schema/index")), db: {},
 }));
+// Source inspection itself is stubbed below; its request-local preload has no DB in this unit fixture.
+vi.mock("../vendor-source-reads", () => ({ preloadVendorSources: vi.fn(async () => ({})) }));
 vi.mock("../vendor-portal-service", () => ({
   auditVendor: vi.fn(async () => {}),
   loadVendorSource: vi.fn(async () => ({ fingerprint: "original", vendorIds: ["v1"], orders: state.identities })),
@@ -60,13 +62,13 @@ describe("Admin supplier ledger integration without a database", () => {
     expect(result.orders[0]).toMatchObject({ sourceOrders: [{ id: "o1", code: "12656", username: "member" }], eligible: true, shippingCost: "5.00" });
     expect(result.orders[0]).toMatchObject({ canRemove: true, profit: { salesUsd: "30.30", amountUsd: "10.10" } });
     expect(result.orders[1]).toMatchObject({ eligible: false, paymentState: "needs_review" });
-    expect(result.orders[1].canRemove).toBe(false);
+    expect(result.orders[1]).toMatchObject({ canRemove: true, requiresRemovalOverride: true });
     expect(result.orders[2].profit.amountUsd).toBeNull();
     expect(result.summary).toMatchObject({ owed: { amount: "25.20", count: 1 }, paid: { amount: "25.20", count: 1 }, needsReview: { amount: "25.20", count: 1 } });
   });
-  it("reports photo-protected and payment-protected submissions as non-removable", async () => {
+  it("requires Admin override for photos and blocks removal until recorded payments are voided", async () => {
     state.images = [{ submissionId: "s1" }];
-    expect((await vendorPaymentDashboard(tx, "v1")).orders[0]).toMatchObject({ canRemove: false, removalReason: expect.stringMatching(/photo/i) });
+    expect((await vendorPaymentDashboard(tx, "v1")).orders[0]).toMatchObject({ canRemove: true, requiresRemovalOverride: true, removalReason: expect.stringMatching(/photo/i) });
     state.images = []; state.allocations = [{ submissionId: "s1", paymentId: "p1", amountUsd: "25.20" }];
     state.payments = [{ id: "p1", voidedAt: null }];
     expect((await vendorPaymentDashboard(tx, "v1")).orders[0]).toMatchObject({ canRemove: false, removalReason: expect.stringMatching(/void/i) });
