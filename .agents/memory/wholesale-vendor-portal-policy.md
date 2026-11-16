@@ -78,6 +78,17 @@ flow directly in Peps Anon Payment rather than automatic replacement.
 **How to apply:** Recheck the reviewed change at confirmation. Paid submissions
 and shipments with started fulfilment, tracking or photos remain protected.
 
+Peps Anon reporting uses product gross profit, not net profit. Show percentage
+margin beside estimated product profit, and keep older orders' supplier costs
+unchanged when supplier price lists change; only future orders use the new costs.
+
+**Why:** The owner explicitly requested historical profit protection and selected
+“Product gross profit” for the revenue/profit reporting tab.
+
+**How to apply:** Use transaction-specific historical values, not current catalogue
+costs. Margin is profit divided by product selling price, not markup on cost.
+Shipping, fees and overheads remain outside this product-profit measure.
+
 Removing an order from Peps Anon Payment means recalling its supplier submission
 from the vendor portal and payment list, not cancelling or deleting the customer order.
 
