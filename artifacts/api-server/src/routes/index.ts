@@ -1,4 +1,5 @@
 import vendorWalletsRouter, { vendorWalletSetupGate } from "./vendor-wallets";
+import managedTelegramRouter from "./managed-telegram";
 import vendorPaymentsRouter from "./vendor-payments";
 import vendorAuthRouter from "./vendor-auth";
 import vendorEmailSettingsRouter from "./vendor-email-settings";
@@ -210,6 +211,7 @@ router.use(bloodTestsRouter);
 router.use(compoundsRouter);
 router.use(glp1Router);
 router.use(plotterRouter);
+router.use(managedTelegramRouter);
 router.use(organiserRouter);
 router.use(groupBuyOrderRevisionsRouter);
 router.use(organiserMarkPaidRouter);

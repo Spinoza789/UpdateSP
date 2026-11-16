@@ -19,6 +19,7 @@ import { palette, ACCENT, ACCENT_SOFT, FONT } from "@/components/dashboard-theme
 import { DashboardShell, type DashOrder } from "@/components/DashboardShell";
 import { useThemeStore } from "@/hooks/use-theme";
 import { useAccount, useLogout, useAccountOrders } from "@/hooks/use-account";
+import { ManagedTelegramUsername } from "@/components/ManagedTelegramUsername";
 import type { PortalNavProps } from "@/pages/CustomerPortal";
 import { ALL_CARRIERS_17TRACK, CARRIER_GROUPS } from "@/data/carriers17track";
 import { COUNTRIES, COUNTRY_LIST } from "@/data/countries";
@@ -1342,6 +1343,7 @@ function OrdersTab({ gbId, orders, gbName, onOrderUpdate, currency }: {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono text-xs font-bold" style={{ color: "var(--t-muted)" }}>{order.code}</span>
                       <span className="text-xs font-semibold" style={{ color: "var(--t-text)" }}>@{order.telegramUsername.replace(/^@/, "")}</span>
+                      <ManagedTelegramUsername scope="reshipper" id={gbId} username={order.telegramUsername} fetcher={reshipFetch} viewerKey={_adminImpersonateUsername ?? undefined} />
                       <ShipmentOrderBadges orderId={order.id} byId={shipmentCtx.byId} />
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ color: sc.color, background: sc.bg }}>
                         {order.status}

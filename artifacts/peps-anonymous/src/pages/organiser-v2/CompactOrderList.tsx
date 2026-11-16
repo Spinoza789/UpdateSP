@@ -1,4 +1,5 @@
 import { OrderReference } from "@/components/OrderReference";
+import { ManagedTelegramUsername } from "@/components/ManagedTelegramUsername";
 import { OnwardPaymentReadonly } from "@/components/onward-delivery/OnwardPayments";
 import { OnwardDeliveryReadonly } from "@/components/onward-delivery/OnwardDelivery";
 import { useState } from "react";
@@ -170,6 +171,7 @@ export default function CompactOrderList({
               <span className="orders-compact-cell orders-compact-user" data-label="User name">
                 <strong>@{order.memberUsername}</strong>
                 <small><OrderReference order={order} /></small>
+                <ManagedTelegramUsername scope="organiser" id={gbId} username={order.memberUsername} />
                 <GbMultipleOrderBadge order={order} />
                 {batchLabels?.[order.id] && <small style={{ color: "var(--t-blue, #2D6BCC)" }}>{batchLabels[order.id]}</small>}
               </span>

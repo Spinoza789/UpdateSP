@@ -69,6 +69,7 @@ import { SupplierBatchManager } from "@/components/supplier-batches/SupplierBatc
 import { SupplierBatchFulfilment } from "@/components/supplier-batches/SupplierBatchFulfilment";
 import { selectSupplierOrderBatch } from "@/components/supplier-batches/OrderBatchFilter";
 import { useOrderBatches, OrderBatchFilter, OrderBatchBadge } from "@/components/supplier-batches/OrderBatchFilter";
+import { ManagedTelegramUsername } from "@/components/ManagedTelegramUsername";
 import { canonicalReshipperUsername, filterAssignedFulfilmentOrders } from "@/lib/reshipper-fulfilment";
 import { PAYMENT_EXPORT_HEADERS, paymentExportCells } from "@/lib/organiser-export-payments";
 
@@ -9384,6 +9385,7 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
                   />
                   <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.06)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: 6 }}><OrderReference order={o} /></span>
                   <OrderBatchBadge model={supplierBatches} orderId={o.id} />
+                  <ManagedTelegramUsername scope="organiser" id={gb.id} username={o.telegramUsername} />
                   <GbMultipleOrderBadge order={o} />
                   <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: "rgba(255,255,255,0.07)", color: "#94a3b8" }}>{o.status}</span>
                   {o.orderType === "test" && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "rgba(249,115,22,0.15)", color: "#F97316", border: "1px solid rgba(249,115,22,0.3)" }}>🧪 TEST</span>}

@@ -16,6 +16,7 @@ interface GroupTrackerProps {
   // removed — used to show a busy spinner and disable the button.
   onRemoveMember?: (username: string) => void;
   removingUsername?: string | null;
+  renderMemberContact?: (member: WholesaleShareMember) => ReactNode;
 }
 
 const money = (n: number) => `$${n.toFixed(2)}`;
@@ -98,7 +99,7 @@ function PaymentTransactionDetails({
 
 // Per-member status list with progress chips so everyone can see where the group
 // stands. Presentation-only — same data the page already shows, just clearer.
-export function GroupTracker({ share, onPayMember, showItems = false, onRemoveMember, removingUsername }: GroupTrackerProps) {
+export function GroupTracker({ share, onPayMember, showItems = false, onRemoveMember, removingUsername, renderMemberContact }: GroupTrackerProps) {
   const isOpen = share.status === "open";
   const d = share.delivery;
   // Mirror the page's deliveryComplete check so the chip can't claim "Address set"
@@ -125,6 +126,7 @@ export function GroupTracker({ share, onPayMember, showItems = false, onRemoveMe
                   </span>
                 )}
               </div>
+              {renderMemberContact?.(m)}
               <p className="text-xs mt-1" style={{ color: "var(--t-muted)" }}>
                 {m.kits > 0 ? `${m.kits} kit${m.kits === 1 ? "" : "s"} · ${money(m.subtotal)}` : "No items yet"}
                 {m.tip > 0 && ` · tip ${money(m.tip)}`}

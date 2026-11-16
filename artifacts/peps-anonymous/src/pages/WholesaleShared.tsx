@@ -23,6 +23,7 @@ import { LabReportPopup } from "@/components/LabTestsPopup";
 
 import { useSharedWholesaleLabReports } from "@/hooks/use-shared-wholesale-lab-reports";
 import { useAccount, useMarkWholesaleInvitePromptSeen } from "@/hooks/use-account";
+import { ManagedTelegramUsername } from "@/components/ManagedTelegramUsername";
 import { PriceWatermark } from "@/components/PriceWatermark";
 import { COUNTRIES } from "@/data/countries";
 import {
@@ -1219,6 +1220,7 @@ export default function WholesaleShared() {
     >
       <GroupTracker
         share={share}
+        renderMemberContact={share.isCreator ? m => <ManagedTelegramUsername scope="shared" id={share.id} username={m.username} /> : undefined}
         showItems={showOrderBreakdown}
         onPayMember={orderId => setLocation(`/account/orders/${orderId}`)}
         onRemoveMember={showOrganiserOpen ? removeMember : undefined}
@@ -1286,7 +1288,7 @@ export default function WholesaleShared() {
   const groupTrackerCard = (
     <section className="space-y-2">
       <p className="text-xs font-bold uppercase tracking-wider px-1" style={{ color: "#8A9AAA" }}>Who's In</p>
-      <GroupTracker share={share} onPayMember={orderId => setLocation(`/account/orders/${orderId}`)} />
+      <GroupTracker share={share} renderMemberContact={share.isCreator ? m => <ManagedTelegramUsername scope="shared" id={share.id} username={m.username} /> : undefined} onPayMember={orderId => setLocation(`/account/orders/${orderId}`)} />
     </section>
   );
 
@@ -2341,6 +2343,7 @@ export default function WholesaleShared() {
                       <span className="text-[10px] font-normal ml-1.5" style={{ color: "var(--t-muted)" }}>recipient</span>
                     )}
                   </p>
+                  {share.isCreator && <ManagedTelegramUsername scope="shared" id={share.id} username={m.username} />}
                   <p className="text-[11px] mt-0.5" style={{
                     color: isPaid ? "#16a34a" : isPending ? "#d97706" : "var(--t-muted)",
                   }}>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ManagedTelegramUsername } from "@/components/ManagedTelegramUsername";
 import { ArrowUpDown, ChevronRight, Mail, PackageCheck, WalletCards } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fmtMoney } from "./data";
@@ -90,7 +91,7 @@ export default function MembersTab({
       id: "member",
       label: "Member",
       width: "28%",
-      render: member => <AtlasPerson name={member.name} username={member.username} />,
+      render: member => <div><AtlasPerson name={member.name} username={member.username} /><ManagedTelegramUsername scope="organiser" id={selectedGbId} username={member.username} /></div>,
     },
     { id: "country", label: "Country", width: "14%", render: member => <span className="atlas-muted-cell">{member.country}</span> },
     {
