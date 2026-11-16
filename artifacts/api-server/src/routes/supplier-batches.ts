@@ -6,7 +6,7 @@ import { memberSupplierBatches } from "../lib/member-supplier-batches";
 import { SupplierBatchError } from "../lib/supplier-batches-model";
 import { type UpdateActor } from "../lib/group-buy-updates-model";
 import { supplierData, saveSupplierConfig, confirmSupplierBatch, appendSupplierBatch, previewSupplierBatchRefresh, refreshSupplierBatch, orderSupplierBatch, releaseSupplierBatch, reviewHistoricalSupplierOrder, exportSupplierBatch, supplierDirectOrders, exportSupplierTxt } from "../lib/supplier-batches";
-import { moveSupplierBatchOrders, undoSupplierBatchMove } from "../lib/supplier-batches";
+import { moveSupplierBatchOrders, undoSupplierBatchMove, setSupplierBatchCompletion } from "../lib/supplier-batches";
 import { previewBatchMessage, queueBatchMessage, batchMessageHistory, listBatchMessageRecipients } from "../lib/supplier-batch-messages";
 import { previewBatchWholesale } from "../lib/supplier-batch-wholesale";
 
@@ -65,6 +65,7 @@ router.post(paths("/:batchId/refresh-preview"), async (req, res) => { res.json(a
 router.post(paths("/:batchId/refresh"), async (req, res) => { res.json(await refreshSupplierBatch(param(req, "id"), param(req, "batchId"), actor(req), req.body)); });
 router.post(paths("/review/:orderId"), async (req, res) => { res.json(await reviewHistoricalSupplierOrder(param(req, "id"), param(req, "orderId"), actor(req), req.body)); });
 router.post(paths("/:batchId/ordered"), async (req, res) => { res.json(await orderSupplierBatch(param(req, "id"), param(req, "batchId"), actor(req), req.body)); });
+router.post(paths("/:batchId/completion"), async (req, res) => { res.json(await setSupplierBatchCompletion(param(req, "id"), param(req, "batchId"), actor(req), req.body)); });
 router.post(paths("/:batchId/release"), async (req, res) => { res.json(await releaseSupplierBatch(param(req, "id"), param(req, "batchId"), actor(req), req.body)); });
 router.post("/admin/group-buys/:id/supplier-batches/:batchId/move-orders", async (req, res) => {
   res.json(await moveSupplierBatchOrders(param(req, "id"), param(req, "batchId"), actor(req), req.body));

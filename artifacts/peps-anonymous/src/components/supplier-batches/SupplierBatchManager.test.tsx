@@ -34,6 +34,33 @@ const existingBatch: SupplierBatch = {
   createdAt: "2026-01-01T00:00:00Z", createdBy: "admin", orderedAt: null,
   releasedAt: null, releaseReason: null, snapshot: target, exceptions: [],
 };
+test("submitted batches require confirmation to complete and can be reopened without customer changes", async () => {
+  const host = document.createElement("div"); document.body.append(host);
+  const root = createRoot(host);
+  const calls: unknown[] = [];
+  const props = { b: { ...existingBatch, state: "ordered" as const }, busy: false,
+    act: async (path: string, body: unknown) => { calls.push([path, body]); return true; },
+    exportCsv: async () => {}, exportTxt: async () => {}, context: { groupBuyId: "gb", scope: "organiser" as const } };
+  try {
+    await act(async () => root.render(createElement(BatchCard, props)));
+    const click = async (id: string) => {
+      const button = host.querySelector(`[data-testid="${id}"]`) as HTMLButtonElement;
+      assert.ok(button, id); await act(async () => button.click());
+    };
+    await click("button-completion-prepared-uk");
+    assert.equal(calls.length, 0);
+    assert.match(host.textContent!, /No member notifications/);
+    await click("button-confirm-completion-prepared-uk");
+    assert.deepEqual(calls, [["/prepared-uk/completion", { confirm: true, completed: true, expectedCompletionId: null }]]);
+    await act(async () => root.render(createElement(BatchCard, { ...props,
+      b: { ...props.b, completion: { id: "event1", completed: true, at: "2026-11-16T12:00:00Z", actor: "admin" } },
+    })));
+    assert.match(host.textContent!, /Completed/);
+    await click("button-completion-prepared-uk");
+    await click("button-confirm-completion-prepared-uk");
+    assert.deepEqual(calls.at(-1), ["/prepared-uk/completion", { confirm: true, completed: false, expectedCompletionId: "event1" }]);
+  } finally { await act(async () => root.unmount()); host.remove(); }
+});
 test("batch rows highlight additions and allow moving five extra kits without moving the whole twenty-kit order", async () => {
   const host = document.createElement("div"); document.body.append(host);
   const root = createRoot(host);

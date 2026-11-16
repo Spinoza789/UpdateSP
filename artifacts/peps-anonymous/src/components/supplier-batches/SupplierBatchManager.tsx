@@ -307,16 +307,17 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
 }
 
 export function BatchCard({ b, batches = [], busy, act, exportCsv, exportTxt, context }: { b: SupplierBatch; batches?: SupplierBatch[]; busy: boolean; act: (path: string, body: unknown, ok?: string) => Promise<boolean>; exportCsv: (id: string) => Promise<void>; exportTxt: (id: string) => Promise<void>; context: Props }) {
-  const [mode, setMode] = useState<"ordered" | "release" | null>(null);
+  const [mode, setMode] = useState<"ordered" | "release" | "completion" | null>(null);
   const [showFulfilment, setShowFulfilment] = useState(false);
   const [txtMessage, setTxtMessage] = useState<{ err: boolean; text: string } | null>(null);
   const [reason, setReason] = useState("");
   const blocked = b.exceptions.length > 0;
+  const completed = b.completion?.completed === true;
   return (
     <div data-testid={`card-batch-${b.id}`} className="rounded-xl border p-3 space-y-2" style={{ borderColor: V.border }}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-sm font-bold font-mono" style={{ color: V.text }}>{b.reference}</span>
-        <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${b.state === "ordered" ? "bg-green-100 text-green-700" : b.state === "released" ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-800"}`}>{b.wholesaleOrder ? "Wholesale order placed" : b.state === "ordered" ? "Submitted to vendor" : b.state}</span>
+        <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${b.state === "ordered" ? "bg-green-100 text-green-700" : b.state === "released" ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-800"}`}>{completed ? "Completed" : b.wholesaleOrder ? "Wholesale order placed" : b.state === "ordered" ? "Submitted to vendor" : b.state}</span>
       </div>
       {b.snapshot.refundRemovals?.map(r => (
         <div key={r.refundId} className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
@@ -326,6 +327,7 @@ export function BatchCard({ b, batches = [], busy, act, exportCsv, exportTxt, co
       <p className="text-[11px]" style={{ color: V.muted }}>
         {b.snapshot.region.name} · {kits(b.snapshot.kits)} kits · {b.snapshot.orders.length} orders · prepared {fmt(b.createdAt)} by {b.createdBy}
         {b.orderedAt && ` · submitted to vendor ${fmt(b.orderedAt)}`}{b.releasedAt && ` · released ${fmt(b.releasedAt)}`}
+        {completed && ` · completed ${fmt(b.completion!.at)} by ${b.completion!.actor}`}
       </p>
       {b.releaseReason && <p className="text-xs" style={{ color: V.text }}>Release reason: {b.releaseReason}</p>}
       {blocked && (
@@ -343,11 +345,29 @@ export function BatchCard({ b, batches = [], busy, act, exportCsv, exportTxt, co
       {(context.wholesaleConversionAvailable || b.wholesaleOrder) && <BatchWholesaleCheckout
         batch={b} groupBuyId={context.groupBuyId} scope={context.scope} headers={context.headers} />}
       {b.state === "ordered" && <div className="space-y-3">
+        {!mode && <button type="button" data-testid={`button-completion-${b.id}`} disabled={busy}
+          onClick={() => setMode("completion")} className={ghost} style={{ borderColor: V.border, color: V.text }}>
+          {completed ? "Reopen batch" : "Mark completed"}
+        </button>}
         <button type="button" className={btn} style={{ background: NAVY }} aria-expanded={showFulfilment} onClick={() => setShowFulfilment(v => !v)}>
           {showFulfilment ? "Close" : "Manage"} supplier packages &amp; receipt
         </button>
         {showFulfilment && <SupplierBatchFulfilment {...context} initialBatchId={b.id} />}
       </div>}
+      {mode === "completion" && (
+        <div className="rounded-lg border p-3 text-xs space-y-2" style={{ borderColor: V.border, background: V.surface2, color: V.text }}>
+          <p>{completed ? "Return this batch to the active batch list?" : "Mark this batch as done and move it to Completed?"}</p>
+          <p>No member notifications are sent. Orders, payments, delivery statuses and batch allocations stay unchanged.</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" data-testid={`button-confirm-completion-${b.id}`} disabled={busy}
+              onClick={async () => { if (await act(`/${encodeURIComponent(b.id)}/completion`,
+                { confirm: true, completed: !completed, expectedCompletionId: b.completion?.id ?? null },
+                completed ? "Batch reopened. No member notifications sent." : "Batch completed. No member notifications sent.")) setMode(null); }}
+              className={btn} style={{ background: NAVY }}>{completed ? "Confirm reopen" : "Confirm completed"}</button>
+            <button type="button" disabled={busy} onClick={() => setMode(null)} className={ghost}>Cancel</button>
+          </div>
+        </div>
+      )}
       {b.state === "prepared" && !mode && (
         <div className="flex flex-wrap gap-2">
           <button type="button" data-testid={`button-ordered-${b.id}`} disabled={busy || blocked} onClick={() => setMode("ordered")} className={btn} style={{ background: NAVY }}>Mark submitted to vendor</button>
@@ -492,7 +512,12 @@ function Body({ groupBuyId, scope, headers, onViewOrders, onDispatch }: Props) {
           <summary className="cursor-pointer text-sm font-semibold" style={{ color: V.text }}>Shipping &amp; receipt overview</summary>
           <div className="mt-3"><SupplierBatchFulfilment groupBuyId={groupBuyId} scope={scope} headers={headers} onViewOrders={onViewOrders} onDispatch={onDispatch} /></div>
         </details>
-        {d.batches.filter(b => b.state !== "released").map(b => <BatchCard key={b.id} b={b} batches={d.batches} busy={busy} act={(p, body) => act(p, body)} exportCsv={exportCsv} exportTxt={exportTxt} context={{ groupBuyId, scope, headers, onViewOrders, onDispatch, wholesaleConversionAvailable: d.groupBuy.wholesaleConversionAvailable }} />)}
+        {d.batches.filter(b => b.state !== "released" && !b.completion?.completed).map(b => <BatchCard key={b.id} b={b} batches={d.batches} busy={busy} act={act} exportCsv={exportCsv} exportTxt={exportTxt} context={{ groupBuyId, scope, headers, onViewOrders, onDispatch, wholesaleConversionAvailable: d.groupBuy.wholesaleConversionAvailable }} />)}
+        {d.batches.some(b => b.state !== "released" && b.completion?.completed) && <details data-testid="completed-batch-history" className="rounded-xl border p-3 space-y-3" style={{ borderColor: V.border }}>
+          <summary className="cursor-pointer text-sm font-semibold" style={{ color: V.text }}>Completed ({d.batches.filter(b => b.state !== "released" && b.completion?.completed).length})</summary>
+          <p className="text-xs" style={{ color: V.muted }}>Batches marked done by staff. Orders and payments are unchanged; reopen a batch if needed.</p>
+          <div className="space-y-2">{d.batches.filter(b => b.state !== "released" && b.completion?.completed).map(b => <BatchCard key={b.id} b={b} batches={d.batches} busy={busy} act={act} exportCsv={exportCsv} exportTxt={exportTxt} context={{ groupBuyId, scope, headers, onViewOrders, onDispatch }} />)}</div>
+        </details>}
         {d.batches.some(b => b.state === "released") && <details data-testid="released-batch-history" className="rounded-xl border p-3" style={{ borderColor: V.border }}>
           <summary className="cursor-pointer text-sm font-semibold" style={{ color: V.muted }}>Released / undone history ({d.batches.filter(b => b.state === "released").length})</summary>
           <p className="my-2 text-xs" style={{ color: V.muted }}>Historical records only. These batches do not allocate kits to a current delivery. Contents show the old snapshot, not an active allocation.</p>

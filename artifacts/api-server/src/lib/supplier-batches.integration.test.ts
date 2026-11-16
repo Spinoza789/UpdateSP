@@ -62,6 +62,48 @@ describe.skipIf(process.env.SUPPLIER_BATCH_DB_TESTS !== "1")("regional supplier 
     const result = await api.saveSupplierConfig(id, admin, {expectedVersion: 0, config: {enabled:true,telegramAlerts,regions:[{id:"eu",name:"EU",countries:["IT","DE"],targetKits:100}]}});
     return {id, ids, result};
   }
+  it("completes and reopens submitted batches without changing orders, allocations or notifications", async () => {
+    const f = await fixture([100]);
+    let view = await api.confirmSupplierBatch(f.id, admin, { regionId: "eu", token: f.result.proposals[0].token });
+    const batchId = view.batches[0].id;
+    const organiser = { username: "synthetic-organiser", admin: false };
+    await expect(api.setSupplierBatchCompletion(f.id, batchId, organiser, {
+      confirm: true, completed: true, expectedCompletionId: null,
+    })).rejects.toThrow(/submitted/i);
+    view = await api.orderSupplierBatch(f.id, batchId, admin, { confirm: true });
+    const beforeOrders = await store.db.select().from(store.ordersTable).where(eq(store.ordersTable.groupBuyId, f.id));
+    const beforeAllocations = await store.db.select().from(store.gbSupplierAllocationsTable).where(eq(store.gbSupplierAllocationsTable.batchId, batchId));
+    const beforeEvents = await store.db.select().from(store.gbSupplierEventsTable).where(eq(store.gbSupplierEventsTable.groupBuyId, f.id));
+    await expect(api.setSupplierBatchCompletion(f.id, batchId, { username: "outsider", admin: false }, {
+      confirm: true, completed: true, expectedCompletionId: null,
+    })).rejects.toThrow(/manage/i);
+    await expect(api.setSupplierBatchCompletion(f.id, batchId, admin, { completed: true })).rejects.toThrow(/confirm/i);
+    view = await api.setSupplierBatchCompletion(f.id, batchId, organiser, { confirm: true, completed: true, expectedCompletionId: null });
+    expect(view.batches[0]).toMatchObject({ state: "ordered", completion: { completed: true, actor: organiser.username } });
+    const completionId = view.batches[0].completion.id;
+    expect((await api.supplierData(f.id, admin)).batches[0].completion.id).toBe(completionId);
+    await expect(api.setSupplierBatchCompletion(f.id, batchId, admin, {
+      confirm: true, completed: false, expectedCompletionId: null,
+    })).rejects.toThrow(/changed/i);
+    view = await api.setSupplierBatchCompletion(f.id, batchId, admin, { confirm: true, completed: false, expectedCompletionId: completionId });
+    expect(view.batches[0]).toMatchObject({ state: "ordered", completion: { completed: false, actor: admin.username } });
+    expect(await store.db.select().from(store.ordersTable).where(eq(store.ordersTable.groupBuyId, f.id))).toEqual(beforeOrders);
+    expect(await store.db.select().from(store.gbSupplierAllocationsTable).where(eq(store.gbSupplierAllocationsTable.batchId, batchId))).toEqual(beforeAllocations);
+    const afterEvents = await store.db.select().from(store.gbSupplierEventsTable).where(eq(store.gbSupplierEventsTable.groupBuyId, f.id));
+    expect(afterEvents.filter((e: any) => e.kind !== "completion")).toEqual(beforeEvents);
+    expect(afterEvents.filter((e: any) => e.kind === "completion")).toHaveLength(2);
+    expect(afterEvents.filter((e: any) => e.kind === "completion").every((e: any) => e.telegram !== "pending")).toBe(true);
+    const other = await fixture([100]);
+    await expect(api.setSupplierBatchCompletion(other.id, batchId, admin, {
+      confirm: true, completed: true, expectedCompletionId: null,
+    })).rejects.toThrow(/not found/i);
+    const prepared = await api.confirmSupplierBatch(other.id, admin, { regionId: "eu", token: other.result.proposals[0].token });
+    const releasedId = prepared.batches[0].id;
+    await api.releaseSupplierBatch(other.id, releasedId, admin, { confirm: true, reason: "Synthetic release" });
+    await expect(api.setSupplierBatchCompletion(other.id, releasedId, admin, {
+      confirm: true, completed: true, expectedCompletionId: null,
+    })).rejects.toThrow(/submitted/i);
+  });
   it("automatically prepares consecutive full batches once, retaining whole orders and member statuses", async () => {
     const f = await fixture([20, 5, 25, 3]);
     const updated = await api.saveSupplierConfig(f.id, admin, { expectedVersion: f.result.version,

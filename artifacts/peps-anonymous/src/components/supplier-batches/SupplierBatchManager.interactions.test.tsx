@@ -32,6 +32,47 @@ const fresh = () => ({
 const batch = (exceptions: unknown[]) => ({ id: "B1", reference: "SB-001", state: "prepared", createdAt: "2026-10-02T10:00:00Z",
   createdBy: "staff", orderedAt: null, releasedAt: null, releaseReason: null, snapshot: proposal("tok-A"), exceptions });
 
+for (const scope of ["admin", "organiser"] as const) test(`${scope}: completed batches move to their own section, persist on reload and reopen`, async () => {
+  state = fresh();
+  state.batches = [{ ...batch([]), state: "ordered" }];
+  await mount(scope, (url, body: any) => {
+    if (!url.endsWith("/completion")) return;
+    state.batches = [{ ...batch([]), state: "ordered",
+      completion: { id: body.completed ? "done1" : "reopen1", completed: body.completed, at: "2026-11-16T12:00:00Z", actor: scope } }];
+    return Response.json(state);
+  });
+  await click("button-completion-B1");
+  assert.equal(requests.length, 0);
+  await click("button-confirm-completion-B1");
+  assert.deepEqual(requests[0].body, { confirm: true, completed: true, expectedCompletionId: null });
+  assert.match(requests[0].url, new RegExp(`/${scope}/group-buys/G/supplier-batches/B1/completion$`));
+  let archive = el<HTMLDetailsElement>("completed-batch-history");
+  assert.equal(archive.open, false);
+  assert.match(archive.textContent!, /Completed \(1\)/);
+  assert.ok(archive.querySelector('[data-testid="card-batch-B1"]'));
+  assert.equal(document.querySelectorAll('[data-testid="card-batch-B1"]').length, 1);
+  await poll();
+  archive = el<HTMLDetailsElement>("completed-batch-history");
+  assert.ok(archive.querySelector('[data-testid="card-batch-B1"]'));
+  await act(async () => { archive.open = true; });
+  await click("button-completion-B1");
+  await click("button-confirm-completion-B1");
+  assert.equal(has("completed-batch-history"), false);
+  assert.ok(has("card-batch-B1"));
+  assert.deepEqual(requests.at(-1)!.body, { confirm: true, completed: false, expectedCompletionId: "done1" });
+  assert.match(document.body.textContent!, /Batch reopened\. No member notifications sent/);
+});
+
+test("failed completion leaves the batch active with its confirmation available to retry", async () => {
+  state = fresh(); state.batches = [{ ...batch([]), state: "ordered" }];
+  await mount("admin", url => url.endsWith("/completion") ? Response.json({ error: "Batch completion changed. Refresh and try again." }, { status: 409 }) : undefined);
+  await click("button-completion-B1");
+  await click("button-confirm-completion-B1");
+  assert.equal(has("completed-batch-history"), false);
+  assert.ok(has("button-confirm-completion-B1"));
+  assert.match(document.body.textContent!, /Batch completion changed/);
+});
+
 for (const scope of ["admin", "organiser"] as const) test(`${scope} saves hard limits and auto-prepare without member messaging`, async () => {
   state = fresh();
   await mount(scope);

@@ -13,7 +13,7 @@ export interface BatchProposal { region: BatchRegion; token: string; orders: Bat
 export interface AddedBatchQuantity { orderId: string; productId: string; productName: string; quantity: number }
 export interface SupplierMoveUndo { eventId: string; targetReference: string; expectedTargetToken: string; kits: number; orderCodes: string[] }
 export interface LateBatchOrder { orderId: string; kits: number; addedAt: string }
-export interface SupplierBatch { id: string; reference: string; state: "prepared" | "ordered" | "released"; wholesaleOrder?: { id: string; code: string; username: string } | null; createdAt: string; createdBy: string; orderedAt: string | null; releasedAt: string | null; releaseReason: string | null; snapshot: BatchProposal; additions?: AddedBatchQuantity[]; lateOrders?: LateBatchOrder[]; undoMoves?: SupplierMoveUndo[]; exceptions: {orderId: string; code: string; reason: string}[] }
+export interface SupplierBatch { id: string; reference: string; state: "prepared" | "ordered" | "released"; completion?: { id: string; completed: boolean; at: string; actor: string } | null; wholesaleOrder?: { id: string; code: string; username: string } | null; createdAt: string; createdBy: string; orderedAt: string | null; releasedAt: string | null; releaseReason: string | null; snapshot: BatchProposal; additions?: AddedBatchQuantity[]; lateOrders?: LateBatchOrder[]; undoMoves?: SupplierMoveUndo[]; exceptions: {orderId: string; code: string; reason: string}[] }
 export interface SupplierData {
   groupBuy: {id: string; name: string; wholesaleConversionAvailable?: boolean}; config: BatchConfig; version: number; checkedAt: string | null;
   proposals: BatchProposal[]; batches: SupplierBatch[];

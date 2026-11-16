@@ -3,6 +3,16 @@ name: Supplier batch policies
 description: Supplier exports, safe allocations, staff alerts, whole-order hard caps and automatic preparation.
 ---
 
+Completed batches are a manually managed staff category, separate from supplier
+submission and customer fulfilment. Admin and the organiser can mark submitted
+batches done, view them in a separate Completed section and reopen mistakes.
+
+**Why:** The user approved a separate Completed section, explicitly without
+changing members' orders, payments or delivery statuses, or sending notifications.
+
+**How to apply:** Never infer completion from submission alone, release completed
+allocations back to the queue, or send member alerts for completing/reopening.
+
 Batch packing slips must show only the quantities allocated to the selected batch,
 not the customer's entire order, and remain printable without a reshipper.
 

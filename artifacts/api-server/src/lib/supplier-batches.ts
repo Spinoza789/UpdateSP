@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
 import {
   db, groupBuysTable, ordersTable, orderLineItemsTable, groupBuyRefundsTable, auditLogsTable,
   gbSupplierSettingsTable as settings, gbSupplierBatchesTable as batches,
@@ -161,7 +161,13 @@ export async function state(tx: any, group: any, reconcile = true) {
     )).orderBy(asc(auditLogsTable.createdAt), asc(auditLogsTable.id)) : [];
   const wholesaleLinks = await tx.select({ detail: events.detail }).from(events)
     .where(and(eq(events.groupBuyId, id), eq(events.kind, "wholesale_checkout")));
+  const completions = await tx.select().from(events).where(and(eq(events.groupBuyId, id), eq(events.kind, "completion")))
+    .orderBy(desc(events.createdAt), desc(events.id));
   const history = data.history.map((b: any) => ({
+    completion: (() => {
+      const e = completions.find((e: any) => e.detail.batchId === b.id);
+      return e ? { id: e.id, completed: e.detail.completed, at: asDate(e.createdAt), actor: e.detail.actor } : null;
+    })(),
     wholesaleOrder: (wholesaleLinks.find((e: any) => e.detail.batchId === b.id)?.detail as any)?.wholesaleOrder ?? null,
     undoMoves: additionHistory.filter(e => e.detail.batchId === b.id
       && ["orders_moved", "quantities_moved"].includes(e.kind)
@@ -369,6 +375,26 @@ export async function orderSupplierBatch(id: string, batchId: string, actor: Upd
     await tx.update(batches).set({ state: "ordered", orderedAt: new Date(), orderedBy: actor.username }).where(eq(batches.id, batchId));
     await audit(tx, id, actor.username, "ordered", { batchId, reference: batch.reference, processedOrderIds: changed.map((o: any) => o.id) });
     return state(tx, group);
+  }, database);
+}
+/** Staff list organisation only: keep purchasing state, snapshots and allocations intact. */
+export async function setSupplierBatchCompletion(id: string, batchId: string, actor: UpdateActor, body: any, database = db) {
+  if (body?.confirm !== true || typeof body?.completed !== "boolean"
+    || !(body.expectedCompletionId === null || typeof body.expectedCompletionId === "string")) {
+    throw new SupplierBatchError("Confirm the batch completion change and reload its current details.", 400);
+  }
+  return locked(id, actor, async (tx, group) => {
+    const [batch] = await tx.select().from(batches).where(and(eq(batches.id, batchId), eq(batches.groupBuyId, id))).for("update");
+    if (!batch) throw new SupplierBatchError("Batch not found.", 404);
+    if (batch.state !== "ordered") throw new SupplierBatchError("Only batches already submitted to the vendor can be completed.", 409);
+    const [prior] = await tx.select().from(events).where(and(eq(events.groupBuyId, id), eq(events.kind, "completion"),
+      sql`${events.detail}->>'batchId' = ${batchId}`)).orderBy(desc(events.createdAt), desc(events.id)).limit(1);
+    if ((prior?.id ?? null) !== body.expectedCompletionId) throw new SupplierBatchError("Batch completion changed. Refresh and try again.", 409);
+    if ((prior?.detail as any)?.completed !== body.completed) {
+      await audit(tx, id, actor.username, "completion", { batchId, reference: batch.reference, completed: body.completed });
+    }
+    // Do not reconcile readiness here: this action must never queue notifications.
+    return state(tx, group, false);
   }, database);
 }
 export async function releaseSupplierBatch(id: string, batchId: string, actor: UpdateActor, body: any, database = db) {
