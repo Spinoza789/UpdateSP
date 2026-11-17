@@ -189,6 +189,11 @@ test("record payment footer separates saved supplier totals, selling prices and 
     return Response.json(ledger);
   };
   await click("payment-refresh");
+  assert.equal(document.querySelector('[data-testid="payment-after-shipping-o1"]'), null);
+  assert.equal(document.querySelector('[data-testid="payment-after-shipping-o2"]'), null);
+  await click("payment-expand-o1");
+  assert.doesNotMatch(el("payment-order-drawer").textContent!, /profit after shipping/i);
+  await click("payment-detail-close");
   await click("payment-order-o1");
   await click("payment-order-o2");
   await click("payment-record-open");
@@ -200,6 +205,8 @@ test("record payment footer separates saved supplier totals, selling prices and 
   assert.match(el("payment-summary-sales").textContent!, /\$33\.20/);
   assert.match(el("payment-summary-profit").textContent!, /\$6\.20/);
   assert.match(el("payment-summary-margin").textContent!, /18\.67%/);
+  assert.doesNotMatch(summary.textContent!, /profit after shipping|margin after shipping/i);
+  assert.match(summary.textContent!, /pass-through/);
   assert.match(summary.textContent!, /USD.*not the crypto amount/s);
   await change("payment-wallet", "w1");
   await change("payment-amount", "0.0123");

@@ -223,3 +223,15 @@ and profit even when the original combined total was correct.
 **How to apply:** Preserve order/product-specific commercial costs through
 quantity changes and re-locking. Only explicit audited product-cost corrections
 justify replacing them; a shipping-only correction does not.
+
+Shipping must not affect Peps Anon profit or percentage margin. Show product
+selling price minus historical supplier product cost; keep shipping separate
+in the supplier payment total, not in a second shipping-adjusted profit figure.
+
+**Why:** The user clarified: "The shipping shouldn't have any effect on the
+profit, since the shipping collected is what I'm sending so it's a net zero.
+The profit should remain the same."
+
+**How to apply:** Treat shipping as pass-through for this reporting basis.
+Do not add shipping revenue or subtract supplier shipping from displayed profit,
+or include shipping in its margin denominator. Preserve historical product costs.

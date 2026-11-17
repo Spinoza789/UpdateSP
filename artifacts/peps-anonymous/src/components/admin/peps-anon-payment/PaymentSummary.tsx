@@ -33,6 +33,7 @@ export function PaymentSummary({ chosen, total }: { chosen: LedgerOrder[]; total
     <p className="text-[10px] leading-snug" style={{ color: "var(--t-subtle)" }}>
       All totals in USD, not the crypto amount sent. Saved order prices only.
       {" "}Product profit excludes shipping, order-level discounts, credits, fees, tax and overheads; not net profit.
+      {" "}Shipping is treated separately as a pass-through and does not change product profit or margin.
     </p>
     {summary.incomplete && <p data-testid="payment-summary-history-warning" className="text-[10px] leading-snug" style={{ color: "var(--t-text)" }}>
       Some historical values are unavailable. Missing values are not treated as zero; incomplete totals show Unavailable.

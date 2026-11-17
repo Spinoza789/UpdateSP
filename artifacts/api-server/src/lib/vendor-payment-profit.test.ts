@@ -11,6 +11,12 @@ const source = (items = [{ vendorId: "v1", lineTotal: "30.30" }]) => ({
   orders: [{ grandTotal: "999", productSubtotal: "888", vendorShipping: "50", creditsApplied: 100 }],
 });
 describe("Admin supplier-scoped product profit", () => {
+  it("treats shipping as pass-through and exposes only product profit", () => {
+    const original = vendorProductProfit(row(), source(), false);
+    const changed = vendorProductProfit({ ...row(), snapshot: { ...row().snapshot, shippingCost: "500.00", totalCost: "520.20" } }, source(), false);
+    expect(changed).toMatchObject({ amountUsd: original.amountUsd, marginPercent: original.marginPercent });
+    expect(changed).not.toHaveProperty("afterShipping");
+  });
   it("shows margin on sales rather than markup on costs, including losses and zero sales", () => {
     expect(vendorProductProfit(row(), source(), false)).toMatchObject({ marginPercent: "33.33" });
     expect(vendorProductProfit(row(), source([{ vendorId: "v1", lineTotal: "10.10" }]), false)).toMatchObject({ marginPercent: "-100.00" });
