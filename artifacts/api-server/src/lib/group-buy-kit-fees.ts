@@ -4,6 +4,32 @@ import type { db } from "@workspace/db";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+export function calculateGroupKitFees(
+  items: ReadonlyArray<{ productId: string; quantity: string | number }>,
+  rates: ReadonlyArray<{ productId: string; feePerKit: string | number | null }>,
+): number {
+  const centsByProduct = new Map(rates.map(row => [row.productId, Math.round(Number(row.feePerKit) * 100)]));
+  const hundredthsOfCents = items.reduce((sum, item) =>
+    sum + Math.max(0, centsByProduct.get(item.productId) ?? 0) * Math.round(Number(item.quantity) * 100), 0);
+  return Math.round(hundredthsOfCents / 100) / 100;
+}
+
+export function kitFeeEditLocked(order: {
+  paymentStatus: string;
+  kitFees: string | number;
+  amountDue?: string | number;
+  paymentTxHash?: string | null;
+  testPaymentTxHash?: string | null;
+  balanceTxHash?: string | null;
+  balancePaymentStatus?: string | null;
+}, nextKitFees: number): boolean {
+  if (!(nextKitFees > 0 || Number(order.kitFees) > 0)) return false;
+  return !["unpaid", "test_ready", "rejected", "failed"].includes(order.paymentStatus)
+    || Boolean(order.paymentTxHash || order.testPaymentTxHash || order.balanceTxHash)
+    || Number(order.amountDue ?? 0) > 0 || order.balancePaymentStatus === "confirmed"
+    || order.balancePaymentStatus === "pending_confirmation";
+}
+
 export function kitFeeAmount(value: unknown): string {
   const text = typeof value === "number" || typeof value === "string" ? String(value).trim() : "";
   if (!/^\d{1,8}(?:\.\d{1,2})?$/.test(text) || Number(text) > 99_999_999.99) {

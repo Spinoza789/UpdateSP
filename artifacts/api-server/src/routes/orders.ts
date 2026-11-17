@@ -10,6 +10,7 @@ import { normalizeToCode as supplierCountryCode } from "../lib/country-utils";
 import { groupBuyCreditsAllowed } from "../lib/group-buy-credit-policy";
 import { calculateCouponDiscount, CouponError, couponProblem, couponQuoteMatches } from "../lib/group-buy-coupon-policy";
 import { assertGroupStock } from "../lib/group-buy-stock";
+import { calculateGroupKitFees, kitFeeEditLocked } from "../lib/group-buy-kit-fees";
 import { gbHalfKitClaimsTable } from "@workspace/db";
 import { cancelUnpaidHalfClaims, prepareNewOrderHalfKit, recordNewOrderHalfKit } from "../lib/half-kit-offers";
 import { parseHalfKitCheckout, assertHalfKitCheckoutItems, halfKitSelections } from "../lib/half-kit-new-order-rules";
@@ -1099,14 +1100,7 @@ router.post("/orders", async (req, res, next): Promise<void> => {
           eq(groupBuyProductsTable.groupBuyId, normalizedGroupBuyId),
           inArray(groupBuyProductsTable.productId, productIds),
         ));
-      const kitFeeMap = new Map(
-        kitFeeRows.map(r => [r.productId, r.feePerKit != null ? parseFloat(String(r.feePerKit)) : 0])
-      );
-      for (const li of clientLineItems as Array<{ productId: string; quantity: number }>) {
-        const fee = kitFeeMap.get(li.productId) ?? 0;
-        if (fee > 0) gbKitFees += fee * parseFloat(String(li.quantity));
-      }
-      gbKitFees = Number(gbKitFees.toFixed(2));
+      gbKitFees = calculateGroupKitFees(clientLineItems, kitFeeRows);
     }
   } else {
     // Non-GB orders cannot have a testing contribution
@@ -2647,8 +2641,6 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
       recomputedAdminFeeLabel = resolved.label;
     }
   }
-  const grandTotal = Number(Math.max(0, baseUpdateTotal + resolvedAdminFee).toFixed(2));
-
   // Capture old line items for audit log before deleting them
   const oldLineItems = await db.select().from(orderLineItemsTable).where(eq(orderLineItemsTable.orderId, rawId));
 
@@ -2674,6 +2666,7 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
     reshipperUsername: updatedDeliveryRoute.reshipperUsername, routingType: updatedDeliveryRoute.routingType,
   } : {};
   const { updatedOrder, insertedLineItems, lineItemsToInsert } = await db.transaction(async tx => {
+  if (!activeHalfClaims.length) await assertGroupStock(tx, order.groupBuyId, clientLineItems, rawId);
   if (updatedDeliveryRoute) {
     const [routeSnapshot] = await tx.select({ reshipperUsername: ordersTable.reshipperUsername, routingType: ordersTable.routingType })
       .from(ordersTable).where(eq(ordersTable.id, rawId)).for("update");
@@ -2698,11 +2691,25 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
     await saveOnwardOrderPreference(tx, rawId, req.body.onwardDeliveryMethod);
     return result;
   }
-  await assertGroupStock(tx, order.groupBuyId, clientLineItems, rawId);
-  const [lockedOrder] = await tx.select({ id: ordersTable.id }).from(ordersTable)
+  const [lockedOrder] = await tx.select().from(ordersTable)
     .where(eq(ordersTable.id, rawId)).for("update");
   if (!lockedOrder) throw new Error("Order no longer exists.");
   await assertNoActiveRefund(tx, rawId);
+  let resolvedKitFees = 0;
+  if (lockedOrder.groupBuyId && lockedOrder.orderType !== "wholesale") {
+    if (!clientDirectShippingRequested && !isAddition) {
+      const rates = await tx.select({ productId: groupBuyProductsTable.productId, feePerKit: groupBuyProductsTable.feePerKit })
+        .from(groupBuyProductsTable)
+        .where(and(eq(groupBuyProductsTable.groupBuyId, lockedOrder.groupBuyId),
+          inArray(groupBuyProductsTable.productId, clientLineItems.map((item: { productId: string }) => item.productId))));
+      resolvedKitFees = calculateGroupKitFees(clientLineItems, rates);
+    }
+    if (lockedOrder.deletedAt || !EDITABLE_STATUSES.includes(lockedOrder.status as OrderStatus)
+      || kitFeeEditLocked(lockedOrder, resolvedKitFees)) {
+      throw new HalfKitError("This order has payment activity or is no longer editable. Contact your organiser before changing it.", 409);
+    }
+  }
+  const grandTotal = Number(Math.max(0, baseUpdateTotal + resolvedAdminFee + resolvedKitFees).toFixed(2));
   const [updatedOrder] = await tx
     .update(ordersTable)
     .set({
@@ -2715,6 +2722,7 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
       tip: tip.toFixed(2),
       testingContribution: normalizedUpdateContribution.toFixed(2),
       grandTotal: grandTotal.toFixed(2),
+      ...(lockedOrder.groupBuyId && lockedOrder.orderType !== "wholesale" && { kitFees: resolvedKitFees.toFixed(2) }),
       adminFee: resolvedAdminFee.toFixed(2),
       ...(isWholesaleOrder && {wholesaleVendorId: req.body.wholesaleVendorId}),
       // Editing the order changes the total, so any previously-locked crypto USD
@@ -2781,12 +2789,14 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
       before: {
         deliveryMethod: order.deliveryMethod,
         grandTotal: order.grandTotal,
+        kitFees: order.kitFees,
         notes: order.notes,
         lineItems: oldLineItems.map(li => ({ productName: li.productName, quantity: li.quantity, unitPrice: li.unitPrice })),
       },
       after: {
         deliveryMethod: updatedOrder.deliveryMethod,
         grandTotal: updatedOrder.grandTotal,
+        kitFees: updatedOrder.kitFees,
         notes: updatedOrder.notes,
         lineItems: lineItemsToInsert.map(li => ({ productName: li.productName, quantity: li.quantity, unitPrice: li.unitPrice })),
       },

@@ -9,7 +9,7 @@ const groupBuysSource = readFileSync(new URL("../group-buys.ts", import.meta.url
 describe("country-specific group-buy admin fee routes", () => {
   it("resolves a new order fee using the stored country overrides and delivery country", () => {
     const createStart = ordersSource.indexOf('router.post("/orders"');
-    const createEnd = ordersSource.indexOf('router.get("/orders/');
+    const createEnd = ordersSource.indexOf('router.get("/orders/', createStart);
     const createRoute = ordersSource.slice(createStart, createEnd);
 
     expect(createRoute).toContain("adminFeeCountries: groupBuysTable.adminFeeCountries");
@@ -22,7 +22,7 @@ describe("country-specific group-buy admin fee routes", () => {
 
   it("uses the authenticated account username when resolving the fallback country", () => {
     const createStart = ordersSource.indexOf('router.post("/orders"');
-    const createEnd = ordersSource.indexOf('router.get("/orders/');
+    const createEnd = ordersSource.indexOf('router.get("/orders/', createStart);
     const createRoute = ordersSource.slice(createStart, createEnd);
 
     expect(createRoute).toContain(
