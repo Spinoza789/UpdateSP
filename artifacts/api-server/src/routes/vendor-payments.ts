@@ -9,6 +9,7 @@ import { paymentLedgerSummary, publicVendorReceipt } from "../lib/vendor-payment
 import { acknowledgeSupplierPaid, clearSupplierPaid, editSupplierCosts, exportSupplierPayments } from "../lib/vendor-payment-tools";
 import { vendorProfitReport, productRefundReviewOptions, reviewProductRefund } from "../lib/vendor-profit-report-service";
 import { vendorOrderComparison } from "../lib/vendor-order-comparison";
+import { lookupTransactionDetails } from "../lib/transaction-details";
 import {
   listVendorPayments,
   recordVendorPayment,
@@ -39,6 +40,17 @@ function handled(fn: (req: Request, res: Response) => Promise<void>) {
     }
   };
 }
+router.get("/admin/vendor-payments/transaction-details", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const network = typeof req.query.network === "string" ? req.query.network : "";
+  const txid = typeof req.query.txid === "string" ? req.query.txid : "";
+  if (!network || network.length > 40 || !txid || txid.length > 100) throw new VendorPortalError("Provide a supported network and TXID.");
+  try {
+    res.set("Cache-Control", "no-store").json(await lookupTransactionDetails(network, txid));
+  } catch (error) {
+    throw new VendorPortalError(error instanceof Error ? error.message : "Invalid transaction lookup.");
+  }
+}));
 router.get("/admin/vendor-payments/order-comparison", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const vendorId = typeof req.query.vendorId === "string" && req.query.vendorId ? req.query.vendorId : undefined;

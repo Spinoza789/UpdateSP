@@ -1,5 +1,6 @@
 import React from "react";
 import type { LedgerOrder, Receipt } from "./model";
+import { TransactionDetails } from "./TransactionDetails";
 
 function explorer(txid: string, network: string | null | undefined) {
   const chain = (network ?? "").trim().toLowerCase().replace(/[\s_-]/g, "");
@@ -11,13 +12,14 @@ function explorer(txid: string, network: string | null | undefined) {
 }
 
 export function OrderTransactions({ order, receipt }: { order: LedgerOrder; receipt: Receipt | null }) {
-  const transaction = (txid: string, network?: string | null, currency?: string | null) => {
+  const transaction = (txid: string, network?: string | null, currency?: string | null, expectedWallet?: string) => {
     const href = explorer(txid, network);
     return <div className="min-w-0">
       <p className="mb-1 text-xs" style={{ color: "var(--t-subtle)" }}>{[currency, network].filter(Boolean).join(" · ") || "Network not recorded"}</p>
       {href
         ? <a href={href} target="_blank" rel="noopener noreferrer" className="block break-all font-mono text-xs underline" style={{ color: "var(--t-blue)" }}>{txid}</a>
         : <span className="block break-all font-mono text-xs">{txid}</span>}
+      {href && network && <TransactionDetails key={`${network}:${txid}`} txid={txid} network={network} expectedWallet={expectedWallet} />}
     </div>;
   };
   const supplier = receipt && !receipt.voidedAt && receipt.txid ? receipt : null;
@@ -34,7 +36,7 @@ export function OrderTransactions({ order, receipt }: { order: LedgerOrder; rece
       </div>
       <div className="min-w-0">
         <h4 className="mb-2 text-xs font-semibold">Supplier payment</h4>
-        {supplier ? transaction(supplier.txid, supplier.network, supplier.currency)
+        {supplier ? transaction(supplier.txid, supplier.network, supplier.currency, supplier.walletSnapshot?.address)
           : <p className="text-xs" style={{ color: "var(--t-subtle)" }}>No supplier payment TXID recorded.</p>}
       </div>
     </div>

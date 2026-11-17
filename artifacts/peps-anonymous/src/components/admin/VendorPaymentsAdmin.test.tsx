@@ -158,6 +158,45 @@ test("the order drawer shows buyer and allocated supplier transaction links with
   assert.equal(section.querySelector(`a[href="https://solscan.io/tx/${sol}"]`)?.getAttribute("target"), "_blank");
   assert.equal(requests.length, before);
 });
+test("looks up receiving wallets and amounts for both payments without recording or verifying a payment", async () => {
+  await mount();
+  const ledger: any = structuredClone(data);
+  const eth = `0x${"d".repeat(64)}`, sol = "4".repeat(88);
+  ledger.orders[0].buyerTransactions = [{ orderId: "buyer", reference: "12957", kind: "Payment", txid: eth, network: "Ethereum", currency: "USDT" }];
+  ledger.orders[0].paymentId = "supplier-receipt";
+  ledger.payments = [{ id: "supplier-receipt", txid: sol, network: "Solana", currency: "USDC", voidedAt: null,
+    walletSnapshot: { address: "SupplierWallet" }, orders: [], usdAmount: "1250" }];
+  let fail = false;
+  adminAuth.request = async (path, init = {}) => {
+    requests.push({ path, method: init.method, body: null });
+    if (path.includes("/transaction-details?")) {
+      if (fail) return new Response(JSON.stringify({ status: "unavailable", transfers: [], message: "Please retry.", checkedAt: "2026-11-17" }));
+      const supplier = path.includes(sol);
+      return new Response(JSON.stringify({ status: "confirmed", transfers: [
+        { recipient: supplier ? "SupplierWallet" : "BuyerReceivingWallet", amount: supplier ? "1250" : "1550",
+          currency: supplier ? "USDC" : "USDT", recipientType: "wallet" },
+      ], checkedAt: "2026-11-17" }));
+    }
+    return new Response(JSON.stringify(ledger));
+  };
+  await click("payment-refresh");
+  await click("payment-expand-o1");
+  const section = el("payment-order-transactions");
+  assert.match(section.textContent!, /BuyerReceivingWallet/);
+  assert.match(section.textContent!, /1550 USDT/);
+  assert.match(section.textContent!, /SupplierWallet/);
+  assert.match(section.textContent!, /1250 USDC/);
+  assert.match(section.textContent!, /Matches saved destination/);
+  assert.match(section.textContent!, /Confirmed/);
+  assert.equal(requests.filter(request => request.method && request.method !== "GET").length, 0);
+  fail = true;
+  const refresh = section.querySelector<HTMLButtonElement>('[data-testid="transaction-details-refresh"]')!;
+  await act(async () => refresh.click());
+  assert.match(section.textContent!, /Please retry/);
+  fail = false;
+  await act(async () => refresh.click());
+  assert.match(section.textContent!, /BuyerReceivingWallet/);
+});
 test("reviews and confirms a corrected supplier submission then refreshes its cost and profit", async () => {
   await mount();
   const ledger = structuredClone(data);
