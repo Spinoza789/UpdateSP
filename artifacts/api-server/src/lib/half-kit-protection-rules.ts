@@ -50,6 +50,12 @@ export function halfKitLegacyMutation(method: string, path: string, body: Record
     const financial = financialFields.some(key => Object.prototype.hasOwnProperty.call(body, key))
       || (body.paymentStatus !== undefined && body.paymentStatus !== "confirmed");
     const refund = suffix?.includes("refund") ?? false;
+    // An admin-only outstanding balance changes customer collections, not the
+    // supplier's purchase. Still protect half-kit balances and take the money mutex.
+    if (role === "admin" && !match[2] && !suffix && method === "PATCH"
+      && Object.keys(body).length === 1 && Object.prototype.hasOwnProperty.call(body, "amountDue")) {
+      return { kind: "order", orderId: match[3], role, block: true, supplierMaterial: false };
+    }
     // This dedicated organiser endpoint only changes the fulfilment assignment:
     // no country-leg recalculation, product edits or charge changes. Keep the
     // money mutex and supplier-snapshot check, but don't reject half-kit claims.

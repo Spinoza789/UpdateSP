@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const fixture = vi.hoisted(() => ({
   twoFactorEnabled: true,
   validSession: true,
+  orderedBatch: false,
+  activeClaim: false,
   events: [] as string[],
   writes: [] as unknown[],
   queries: [] as string[],
@@ -50,6 +52,14 @@ vi.mock("@workspace/db", async () => {
               fixture.events.push("read-protected-order");
               return Promise.resolve([{ id: "test-order", groupBuyId: "test-group", username: "test-member" }]);
             }
+            if (name === "gb_supplier_allocations") {
+              fixture.events.push("check-supplier-allocation");
+              return Promise.resolve(fixture.orderedBatch ? [{ batchId: "batch" }] : []);
+            }
+            if (name === "gb_supplier_batches") return { limit: async () => [{
+              reference: "GB-TEST / 001", state: "ordered", snapshot: {},
+            }] };
+            if (name === "gb_half_kit_claims") return { limit: async () => fixture.activeClaim ? [{ id: "claim" }] : [] };
             return { limit: async () => [], then: (resolve: (value: unknown[]) => unknown) => Promise.resolve([]).then(resolve) };
           },
         }),
@@ -69,6 +79,8 @@ let base: string;
 beforeEach(async () => {
   vi.stubEnv("ADMIN_SECRET", "test-only-shared-secret");
   fixture.validSession = true;
+  fixture.orderedBatch = false;
+  fixture.activeClaim = false;
   fixture.twoFactorEnabled = true;
   fixture.events.length = 0;
   fixture.writes.length = 0;
@@ -85,7 +97,7 @@ beforeEach(async () => {
     expect(mount.position).toBeGreaterThan(-1);
     app.use(mount.path, mount.middleware);
   }
-  app.patch("/admin/orders/:id/routing", (req, res) => {
+  app.patch(["/admin/orders/:id", "/admin/orders/:id/routing"], (req, res) => {
     if (!requireAdmin(req, res)) return;
     fixture.writes.push(req.body);
     res.json({ ok: true, ...req.body });
@@ -143,6 +155,40 @@ describe("half-kit protection respects the admin-session boundary", () => {
     expect(fixture.events[0]).toBe("authenticate");
     expect(fixture.events).toContain("protect");
     expect(fixture.queries.some(query => query.includes("pg_advisory_lock"))).toBe(true);
+  });
+
+  function saveBalance(patch: Record<string, unknown>, authenticated = true) {
+    return fetch(`${base}/admin/orders/test-order`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Origin: base,
+        ...(authenticated ? { Cookie: "peps_admin_session=test-session", "x-admin-csrf": "test-csrf" } : {}) },
+      body: JSON.stringify(patch),
+    });
+  }
+
+  it("allows a balance-only save on an ordered batch without skipping the money lock", async () => {
+    fixture.orderedBatch = true;
+    expect((await saveBalance({ amountDue: "12" })).status).toBe(200);
+    expect(fixture.writes).toEqual([{ amountDue: "12" }]);
+    expect(fixture.events).not.toContain("check-supplier-allocation");
+    expect(fixture.queries.some(query => query.includes("pg_advisory_lock("))).toBe(true);
+  });
+
+  it("still blocks mixed edits on ordered batches and protected half-kit balances", async () => {
+    fixture.orderedBatch = true;
+    const mixed = await saveBalance({ amountDue: "12", deliveryPrice: "20" });
+    expect(mixed.status).toBe(409);
+    expect((await mixed.json()).error).toContain("GB-TEST / 001");
+    fixture.activeClaim = true;
+    const halfKit = await saveBalance({ amountDue: "12" });
+    expect(halfKit.status).toBe(409);
+    expect((await halfKit.json()).code).toBe("half_kit_pricing_protected");
+    expect(fixture.writes).toEqual([]);
+  });
+
+  it("rejects a balance-only save without an admin session", async () => {
+    expect((await saveBalance({ amountDue: "12" }, false)).status).toBe(401);
+    expect(fixture.writes).toEqual([]);
   });
 
   it("rejects a missing admin session before accessing protected orders or acquiring locks", async () => {
