@@ -446,6 +446,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
         removeReason={removeReason} onRemoveReason={setRemoveReason} />}
 
       {active && costTarget && <SupplierCostEditor key={`${costTarget.id}:${costTarget.reviewToken}`} order={costTarget} busy={busy} message={message}
+        freeShippingThreshold={ledger?.vendors.find(v => v.id === vendorId)?.freeShippingThreshold}
         onClose={() => { if (!busy) setCostTarget(null); }}
         onSave={input => void saveTool(`/api/admin/vendor-payments/orders/${encodeURIComponent(costTarget.id)}/costs`,
           { ...input, reviewToken: costTarget.reviewToken }, "Supplier costs updated. Customer prices and catalogue costs were not changed.")} />}

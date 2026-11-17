@@ -271,6 +271,36 @@ test("opens an order-specific supplier cost modal and refreshes saved supplier c
   assert.equal(document.querySelector('[data-testid="supplier-cost-editor"]'),null);
   assert.match(document.body.textContent!,/11\.10/);
 });
+test("reviews free supplier shipping for an unpaid saved submission without changing its product costs", async () => {
+  await mount();
+  const ledger: any = structuredClone(data);
+  ledger.vendors[0].freeShippingThreshold = 1000;
+  Object.assign(ledger.orders[0], { items: [{ productName: "Saved product", quantity: 100, unitCost: "12.50", lineTotal: "1250.00" }],
+    productCost: "1250.00", shippingCost: "60.00", totalCost: "1310.00" });
+  adminAuth.request = async (path, init = {}) => {
+    const body = init.body ? JSON.parse(String(init.body)) : null;
+    requests.push({ path, method: init.method, body });
+    if (path.endsWith("/o1/costs")) {
+      assert.equal(body.shippingOnly, true);
+      assert.equal(body.shippingCost, "0.00");
+      assert.equal(body.items[0].unitCost, "12.50");
+      ledger.orders[0].shippingCost = "0.00"; ledger.orders[0].totalCost = "1250.00";
+      return Response.json({ ok: true });
+    }
+    return Response.json(ledger);
+  };
+  await click("payment-refresh");
+  await click("payment-expand-o1");
+  await click("payment-edit-costs");
+  assert.equal((el("supplier-cost-shipping") as HTMLInputElement).value, "60.00");
+  await click("supplier-cost-free-shipping");
+  assert.equal((el("supplier-cost-shipping") as HTMLInputElement).value, "0.00");
+  assert.match(el("supplier-cost-editor").textContent!, /\$1,250\.00/);
+  assert.equal(requests.filter(r => r.method === "POST").length, 0);
+  await click("supplier-cost-save");
+  assert.equal(requests.filter(r => r.path.endsWith("/o1/costs")).length, 1);
+  assert.match(document.body.textContent!, /1,250\.00/);
+});
 test("downloads selected paid and stale orders without enabling a new payment", async () => {
   await mount();
   let blob:Blob|undefined;

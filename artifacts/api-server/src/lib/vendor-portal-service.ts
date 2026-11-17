@@ -267,12 +267,12 @@ export async function prepareVendorShipments(tx: Executor, vendorId: string, ord
     });
     const items = supplierFinancialItems(quoted);
     const kits = items.reduce((total, i) => total + i.quantity, 0);
+    const productCents = items.reduce((sum, i) => sum + usdToCents(i.lineTotal), 0n);
     const region = pickRegionForCountry(vendor, source.shipping.country);
-    const shippingAmount = region && calcTotalShipping(vendor, region.region, kits);
+    const shippingAmount = region && calcTotalShipping(vendor, region.region, kits, Number(productCents) / 100);
     if (shippingAmount == null || !Number.isFinite(shippingAmount) || shippingAmount < 0) {
       throw new VendorPortalError(`Set calculable supplier shipping rates for ${source.shipping.country} on ${vendor.name} before submitting.`);
     }
-    const productCents = items.reduce((sum, i) => sum + usdToCents(i.lineTotal), 0n);
     const shippingCost = shippingAmount.toFixed(2);
     const snapshot: VendorSnapshot = { items, shipping: source.shipping, currency: "USD",
       productCost: centsToUsdString(productCents), shippingCost, totalCost: centsToUsdString(productCents + usdToCents(shippingCost)),

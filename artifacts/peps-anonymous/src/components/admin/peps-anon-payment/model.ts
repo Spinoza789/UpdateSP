@@ -74,7 +74,7 @@ export type Receipt = {
 type Bucket = { amount: string; count: number };
 export type Summary = { currency: "USD"; owed: Bucket; paid: Bucket; needsReview: Bucket; notOwed: Bucket; unavailableCount: number };
 export type LedgerData = {
-  vendors: { id: string; name: string }[];
+  vendors: { id: string; name: string; freeShippingThreshold?: number | null }[];
   vendorId: string;
   wallets: Wallet[];
   orders: LedgerOrder[];

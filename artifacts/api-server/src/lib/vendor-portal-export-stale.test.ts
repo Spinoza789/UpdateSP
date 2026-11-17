@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@workspace/db", () => import("../../../../lib/db/src/schema"));
 vi.mock("../routes/config", () => ({ getVendors: async () => [{
   id: "uther", name: "Uther", tiers: ["1-25"], tierBounds: [25], maxKitsPerPackage: 25,
+  freeShippingThreshold: 1000,
   regions: [{ name: "UK", countries: ["United Kingdom"], prices: [50] }],
 }] }));
 vi.mock("./fs3-cost-matches", () => ({ loadFs3CostMatches: async () => [] }));
@@ -59,6 +60,19 @@ describe("FS3 download of orders with stale vendor submissions", () => {
   it("still blocks stale actual vendor submission", async () => {
     await expect(prepareVendorShipments(tx, "uther", [order.code])).rejects.toThrow("This submission is stale");
   });
+  it("waives supplier shipping once supplier products reach the vendor threshold", async () => {
+    submission = null;
+    cost = "12.50"; item.quantity = "100"; item.lineTotal = "1550.00";
+    const [prepared] = await prepareVendorShipments(tx, "uther", [order.code]);
+    expect(prepared.snapshot).toMatchObject({ productCost: "1250.00", shippingCost: "0.00", totalCost: "1250.00" });
+    // Customer sales alone do not establish the supplier's purchase threshold.
+    cost = "9.99";
+    const [below] = await prepareVendorShipments(tx, "uther", [order.code]);
+    expect(below.snapshot.shippingCost).toBe("200.00");
+    cost = "10.00";
+    const [exact] = await prepareVendorShipments(tx, "uther", [order.code]);
+    expect(exact.snapshot.shippingCost).toBe("0.00");
+  });
   it("freezes shared-member commercial sales at preparation, without backfilling an existing snapshot", async () => {
     submission = null;
     order.sharedOrderId = "shared-a"; order.orderType = "wholesale_shared";
@@ -83,6 +97,19 @@ describe("FS3 download of orders with stale vendor submissions", () => {
     const [existing] = await prepareVendorShipments(tx, "uther", [order.code]);
     expect(existing.snapshot.productSales.orderLines).toBeUndefined();
     expect(tx.update).not.toHaveBeenCalled();
+  });
+  it("combines the same vendor's shared supplier costs for free shipping", async () => {
+    submission = null;
+    order.sharedOrderId = "shared-a"; order.orderType = "wholesale_shared";
+    item.quantity = "50"; item.lineTotal = "775.00";
+    otherOrder = { ...order, id: "order-b", code: "12732" };
+    otherItem = { ...item, orderId: otherOrder.id };
+    share = { ...order, id: "shared-a", vendorId: "uther", status: "submitted", organiserPaymentStatus: "confirmed" };
+    financials = [order, otherOrder].map(o => ({ orderId: o.id, lines: [{
+      productId: item.productId, productName: item.productName, quantity: "50", salesUsd: "775.00", vendorId: "uther", unitCost: "12.50",
+    }] }));
+    const [prepared] = await prepareVendorShipments(tx, "uther", [order.code]);
+    expect(prepared.snapshot).toMatchObject({ productCost: "1250.00", shippingCost: "0.00", totalCost: "1250.00" });
   });
   it("preserves the committed snapshot when the order has not changed", async () => {
     item.quantity = "2";

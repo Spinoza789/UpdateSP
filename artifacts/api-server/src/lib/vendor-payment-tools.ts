@@ -32,6 +32,8 @@ function amount(value: unknown) {
 /** Edits this supplier shipment only; customer prices and saved catalogue costs stay untouched. */
 export async function editSupplierCosts(id: string, body: any, actor: string, database: any = db) {
   const vendorId = vendorInput(body), note = noteInput(body.note);
+  if (body.shippingOnly !== undefined && typeof body.shippingOnly !== "boolean")
+    throw new VendorPortalError("Invalid shipping-only correction.");
   if (!Array.isArray(body.items) || !body.items.length || body.items.length > 2000)
     throw new VendorPortalError("Provide a unit cost for every supplier item.");
   const shippingCost = amount(body.shippingCost);
@@ -44,11 +46,17 @@ export async function editSupplierCosts(id: string, body: any, actor: string, da
     if (body.items.length !== original.length || new Set(body.items.map((i: any) => i?.productName)).size !== original.length
       || body.items.some((i: any) => !original.some((o: any) => o.productName === i?.productName)))
       throw new VendorPortalError("Supplier items changed. Reopen the cost editor.");
-    const items = supplierItems(original, body.items.map((i: any) => ({ productName: i.productName, unitCost: amount(i.unitCost) })));
-    const productCents = items.reduce((sum, i) => sum + usdToCents(i.lineTotal), 0n);
+    if (body.shippingOnly && body.items.some((item: any) => {
+      const saved = original.find((line: any) => line.productName === item.productName);
+      return saved.unitCost == null || amount(item.unitCost) !== amount(saved.unitCost);
+    })) throw new VendorPortalError("A shipping-only correction cannot change product costs.");
+    const items = body.shippingOnly ? original
+      : supplierItems(original, body.items.map((i: any) => ({ productName: i.productName, unitCost: amount(i.unitCost) })));
+    const productCents = body.shippingOnly ? usdToCents(row.snapshot.productCost)
+      : items.reduce((sum: bigint, i: any) => sum + usdToCents(i.lineTotal), 0n);
     const snapshot = { ...row.snapshot, items, shippingCost, productCost: centsToUsdString(productCents),
       totalCost: centsToUsdString(productCents + usdToCents(shippingCost)) };
-    delete snapshot.productCostHistoryMissing;
+    if (!body.shippingOnly) delete snapshot.productCostHistoryMissing;
     await auditVendor(tx, actor, "supplier_costs_edited", id, { vendorId, note, before: row.snapshot, after: snapshot });
     await tx.update(vendorSubmissionsTable).set({ snapshot, updatedAt: new Date() }).where(eq(vendorSubmissionsTable.id, id));
     return { ok: true };

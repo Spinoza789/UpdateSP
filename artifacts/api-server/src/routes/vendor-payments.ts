@@ -91,6 +91,7 @@ router.get(
     const vendors = (await getVendors()).map((v) => ({
       id: v.id,
       name: v.name,
+      freeShippingThreshold: v.freeShippingThreshold ?? null,
     }));
     const vendorId =
       typeof req.query.vendorId === "string" ? req.query.vendorId : undefined;

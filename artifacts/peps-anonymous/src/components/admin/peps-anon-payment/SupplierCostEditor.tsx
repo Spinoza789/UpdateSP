@@ -3,8 +3,9 @@ import { cents, money, type LedgerOrder } from "./model";
 import { Notice, Overlay } from "./Overlay";
 import { inputCls, inputStyle } from "../../reshipper-payouts/ui";
 
-type SaveInput = { items: { productName: string; unitCost: string }[]; shippingCost: string; note: string };
+type SaveInput = { items: { productName: string; unitCost: string }[]; shippingCost: string; note: string; shippingOnly?: boolean };
 type Props = {
+  freeShippingThreshold?: number | null;
   order: LedgerOrder;
   busy: boolean;
   message: { ok: boolean; text: string } | null;
@@ -15,23 +16,30 @@ type Props = {
 const validAmount = (value: string) => /^(0|[1-9]\d{0,8})(?:\.\d{1,2})?$/.test(value.trim());
 const quantityHundredths = (value: number | null) => value === null || !Number.isFinite(value) ? null : BigInt(Math.round(value * 100));
 
-export function SupplierCostEditor({ order, busy, message, onSave, onClose }: Props) {
+export function SupplierCostEditor({ order, busy, message, onSave, onClose, freeShippingThreshold }: Props) {
   const items = order.items ?? [];
   const [unitCosts, setUnitCosts] = useState(() => items.map((item) => item.unitCost ?? ""));
   const [shippingCost, setShippingCost] = useState(order.shippingCost ?? "");
   const [note, setNote] = useState("");
+  const [shippingOnly, setShippingOnly] = useState(false);
   const paid = !!order.paymentId || order.paymentState === "paid" || !!order.paymentAcknowledgement;
   const lineAmounts = useMemo(() => items.map((item, i) => {
+    if (shippingOnly) return cents(item.lineTotal);
     const unit = cents(unitCosts[i]);
     const quantity = quantityHundredths(item.quantity);
     if (unit === null || quantity === null || quantity < 0n) return null;
     return (unit * quantity + 50n) / 100n;
-  }), [items, unitCosts]);
+  }), [items, unitCosts, shippingOnly]);
   const productTotal = lineAmounts.every((amount) => amount !== null)
     ? lineAmounts.reduce<bigint>((total, amount) => total + (amount ?? 0n), 0n)
     : null;
   const shipping = cents(shippingCost);
   const total = productTotal !== null && shipping !== null ? productTotal + shipping : null;
+  const threshold = typeof freeShippingThreshold === "number" && Number.isFinite(freeShippingThreshold) && freeShippingThreshold > 0
+    ? cents(freeShippingThreshold.toFixed(2)) : null;
+  const savedProductTotal = cents(order.productCost);
+  const qualifiesForFreeShipping = !paid && threshold !== null && savedProductTotal !== null && savedProductTotal >= threshold
+    && (cents(order.shippingCost) ?? 0n) > 0n;
   const valid = items.length > 0 && lineAmounts.every(v => v !== null) && unitCosts.every(validAmount) && validAmount(shippingCost) && note.trim().length > 0;
 
   const field = (label: string, value: string, change: (next: string) => void, testId: string) => <label className="block text-xs font-semibold" style={{ color: "var(--t-subtle)" }}>
@@ -54,6 +62,7 @@ export function SupplierCostEditor({ order, busy, message, onSave, onClose }: Pr
     footer={<div className="flex flex-wrap items-center justify-end gap-2">
       <button type="button" className="pap-btn" disabled={busy} onClick={onClose}>Cancel</button>
       <button type="button" className="pap-btn pap-btn-primary" disabled={busy || paid || !valid} onClick={() => onSave({
+        ...(shippingOnly ? { shippingOnly: true } : {}),
         items: items.map((item, i) => ({ productName: item.productName, unitCost: unitCosts[i].trim() })),
         shippingCost: shippingCost.trim(), note: note.trim(),
       })} data-testid="supplier-cost-save">{busy ? "Saving…" : "Save supplier costs"}</button>
@@ -66,6 +75,16 @@ export function SupplierCostEditor({ order, busy, message, onSave, onClose }: Pr
     {paid && <p role="alert" className="mb-4 rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "rgba(180,35,24,.35)", background: "rgba(239,68,68,.07)", color: "#B42318" }}>
       This submission has a recorded payment. Clear the paid acknowledgement or void its receipt before editing supplier costs.
     </p>}
+    {qualifiesForFreeShipping && <div data-testid="supplier-cost-free-shipping-notice" className="mb-4 rounded-lg border p-3 text-xs" style={{ borderColor: "var(--t-border)", background: "var(--pap-soft)" }}>
+      <p>Saved supplier products meet this vendor’s {money(threshold)} free-shipping threshold.
+        Review and save to remove supplier shipping only. Historical product costs and profit stay unchanged; no buyer notifications are sent.</p>
+      <button type="button" className="pap-btn mt-2" disabled={busy} data-testid="supplier-cost-free-shipping" onClick={() => {
+        setUnitCosts(items.map(item => item.unitCost ?? ""));
+        setShippingOnly(true);
+        setShippingCost("0.00");
+        setNote(`Supplier shipping corrected to zero: saved supplier products meet the ${money(threshold)} free-shipping threshold.`);
+      }}>Use free supplier shipping</button>
+    </div>}
     <div className="overflow-x-auto rounded-lg border" style={{ borderColor: "var(--t-border)" }}>
       <table className="w-full min-w-[560px] text-left text-sm">
         <thead><tr className="text-[11px]" style={{ background: "var(--pap-soft)", color: "var(--t-subtle)" }}>
@@ -75,7 +94,7 @@ export function SupplierCostEditor({ order, busy, message, onSave, onClose }: Pr
           {items.length ? items.map((item, index) => <tr key={`${item.productName}-${index}`} className="border-t" style={{ borderColor: "var(--t-border)" }}>
             <td className="px-3 py-3 font-medium">{item.productName}</td>
             <td className="px-3 py-3 text-right tabular-nums" style={{ color: "var(--t-subtle)" }}>{item.quantity ?? "Unavailable"}</td>
-            <td className="px-3 py-2">{field(`${item.productName} unit cost`, unitCosts[index], (value) => setUnitCosts((current) => current.map((v, i) => i === index ? value : v)), `supplier-cost-unit-${index}`)}</td>
+            <td className="px-3 py-2">{field(`${item.productName} unit cost`, unitCosts[index], (value) => { setShippingOnly(false); setUnitCosts((current) => current.map((v, i) => i === index ? value : v)); }, `supplier-cost-unit-${index}`)}</td>
             <td className="px-3 py-3 text-right font-semibold tabular-nums">{money(lineAmounts[index])}</td>
           </tr>) : <tr><td colSpan={4} className="px-3 py-5 text-center text-sm" style={{ color: "var(--t-subtle)" }}>No item lines were recorded for this submission.</td></tr>}
         </tbody>
