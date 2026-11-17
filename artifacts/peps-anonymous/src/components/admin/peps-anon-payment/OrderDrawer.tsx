@@ -3,13 +3,15 @@ import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Overlay, Notice } from "./Overlay";
 import { OrderBreakdown } from "./OrderBreakdown";
 import { FulfilmentText, SupplierBadge } from "./StatusBadge";
-import { isEligible, moneyOf, orderState, signedMoneyOf, type LedgerOrder } from "./model";
+import { isEligible, moneyOf, orderState, signedMoneyOf, type LedgerOrder, type Receipt } from "./model";
+import { OrderTransactions } from "./OrderTransactions";
 import { SubmissionUpdateReview, type SubmissionUpdatePreview } from "./SubmissionUpdateReview";
 import { formatPercent } from "./reportDates";
 
 export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, selected, onToggle, locked, message,
   onRecord, onReceipt, paymentLocked, onRemove, removeTarget, onRemoveCancel, onRemoveConfirm, removeBusy, removeReason, onRemoveReason, busy,
-  updatePreview, onUpdateReview, onUpdateConfirm, onUpdateCancel, onEditCosts, onClearPaid }: {
+  updatePreview, onUpdateReview, onUpdateConfirm, onUpdateCancel, onEditCosts, onClearPaid, receipt = null }: {
+  receipt?: Receipt | null;
   onEditCosts?: () => void; onClearPaid?: () => void;
   updatePreview: SubmissionUpdatePreview | null; onUpdateReview: () => void; onUpdateConfirm: () => void; onUpdateCancel: () => void;
   onRecord: () => void; onReceipt: () => void; paymentLocked: boolean;
@@ -61,6 +63,7 @@ export function OrderDrawer({ order, index, total, onPrev, onNext, onClose, sele
       <span className="ml-2" style={{ color: "var(--t-subtle)" }}>Fulfilment</span><FulfilmentText status={o.status} />
       <span className="ml-2" style={{ color: "var(--t-subtle)" }}>Customer payment status is not changed here.</span>
     </div>
+    <OrderTransactions order={o} receipt={receipt} />
     <section className="mb-4 rounded-lg border p-4" style={{ borderColor: "var(--t-border)" }} data-testid="payment-order-delivery" aria-label="Delivery details">
       <h3 className="mb-2 text-sm font-semibold">Delivery details</h3>
       <p className="mb-3 text-xs" style={{ color: "var(--t-subtle)" }}>Address and contact details submitted to this supplier. Tracking reflects the supplier submission. Shared orders show the supplier parcel destination, not each member’s onward address.</p>

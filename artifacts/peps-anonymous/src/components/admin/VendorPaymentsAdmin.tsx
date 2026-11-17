@@ -422,6 +422,7 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
       </Overlay>}
 
       {active && detailOrder && !costTarget && !clearPaidTarget && <OrderDrawer order={detailOrder} index={detailIndex < 0 ? 0 : detailIndex} total={detailIndex < 0 ? 1 : visible.length}
+        receipt={ledger.payments.find(payment => payment.id === detailOrder.paymentId && !payment.voidedAt) ?? null}
         onEditCosts={() => { if (!locked && !transferDirty) { setCostTarget(structuredClone(detailOrder)); setMessage(null); } }}
         onClearPaid={() => { if (!locked && !transferDirty) { setClearPaidTarget(structuredClone(detailOrder)); setClearPaidNote(""); setMessage(null); } }}
         updatePreview={updatePreview} onUpdateReview={() => void updateSubmission()} onUpdateConfirm={() => void updateSubmission(true)} onUpdateCancel={() => setUpdatePreview(null)}

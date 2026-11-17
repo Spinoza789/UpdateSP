@@ -5,8 +5,40 @@ import { centsToUsdString, usdToCents } from "./refund-money";
 const PAYABLE_STATUSES = new Set(["Submitted"]);
 const PROGRESSED_STATUSES = new Set(["processing", "processed", "shipped", "completed"]);
 const NOT_OWED_STATUSES = new Set(["Recalled", "Cancelled", "Canceled"]);
-type Identity = { id: string; code?: string | null; telegramUsername?: string | null; status?: string | null };
+type Identity = {
+  id: string; code?: string | null; telegramUsername?: string | null; status?: string | null;
+  paymentTxHash?: string | null; paymentTxHashes?: string[] | null; testPaymentTxHash?: string | null;
+  balanceTxHash?: string | null; paymentCryptoNetwork?: string | null; paymentCryptoCurrency?: string | null;
+  balanceCryptoQuote?: unknown;
+};
 type Allocation = { paymentId: string; amountUsd: string };
+
+function buyerTransactions(orderIds: string[], identities: Map<string, Identity>) {
+  return orderIds.flatMap(orderId => {
+    const order = identities.get(orderId);
+    if (!order) return [];
+    const balance = order.balanceCryptoQuote as { network?: string; currency?: string } | null;
+    const seen = new Set<string>();
+    const entries = [
+      { kind: "Payment", values: [order.paymentTxHash, ...(order.paymentTxHashes ?? [])], network: order.paymentCryptoNetwork, currency: order.paymentCryptoCurrency },
+      { kind: "Test payment", values: [order.testPaymentTxHash], network: order.paymentCryptoNetwork, currency: order.paymentCryptoCurrency },
+      { kind: "Balance payment", values: [order.balanceTxHash], network: balance?.network, currency: balance?.currency },
+    ];
+    return entries.flatMap(entry => entry.values.flatMap(value => {
+      if (typeof value !== "string") return [];
+      // AnonPay may append an actual chain hash after its private session marker.
+      return value.split("|").flatMap(part => {
+        const txid = part.trim();
+        if (!/^(?:0x[0-9a-fA-F]{64}|[0-9a-fA-F]{64}|[1-9A-HJ-NP-Za-km-z]{64,90})$/.test(txid)) return [];
+        const key = txid.startsWith("0x") ? txid.toLowerCase() : txid;
+        if (seen.has(key)) return [];
+        seen.add(key);
+        return [{ orderId, reference: order.code ?? orderId, kind: entry.kind, txid,
+          network: entry.network ?? null, currency: entry.currency ?? null }];
+      });
+    }));
+  });
+}
 
 function money(value: unknown): string | null {
   if (typeof value !== "string" && typeof value !== "number") return null;
@@ -89,7 +121,8 @@ export function paymentOrderRow(row: any, stale: boolean, allocation: Allocation
       phone: text(shipping.phone), email: text(shipping.email),
       carrier: text(row.carrier), trackingNumber: text(row.trackingNumber),
     },
-    ...detail, sourceOrders, paymentId: allocation?.paymentId ?? null,
+    ...detail, sourceOrders, buyerTransactions: buyerTransactions(sourceOrders.map(order => order.id), identities),
+    paymentId: allocation?.paymentId ?? null,
     reviewToken: paymentReviewToken(row),
     paidAmountUsd: allocation ? money(allocation.amountUsd) : acknowledgement ? money(acknowledgement.amountUsd) : null,
     paymentAcknowledgement: acknowledgement,

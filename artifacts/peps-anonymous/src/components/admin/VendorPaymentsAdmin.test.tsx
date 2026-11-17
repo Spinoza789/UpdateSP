@@ -142,6 +142,22 @@ async function mount() {
   await act(async () => root!.render(createElement(Component)));
   await change("payment-vendor", "v1");
 }
+test("the order drawer shows buyer and allocated supplier transaction links without sending updates", async () => {
+  await mount();
+  const ledger: any = structuredClone(data);
+  const eth = `0x${"a".repeat(64)}`, sol = "3".repeat(88);
+  ledger.orders[0].buyerTransactions = [{ orderId: "customer", reference: "12957", kind: "Payment", txid: eth, network: "Ethereum", currency: "USDT" }];
+  ledger.orders[0].paymentId = "receipt-1";
+  ledger.payments = [{ id: "receipt-1", txid: sol, network: "Solana", currency: "USDC", voidedAt: null, orders: [], usdAmount: "2.00" }];
+  adminAuth.request = async () => new Response(JSON.stringify(ledger));
+  await click("payment-refresh");
+  const before = requests.length;
+  await click("payment-expand-o1");
+  const section = el("payment-order-transactions");
+  assert.equal(section.querySelector(`a[href="https://etherscan.io/tx/${eth}"]`)?.textContent, eth);
+  assert.equal(section.querySelector(`a[href="https://solscan.io/tx/${sol}"]`)?.getAttribute("target"), "_blank");
+  assert.equal(requests.length, before);
+});
 test("reviews and confirms a corrected supplier submission then refreshes its cost and profit", async () => {
   await mount();
   const ledger = structuredClone(data);

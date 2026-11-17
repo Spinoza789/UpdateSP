@@ -158,6 +158,10 @@ export async function vendorPaymentDashboard(tx: any, vendorId: string) {
   const orderIds = [...new Set<string>(rows.flatMap((row: any) => row.orderIds ?? []))];
   const identities: any[] = orderIds.length ? await tx.select({
     id: ordersTable.id, code: ordersTable.code, telegramUsername: ordersTable.telegramUsername, status: ordersTable.status,
+    paymentTxHash: ordersTable.paymentTxHash, paymentTxHashes: ordersTable.paymentTxHashes,
+    testPaymentTxHash: ordersTable.testPaymentTxHash, balanceTxHash: ordersTable.balanceTxHash,
+    paymentCryptoNetwork: ordersTable.paymentCryptoNetwork, paymentCryptoCurrency: ordersTable.paymentCryptoCurrency,
+    balanceCryptoQuote: ordersTable.balanceCryptoQuote,
   }).from(ordersTable).where(inArray(ordersTable.id, orderIds)) : [];
   const identityById = new Map(identities.map(order => [order.id, order]));
   const images: { submissionId: string }[] = rows.length ? await tx.select({ submissionId: vendorImagesTable.submissionId })

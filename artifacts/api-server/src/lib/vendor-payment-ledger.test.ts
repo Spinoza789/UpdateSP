@@ -16,6 +16,24 @@ const row = (patch: Record<string, unknown> = {}) => ({
 const identities = new Map([["o1", { id: "o1", code: "12656", telegramUsername: "member" }]]);
 
 describe("supplier payment ledger", () => {
+  it("includes buyer transaction references on Admin rows but never immutable receipt details", () => {
+    const hash = `0x${"a".repeat(64)}`;
+    const buyer = new Map([["o1", { id: "o1", paymentTxHash: hash, paymentTxHashes: [hash], paymentCryptoNetwork: "ERC-20", paymentCryptoCurrency: "USDT" }]]);
+    expect(paymentOrderRow(row(), false, null, buyer).buyerTransactions).toEqual([
+      { orderId: "o1", reference: "o1", kind: "Payment", txid: hash, network: "ERC-20", currency: "USDT" },
+    ]);
+    expect(paymentOrderDetail(row(), buyer)).not.toHaveProperty("buyerTransactions");
+  });
+  it("includes split, test and balance chain payments without linking fiat or AnonPay identifiers", () => {
+    const eth = `0x${"b".repeat(64)}`, sol = "3".repeat(88);
+    const buyer = new Map([["o1", { id: "o1", code: "123", paymentTxHash: `anonpay:session|${eth}`,
+      paymentTxHashes: ["fiat:revolut", "anonpay:session"], testPaymentTxHash: sol,
+      balanceTxHash: `0x${"c".repeat(64)}`, paymentCryptoNetwork: "Ethereum", balanceCryptoQuote: { network: "Solana" } }]]);
+    const refs = paymentOrderRow(row(), false, null, buyer).buyerTransactions;
+    expect(refs.map(r => r.txid)).toEqual([eth, sol, `0x${"c".repeat(64)}`]);
+    expect(refs[2].network).toBe("Solana");
+    expect(paymentOrderRow(row(), false).buyerTransactions).toEqual([]);
+  });
   it("exposes submitted delivery and current tracking only on the Admin ledger row", () => {
     const submission = row({ carrier: "Royal Mail", trackingNumber: "TRACK123", snapshot: {
       ...snapshot, shipping: { name: "Recipient", address: "1 Road", country: "GB", phone: "123", email: "recipient@example.test", secret: "hidden" },

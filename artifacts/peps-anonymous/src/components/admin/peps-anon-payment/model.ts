@@ -15,6 +15,7 @@ export type OrderProfit = {
   lines?: Array<{ productName: string; salesUsd: string; amountUsd: string }> | null;
 };
 export type LedgerOrder = {
+  buyerTransactions?: Array<{ orderId: string; reference: string; kind: string; txid: string; network: string | null; currency: string | null }>;
   paymentAcknowledgement?: { amountUsd: string; note: string; recordedAt: string; recordedBy: string } | null;
   id: string;
   reference: string;
