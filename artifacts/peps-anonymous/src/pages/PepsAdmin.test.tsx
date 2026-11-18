@@ -110,7 +110,7 @@ it("restores a cookie session and retries a transient restore-session 503", asyn
   await render();
   expect(restoreAttempts).toBe(2);
   expect(fetchMock.mock.calls.some(call => call[0] === "/api/admin/auth/me")).toBe(true);
-  expect(host.textContent).toContain("Shipment overview");
+  expect(host.textContent).toContain("Needs attention");
 });
 
 it("uses the MFA challenge contract and the legacy shared-secret contract", async () => {
@@ -127,7 +127,7 @@ it("uses the MFA challenge contract and the legacy shared-secret contract", asyn
   await settle();
   const verify = fetchMock.mock.calls.find(c => c[0] === "/api/admin/auth/verify");
   expect(JSON.parse(verify?.[1]?.body as string)).toEqual({ challenge: "challenge-1", code: "123456" });
-  expect(host.textContent).toContain("Shipment overview");
+  expect(host.textContent).toContain("Needs attention");
 
   await act(async () => root.unmount());
   pepsAdminAuth.clear(); pepsAdminAuth.twoFactorEnabled = null;
@@ -138,7 +138,7 @@ it("uses the MFA challenge contract and the legacy shared-secret contract", asyn
   await settle();
   const legacy = fetchMock.mock.calls.find(c => c[0] === "/api/admin/auth/legacy-login");
   expect(JSON.parse(legacy?.[1]?.body as string)).toEqual({ adminSecret: "legacy-secret", rememberMe: false });
-  expect(host.textContent).toContain("Shipment overview");
+  expect(host.textContent).toContain("Needs attention");
 });
 
 it("sends vendorId after selection and clears selected detail", async () => {
@@ -152,7 +152,7 @@ it("sends vendorId after selection and clears selected detail", async () => {
 });
 
 it("loads detail and sends permitted processing and tracking mutations", async () => {
-  fulfillSetup(); await render();
+  fulfillSetup(); await render(); await click("nav-orders");
   await act(async () => byTestId("row-order-order-1").click());
   await settle();
   expect(host.textContent).toContain("Glass charm");
@@ -170,7 +170,8 @@ it("loads detail and sends permitted processing and tracking mutations", async (
     { id: "legacy-0", courier: "Parcel Post", internationalTrackingNumber: "TRACK-567", localTrackingNumber: null },
     expect.objectContaining({ courier: "Royal Mail", internationalTrackingNumber: "RM987654GB", localTrackingNumber: null }),
   ], expectedTrackingPackages: [] });
-});
+// Each parcel row renders the full carrier list, which is slow under jsdom.
+}, 15_000);
 
 it("keeps the recall confirmation open on a failed recall", async () => {
   fulfillSetup();
@@ -182,7 +183,7 @@ it("keeps the recall confirmation open on a failed recall", async () => {
     if (String(input).endsWith("/orders/order-1") && init?.method === "DELETE") return json({ error: "Payment allocation blocks recall" }, 409);
     return json({ ok: true });
   });
-  await render(); await act(async () => byTestId("row-order-order-1").click()); await settle(); await click("button-recall");
+  await render(); await click("nav-orders"); await act(async () => byTestId("row-order-order-1").click()); await settle(); await click("button-recall");
   await setValue(host.querySelector(".pa-textarea") as HTMLTextAreaElement, "duplicate vendor shipment");
   const checkbox = host.querySelector('input[type="checkbox"]') as HTMLInputElement;
   await act(async () => { checkbox.click(); });
@@ -242,7 +243,7 @@ it("keeps the authenticated workspace visible when sign-out fails", async () => 
     return json({ ok: true });
   });
   await render(); await click("button-signout");
-  expect(host.textContent).toContain("Shipment overview");
+  expect(host.textContent).toContain("Needs attention");
   expect(host.textContent).toContain("Sign out failed");
 });
 
@@ -270,7 +271,7 @@ it("renders completed shipments as terminal and omits processing and tracking co
     if (String(input).endsWith("/orders/done") && (!init?.method || init.method === "GET")) return json(order("done", "v1", "completed"));
     return json({ ok: true });
   });
-  await render();
+  await render(); await click("nav-orders");
   expect(host.textContent).toContain("Completed");
   await act(async () => host.querySelector('[data-testid="row-order-done"]')?.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })));
   await settle();
@@ -278,3 +279,73 @@ it("renders completed shipments as terminal and omits processing and tracking co
   expect(host.querySelector('[data-testid="button-process"]')).toBeNull();
   expect(host.querySelector('[data-testid="input-tracking"]')).toBeNull();
 });
+
+it("opens the supplier payment ledger through the workspace admin session", async () => {
+  fulfillSetup();
+  const base = fetchMock.getMockImplementation()!;
+  fetchMock.mockImplementation(async (input, init) => String(input).startsWith("/api/admin/vendor-payments")
+    ? json({ vendors: [{ id: "v1", name: "Alder Supply", freeShippingThreshold: null }], vendorId: null, wallets: [], orders: [], payments: [], summary: {} })
+    : base(input, init));
+  await render(); await click("nav-payments");
+  expect(byTestId("vendor-payments-admin")).toBeTruthy();
+  expect(fetchMock.mock.calls.some(c => c[0] === "/api/admin/vendor-payments")).toBe(true);
+  expect(host.textContent).toContain("Alder Supply");
+});
+
+it("filters the whole panel from the sidebar vendor switcher and shows per-vendor analytics", async () => {
+  fulfillSetup(); await render();
+  await click("nav-analytics");
+  expect(byTestId("analytics-vendors").textContent).toContain("Alder Supply");
+  expect(byTestId("analytics-vendors").textContent).toContain("Birch Goods");
+  expect(fetchMock.mock.calls.some(c => String(c[0]).startsWith("/api/admin/vendor-payments/report"))).toBe(true);
+  await click("vendor-filter-v2");
+  await settle();
+  expect(fetchMock.mock.calls.some(c => String(c[0]).includes("/vendor-portal/orders?") && String(c[0]).includes("vendorId=v2"))).toBe(true);
+  expect(fetchMock.mock.calls.some(c => String(c[0]).startsWith("/api/admin/vendor-payments/report") && String(c[0]).includes("vendorId=v2"))).toBe(true);
+  expect(byTestId("analytics-vendors").textContent).not.toContain("Alder Supply");
+  expect((byTestId("select-vendor") as HTMLSelectElement).value).toBe("v2");
+});
+
+it("shows what the vendor bot sent, as plain text, and follows the vendor filter", async () => {
+  fulfillSetup();
+  const base = fetchMock.getMockImplementation()!;
+  fetchMock.mockImplementation(async (input, init) => String(input).startsWith("/api/admin/vendor-telegram/log")
+    ? json({ vendors: [], hasMore: false, entries: [
+      { id: "t1", vendorId: "v1", vendorName: "Alder Supply", chatTitle: "Packing team", kind: "new_order", text: "📦 <b>New shipment #PO-1</b>\n2 &amp; 3 units", buttonUrl: "https://example.test/vendor?order=1", ok: true, error: null, createdAt: "2026-04-10T10:00:00Z" },
+      { id: "t2", vendorId: "v1", vendorName: "Alder Supply", chatTitle: null, kind: "overdue", text: "Late", buttonUrl: null, ok: false, error: "Forbidden: bot was blocked by the user", createdAt: "2026-04-09T10:00:00Z" },
+    ] })
+    : base(input, init));
+  await render(); await click("nav-telegram");
+  const log = byTestId("telegram-log");
+  expect(log.textContent).toContain("New shipment #PO-1");
+  expect(log.textContent).toContain("2 & 3 units");
+  expect(log.querySelector("b")).toBeNull();
+  expect(log.textContent).toContain("Packing team");
+  expect(log.textContent).toContain("bot was blocked by the user");
+  await click("vendor-filter-v2");
+  await click("telegram-filter-failed");
+  expect(fetchMock.mock.calls.some(c => String(c[0]).startsWith("/api/admin/vendor-telegram/log") && String(c[0]).includes("vendorId=v2") && String(c[0]).includes("failed=1"))).toBe(true);
+});
+
+it("previews a vendor's portal read-only without calling any vendor API", async () => {
+  fulfillSetup();
+  const base = fetchMock.getMockImplementation()!;
+  fetchMock.mockImplementation(async (input, init) => String(input).startsWith("/api/admin/vendor-payments")
+    ? json({ vendors: [], wallets: [{ id: "w1", currency: "USDT", network: "TRON", address: "T-wallet-1" }], orders: [], payments: [] })
+    : base(input, init));
+  await render(); await click("view-as-v1");
+  expect(byTestId("vendor-preview-banner").textContent).toContain("Viewing as Alder Supply");
+  expect(byTestId("text-vendor-name").textContent).toBe("Alder Supply");
+  expect(host.textContent).toContain("PO-order-1");
+  expect(host.textContent).not.toContain("PO-order-2");
+  await click("card-order-order-1");
+  expect(host.textContent).toContain("Glass charm");
+  expect(host.querySelector('[data-testid="button-mark-processing"]')).toBeNull();
+  expect((byTestId("input-tracking") as HTMLInputElement).disabled).toBe(true);
+  await click("nav-settings");
+  expect(byTestId("preview-wallets").textContent).toContain("T-wallet-1");
+  expect(fetchMock.mock.calls.some(c => String(c[0]).startsWith("/api/vendor/"))).toBe(false);
+  expect(fetchMock.mock.calls.some(c => (c[1]?.method ?? "GET") !== "GET" && !String(c[0]).startsWith("/api/admin/auth/"))).toBe(false);
+  await click("button-exit-preview");
+  expect(host.querySelector('[data-testid="peps-admin-workspace"]')).not.toBeNull();
+}, 15_000);

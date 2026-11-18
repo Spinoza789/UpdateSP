@@ -25,12 +25,20 @@ describe("site domain boundary", () => {
       "/api/admin/auth/legacy-login", "/api/admin/auth/legacy-me", "/api/admin/auth/legacy-logout",
       "/api/admin/vendor-portal/orders", "/api/admin/vendor-portal/orders/abc",
       "/api/admin/vendor-portal/vendor-images/abc", "/api/admin/vendor-portal/preview", "/api/admin/vendor-portal/submit",
-      "/api/admin/vendor-portal/orders/abc/update"]) {
+      "/api/admin/vendor-portal/orders/abc/update",
+      "/api/admin/vendor-telegram/log",
+      "/api/admin/vendor-payments", "/api/admin/vendor-payments/export", "/api/admin/vendor-payments/acknowledge-paid",
+      "/api/admin/vendor-payments/report", "/api/admin/vendor-payments/order-comparison", "/api/admin/vendor-payments/transaction-details",
+      "/api/admin/vendor-payments/abc/void", "/api/admin/vendor-payments/orders/abc/costs", "/api/admin/vendor-payments/orders/abc/clear-paid",
+      "/api/admin/vendor-payments/product-refunds/abc", "/api/admin/vendor-payments/product-refunds/abc/review"]) {
       expect((await request("pepsanonymous.com", path)).status, path).toBe(200);
     }
     for (const path of ["/api/admin/orders", "/api/admin/vendor-accounts", "/api/admin/security/disable",
       "/api/admin/auth/step-up", "/api/admin/vendor-portal/access", "/api/admin/vendor-portal",
-      "/api/admin/vendor-portal/orders/abc/unknown", "/api/admin/vendor-portal/orders-extra"]) {
+      "/api/admin/vendor-portal/orders/abc/unknown", "/api/admin/vendor-portal/orders-extra",
+      "/api/admin/vendor-payments-extra", "/api/admin/vendor-payments/abc", "/api/admin/vendor-payments/orders/abc",
+      "/api/admin/vendor-payments/orders/abc/unknown", "/api/admin/vendor-accounts/abc",
+      "/api/admin/vendor-telegram", "/api/admin/vendor-telegram/test/abc", "/api/admin/vendor-telegram/chats/abc"]) {
       expect((await request("pepsanonymous.com", path)).status, path).toBe(404);
     }
     expect((await request("pepsanonymous.com", "/api/admin/vendor-portal/orders", {Origin: "https://saltandpeps.co.uk"})).status).toBe(403);

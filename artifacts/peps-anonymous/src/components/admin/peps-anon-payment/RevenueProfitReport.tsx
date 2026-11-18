@@ -109,10 +109,12 @@ export function ReportBody({ report, showDaily }: { report: ProfitReport; showDa
 
 type Request = RefundRequest;
 
-export function RevenueProfitReport({ vendors, request }: { vendors: { id: string; name: string }[]; request: Request }) {
+/** `vendorId`, when given, is an outer vendor filter the report follows. */
+export function RevenueProfitReport({ vendors, request, vendorId: outerVendorId }: { vendors: { id: string; name: string }[]; request: Request; vendorId?: string }) {
   const [preset, setPreset] = useState<Preset>("monthly");
   const [range, setRange] = useState<Range>(() => presetRange("monthly", londonToday()));
-  const [vendorId, setVendorId] = useState("");
+  const [vendorId, setVendorId] = useState(outerVendorId ?? "");
+  useEffect(() => { if (outerVendorId !== undefined) setVendorId(outerVendorId); }, [outerVendorId]);
   const [showDaily, setShowDaily] = useState(false);
   const [report, setReport] = useState<ProfitReport | null>(null);
   const [error, setError] = useState<string | null>(null);

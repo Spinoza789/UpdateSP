@@ -697,10 +697,12 @@ function printPackingSlip(o: VendorOrder) {
 /* ---------------------------------------------------------------------------
  * Order detail
  * ------------------------------------------------------------------------- */
-export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issue, issueTypes, onIssueChanged, defaultCarrier, onMessage }: {
+export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issue, issueTypes, onIssueChanged, defaultCarrier, onMessage, readOnly }: {
   order: VendorOrder; onBack: () => void; onChanged: () => Promise<void>;
   prev: VendorOrder | null; next: VendorOrder | null; onOpen: (id: string) => void;
   issue?: VendorIssue; issueTypes?: Record<string, string>; onIssueChanged?: () => Promise<void>; defaultCarrier?: string | null; onMessage?: () => void;
+  /** Staff preview: show exactly what the vendor sees, but never send anything on their behalf. */
+  readOnly?: boolean;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -724,7 +726,7 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
   useEffect(() => () => { detectionVersion.current++; }, []);
   const detectCarrier = async () => {
     const number = tracking.trim();
-    if (order.stale || number.length < 3 || number === lastDetected.current) return;
+    if (order.stale || readOnly || number.length < 3 || number === lastDetected.current) return;
     const version = ++detectionVersion.current;
     lastDetected.current = number;
     setDetectingCarrier(true); setCarrierHint("");
@@ -745,7 +747,7 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
       if (version === detectionVersion.current) setDetectingCarrier(false);
     }
   };
-  const locked = order.stale;
+  const locked = order.stale || !!readOnly;
   const st = stage(order);
   const started = st === "processing" || st === "shipped";
   const shipped = st === "shipped";
@@ -825,9 +827,9 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
     const untimed: { label: string; detail?: string }[] = [];
     if (started) untimed.push({ label: "Marked as processing" });
     if (shipped) untimed.push({ label: "Tracking added · order fulfilled", detail: [order.carrier, order.trackingNumber].filter(Boolean).join(" ") });
-    if (locked) untimed.push({ label: "Changed by Peps Anonymous · on hold", detail: "Actions unlock when the order is resubmitted" });
+    if (order.stale) untimed.push({ label: "Changed by Peps Anonymous · on hold", detail: "Actions unlock when the order is resubmitted" });
     return [...timed.map(t => ({ ...t, when: when(new Date(t.at).toISOString()) })), ...untimed.map(u => ({ ...u, when: "" }))];
-  }, [order, started, shipped, locked]);
+  }, [order, started, shipped]);
 
   const s = order.shipping;
   const addressLines = vendorAddressLines(s.address, s.country);
@@ -857,7 +859,7 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
       </div>
 
       <div className="space-y-3 mb-4 empty:hidden">
-        {locked && <Banner tone="warning" testId="text-stale">{t("This shipment changed after it was sent to you. Actions are locked until Peps Anonymous resubmits it.")}</Banner>}
+        {order.stale && <Banner tone="warning" testId="text-stale">{t("This shipment changed after it was sent to you. Actions are locked until Peps Anonymous resubmits it.")}</Banner>}
         {msg && <Banner tone={msg.ok ? "success" : "critical"} role={msg.ok ? "status" : "alert"} testId="text-action-result" onDismiss={() => setMsg(null)}>{vt(msg.text)}</Banner>}
       </div>
 
@@ -865,7 +867,7 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
         <div className="space-y-4 min-w-0">
           <Card flush title={<><Badge tone={meta.tone} progress={meta.progress}>{t(meta.label)} ({units(order)})</Badge></>}
             actions={shipped && order.trackingNumber ? <span className="text-xs font-mono truncate max-w-[180px]" style={subtle}>{order.trackingNumber}</span> : undefined}
-            footer={locked ? <span className="text-xs mr-auto" style={muted}>{t("Locked while on hold.")}</span>
+            footer={locked ? <span className="text-xs mr-auto" style={muted}>{t(order.stale ? "Locked while on hold." : "Preview only. Actions are switched off.")}</span>
               : st === "new" ? <>
                 <span className="text-xs mr-auto hidden sm:inline" style={muted}>{t("Let Peps Anonymous and the customer know packing has started.")}</span>
                 <Btn variant="primary" disabled={!!busy} onClick={() => run("processing", () => patchOrder(order.id, { action: "processing" }), "Marked as processing.")} data-testid="button-mark-processing">
@@ -1011,4 +1013,145 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
         </div>)}
     </div>
   );
+}
+
+/* ---------------------------------------------------------------------------
+ * Staff preview ("view as vendor")
+ *
+ * Renders the real portal screens above with data the admin workspace loaded
+ * for one vendor. It never signs in as the vendor and never calls a vendor API:
+ * every action is switched off, so staff can look without acting on their behalf.
+ * ------------------------------------------------------------------------- */
+export interface VendorPreviewWallet { id?: string; currency: string; network: string; address: string; label?: string | null }
+export interface VendorPreviewPayment { id: string; paidAt?: string; usdAmount?: string; cryptoAmount?: string; currency?: string; network?: string; txid?: string; voidedAt?: string | null; orders?: { reference: string; amountUsd: string }[] }
+export function VendorPortalPreview({ vendor, orders, loading, error, onRetry, loadOrder, wallets, payments, onExit }: {
+  vendor: { id: string; name: string }; orders: VendorOrder[] | null; loading: boolean; error: string | null; onRetry: () => void;
+  /** Loads one order with its packing photos, which the list does not carry. */
+  loadOrder?: (id: string) => Promise<VendorOrder>;
+  wallets: VendorPreviewWallet[] | null; payments: VendorPreviewPayment[] | null; onExit: () => void;
+}) {
+  useVendorLanguage();
+  const [view, setView] = useState<View>("home");
+  const [tab, setTab] = useState<Tab>("new");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"oldest" | "newest" | "value">("oldest");
+  const [full, setFull] = useState<Record<string, VendorOrder>>({});
+  const me: VendorMe = { vendorId: vendor.id, vendorName: vendor.name, username: "staff preview" };
+  const counts = useMemo<Counts>(() => {
+    const c: Counts = { new: 0, processing: 0, shipped: 0, hold: 0, all: 0, overdue: 0 };
+    for (const o of orders ?? []) { c[stage(o)]++; c.all++; if (overdue(o)) c.overdue++; }
+    return c;
+  }, [orders]);
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = (orders ?? []).filter(o => (tab === "all" || stage(o) === tab) && (!q ||
+      [o.reference, o.shipping.name, o.shipping.country, ...vendorTrackingParcels(o).map(p => p.internationalTrackingNumber), ...o.items.map(i => i.productName)].some(v => v.toLowerCase().includes(q))));
+    return list.sort((a, b) => sort === "value" ? Number(b.totalCost) - Number(a.totalCost) : sort === "newest" ? time(b) - time(a) : time(a) - time(b));
+  }, [orders, tab, query, sort]);
+  const attention = useMemo(() => (orders ?? []).filter(o => { const s = stage(o); return s === "new" || s === "processing"; }).sort((a, b) => time(a) - time(b)).slice(0, 6), [orders]);
+  useEffect(() => {
+    if (!selected || !loadOrder || full[selected]) return;
+    let live = true;
+    loadOrder(selected).then(order => { if (live) setFull(known => ({ ...known, [order.id]: order })); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [selected, loadOrder, full]);
+
+  const onNav = (v: View, next?: Tab) => { setView(v); if (next) setTab(next); setSelected(null); };
+  const onGlobalQuery = (q: string) => { setQuery(q); if (view !== "orders" || selected) { setView("orders"); setTab("all"); setSelected(null); } };
+  const nav: NavProps = { view, tab, counts, onNav };
+  const listed = orders?.find(o => o.id === selected) ?? null;
+  const current = listed ? full[listed.id] ?? listed : null;
+  const navList = view === "home" ? attention : visible;
+  const index = current ? navList.findIndex(o => o.id === current.id) : -1;
+  const updated = loading ? "Loading this vendor's orders…" : "Staff preview · not refreshed automatically";
+  const refreshBtn = <Btn onClick={onRetry} aria-label={t("Refresh orders")} className="!px-2"><RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /></Btn>;
+  const notice = (
+    <div className="max-w-[1120px] mx-auto mb-4" data-testid="vendor-preview-banner">
+      <Banner tone="info">
+        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span><strong>Viewing as {vendor.name}.</strong> This is what they see. It is read-only: nothing you do here is sent or saved.</span>
+          <button type="button" onClick={onExit} className="font-semibold underline" data-testid="button-exit-preview">Back to admin</button>
+        </span>
+      </Banner>
+    </div>
+  );
+  const shell = (children: ReactNode) => <Shell me={me} nav={nav} query={query} onQuery={onGlobalQuery}>{notice}{children}</Shell>;
+
+  if (current && view !== "settings" && view !== "messages") return shell(
+    <OrderDetail key={current.id} order={current} readOnly onBack={() => setSelected(null)} onChanged={async () => undefined}
+      prev={index > 0 ? navList[index - 1] : null} next={index >= 0 && index < navList.length - 1 ? navList[index + 1] : null} onOpen={id => setSelected(id)} />);
+
+  if (view === "messages") return shell(
+    <div className="max-w-[1120px] mx-auto">
+      <PageHeader title={t("Messages")} subtitle="Talk to Peps Anonymous about orders, stock and payments. Replies also reach your connected Telegram chat." />
+      <Card><EmptyState icon={MessageSquare} title="Conversations are not part of the preview" body="The vendor sees their message threads with Peps Anonymous here. Open them from the main admin's vendor messages." /></Card>
+    </div>);
+
+  if (view === "settings") return shell(
+    <div className="max-w-[880px] mx-auto space-y-4">
+      <PageHeader title={t("Settings")} subtitle="Payment wallets, history, holiday mode and fulfilment defaults" />
+      <Card title="Payment wallets" testId="preview-wallets">
+        {wallets === null ? <p className="text-[13px]" style={muted}>Loading…</p>
+          : wallets.length === 0 ? <p className="text-[13px]" style={muted}>No receiving wallet saved yet. The vendor is asked to add one before they can open orders.</p>
+          : <ul className="space-y-2">{wallets.map((w, i) => (
+            <li key={w.id ?? i} className="rounded-lg p-3" style={{ background: "var(--t-surface2)" }}>
+              <p className="text-[13px] font-semibold" style={{ color: "var(--t-text)" }}>{w.currency} · {w.network}{w.label ? ` · ${w.label}` : ""}</p>
+              <p className="text-xs font-mono break-all mt-0.5" style={muted}>{w.address}</p>
+            </li>))}</ul>}
+      </Card>
+      <Card title="Payment history" testId="preview-payments">
+        {payments === null ? <p className="text-[13px]" style={muted}>Loading…</p>
+          : payments.filter(p => !p.voidedAt).length === 0 ? <p className="text-[13px]" style={muted}>No payments recorded yet.</p>
+          : <ul>{payments.filter(p => !p.voidedAt).map((p, i) => (
+            <li key={p.id} className="py-3" style={{ borderTop: i ? "1px solid var(--t-border)" : undefined }}>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-[13px] font-semibold tabular-nums" style={{ color: "var(--t-text)" }}>{money(p.usdAmount ?? 0)} <span className="font-normal" style={subtle}>· {p.cryptoAmount} {p.currency} ({p.network})</span></p>
+                <span className="text-xs" style={subtle}>{p.paidAt ? date(p.paidAt) : ""}</span>
+              </div>
+              {p.txid && <p className="text-xs font-mono break-all mt-0.5" style={muted}>{p.txid}</p>}
+              {!!p.orders?.length && <p className="text-xs mt-1" style={subtle}>{p.orders.map(o => `#${o.reference}`).join(", ")}</p>}
+            </li>))}</ul>}
+      </Card>
+      <p className="text-xs" style={subtle}>The vendor's own username, password, email, Telegram and holiday settings also live on this page; they are not shown in the preview.</p>
+    </div>);
+
+  if (view === "home") return shell(
+    <HomeView me={me} orders={orders} counts={counts} attention={attention} updated={updated} refreshBtn={refreshBtn} listError={error} onRetry={onRetry}
+      onNav={onNav} onOpen={id => setSelected(id)} />);
+
+  return shell(
+    <div className="max-w-[1120px] mx-auto">
+      <PageHeader title={t("Orders")} subtitle={updated} actions={refreshBtn} />
+      {counts.overdue > 0 && <div className="mb-4"><Banner tone="critical" testId="text-overdue">{vt(counts.overdue)}  {t("order")}{vt(counts.overdue === 1 ? " has" : "s have")}  {t("been waiting more than")} {vt(OVERDUE_HOURS)}  {t("hours without tracking.")}</Banner></div>}
+      <Card flush>
+        <div className="flex items-center gap-1 overflow-x-auto px-3 pt-3 pb-2" role="tablist">
+          {(["all", ...STAGES.map(s => s.key)] as Tab[]).map(key => {
+            const on = tab === key;
+            return (
+              <button key={key} role="tab" aria-selected={on} onClick={() => setTab(key)} data-testid={`button-filter-${key}`}
+                className="h-8 px-3 rounded-lg text-[13px] whitespace-nowrap flex items-center gap-1.5 hover:bg-[var(--t-surface2)]"
+                style={{ background: on ? "var(--t-surface2)" : undefined, color: on ? "var(--t-text)" : "var(--t-muted)", fontWeight: on ? 600 : 500 }}>
+                {vt(key === "all" ? "All" : stageMeta(key).label)}
+                <span className="tabular-nums text-xs px-1.5 rounded-md" style={{ background: on ? "var(--t-surface)" : "var(--t-surface2)", border: "1px solid var(--t-border)", ...subtle }}>{vt(counts[key])}</span>
+              </button>);
+          })}
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 px-3 pb-3" style={{ borderBottom: "1px solid var(--t-border)" }}>
+          <label className="relative flex-1">
+            <span className="sr-only">{t("Search orders")}</span>
+            <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2" style={subtle} />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t("Search by reference, recipient, product or tracking")} className={`${fieldCls} pl-8`} style={field} />
+          </label>
+          <select value={sort} onChange={e => setSort(e.target.value as typeof sort)} aria-label={t("Sort orders")} className={`${fieldCls} sm:w-44`} style={field}>
+            <option value="oldest">{t("Oldest first")}</option><option value="newest">{t("Newest first")}</option><option value="value">{t("Highest value")}</option>
+          </select>
+        </div>
+        {error && <div className="p-3 pb-0"><Banner tone="critical" role="alert">{vt(error)} <button onClick={onRetry} className="font-semibold underline ml-1">{t("Retry")}</button></Banner></div>}
+        {orders === null && !error ? <div className="p-3 space-y-2">{[0, 1, 2].map(i => <div key={i} className="h-12 rounded-lg animate-pulse" style={{ background: "var(--t-surface2)" }} />)}</div>
+          : visible.length === 0 ? <EmptyState icon={Package} title={t(query ? "No orders match your search" : tab === "new" ? "Nothing waiting on you" : "No orders here")}
+            body={query ? "Try a different reference, name or product." : "New shipments appear here automatically. This list refreshes every 30 seconds."} />
+          : <OrdersTable orders={visible} onOpen={id => setSelected(id)} footer={`Showing ${visible.length} of ${counts.all} order${counts.all === 1 ? "" : "s"}`} />}
+      </Card>
+    </div>);
 }

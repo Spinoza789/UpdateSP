@@ -1,4 +1,4 @@
-import { pgTable, text, jsonb, timestamp, unique, index, integer, foreignKey } from "drizzle-orm/pg-core";
+import { pgTable, text, jsonb, timestamp, unique, index, integer, boolean, foreignKey } from "drizzle-orm/pg-core";
 import { accountsTable } from "./accounts";
 import { vendorAccountsTable } from "./vendor_accounts";
 
@@ -150,6 +150,20 @@ export const vendorTelegramEventsTable = pgTable("vendor_telegram_events", {
   delivered: integer("delivered").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, t => [unique("vendor_telegram_events_kind_submission_unique").on(t.kind, t.submissionId)]);
+
+/** Every message the vendor bot tried to send, so staff can see exactly what a vendor was told and whether it arrived. */
+export const vendorTelegramLogTable = pgTable("vendor_telegram_log", {
+  id: text("id").primaryKey(),
+  vendorId: text("vendor_id"),
+  chatId: text("chat_id").notNull(),
+  chatTitle: text("chat_title"),
+  kind: text("kind"),
+  body: text("body").notNull(),
+  buttonUrl: text("button_url"),
+  ok: boolean("ok").notNull(),
+  error: text("error"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, t => [index("vendor_telegram_log_vendor_created_idx").on(t.vendorId, t.createdAt), index("vendor_telegram_log_created_idx").on(t.createdAt)]);
 
 /* ---------------------------------------------------------------------------
  * Vendor message threads (Admin <-> vendor), mirrored to the vendor Telegram bot

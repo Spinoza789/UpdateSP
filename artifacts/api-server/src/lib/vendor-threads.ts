@@ -163,7 +163,7 @@ export async function mirrorToVendorTelegram(thread: any, message: any) {
   let delivered = 0;
   for (const chat of chats) {
     if (!prefEnabled(chat.prefs, "message")) continue;
-    const result = await sendToChatFull(chat.chatId, text, portalThreadUrl(thread.id), "Open conversation");
+    const result = await sendToChatFull(chat.chatId, text, portalThreadUrl(thread.id), "Open conversation", null, { kind: "message" });
     if (!result.ok) continue;
     delivered++;
     if (result.messageId != null) {

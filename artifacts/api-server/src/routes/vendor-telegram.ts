@@ -9,7 +9,7 @@ import { VendorPortalError } from "../lib/vendor-portal-model";
 import {
   getVendorBotToken, vendorWebhookSecret, vendorBotStatus, getVendorBotUsername,
   vendorChats, allChats, publicChat, createLinkToken, completeLink, unlinkChat, updateChatPrefs, chatVendor, normalizePrefs,
-  sendToChat, sendToChatFull, notifyVendor, formatEvent, openOrdersSummary, esc, expireLinkTokens, vendorLinkStatus,
+  sendToChat, sendToChatFull, notifyVendor, formatEvent, openOrdersSummary, esc, expireLinkTokens, vendorLinkStatus, vendorTelegramLog,
 } from "../lib/vendor-telegram";
 import { threadForTelegramReply, postMessage } from "../lib/vendor-threads";
 import { createAlert } from "../lib/create-alert";
@@ -68,6 +68,24 @@ router.get("/admin/vendor-telegram", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const [status, chats, vendors] = await Promise.all([vendorBotStatus(), allChats(db), getVendors()]);
   noStore(res).json({ ...status, chats: chats.map((c: any) => ({ ...publicChat(c), vendorId: c.vendorId, vendorName: vendors.find(v => v.id === c.vendorId)?.name ?? c.vendorId })) });
+}));
+/** What the vendor bot has sent (or failed to send), newest first. */
+router.get("/admin/vendor-telegram/log", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const vendors = (await getVendors()).map(v => ({ id: v.id, name: v.name }));
+  const vendorId = typeof req.query.vendorId === "string" && req.query.vendorId ? req.query.vendorId : undefined;
+  if (vendorId && !vendors.some(v => v.id === vendorId)) throw new VendorPortalError("Vendor not found.", 404);
+  const before = typeof req.query.before === "string" && req.query.before ? new Date(req.query.before) : undefined;
+  if (before && Number.isNaN(before.getTime())) throw new VendorPortalError("Invalid log position.", 400);
+  const limit = typeof req.query.limit === "string" && /^[0-9]{1,3}$/.test(req.query.limit) ? Number(req.query.limit) : undefined;
+  const { entries, hasMore } = await vendorTelegramLog({ vendorId, failedOnly: req.query.failed === "1", before, limit });
+  noStore(res).json({
+    vendors, hasMore,
+    entries: entries.map((e: any) => ({
+      id: e.id, vendorId: e.vendorId, vendorName: e.vendorId ? vendors.find(v => v.id === e.vendorId)?.name ?? e.vendorId : null,
+      chatTitle: e.chatTitle, kind: e.kind, text: e.body, buttonUrl: e.buttonUrl, ok: e.ok, error: e.error, createdAt: e.createdAt,
+    })),
+  });
 }));
 router.post("/admin/vendor-telegram/test/:vendorId", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;

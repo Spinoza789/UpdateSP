@@ -29,6 +29,16 @@ import { notifyUser } from "../lib/telegram";
 import { storePageUpdateImage, downloadWholesaleUpdateImage, deleteWholesaleUpdateImage } from "../lib/wholesale-update-images";
 import { WholesaleUpdateValidationError } from "../lib/wholesale-updates";
 
+/** Order-preserving map that checks a few shipments at once: each stale check is several
+ * queries, so a one-at-a-time loop made long order lists take over a minute to load. */
+async function mapLimit<T, R>(items: T[], fn: (item: T) => Promise<R>, limit = 6): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) { const index = next++; results[index] = await fn(items[index]); }
+  }));
+  return results;
+}
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 0 } }).single("file");
 type Handler = (req: Request, res: Response) => Promise<void>;
@@ -89,7 +99,7 @@ router.get("/vendor/orders", requireVendorAccount, handled(async (req, res) => {
   const access = await vendorAccess(db, username(req), false, req.vendor!.tokenHash);
   const rows = await db.select().from(vendorSubmissionsTable).where(eq(vendorSubmissionsTable.vendorId, access.vendorId)).orderBy(desc(vendorSubmissionsTable.submittedAt));
   const orders = [];
-  for (const row of rows) orders.push(publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "vendor")));
+  orders.push(...await mapLimit(rows, async row => publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "vendor"))));
   res.set("Cache-Control", "no-store").json({ orders });
 }));
 // Authentication and ownership are checked before any provider quota is used.
@@ -322,11 +332,10 @@ router.get("/admin/vendor-portal/orders", handled(async (req, res) => {
   const [{ total }] = await db.select({ total: count() }).from(vendorSubmissionsTable).where(where);
   const rows = await db.select().from(vendorSubmissionsTable).where(where)
     .orderBy(desc(vendorSubmissionsTable.submittedAt), desc(vendorSubmissionsTable.id)).limit(limit).offset((page - 1) * limit);
-  const orders = [];
-  for (const row of rows) orders.push({
+  const orders = await mapLimit(rows, async row => ({
     ...publicVendorOrder(row, await isVendorSubmissionStale(db, row), []),
     vendorId: row.vendorId, vendorName: vendors.find(v => v.id === row.vendorId)?.name ?? row.vendorId,
-  });
+  }));
   res.set("Cache-Control", "no-store").json({ vendors, orders, total, page, limit });
 }));
 router.get("/admin/vendor-portal/orders/:id", handled(async (req, res) => {

@@ -136,12 +136,14 @@ function Summary({ report, current, comparison, loading }: { report: OrderCompar
   </div>;
 }
 
-export function OrderComparison({ vendors, request }: { vendors: Vendor[]; request: Request }) {
+/** `vendorId`, when given, is an outer vendor filter the comparison follows. */
+export function OrderComparison({ vendors, request, vendorId: outerVendorId }: { vendors: Vendor[]; request: Request; vendorId?: string }) {
   const [preset, setPreset] = useState<Preset>("monthly");
   const [range, setRange] = useState<Range>(() => presetRange("monthly", londonToday()));
   const [comparisonMode, setComparisonMode] = useState<ComparisonMode>("previous");
   const [customComparison, setCustomComparison] = useState<Range>(() => shiftRange("monthly", presetRange("monthly", londonToday()), -1));
-  const [vendorId, setVendorId] = useState("");
+  const [vendorId, setVendorId] = useState(outerVendorId ?? "");
+  useEffect(() => { if (outerVendorId !== undefined) setVendorId(outerVendorId); }, [outerVendorId]);
   const [report, setReport] = useState<OrderComparisonReport | null>(null);
   const [reportKey, setReportKey] = useState("");
   const [error, setError] = useState<string | null>(null);

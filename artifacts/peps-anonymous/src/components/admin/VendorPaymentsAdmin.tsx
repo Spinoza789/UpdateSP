@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Landmark, RefreshCw, Wallet as WalletIcon } from "lucide-react";
-import { adminAuth } from "../../lib/admin-auth";
+import { adminAuth, type AdminAuthController } from "../../lib/admin-auth";
+import { AdminAuthContext } from "../../lib/admin-auth-context";
 import { cents, filterOrders, fulfilmentProgressed, hasReviewToken, isEligible, isLedger, money, orderState, PAGE_SIZE, parsePaidAt, selectedTotal, summarize, toggleExportOne, type Filters, type LedgerData, type LedgerOrder } from "./peps-anon-payment/model";
 import { LedgerSummary } from "./peps-anon-payment/LedgerSummary";
 import { EMPTY_FILTERS, LedgerOrders } from "./peps-anon-payment/LedgerOrders";
@@ -20,16 +21,26 @@ import { inputCls, inputStyle, Skeleton } from "../reshipper-payouts/ui";
 const EMPTY_FORM: PaymentForm = { walletId: "", amount: "", txid: "", paidAt: "", note: "" };
 type Msg = { ok: boolean; text: string } | null;
 
-async function request(path: string, init?: RequestInit) {
-  const response = await adminAuth.request(path, init);
+async function jsonRequest(auth: AdminAuthController, path: string, init?: RequestInit) {
+  const response = await auth.request(path, init);
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(body?.error || `Request failed (${response.status})`);
   return body;
 }
 
-export default function VendorPaymentsAdmin({ active = true }: { active?: boolean } = {}) {
+/** `auth` lets another admin workspace (the Peps Anonymous admin) reuse this ledger with its own session. */
+export default function VendorPaymentsAdmin({ active = true, auth = adminAuth, heading = true, reports = true, vendorId: outerVendorId }: {
+  active?: boolean; auth?: AdminAuthController; heading?: boolean;
+  /** Hide the Revenue & Profit and comparison views when the host shows them elsewhere. */
+  reports?: boolean;
+  /** Outer vendor filter to follow; an unsaved payment draft still asks before switching. */
+  vendorId?: string;
+} = {}) {
+  const authRef = useRef(auth);
+  authRef.current = auth;
+  const request = useCallback((path: string, init?: RequestInit) => jsonRequest(authRef.current, path, init), []);
   const [vendors, setVendors] = useState<{ id: string; name: string }[]>([]);
-  const [vendorId, setVendorId] = useState("");
+  const [vendorId, setVendorId] = useState(outerVendorId ?? "");
   const [data, setData] = useState<LedgerData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -165,6 +176,13 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
     if (transferDirty) { setPendingVendor(id); return; }
     applyVendor(id);
   }
+
+  const followedVendor = useRef(outerVendorId);
+  useEffect(() => {
+    if (followedVendor.current === outerVendorId) return;
+    followedVendor.current = outerVendorId;
+    if (outerVendorId) changeVendor(outerVendorId);
+  });
 
   async function downloadSelected() {
     if (lock.current || !selected.size || !vendorId) return;
@@ -334,9 +352,9 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
   const overlayOpen = !!(recordOpen || (detailOrder && ledger) || receipt || walletsOpen || costTarget || historicalOrders || clearPaidTarget);
   const locked = busy || !!draft || !!voidId || !!removeTarget || !!updatePreview || !!costTarget || !!historicalOrders || !!clearPaidTarget;
 
-  return <section className="pap-root space-y-4" data-testid="vendor-payments-admin">
+  return <AdminAuthContext.Provider value={auth}><section className="pap-root space-y-4" data-testid="vendor-payments-admin">
     <header className="flex flex-wrap items-end justify-between gap-3">
-      <div className="min-w-0">
+      <div className="min-w-0" hidden={!heading}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-subtle)" }}>Supplier accounts</p>
         <h2 className="flex items-center gap-2 text-xl font-bold" style={{ color: "var(--t-text)" }}><Landmark className="h-5 w-5" style={{ color: "var(--t-blue)" }} />Peps Anon Payment</h2>
         <p className="mt-0.5 max-w-xl text-xs" style={{ color: "var(--t-subtle)" }}>Supplier-order costs and receipts for transfers sent outside this website. Recording never sends funds, verifies a blockchain, or changes customer payment or fulfilment status.</p>
@@ -368,8 +386,8 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
       <span>{loadError}</span>
       <button type="button" className="font-semibold underline" onClick={() => void load(vendorId)} data-testid="payment-retry">Retry</button>
     </div>}
-    <div role="tablist" onKeyDown={tabKeys} aria-label="Peps Anon Payment views" className="inline-flex flex-wrap rounded-lg border p-0.5" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)" }}>
-      {([...(ledger ? [["orders", `Orders (${ledger.orders.length})`], ["history", `Payment history (${ledger.payments.length})`]] as const : []), ["report", "Revenue & Profit"] as const, ["comparison", "Orders comparison"] as const]).map(([k, label]) =>
+    <div role="tablist" hidden={!ledger && !reports} onKeyDown={tabKeys} aria-label="Peps Anon Payment views" className="inline-flex flex-wrap rounded-lg border p-0.5" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)" }}>
+      {([...(ledger ? [["orders", `Orders (${ledger.orders.length})`], ["history", `Payment history (${ledger.payments.length})`]] as const : []), ...(reports ? [["report", "Revenue & Profit"] as const, ["comparison", "Orders comparison"] as const] : [])]).map(([k, label]) =>
         <button key={k} id={`payment-tab-${k}`} aria-controls={`payment-panel-${k}`} tabIndex={(view === k || (!ledger && k === "report" && !reportView)) ? 0 : -1} type="button" role="tab" aria-selected={view === k} onClick={() => setView(k)} data-testid={`payment-tab-${k}`}
           className="rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
           style={view === k ? { background: "var(--t-blue-deep)", color: "#fff" } : { color: "var(--t-subtle)" }}>{label}</button>)}
@@ -479,5 +497,5 @@ export default function VendorPaymentsAdmin({ active = true }: { active?: boolea
         voiding={!!voidTarget && voidTarget.id === receipt.id} onVoidStart={() => { setVoidId(receipt.id); setReason(""); setMessage(null); }}
         onVoidCancel={() => setVoidId("")} reason={reason} onReason={setReason} onVoidConfirm={() => void mutate(true)} />}
     </>}
-  </section>;
+  </section></AdminAuthContext.Provider>;
 }

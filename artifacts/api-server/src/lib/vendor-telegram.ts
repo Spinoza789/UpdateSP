@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { and, desc, eq, gt, inArray, isNull, lt, notInArray } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, lt, notInArray, sql } from "drizzle-orm";
 import {
-  db, siteConfigTable, vendorSubmissionsTable, vendorTelegramChatsTable, vendorTelegramEventsTable, vendorTelegramLinkTokensTable,
+  db, siteConfigTable, vendorSubmissionsTable, vendorTelegramChatsTable, vendorTelegramEventsTable, vendorTelegramLinkTokensTable, vendorTelegramLogTable,
   type VendorTelegramPrefs,
 } from "@workspace/db";
 import { getVendors } from "../routes/config";
@@ -186,17 +186,60 @@ export async function chatVendor(tx: Executor, chatId: string) {
   return row ?? null;
 }
 
+/* ---- Send log ------------------------------------------------------------ */
+let logTableReady: Promise<void> | null = null;
+/** Mirrors vendorTelegramLogTable. Lets the log work on a database that has not been schema-pushed yet. */
+function ensureLogTable(): Promise<void> {
+  if (logTableReady) return logTableReady;
+  const ready: Promise<void> = db.execute(sql`
+    CREATE TABLE IF NOT EXISTS vendor_telegram_log(id text PRIMARY KEY, vendor_id text, chat_id text NOT NULL, chat_title text, kind text,
+      body text NOT NULL, button_url text, ok boolean NOT NULL, error text, created_at timestamptz NOT NULL DEFAULT now());
+    CREATE INDEX IF NOT EXISTS vendor_telegram_log_vendor_created_idx ON vendor_telegram_log(vendor_id, created_at);
+    CREATE INDEX IF NOT EXISTS vendor_telegram_log_created_idx ON vendor_telegram_log(created_at);
+  `).then(() => undefined, (error: unknown) => { logTableReady = null; throw error; });
+  logTableReady = ready;
+  return ready;
+}
+export type VendorSendMeta = { kind?: string; vendorId?: string; chatTitle?: string | null };
+/** Best effort: a logging problem must never stop or fail a vendor alert. */
+async function logSend(chatId: string, html: string, buttonUrl: string | null | undefined, result: { ok: boolean; description?: string }, meta: VendorSendMeta) {
+  if (transport) return; // Test transport: nothing was really sent.
+  try {
+    await ensureLogTable();
+    const chat = meta.vendorId && meta.chatTitle !== undefined ? null : await chatVendor(db, chatId).catch(() => null);
+    await db.insert(vendorTelegramLogTable).values({
+      id: randomUUID(), vendorId: meta.vendorId ?? chat?.vendorId ?? null, chatId, chatTitle: meta.chatTitle ?? chat?.title ?? null,
+      kind: meta.kind ?? null, body: html.slice(0, 4096), buttonUrl: buttonUrl ?? null, ok: !!result.ok,
+      error: result.ok ? null : String(result.description ?? "Telegram did not accept the message").slice(0, 500),
+    });
+  } catch (error) {
+    console.error("[vendor-telegram] could not record send log:", error instanceof Error ? error.message : "unknown error");
+  }
+}
+export async function vendorTelegramLog(options: { vendorId?: string; failedOnly?: boolean; before?: Date; limit?: number } = {}) {
+  await ensureLogTable();
+  const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
+  const where = and(
+    options.vendorId ? eq(vendorTelegramLogTable.vendorId, options.vendorId) : undefined,
+    options.failedOnly ? eq(vendorTelegramLogTable.ok, false) : undefined,
+    options.before ? lt(vendorTelegramLogTable.createdAt, options.before) : undefined,
+  );
+  const rows = await db.select().from(vendorTelegramLogTable).where(where).orderBy(desc(vendorTelegramLogTable.createdAt), desc(vendorTelegramLogTable.id)).limit(limit + 1);
+  return { entries: rows.slice(0, limit), hasMore: rows.length > limit };
+}
+
 /* ---- Sending ------------------------------------------------------------- */
-export async function sendToChatFull(chatId: string, html: string, buttonUrl?: string | null, buttonText = "Open in vendor portal", replyToMessageId?: string | number | null) {
+export async function sendToChatFull(chatId: string, html: string, buttonUrl?: string | null, buttonText = "Open in vendor portal", replyToMessageId?: string | number | null, meta: VendorSendMeta = {}) {
   const payload: Record<string, unknown> = { chat_id: chatId, text: html, parse_mode: "HTML", disable_web_page_preview: true };
   if (buttonUrl) payload.reply_markup = { inline_keyboard: [[{ text: buttonText, url: buttonUrl }]] };
   if (replyToMessageId != null) payload.reply_parameters = { message_id: Number(replyToMessageId), allow_sending_without_reply: true };
   const result = await api("sendMessage", payload);
   if (!result.ok) console.error("[vendor-telegram] sendMessage failed:", result.description);
+  await logSend(chatId, html, buttonUrl, result, meta);
   return { ok: !!result.ok, messageId: result.ok ? (result.result?.message_id as number | undefined) ?? null : null };
 }
-export async function sendToChat(chatId: string, html: string, buttonUrl?: string | null, buttonText = "Open in vendor portal") {
-  return (await sendToChatFull(chatId, html, buttonUrl, buttonText)).ok;
+export async function sendToChat(chatId: string, html: string, buttonUrl?: string | null, buttonText = "Open in vendor portal", meta: VendorSendMeta = {}) {
+  return (await sendToChatFull(chatId, html, buttonUrl, buttonText, null, meta)).ok;
 }
 /** Sends to every linked chat of the vendor that has not muted this kind. Returns how many deliveries succeeded. */
 export async function notifyVendor(vendorId: string, kind: EventKind, html: string, buttonUrl?: string | null) {
@@ -204,7 +247,7 @@ export async function notifyVendor(vendorId: string, kind: EventKind, html: stri
   let delivered = 0;
   for (const chat of chats) {
     if (!prefEnabled(chat.prefs, kind)) continue;
-    if (await sendToChat(chat.chatId, html, buttonUrl)) delivered++;
+    if (await sendToChat(chat.chatId, html, buttonUrl, undefined, { kind, vendorId, chatTitle: chat.title ?? null })) delivered++;
   }
   return delivered;
 }

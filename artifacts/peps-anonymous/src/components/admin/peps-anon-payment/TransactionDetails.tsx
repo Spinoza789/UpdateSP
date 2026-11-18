@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { adminAuth } from "../../../lib/admin-auth";
+import { useAdminAuth } from "../../../lib/admin-auth-context";
 
 type Details = {
   status: "confirmed" | "failed" | "pending" | "unavailable";
@@ -10,6 +10,7 @@ type Details = {
 const labels = { confirmed: "Confirmed", failed: "Failed", pending: "Pending / not found", unavailable: "Unavailable" };
 
 export function TransactionDetails({ txid, network, expectedWallet }: { txid: string; network: string; expectedWallet?: string }) {
+  const adminAuth = useAdminAuth();
   const [details, setDetails] = useState<Details | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

@@ -9,7 +9,13 @@ const VENDOR_ADMIN_APIS = new Set([
   "/api/admin/security/status",
   ...["login", "verify", "me", "logout", "legacy-login", "legacy-me", "legacy-logout"].map(p => `/api/admin/auth/${p}`),
   "/api/admin/vendor-portal/orders", "/api/admin/vendor-portal/preview", "/api/admin/vendor-portal/submit",
+  "/api/admin/vendor-telegram/log",
 ]);
+// Supplier payment ledger for the same workspace: wallets, receipts, cost edits and reports.
+const VENDOR_PAYMENT_ADMIN_API = new RegExp("^/api/admin/vendor-payments(?:/(?:"
+  + "export|acknowledge-paid|report|order-comparison|transaction-details"
+  + "|[a-z0-9_-]+/void|orders/[a-z0-9_-]+/(?:costs|clear-paid)|product-refunds/[a-z0-9_-]+(?:/review)?"
+  + "))?$", "i");
 const HEALTH_PATHS = new Set(["/health", "/_health", "/api", "/api/health", "/api/healthz"]);
 
 // Never use req.hostname: Express derives that from X-Forwarded-Host when trust proxy is on.
@@ -68,7 +74,8 @@ export function siteDomainPolicy(options: { production: boolean; developmentHost
         || (path === "/favicon.svg" || path === "/favicon.ico") || /^\/brand\/[a-z0-9_-]+\.(?:svg|png)$/i.test(path);
       const vendorAdminApi = VENDOR_ADMIN_APIS.has(path)
         || /^\/api\/admin\/vendor-portal\/(?:orders|vendor-images)\/[a-z0-9_-]+$/i.test(path)
-        || /^\/api\/admin\/vendor-portal\/orders\/[a-z0-9_-]+\/update$/i.test(path);
+        || /^\/api\/admin\/vendor-portal\/orders\/[a-z0-9_-]+\/update$/i.test(path)
+        || VENDOR_PAYMENT_ADMIN_API.test(path);
       if (!vendorApi && !vendorAdminApi && !VENDOR_PAGES.has(path) && !HEALTH_PATHS.has(path) && !staticAsset) {
         res.status(404).json({ error: "Not found" }); return;
       }
