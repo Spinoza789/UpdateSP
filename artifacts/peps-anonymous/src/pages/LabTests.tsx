@@ -372,12 +372,13 @@ export function ReportModal({
     </button>
   );
 
+  // Keep the report and its actions above the hub's floating navigation (z-65).
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-x-0 bottom-0 z-50 flex items-end md:items-center justify-center"
+      className="fixed inset-x-0 bottom-0 z-[70] flex items-end md:items-center justify-center"
       style={{ height: "100dvh", background: "rgba(0,0,0,0.65)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -412,7 +413,7 @@ export function ReportModal({
         </div>
 
         {/* BODY: certificate first on mobile, two columns on desktop */}
-        <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto overscroll-contain md:overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)] md:pb-0 md:overflow-hidden">
         {/* LEFT PANEL: Details */}
         <div className="flex flex-col shrink-0 w-full md:w-80 order-2 md:order-1 border-t md:border-t-0 md:border-r" style={{ borderColor: "var(--t-border)", background: "var(--t-surface)" }}>
           <div className="flex flex-col px-4 md:px-5 py-4 gap-4 flex-1 md:overflow-y-auto">
