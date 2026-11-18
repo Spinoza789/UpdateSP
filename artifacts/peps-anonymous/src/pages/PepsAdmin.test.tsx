@@ -349,3 +349,21 @@ it("previews a vendor's portal read-only without calling any vendor API", async 
   await click("button-exit-preview");
   expect(host.querySelector('[data-testid="peps-admin-workspace"]')).not.toBeNull();
 }, 15_000);
+
+it("bulk-marks already-shipped orders as fulfilled through the silent admin endpoint", async () => {
+  fulfillSetup();
+  const base = fetchMock.getMockImplementation()!;
+  fetchMock.mockImplementation(async (input, init) => input === "/api/admin/vendor-portal/orders/manual-fulfil"
+    ? json({ ok: true, fulfilled: 2, alreadyFulfilled: 0 }) : base(input, init));
+  await render(); await click("nav-orders");
+  await act(async () => { byTestId("check-all-orders").click(); });
+  await click("button-bulk-fulfil");
+  expect(host.textContent).toContain("The customer is not notified");
+  await click("button-fulfil-confirm");
+  const call = fetchMock.mock.calls.find(c => c[0] === "/api/admin/vendor-portal/orders/manual-fulfil");
+  expect(call?.[1]?.method).toBe("POST");
+  expect(JSON.parse(call?.[1]?.body as string)).toEqual({ ids: ["order-1", "order-2"] });
+  expect(fetchMock.mock.calls.some(c => c[1]?.method === "PATCH")).toBe(false);
+  expect(byTestId("text-notice").textContent).toContain("2 orders marked as fulfilled. No customer was notified.");
+  expect(host.querySelector(".pa-modal")).toBeNull();
+});

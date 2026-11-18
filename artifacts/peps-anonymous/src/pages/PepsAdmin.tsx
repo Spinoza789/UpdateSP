@@ -195,7 +195,10 @@ export default function PepsAdmin() {
   const [extraParcels, setExtraParcels] = useState<VendorTrackingParcel[]>([]);
   const [mutationBusy, setMutationBusy] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [dialog, setDialog] = useState<"recall" | "resubmit" | null>(null);
+  const [dialog, setDialog] = useState<"recall" | "resubmit" | "fulfil" | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [fulfilIds, setFulfilIds] = useState<string[]>([]);
+  const [notice, setNotice] = useState("");
   const [override, setOverride] = useState(false);
   const [reason, setReason] = useState("");
   const [orderCodes, setOrderCodes] = useState("");
@@ -341,6 +344,27 @@ export default function PepsAdmin() {
     } catch (e) { if (epoch === identityEpoch.current) setActionError(errorMessage(e)); }
     finally { if (epoch === identityEpoch.current) setMutationBusy(false); }
   };
+  const askFulfil = (ids: string[]) => { if (!ids.length) return; setFulfilIds(ids); setActionError(""); setDialog("fulfil"); };
+  /** Backfill for shipments sent before this panel existed: vendor shipment only, no customer notification. */
+  const manualFulfil = async () => {
+    if (!fulfilIds.length) return;
+    const epoch = identityEpoch.current;
+    setMutationBusy(true); setActionError("");
+    try {
+      let fulfilled = 0;
+      for (let start = 0; start < fulfilIds.length; start += 200) {
+        const result = await pepsAdminJson<{ fulfilled: number }>("/admin/vendor-portal/orders/manual-fulfil", {
+          method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ids: fulfilIds.slice(start, start + 200) }),
+        });
+        fulfilled += result.fulfilled;
+      }
+      if (epoch !== identityEpoch.current) return;
+      setDialog(null); setFulfilIds([]); setPicked(new Set());
+      setNotice(`${fulfilled} order${fulfilled === 1 ? "" : "s"} marked as fulfilled. No customer was notified.`);
+      await Promise.all([loadList(), selectedId ? loadDetail(selectedId) : Promise.resolve()]);
+    } catch (e) { if (epoch === identityEpoch.current) setActionError(errorMessage(e)); }
+    finally { if (epoch === identityEpoch.current) setMutationBusy(false); }
+  };
   const requestPreview = async (event: FormEvent) => {
     event.preventDefault(); setPreviewLoading(true); setPreviewError(""); setPreview(null);
     const codes = orderCodes.split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
@@ -379,7 +403,7 @@ export default function PepsAdmin() {
   }
   const onNav = (next: View, stage?: StageKey | "all") => { setView(next); if (stage) setStatusFilter(stage); setSelectedId(null); };
   const onGlobalQuery = (q: string) => { setQuery(q); if (view !== "orders" || selectedId) { setView("orders"); setStatusFilter("all"); setSelectedId(null); } };
-  const changeVendor = (id: string) => { setVendorId(id); setPage(1); setOrders([]); setTotal(0); setSelectedId(null); setDetail(null); detailGen.current++; };
+  const changeVendor = (id: string) => { setPicked(new Set()); setVendorId(id); setPage(1); setOrders([]); setTotal(0); setSelectedId(null); setDetail(null); detailGen.current++; };
   const openSubmit = () => { setDialog("resubmit"); setPreview(null); setPreviewError(""); };
 
   if (authView === "boot" || authView === "retry") return <Gate>
@@ -416,7 +440,13 @@ export default function PepsAdmin() {
     <option value="">All vendors</option>{vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}</select>;
   const refreshBtn = <Btn onClick={() => void loadList()} disabled={listLoading} aria-label="Refresh orders" data-testid="button-refresh" className="!px-2"><RefreshCw className={`w-4 h-4 ${listLoading ? "animate-spin" : ""}`} /></Btn>;
   const submitBtn = <Btn variant="primary" onClick={openSubmit} data-testid="button-resubmit"><PackageCheck className="w-4 h-4" />Submit orders</Btn>;
-  const errorBanner = actionError && !selectedId ? <div className="mb-4"><Banner tone="critical" role="alert" onDismiss={() => setActionError("")}>{actionError}</Banner></div> : null;
+  const errorBanner = <>
+    {actionError && !selectedId && !dialog ? <div className="mb-4"><Banner tone="critical" role="alert" onDismiss={() => setActionError("")}>{actionError}</Banner></div> : null}
+    {notice ? <div className="mb-4"><Banner tone="success" testId="text-notice" onDismiss={() => setNotice("")}>{notice}</Banner></div> : null}
+  </>;
+  // Only shipments not yet fulfilled can be picked for the manual backfill.
+  const pickable = filtered.filter(o => { const k = stageKey(o); return k === "new" || k === "process"; });
+  const pickedIds = pickable.filter(o => picked.has(o.id)).map(o => o.id);
   const listErrorBanner = listError ? <div className="mb-4"><Banner tone="critical" role="alert" testId="text-list-error">{listError} <button onClick={() => void loadList()} className="font-semibold underline ml-1">Retry</button></Banner></div> : null;
   const ready = !(listLoading && orders.length === 0) || !!listError;
   const navList = view === "home" ? attention : filtered;
@@ -439,7 +469,7 @@ export default function PepsAdmin() {
     <DetailView order={visibleDetail} loading={detailLoading} error={detailError} onBack={() => setSelectedId(null)} onRetry={() => void loadDetail(selectedId)}
       trackingNumber={trackingNumber} setTrackingNumber={setTrackingNumber} carrier={carrier} setCarrier={setCarrier} extraParcels={extraParcels} setExtraParcels={setExtraParcels}
       busy={mutationBusy} actionError={actionError} onDismissError={() => setActionError("")} onProcess={startProcessing} onTracking={saveTracking}
-      onRecall={() => { setDialog("recall"); setReason(""); setOverride(false); }} onPayments={() => onNav("payments")}
+      onRecall={() => { setDialog("recall"); setReason(""); setOverride(false); }} onPayments={() => onNav("payments")} onFulfil={() => askFulfil([selectedId])} notice={notice} onDismissNotice={() => setNotice("")}
       prev={index > 0 ? navList[index - 1] : null} next={index >= 0 && index < navList.length - 1 ? navList[index + 1] : null} onOpen={setSelectedId} />
   );
   else if (view === "home") body = (
@@ -481,7 +511,15 @@ export default function PepsAdmin() {
         {!ready ? <div className="p-3 space-y-2" aria-label="Loading orders">{[0, 1, 2].map(i => <div key={i} className="h-12 rounded-lg animate-pulse" style={{ background: "var(--t-surface2)" }} />)}</div>
           : filtered.length === 0 ? <EmptyState icon={Package} title={query ? "No orders match your search" : statusFilter === "all" ? "No orders here yet" : "No orders here"}
             body={query ? "Try a different reference, vendor, name or product." : "Orders you submit to a vendor appear here. This list refreshes every 30 seconds."} />
-          : <OrdersTable orders={filtered} onOpen={setSelectedId} />}
+          : <>
+            {pickedIds.length > 0 && <div className="flex flex-wrap items-center gap-3 px-4 py-2 text-[13px]" style={{ background: "var(--t-surface2)", borderBottom: "1px solid var(--t-border)" }} data-testid="bar-bulk">
+              <span className="font-semibold" style={{ color: "var(--t-text)" }}>{pickedIds.length} selected</span>
+              <Btn variant="primary" onClick={() => askFulfil(pickedIds)} data-testid="button-bulk-fulfil"><CheckCircle2 className="w-4 h-4" />Mark as fulfilled</Btn>
+              <Btn variant="plain" onClick={() => setPicked(new Set())}>Clear</Btn>
+              <span className="text-xs" style={subtle}>For orders already shipped. Customers are not notified.</span>
+            </div>}
+            <OrdersTable orders={filtered} onOpen={setSelectedId} pickable={pickable} picked={picked} setPicked={setPicked} />
+          </>}
         <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 text-xs" style={{ borderTop: "1px solid var(--t-border)", ...subtle }}>
           <span>Showing {filtered.length} of {total.toLocaleString()} order{total === 1 ? "" : "s"}{pageCount > 1 ? ` · tabs and search cover page ${page} of ${pageCount}` : ""}</span>
           {pageCount > 1 && <span className="ml-auto inline-flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--t-border)", background: "var(--t-surface)" }}>
@@ -508,6 +546,21 @@ export default function PepsAdmin() {
       <div className="flex justify-end gap-2 mt-5">
         <Btn onClick={() => setDialog(null)}>Keep order</Btn>
         <Btn variant="critical" data-testid="button-recall-confirm" onClick={() => void recall()} disabled={mutationBusy || (needsOverride(visibleDetail) && (!reason.trim() || !override))}>{mutationBusy ? "Recalling…" : "Recall shipment"}</Btn>
+      </div>
+    </Modal>}
+    {dialog === "fulfil" && <Modal labelId="fulfil-title" onClose={() => { if (!mutationBusy) setDialog(null); }} closeDisabled={mutationBusy}>
+      <span className="w-9 h-9 rounded-lg grid place-items-center mb-3" style={{ background: TONES.success.bg, color: TONES.success.fg }}><CheckCircle2 className="w-4 h-4" /></span>
+      <h2 id="fulfil-title" className="text-base font-semibold" style={{ color: "var(--t-text)" }}>Mark {fulfilIds.length === 1 ? "this order" : `${fulfilIds.length} orders`} as fulfilled?</h2>
+      <p className="text-[13px] mt-1 mb-3" style={muted}>Use this for shipments that were already sent before this panel existed.</p>
+      <ul className="text-[13px] space-y-1.5 mb-3 list-disc pl-5" style={muted}>
+        <li>The vendor shipment moves to <strong>Fulfilled</strong>, here and in the vendor’s portal, and overdue reminders stop.</li>
+        <li><strong>The customer is not notified</strong> and their order is not changed.</li>
+        <li>No tracking number is added. You can still add one afterwards, which does notify the customer as usual.</li>
+      </ul>
+      {actionError && <div className="mb-3"><Banner tone="critical" role="alert">{actionError}</Banner></div>}
+      <div className="flex justify-end gap-2 mt-5">
+        <Btn onClick={() => setDialog(null)} disabled={mutationBusy}>Cancel</Btn>
+        <Btn variant="primary" onClick={() => void manualFulfil()} disabled={mutationBusy} data-testid="button-fulfil-confirm">{mutationBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}Mark as fulfilled</Btn>
       </div>
     </Modal>}
     {dialog === "resubmit" && <Modal wide labelId="resubmit-title" onClose={() => { if (!previewLoading) setDialog(null); }} closeDisabled={previewLoading}>
@@ -961,18 +1014,27 @@ function TelegramLogView({ vendors, vendorId, vendorSelect, banners }: { vendors
 /* ---------------------------------------------------------------------------
  * Index table
  * ------------------------------------------------------------------------- */
-const COLS = "md:grid-cols-[minmax(0,1fr)_120px_minmax(0,0.9fr)_minmax(0,1.1fr)_56px_96px_124px_112px]";
+const COLS = "md:grid-cols-[28px_minmax(0,1fr)_120px_minmax(0,0.9fr)_minmax(0,1.1fr)_56px_96px_124px_112px]";
 const HEADERS = ["Order", "Date", "Vendor", "Ship to", "Items", "Total", "Fulfillment", ""];
 
-function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (id: string) => void }) {
+function OrdersTable({ orders, onOpen, pickable, picked, setPicked }: {
+  orders: Order[]; onOpen: (id: string) => void; pickable: Order[]; picked: Set<string>; setPicked: (next: Set<string>) => void;
+}) {
+  const canPick = new Set(pickable.map(o => o.id));
+  const allPicked = pickable.length > 0 && pickable.every(o => picked.has(o.id));
+  const toggle = (id: string, on: boolean) => { const next = new Set(picked); if (on) next.add(id); else next.delete(id); setPicked(next); };
   return <>
     <div className={`hidden md:grid ${COLS} gap-3 px-4 h-9 items-center text-xs font-medium`} style={{ borderBottom: "1px solid var(--t-border)", ...subtle }}>
+      <span>{pickable.length > 0 && <input type="checkbox" aria-label="Select all unfulfilled orders" checked={allPicked} data-testid="check-all-orders"
+        onChange={e => setPicked(e.target.checked ? new Set(pickable.map(o => o.id)) : new Set())} className="w-4 h-4 accent-[#1A1A1A]" />}</span>
       {HEADERS.map((h, i) => <span key={i} className={i === 4 || i === 5 ? "text-right" : ""}>{h}</span>)}
     </div>
     <ul>{orders.map(o => {
       const k = stageKey(o);
       return (
-        <li key={o.id} className={`relative grid grid-cols-1 ${COLS} gap-x-3 gap-y-1 px-4 py-3 items-center hover:bg-[var(--t-surface2)]`} style={{ borderBottom: "1px solid var(--t-border)", opacity: o.stale ? 0.85 : 1 }}>
+        <li key={o.id} className={`relative grid grid-cols-[28px_minmax(0,1fr)] ${COLS} gap-x-3 gap-y-1 px-4 py-3 items-center hover:bg-[var(--t-surface2)]`} style={{ borderBottom: "1px solid var(--t-border)", background: picked.has(o.id) ? "var(--t-blue-06)" : undefined, opacity: o.stale ? 0.85 : 1 }}>
+          <span className="relative z-10 self-start md:self-center pt-0.5 md:pt-0">{canPick.has(o.id) && <input type="checkbox" aria-label={`Select ${o.reference}`} checked={picked.has(o.id)}
+            onChange={e => toggle(o.id, e.target.checked)} className="w-4 h-4 accent-[#1A1A1A]" data-testid={`check-order-${o.id}`} />}</span>
           <button onClick={() => onOpen(o.id)} className="text-left min-w-0 after:absolute after:inset-0 focus-visible:outline-none" data-testid={`row-order-${o.id}`}>
             <span className="flex items-center gap-2 flex-wrap">
               <span className="text-[13px] font-semibold" style={{ color: "var(--t-text)" }}>#{o.reference}</span>
@@ -1016,11 +1078,12 @@ function CompactRow({ order: o, onOpen }: { order: Order; onOpen: () => void }) 
 /* ---------------------------------------------------------------------------
  * Order detail
  * ------------------------------------------------------------------------- */
-function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, setTrackingNumber, carrier, setCarrier, extraParcels, setExtraParcels, busy, actionError, onDismissError, onProcess, onTracking, onRecall, onPayments, prev, next, onOpen }: {
+function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, setTrackingNumber, carrier, setCarrier, extraParcels, setExtraParcels, busy, actionError, onDismissError, onProcess, onTracking, onRecall, onPayments, onFulfil, notice, onDismissNotice, prev, next, onOpen }: {
   order: Order | null; loading: boolean; error: string; onBack: () => void; onRetry: () => void;
   trackingNumber: string; setTrackingNumber: (s: string) => void; carrier: string; setCarrier: (s: string) => void;
   extraParcels: VendorTrackingParcel[]; setExtraParcels: (value: VendorTrackingParcel[]) => void;
   busy: boolean; actionError: string; onDismissError: () => void; onProcess: () => void; onTracking: () => void; onRecall: () => void; onPayments: () => void;
+  onFulfil: () => void; notice: string; onDismissNotice: () => void;
   prev: Order | null; next: Order | null; onOpen: (id: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -1078,6 +1141,7 @@ function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, se
       <div className="space-y-3 mb-4 empty:hidden">
         {order.stale && <Banner tone="warning" testId="text-stale">This shipment changed after it was sent to the vendor. Processing and tracking are locked until it is resubmitted.</Banner>}
         {actionError && <Banner tone="critical" role="alert" testId="text-action-result" onDismiss={onDismissError}>{actionError}</Banner>}
+        {notice && <Banner tone="success" testId="text-notice" onDismiss={onDismissNotice}>{notice}</Banner>}
       </div>
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
@@ -1117,6 +1181,10 @@ function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, se
               </div>
             </div> : <p className="text-[13px]" style={muted}>{order.stale ? "Tracking is locked while this shipment is on hold." : "No tracking updates are available for this order state."}</p>}
           </Card>
+
+          {(k === "new" || k === "process") && <Card title="Already shipped?" footer={<Btn onClick={onFulfil} disabled={busy} data-testid="button-manual-fulfil"><CheckCircle2 className="w-4 h-4" />Mark as fulfilled</Btn>}>
+            <p className="text-[13px]" style={muted}>For orders that were sent before this panel existed. Marks the shipment as fulfilled without tracking. The customer is not notified and their order is not changed.</p>
+          </Card>}
 
           <Card title="Packing photos" actions={<span className="text-xs tabular-nums" style={subtle}>{order.images.length} attached</span>}>
             {order.images.length ? <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">{order.images.map((img, i) => (

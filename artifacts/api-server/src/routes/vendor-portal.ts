@@ -99,7 +99,7 @@ router.get("/vendor/orders", requireVendorAccount, handled(async (req, res) => {
   const access = await vendorAccess(db, username(req), false, req.vendor!.tokenHash);
   const rows = await db.select().from(vendorSubmissionsTable).where(eq(vendorSubmissionsTable.vendorId, access.vendorId)).orderBy(desc(vendorSubmissionsTable.submittedAt));
   const orders = [];
-  orders.push(...await mapLimit(rows, async row => publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "vendor"))));
+  orders.push(...await mapLimit(rows, async (row: any) => publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "vendor"))));
   res.set("Cache-Control", "no-store").json({ orders });
 }));
 // Authentication and ownership are checked before any provider quota is used.
@@ -237,6 +237,32 @@ router.patch("/admin/vendor-portal/orders/:id", handled(async (req, res) => {
   if (!requireAdmin(req, res)) return;
   await updateShipment(req, res, true);
 }));
+/**
+ * Admin backfill for shipments that were sent before the panel existed. It only marks the
+ * vendor shipment as fulfilled: the customer's order is not touched and nobody is notified.
+ */
+router.post("/admin/vendor-portal/orders/manual-fulfil", handled(async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const ids: unknown = req.body?.ids;
+  if (!Array.isArray(ids) || !ids.length || ids.length > 200 || ids.some(id => typeof id !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(id))) {
+    throw new VendorPortalError("Choose between 1 and 200 orders to mark as fulfilled.");
+  }
+  const wanted = [...new Set(ids as string[])];
+  const result = await db.transaction(async tx => {
+    const rows = await tx.select().from(vendorSubmissionsTable).where(inArray(vendorSubmissionsTable.id, wanted)).for("update");
+    if (rows.length !== wanted.length) throw new VendorPortalError("Some of those orders no longer exist. Refresh and try again.", 404);
+    const now = new Date();
+    let fulfilled = 0;
+    for (const row of rows) {
+      if (row.status === "Shipped") continue;
+      await tx.update(vendorSubmissionsTable).set({ status: "Shipped", updatedAt: now }).where(eq(vendorSubmissionsTable.id, row.id));
+      await auditVendor(tx, getAdminUsername(res), "manual_fulfil", row.id, { actorType: "admin", previousStatus: row.status, customerNotified: false });
+      fulfilled++;
+    }
+    return { fulfilled, alreadyFulfilled: rows.length - fulfilled };
+  });
+  res.json({ ok: true, ...result });
+}));
 router.post("/vendor/orders/:id/images", requireVendorAccount, sameOrigin, (req, res, next) => {
   upload(req, res, err => {
     if (err) { res.status(400).json({ error: "Upload one image, 5 MB or smaller." }); return; }
@@ -332,7 +358,7 @@ router.get("/admin/vendor-portal/orders", handled(async (req, res) => {
   const [{ total }] = await db.select({ total: count() }).from(vendorSubmissionsTable).where(where);
   const rows = await db.select().from(vendorSubmissionsTable).where(where)
     .orderBy(desc(vendorSubmissionsTable.submittedAt), desc(vendorSubmissionsTable.id)).limit(limit).offset((page - 1) * limit);
-  const orders = await mapLimit(rows, async row => ({
+  const orders = await mapLimit(rows, async (row: any) => ({
     ...publicVendorOrder(row, await isVendorSubmissionStale(db, row), []),
     vendorId: row.vendorId, vendorName: vendors.find(v => v.id === row.vendorId)?.name ?? row.vendorId,
   }));
