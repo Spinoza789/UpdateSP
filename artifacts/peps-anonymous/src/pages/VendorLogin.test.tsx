@@ -148,7 +148,8 @@ it("signs in using only vendor authentication and opens the portal for a linked 
   }));
   await render();
   await enterAndSubmit();
-  expect(calls).toEqual(["GET /api/vendor/auth/session", "POST /api/vendor/auth/login"]);
+  // Signed out on load, the form makes one read-only check for a live admin session before the vendor login.
+  expect(calls).toEqual(["GET /api/vendor/auth/session", "GET /api/admin/security/status", "POST /api/vendor/auth/login"]);
   expect(workspace.initialize).not.toHaveBeenCalled();
   expect(path.history?.at(-1)).toBe("/vendor");
 });
@@ -189,7 +190,7 @@ it("creates a pending vendor account without a member signup, email or verificat
   });
   await settle();
   expect(payload).toEqual({ username: "supplier", password: "long-vendor-password", companyName: "Supplier" });
-  expect(calls).toEqual(["/api/vendor/auth/session", "/api/vendor/auth/signup"]);
+  expect(calls).toEqual(["/api/vendor/auth/session", "/api/admin/security/status", "/api/vendor/auth/signup"]);
   expect(element.textContent).toContain("awaiting approval");
 });
 it('returns to sign in when logout confirms the vendor session was revoked', async () => {

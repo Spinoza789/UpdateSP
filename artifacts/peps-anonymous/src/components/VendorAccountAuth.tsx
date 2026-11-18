@@ -1,6 +1,6 @@
 import VendorLanguageSelect from "@/components/VendorLanguageSelect";
 import { vendorTranslate as vt, useVendorLanguage, getVendorLanguage } from "@/lib/vendor-language";
-import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Clock, Fingerprint, KeyRound, Loader2, LogIn, LogOut, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Badge, Banner, Btn, Field, cardStyle, field, fieldCls, muted, subtle } from '@/components/vendor-ui';
 import { clearVendorCsrfToken, restoreVendorSession, setVendorCsrfToken, vendorFetch } from '@/lib/vendor-auth-client';
@@ -16,6 +16,23 @@ type Account = { username: string; status: 'pending' | 'active' | 'disabled'; ve
 type Mfa = { mfaToken: string; username: string; methods: { totp: boolean; passkeys: number }; rememberMe: boolean; workspaceChallenge?: string };
 const input = fieldCls.replace('h-8', 'h-9');
 const post = (url: string, body: unknown) => fetch(url, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+/**
+ * True when this browser still holds a live admin session. Read-only: it sends no credentials,
+ * does not touch the admin sign-in controller, and treats anything unexpected as "no".
+ */
+async function hasAdminSession(): Promise<boolean> {
+  try {
+    const status = await fetch("/api/admin/security/status", { credentials: "include" });
+    if (!status.ok) return false;
+    const mode = await status.json();
+    if (typeof mode?.twoFactorEnabled !== "boolean") return false;
+    const me = await fetch(mode.twoFactorEnabled ? "/api/admin/auth/me" : "/api/admin/auth/legacy-me", { credentials: "include" });
+    if (!me.ok) return false;
+    const identity = await me.json();
+    return typeof identity?.username === "string" && identity.username.length > 0 && typeof identity?.csrfToken === "string";
+  } catch { return false; }
+}
 
 export default function VendorAccountAuth({ onAuthenticated, onWorkspaceAuthenticated = () => window.location.assign("/vendor/admin") }: { onAuthenticated: () => void; onWorkspaceAuthenticated?: () => void }) {
   useVendorLanguage();
@@ -33,15 +50,24 @@ export default function VendorAccountAuth({ onAuthenticated, onWorkspaceAuthenti
     setAccount(next); setMfa(null);
     if (next.status === 'active' && next.vendorId) onAuthenticated();
   }, [onAuthenticated]);
+  // The default callback is a new function every render, so reach it through a ref to keep refresh stable.
+  const openWorkspace = useRef(onWorkspaceAuthenticated);
+  openWorkspace.current = onWorkspaceAuthenticated;
   const refresh = useCallback(async () => {
     setLoading(true); setError('');
+    let leaving = false;
     try {
       const response = await restoreVendorSession();
       if (response.ok) accept((await response.json()).account);
-      else if (response.status === 401) setAccount(null);
+      else if (response.status === 401) {
+        // Staff sign in through this same form. If their admin session is still alive (for example
+        // "Keep me signed in"), take them straight to the admin panel instead of asking again.
+        if (await hasAdminSession()) { leaving = true; openWorkspace.current(); return; }
+        setAccount(null);
+      }
       else throw new Error(vt('Could not check vendor access. Try again.'));
     } catch (err) { setError(err instanceof Error ? err.message : vt('Could not reach the vendor portal.')); }
-    finally { setLoading(false); }
+    finally { if (!leaving) setLoading(false); } // Stay on the loading state while moving to the admin panel.
   }, [accept]);
   useEffect(() => { void refresh(); }, [refresh]);
 
