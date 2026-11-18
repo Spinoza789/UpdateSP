@@ -1,0 +1,447 @@
+{
+ "note": "file paths are relative to this folder; upload each as help-videos/<slug>.mp4",
+ "videos": [
+  {
+   "slug": "crypto-coinbase-to-cake-wallet",
+   "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-cake-wallet-v2.mp4",
+   "title": "Paying with crypto: Coinbase to Cake Wallet",
+   "category": "Paying",
+   "level": "public",
+   "length": "4:17",
+   "chapters": [
+    {
+     "slug": "crypto-coinbase-to-cake-wallet-before-you-start",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-cake-wallet-v2-chapters/0-before-you-start.mp4",
+     "title": "Before you start",
+     "length": "1:19"
+    },
+    {
+     "slug": "crypto-coinbase-to-cake-wallet-step-1-your-wallet",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-cake-wallet-v2-chapters/1-step-1-your-wallet.mp4",
+     "title": "Step 1: your wallet",
+     "length": "0:23"
+    },
+    {
+     "slug": "crypto-coinbase-to-cake-wallet-step-2-buy",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-cake-wallet-v2-chapters/2-step-2-buy.mp4",
+     "title": "Step 2: buy",
+     "length": "0:35"
+    },
+    {
+     "slug": "crypto-coinbase-to-cake-wallet-step-3-move-your-coins",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-cake-wallet-v2-chapters/3-step-3-move-your-coins.mp4",
+     "title": "Step 3: move your coins",
+     "length": "0:47"
+    },
+    {
+     "slug": "crypto-coinbase-to-cake-wallet-step-4-pay",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-cake-wallet-v2-chapters/4-step-4-pay.mp4",
+     "title": "Step 4: pay",
+     "length": "1:09"
+    }
+   ]
+  },
+  {
+   "slug": "crypto-coinbase-to-exodus",
+   "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-exodus-v2.mp4",
+   "title": "Paying with crypto: Coinbase to Exodus",
+   "category": "Paying",
+   "level": "public",
+   "length": "4:23",
+   "chapters": [
+    {
+     "slug": "crypto-coinbase-to-exodus-before-you-start",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-exodus-v2-chapters/0-before-you-start.mp4",
+     "title": "Before you start",
+     "length": "1:21"
+    },
+    {
+     "slug": "crypto-coinbase-to-exodus-step-1-your-wallet",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-exodus-v2-chapters/1-step-1-your-wallet.mp4",
+     "title": "Step 1: your wallet",
+     "length": "0:27"
+    },
+    {
+     "slug": "crypto-coinbase-to-exodus-step-2-buy",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-exodus-v2-chapters/2-step-2-buy.mp4",
+     "title": "Step 2: buy",
+     "length": "0:35"
+    },
+    {
+     "slug": "crypto-coinbase-to-exodus-step-3-move-your-coins",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-exodus-v2-chapters/3-step-3-move-your-coins.mp4",
+     "title": "Step 3: move your coins",
+     "length": "0:47"
+    },
+    {
+     "slug": "crypto-coinbase-to-exodus-step-4-pay",
+     "file": "6-crypto-guides/salt-peps-crypto-coinbase-to-exodus-v2-chapters/4-step-4-pay.mp4",
+     "title": "Step 4: pay",
+     "length": "1:09"
+    }
+   ]
+  },
+  {
+   "slug": "crypto-kraken-to-cake-wallet",
+   "file": "6-crypto-guides/salt-peps-crypto-kraken-to-cake-wallet-v2.mp4",
+   "title": "Paying with crypto: Kraken to Cake Wallet",
+   "category": "Paying",
+   "level": "public",
+   "length": "4:27",
+   "chapters": [
+    {
+     "slug": "crypto-kraken-to-cake-wallet-before-you-start",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-cake-wallet-v2-chapters/0-before-you-start.mp4",
+     "title": "Before you start",
+     "length": "1:20"
+    },
+    {
+     "slug": "crypto-kraken-to-cake-wallet-step-1-your-wallet",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-cake-wallet-v2-chapters/1-step-1-your-wallet.mp4",
+     "title": "Step 1: your wallet",
+     "length": "0:23"
+    },
+    {
+     "slug": "crypto-kraken-to-cake-wallet-step-2-buy",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-cake-wallet-v2-chapters/2-step-2-buy.mp4",
+     "title": "Step 2: buy",
+     "length": "0:38"
+    },
+    {
+     "slug": "crypto-kraken-to-cake-wallet-step-3-move-your-coins",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-cake-wallet-v2-chapters/3-step-3-move-your-coins.mp4",
+     "title": "Step 3: move your coins",
+     "length": "0:55"
+    },
+    {
+     "slug": "crypto-kraken-to-cake-wallet-step-4-pay",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-cake-wallet-v2-chapters/4-step-4-pay.mp4",
+     "title": "Step 4: pay",
+     "length": "1:07"
+    }
+   ]
+  },
+  {
+   "slug": "crypto-kraken-to-exodus",
+   "file": "6-crypto-guides/salt-peps-crypto-kraken-to-exodus-v2.mp4",
+   "title": "Paying with crypto: Kraken to Exodus",
+   "category": "Paying",
+   "level": "public",
+   "length": "4:31",
+   "chapters": [
+    {
+     "slug": "crypto-kraken-to-exodus-before-you-start",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-exodus-v2-chapters/0-before-you-start.mp4",
+     "title": "Before you start",
+     "length": "1:20"
+    },
+    {
+     "slug": "crypto-kraken-to-exodus-step-1-your-wallet",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-exodus-v2-chapters/1-step-1-your-wallet.mp4",
+     "title": "Step 1: your wallet",
+     "length": "0:27"
+    },
+    {
+     "slug": "crypto-kraken-to-exodus-step-2-buy",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-exodus-v2-chapters/2-step-2-buy.mp4",
+     "title": "Step 2: buy",
+     "length": "0:38"
+    },
+    {
+     "slug": "crypto-kraken-to-exodus-step-3-move-your-coins",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-exodus-v2-chapters/3-step-3-move-your-coins.mp4",
+     "title": "Step 3: move your coins",
+     "length": "0:54"
+    },
+    {
+     "slug": "crypto-kraken-to-exodus-step-4-pay",
+     "file": "6-crypto-guides/salt-peps-crypto-kraken-to-exodus-v2-chapters/4-step-4-pay.mp4",
+     "title": "Step 4: pay",
+     "length": "1:06"
+    }
+   ]
+  },
+  {
+   "slug": "ordering-and-paying",
+   "file": "2-member-guides/salt-peps-ordering-and-paying-v2.mp4",
+   "title": "Ordering and paying",
+   "category": "Paying",
+   "level": "public",
+   "length": "1:51"
+  },
+  {
+   "slug": "batch-system",
+   "file": "1-buying-channels/salt-peps-batch-system-v3-1.1x.mp4",
+   "title": "HGH group buy: how the batch system works",
+   "category": "Group buys",
+   "level": "public",
+   "length": "1:57"
+  },
+  {
+   "slug": "uther-gb",
+   "file": "1-buying-channels/salt-peps-uther-gb-v3.mp4",
+   "title": "Uther group buy",
+   "category": "Group buys",
+   "level": "public",
+   "length": "1:56"
+  },
+  {
+   "slug": "half-kits",
+   "file": "1-buying-channels/salt-peps-half-kits.mp4",
+   "title": "Half kits",
+   "category": "Group buys",
+   "level": "public",
+   "length": "1:02"
+  },
+  {
+   "slug": "shared-orders",
+   "file": "1-buying-channels/salt-peps-shared-orders-v3.mp4",
+   "title": "Shared orders",
+   "category": "Shared orders and wholesale",
+   "level": "member",
+   "length": "2:17"
+  },
+  {
+   "slug": "wholesale",
+   "file": "1-buying-channels/salt-peps-wholesale-v3.mp4",
+   "title": "Wholesale",
+   "category": "Shared orders and wholesale",
+   "level": "member",
+   "length": "2:19"
+  },
+  {
+   "slug": "testing-pools",
+   "file": "1-buying-channels/salt-peps-testing-pools.mp4",
+   "title": "Testing pools",
+   "category": "Testing",
+   "level": "public",
+   "length": "1:39"
+  },
+  {
+   "slug": "gb-testing-pool",
+   "file": "1-buying-channels/salt-peps-gb-testing-pool.mp4",
+   "title": "Group buy testing pool",
+   "category": "Testing",
+   "level": "public",
+   "length": "1:33"
+  },
+  {
+   "slug": "supplier-testing",
+   "file": "1-buying-channels/salt-peps-supplier-testing.mp4",
+   "title": "Supplier testing",
+   "category": "Testing",
+   "level": "public",
+   "length": "1:01"
+  },
+  {
+   "slug": "dashboard",
+   "file": "2-member-guides/salt-peps-how-to-use-the-dashboard-v4.mp4",
+   "title": "How to use the dashboard",
+   "category": "Your account",
+   "level": "public",
+   "length": "4:17",
+   "mobileSlug": "dashboard-mobile"
+  },
+  {
+   "slug": "dashboard-mobile",
+   "file": "2-member-guides/salt-peps-how-to-use-the-dashboard-mobile.mp4",
+   "title": "How to use the dashboard (phone version)",
+   "category": "Your account",
+   "level": "public",
+   "length": "4:17"
+  },
+  {
+   "slug": "your-account-and-tracking",
+   "file": "2-member-guides/salt-peps-your-account-and-tracking.mp4",
+   "title": "Your account and tracking",
+   "category": "Your account",
+   "level": "public",
+   "length": "1:01"
+  },
+  {
+   "slug": "account-tools-tour",
+   "file": "2-member-guides/salt-peps-account-tools-tour.mp4",
+   "title": "Account tools tour",
+   "category": "Your account",
+   "level": "public",
+   "length": "1:12"
+  },
+  {
+   "slug": "uploading-your-qr-code",
+   "file": "2-member-guides/salt-peps-uploading-your-qr-code.mp4",
+   "title": "Uploading your QR code",
+   "category": "Your account",
+   "level": "public",
+   "length": "1:22",
+   "mobileSlug": "uploading-your-qr-code-mobile"
+  },
+  {
+   "slug": "uploading-your-qr-code-mobile",
+   "file": "2-member-guides/salt-peps-uploading-your-qr-code-mobile.mp4",
+   "title": "Uploading your QR code (phone version)",
+   "category": "Your account",
+   "level": "public",
+   "length": "1:22"
+  },
+  {
+   "slug": "support-tickets",
+   "file": "2-member-guides/salt-peps-support-tickets.mp4",
+   "title": "Support tickets",
+   "category": "Your account",
+   "level": "public",
+   "length": "1:47"
+  },
+  {
+   "slug": "telegram-bot",
+   "file": "2-member-guides/salt-peps-telegram-bot-v2.mp4",
+   "title": "Telegram bot",
+   "category": "Your account",
+   "level": "public",
+   "length": "1:00"
+  },
+  {
+   "slug": "the-lonely-vial-shop",
+   "file": "4-lonely-vial-and-peps-anonymous/salt-peps-the-lonely-vial-shop.mp4",
+   "title": "The Lonely Vial shop",
+   "category": "The Lonely Vial",
+   "level": "public",
+   "length": "1:18"
+  },
+  {
+   "slug": "selling-on-the-lonely-vial",
+   "file": "4-lonely-vial-and-peps-anonymous/salt-peps-selling-on-the-lonely-vial.mp4",
+   "title": "Selling on The Lonely Vial",
+   "category": "Get involved",
+   "level": "member",
+   "length": "1:08"
+  },
+  {
+   "slug": "becoming-a-reshipper",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-becoming-a-reshipper.mp4",
+   "title": "Becoming a reshipper",
+   "category": "Get involved",
+   "level": "public",
+   "length": "0:57"
+  },
+  {
+   "slug": "reshippers",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-reshippers.mp4",
+   "title": "Reshippers",
+   "category": "Get involved",
+   "level": "member",
+   "length": "1:54"
+  },
+  {
+   "slug": "pool-leader",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-pool-leader.mp4",
+   "title": "Pool leader",
+   "category": "Get involved",
+   "level": "member",
+   "length": "1:41"
+  },
+  {
+   "slug": "organiser-1-create",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-organiser-1-create-v2.mp4",
+   "title": "Organiser 1: create",
+   "category": "Get involved",
+   "level": "member",
+   "length": "2:19"
+  },
+  {
+   "slug": "organiser-2-orders",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-organiser-2-orders-v2.mp4",
+   "title": "Organiser 2: orders",
+   "category": "Your tools",
+   "level": "organiser",
+   "length": "1:39"
+  },
+  {
+   "slug": "organiser-3-dispatch",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-organiser-3-dispatch-v2.mp4",
+   "title": "Organiser 3: dispatch",
+   "category": "Your tools",
+   "level": "organiser",
+   "length": "1:20"
+  },
+  {
+   "slug": "organiser-4-tools",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-organiser-4-tools.mp4",
+   "title": "Organiser 4: tools",
+   "category": "Your tools",
+   "level": "organiser",
+   "length": "1:31"
+  },
+  {
+   "slug": "pool-leader-2-options",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-pool-leader-2-options.mp4",
+   "title": "Pool leader 2: options",
+   "category": "Your tools",
+   "level": "pool-leader",
+   "length": "1:04"
+  },
+  {
+   "slug": "reshippers-2-qr-and-box-checks",
+   "file": "3-organisers-pool-leaders-reshippers/salt-peps-reshippers-2-qr-and-box-checks.mp4",
+   "title": "Reshippers 2: QR codes and box checks",
+   "category": "Your tools",
+   "level": "reshipper",
+   "length": "1:06"
+  },
+  {
+   "slug": "faq-group-buys",
+   "file": "5-faq/salt-peps-faq-group-buys.mp4",
+   "title": "Common questions: group buys",
+   "category": "Common questions",
+   "level": "public",
+   "length": "2:07"
+  },
+  {
+   "slug": "faq-batch-system",
+   "file": "5-faq/salt-peps-faq-batch-system.mp4",
+   "title": "Common questions: the batch system",
+   "category": "Common questions",
+   "level": "public",
+   "length": "1:31"
+  },
+  {
+   "slug": "faq-shared-orders",
+   "file": "5-faq/salt-peps-faq-shared-orders.mp4",
+   "title": "Common questions: shared orders",
+   "category": "Common questions",
+   "level": "member",
+   "length": "1:35"
+  },
+  {
+   "slug": "faq-wholesale",
+   "file": "5-faq/salt-peps-faq-wholesale.mp4",
+   "title": "Common questions: wholesale",
+   "category": "Common questions",
+   "level": "member",
+   "length": "1:35"
+  },
+  {
+   "slug": "faq-testing-pools",
+   "file": "5-faq/salt-peps-faq-testing-pools.mp4",
+   "title": "Common questions: testing pools",
+   "category": "Common questions",
+   "level": "public",
+   "length": "1:42"
+  },
+  {
+   "slug": "faq-lab-tests",
+   "file": "5-faq/salt-peps-faq-lab-tests.mp4",
+   "title": "Common questions: lab tests",
+   "category": "Common questions",
+   "level": "public",
+   "length": "1:25"
+  },
+  {
+   "slug": "vendor-portal",
+   "file": "4-lonely-vial-and-peps-anonymous/peps-anonymous-vendor-portal.mp4",
+   "title": "Vendor portal tour",
+   "category": "Vendor portal",
+   "level": "vendor",
+   "length": "1:14"
+  }
+ ]
+}

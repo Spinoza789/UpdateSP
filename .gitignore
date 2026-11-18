@@ -30,5 +30,5 @@ attached_assets/Genetic_Lifehacks_*.pdf
 attached_assets/MyHeritage_*.csv
 attached_assets/23andme_*.txt
 
-# Guide video source files (577 MB). They live in App Storage, never in git.
-/salt-peps-videos-latest/
+# Guide videos are kept in git; only generated poster images are ignored.
+/salt-peps-videos-latest/posters/
