@@ -3,6 +3,7 @@ import { Copy, Check, Loader2, Send, AlertCircle, ShieldCheck, Clock, FlaskConic
 import QRCode from "react-qr-code";
 import { AnonPayPaymentDetails } from "@/components/AnonPayPaymentDetails";
 import { Card, Button, Input } from "@/components/ui";
+import { CryptoGuideLink } from "@/components/help/WatchLink";
 import { currSym } from "@/lib/currency";
 import { safeSubtractMoneyClamped } from "@/lib/exact-money";
 
@@ -1117,6 +1118,7 @@ export default function PaymentPanel({
           <p className="text-xs" style={{ color: "var(--t-subtle)" }}>
             Total: <span className="font-bold">{currSym(currency)}{effectiveGrandTotal.toFixed(2)}</span>{isGbp && creditsUsd > 0 ? <span className="text-emerald-600"> (−${creditsUsd.toFixed(2)} USD credits applied)</span> : ""} — choose your payment method below.
           </p>
+          <div className="mt-1.5"><CryptoGuideLink /></div>
         </div>
 
         <div className="space-y-2.5">
@@ -1810,6 +1812,7 @@ export default function PaymentPanel({
         </div>
 
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--crypto-text-muted)" }}>Choose your coin</p>
+        <div><CryptoGuideLink /></div>
 
         <div className="grid grid-cols-2 gap-3">
           {coinsForNetwork.map(opt => (
@@ -1893,6 +1896,7 @@ export default function PaymentPanel({
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
           </button>
+          <div className="px-1"><CryptoGuideLink chapter="step-4-pay" label="Watch: sending your payment" /></div>
 
           <button
             onClick={() => { setStep("pay"); setError(""); }}
@@ -1960,14 +1964,17 @@ export default function PaymentPanel({
         {submitting ? (
           <ConfirmationProgress confirmations={null} isPending={pendingTx} />
         ) : (
-          <TxInput
-            label="Paste your test payment transaction hash"
-            value={testTx}
-            onChange={v => { setTestTx(v); setError(""); }}
-            onSubmit={submitTest}
-            submitting={submitting}
-            error={error}
-          />
+          <>
+            <TxInput
+              label="Paste your test payment transaction hash"
+              value={testTx}
+              onChange={v => { setTestTx(v); setError(""); }}
+              onSubmit={submitTest}
+              submitting={submitting}
+              error={error}
+            />
+            <div><CryptoGuideLink chapter="step-4-pay" label="Where do I find my transaction hash?" /></div>
+          </>
         )}
 
         {!isAutoVerified(cryptoCurrency, cryptoNetwork) && (
@@ -2052,15 +2059,18 @@ export default function PaymentPanel({
       {submitting ? (
         <ConfirmationProgress confirmations={null} isPending={pendingTx} />
       ) : (
-        <TxInput
-          label="Paste your transaction hash after sending"
-          value={fullTx}
-          onChange={v => { setFullTx(v); setError(""); }}
-          onSubmit={submitFull}
-          submitting={submitting}
-          error={error}
-          retry={!!error}
-        />
+        <>
+          <TxInput
+            label="Paste your transaction hash after sending"
+            value={fullTx}
+            onChange={v => { setFullTx(v); setError(""); }}
+            onSubmit={submitFull}
+            submitting={submitting}
+            error={error}
+            retry={!!error}
+          />
+          <div><CryptoGuideLink chapter="step-4-pay" label="Where do I find my transaction hash?" /></div>
+        </>
       )}
 
       <div className="flex gap-2 items-start p-2.5 rounded-lg" style={{ background: "var(--crypto-warn-bg)", border: "1px solid var(--crypto-warn-border)" }}>

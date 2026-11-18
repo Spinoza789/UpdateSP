@@ -5,7 +5,7 @@ import {
   Search, Bell, ChevronDown, ChevronRight, Clock, Sun, Moon, PanelLeft, Send, Ticket,
   Wallet, Store, ArrowRight, User, LogOut, X, Award, FlaskConical,
   Droplet, Scale, TrendingUp, Activity, Truck, ShoppingBag, Users, TestTube, LifeBuoy,
-  BookMarked, GraduationCap, Calculator as CalcIcon, Sparkles, MessageCircle,
+  BookMarked, GraduationCap, Calculator as CalcIcon, Sparkles, MessageCircle, HelpCircle,
 } from "lucide-react";
 import { useGetProducts, useListLabTests } from "@workspace/api-client-react";
 import { getAccountHandle, useAccount, useAccountNotifications } from "@/hooks/use-account";
@@ -333,6 +333,7 @@ export function DashboardShell({
   const moreItems: SideLink[] = [
     { id: "lab-pool", label: "Testing Pools", Icon: TestTube, active: activeSection === "lab-pool", go: () => onSection("lab-pool") },
     { id: "supplier-testing", label: "Supplier Testing", Icon: TestTube, active: activeSection === "supplier-testing", go: () => onSection("supplier-testing") },
+    { id: "help",     label: "Help and videos", Icon: HelpCircle, go: () => navigate("/help") },
     { id: "support",  label: "Tickets",      Icon: LifeBuoy, active: activeSection === "support",  go: () => onSection("support") },
   ];
 
@@ -827,6 +828,11 @@ export function DashboardShell({
               style={{ height: 72, background: T.panel, borderBottom: `1px solid ${T.border}` }}
             >
               <h1 className="font-extrabold tracking-tight min-w-0 truncate sm:shrink-0" style={{ fontSize: 21 }} title={title}>{title}</h1>
+              <button type="button" onClick={() => navigate("/help")} aria-label="Help and video guides" title="Help and video guides"
+                data-testid="button-dashboard-help"
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ color: T.muted, border: `1px solid ${T.border}` }}>
+                <HelpCircle className="w-4 h-4" />
+              </button>
 
               <div className="flex-1 flex justify-center min-w-0 sm:px-2">
                 <div className="relative hidden sm:block w-full max-w-[460px]">

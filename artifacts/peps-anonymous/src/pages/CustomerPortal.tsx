@@ -1,4 +1,5 @@
 import { OrderReference } from "@/components/OrderReference";
+import { WatchLink } from "@/components/help/WatchLink";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { wholesaleStatusLabel } from "@/lib/wholesale-status-label";
 import { useQueryClient } from "@tanstack/react-query";
@@ -930,6 +931,7 @@ function TelegramCard() {
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-bold" style={{ color: T.text }}>Telegram Notifications</h3>
           <p className="text-[11px]" style={{ color: T.muted }}>Get order updates sent straight to your phone</p>
+          <div className="mt-1"><WatchLink slug="telegram-bot" label="Watch: setting up the Telegram bot" /></div>
         </div>
         {linked ? (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
@@ -7045,11 +7047,14 @@ function SupportSection({ username, onBack, initialTicketId }: { username: strin
               <ArrowLeft className="w-4 h-4" style={{ color: "rgba(255,255,255,0.9)" }} />
             </button>
             {view === "list" && (
-              <button onClick={() => setView("new")}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold"
-                style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>
-                <Plus className="w-3.5 h-3.5" /> New Ticket
-              </button>
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
+                <WatchLink slug="support-tickets" label="Watch: how tickets work" className="!text-white" />
+                <button onClick={() => setView("new")}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold"
+                  style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>
+                  <Plus className="w-3.5 h-3.5" /> New Ticket
+                </button>
+              </div>
             )}
             {view === "new" && (
               <button onClick={() => { setView("list"); setSubmitError(""); setNewTicketFiles([]); }}
@@ -7190,6 +7195,7 @@ function SupportSection({ username, onBack, initialTicketId }: { username: strin
                   <MessageSquare className="w-9 h-9 mx-auto opacity-20" style={{ color: "var(--t-blue-deep)" }} />
                   <p className="text-xs font-medium" style={{ color: "var(--t-subtle)" }}>No tickets yet.</p>
                   <p className="text-[11px]" style={{ color: "var(--t-subtle)" }}>Tap New Ticket to raise a support request.</p>
+                  <div className="flex justify-center"><WatchLink slug="support-tickets" label="Watch: how tickets work" /></div>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -8314,8 +8320,9 @@ export default function CustomerPortal() {
         <div className="px-4 md:px-7 py-6 flex flex-col gap-5 pb-[calc(96px_+_env(safe-area-inset-bottom))] lg:pb-8">
 
           {/* ── Header: subtitle ── */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <p className="text-[13px]" style={{ color: T.subtle }}>Manage and track all your orders</p>
+            <WatchLink slug="your-account-and-tracking" label="Watch: tracking your order" />
           </div>
 
           <div className="space-y-2">
@@ -8688,6 +8695,7 @@ export default function CustomerPortal() {
         <p className="text-xs" style={{ color: T.muted }}>
           Use a group buy’s menu to mark it completed for your account only. Orders and payments are unchanged.
         </p>
+        <div><WatchLink slug="batch-system" label="Watch: how the batch system works" /></div>
 
         {groupBuysPageMessage && !gbMsgDismissed && (
           <div
@@ -11180,7 +11188,7 @@ export default function CustomerPortal() {
   }
 
   if (section === "supplier-testing") {
-    return inShell("supplier-testing", "Supplier Testing", <SupplierTesting />);
+    return inShell("supplier-testing", "Supplier Testing", <><div className="-mb-2 empty:hidden"><WatchLink slug="supplier-testing" label="Watch: supplier testing" /></div><SupplierTesting /></>);
   }
 
   if (section === "community-testing") {

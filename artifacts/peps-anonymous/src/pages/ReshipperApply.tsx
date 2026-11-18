@@ -6,6 +6,7 @@ import {
   ArrowRight, LogIn, Loader2, Globe, Package, Users,
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
+import { WatchLink } from "@/components/help/WatchLink";
 import { useAccount } from "@/hooks/use-account";
 
 export default function ReshipperApply() {
@@ -63,6 +64,8 @@ export default function ReshipperApply() {
               <p className="text-sm text-white/75 mt-2 leading-relaxed">
                 Help your country's community by receiving and redistributing group buy shipments.
               </p>
+              <div className="mt-2"><WatchLink slug="becoming-a-reshipper" label="Watch: what a reshipper does" className="!text-white" /></div>
+              <div className="mt-1"><WatchLink slug="reshippers" label="Watch: the full reshipper guide" className="!text-white" /></div>
             </div>
             <div className="absolute top-0 right-0 w-36 h-36 rounded-full bg-white/10 pointer-events-none" style={{ transform: "translate(35%, -35%)" }} />
             <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/5 pointer-events-none" style={{ transform: "translate(-30%, 30%)" }} />

@@ -115,6 +115,44 @@ export function publicVendorOrder(row: any, stale: boolean, images: any[]) {
 }
 
 /* ---------------------------------------------------------------------------
+ * Following the Salt&Peps order
+ *
+ * Staff may move an order on (Processing, Shipped, tracking added) in the main admin
+ * without touching the vendor shipment. The shipment then shows the furthest of the two,
+ * so both panels match what the customer's order says.
+ * ------------------------------------------------------------------------- */
+const STATUS_RANK: Record<string, number> = { Submitted: 0, Processing: 1, Shipped: 2, Completed: 3 };
+const RANK_STATUS = ["Submitted", "Processing", "Shipped", "Completed"];
+export type SourceOrderState = { status: string; shippingCarrier?: string | null };
+export type TrackingParcel = { id: string; courier: string; internationalTrackingNumber: string; localTrackingNumber: string | null };
+/**
+ * The shipment row as it should be shown: status and tracking merged with its customer orders.
+ * `soleVendor` is false when the orders are split between vendors, where an order's tracking
+ * may belong to another vendor's parcel and must not be borrowed.
+ */
+export function followSourceOrders<Row extends { status: string; trackingNumber?: string | null; carrier?: string | null; trackingPackages?: TrackingParcel[] | null }>(
+  row: Row, orders: SourceOrderState[] | null | undefined, packagesOf: (order: any) => TrackingParcel[], soleVendor = true,
+): Row {
+  if (!orders?.length) return row;
+  const live = orders.filter(order => order.status !== "Cancelled");
+  if (!live.length) return { ...row, status: "Cancelled" };
+  const ranks = live.map(order => STATUS_RANK[order.status]);
+  // An order in a state this ladder does not know (for example Draft) leaves the shipment as it is.
+  if (ranks.some(rank => rank === undefined)) return row;
+  const own = STATUS_RANK[row.status] ?? 0;
+  const rank = Math.max(own, Math.min(...ranks));
+  const next: Row = rank === own ? row : { ...row, status: RANK_STATUS[rank] };
+  if (soleVendor && rank >= STATUS_RANK["Shipped"] && !row.trackingNumber && !row.trackingPackages?.length) {
+    const tracked = live.find(order => packagesOf(order).length > 0);
+    if (tracked) {
+      const packages = packagesOf(tracked);
+      return { ...next, trackingPackages: packages, trackingNumber: packages[0].internationalTrackingNumber, carrier: tracked.shippingCarrier || packages[0].courier || null };
+    }
+  }
+  return next;
+}
+
+/* ---------------------------------------------------------------------------
  * Vendor applications (self-service signup, approved by Admin)
  * ------------------------------------------------------------------------- */
 export interface VendorApplicationInput {

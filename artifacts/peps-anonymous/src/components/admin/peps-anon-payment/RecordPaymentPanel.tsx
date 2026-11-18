@@ -30,7 +30,7 @@ export function RecordPaymentPanel({ wallets, form, onForm, chosen, total, draft
   const sub = { color: "var(--t-subtle)" };
   return <Overlay side="center" testId="payment-record-dialog" closeTestId="payment-record-close" canClose={canClose} onClose={onClose}
     title={draft ? "Confirm payment record" : "Record payment"}
-    subtitle={<>Records an external transfer already sent to {vendorName}. It never sends funds or verifies blockchain receipt.</>}
+    subtitle={<>Records an external transfer already sent to {vendorName}. It never sends funds or verifies blockchain receipt. Orders still Submitted move to Processing.</>}
     footer={<>
       <PaymentSummary chosen={chosen} total={total} />
       {draft

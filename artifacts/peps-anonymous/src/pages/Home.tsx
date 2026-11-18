@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowRight, FlaskConical } from "lucide-react";
+import { ArrowRight, FlaskConical, PlayCircle } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { SiteAnnouncements } from "@/components/SiteAnnouncements";
 import { useCurrency } from "@/hooks/use-currency";
@@ -91,6 +91,19 @@ export default function Home() {
             <SiteAnnouncements />
           </div>
         )}
+
+        <div className="px-6 pt-4">
+          <button
+            type="button"
+            onClick={() => setLocation("/help")}
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold underline-offset-2 hover:underline rounded text-left"
+            style={{ color: "var(--t-blue)" }}
+            data-testid="link-home-help"
+          >
+            <PlayCircle className="w-4 h-4 shrink-0" aria-hidden />
+            <span>New here? Watch how it works</span>
+          </button>
+        </div>
 
         {/* ── TESTING POOLS ── */}
         {landingVis.testing_pools && (

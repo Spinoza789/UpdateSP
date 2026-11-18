@@ -26,7 +26,7 @@ describe("site domain boundary", () => {
       "/api/admin/vendor-portal/orders", "/api/admin/vendor-portal/orders/abc",
       "/api/admin/vendor-portal/vendor-images/abc", "/api/admin/vendor-portal/preview", "/api/admin/vendor-portal/submit",
       "/api/admin/vendor-portal/orders/abc/update",
-      "/api/admin/vendor-telegram/log",
+      "/api/admin/vendor-telegram/log", "/api/help-videos/vendor-portal", "/api/help-videos/vendor-portal/poster",
       "/api/admin/vendor-payments", "/api/admin/vendor-payments/export", "/api/admin/vendor-payments/acknowledge-paid",
       "/api/admin/vendor-payments/report", "/api/admin/vendor-payments/order-comparison", "/api/admin/vendor-payments/transaction-details",
       "/api/admin/vendor-payments/abc/void", "/api/admin/vendor-payments/orders/abc/costs", "/api/admin/vendor-payments/orders/abc/clear-paid",
@@ -37,7 +37,7 @@ describe("site domain boundary", () => {
       "/api/admin/auth/step-up", "/api/admin/vendor-portal/access", "/api/admin/vendor-portal",
       "/api/admin/vendor-portal/orders/abc/unknown", "/api/admin/vendor-portal/orders-extra",
       "/api/admin/vendor-payments-extra", "/api/admin/vendor-payments/abc", "/api/admin/vendor-payments/orders/abc",
-      "/api/admin/vendor-payments/orders/abc/unknown", "/api/admin/vendor-accounts/abc",
+      "/api/admin/vendor-payments/orders/abc/unknown", "/api/admin/vendor-accounts/abc", "/api/help-videos/batch-system", "/api/help-videos/organiser-2-orders",
       "/api/admin/vendor-telegram", "/api/admin/vendor-telegram/test/abc", "/api/admin/vendor-telegram/chats/abc"]) {
       expect((await request("pepsanonymous.com", path)).status, path).toBe(404);
     }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, ClipboardCheck, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronUp, ClipboardCheck, PlayCircle, RefreshCw } from "lucide-react";
 import { vendorFetch } from "@/lib/vendor-auth-client";
+import { HELP_VIDEO_BY_SLUG } from "@/data/help-videos";
+import { openHelpVideo } from "@/components/help/help-video-store";
 import { vendorTranslate as vt, useVendorLanguage } from "@/lib/vendor-language";
 import { Badge, Btn, Card, muted } from "./vendor-ui";
 
@@ -100,6 +102,14 @@ export function VendorSetupGuide({ username, walletReady, walletLoading, walletE
       {!review.collapsed && <div id="vendor-setup-steps">
         <p className="text-xs mt-3 mb-1" style={muted}>{vt("Email and Telegram are optional. This checklist does not block your orders. Review and skip choices are saved on this browser only.")}</p>
         <ol className="divide-y" style={{ borderColor: "var(--t-border)" }}>
+          {/* Not a setup step: a plain link to the vendor portal tour video (the server enforces access). */}
+          {HELP_VIDEO_BY_SLUG["vendor-portal"] && <li className="py-2" data-testid="setup-watch-tour">
+            <button type="button" onClick={() => openHelpVideo("vendor-portal")} data-testid="watch-link-vendor-portal"
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold underline-offset-2 hover:underline rounded text-left" style={{ color: "var(--t-blue)" }}>
+              <PlayCircle className="w-4 h-4 shrink-0" aria-hidden />
+              <span>{vt("Watch: vendor portal tour")} ({HELP_VIDEO_BY_SLUG["vendor-portal"].length})</span>
+            </button>
+          </li>}
           {steps.map((step, index) => {
             const skipped = step.optional && !step.check?.ready && review[step.key as keyof Review] === true;
             const reviewed = !step.check && review[step.key as keyof Review] === true;

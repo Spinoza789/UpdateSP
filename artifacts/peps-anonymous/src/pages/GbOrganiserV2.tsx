@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import { useAccount } from "@/hooks/use-account";
+import { openHelpVideo } from "@/components/help/help-video-store";
 import type { OrganiserGB } from "./GbOrganiser";
 import SetupWizard from "./organiser-v2/SetupWizard";
 import Workspace from "./organiser-v2/Workspace";
@@ -114,6 +115,14 @@ export default function GbOrganiserV2() {
       keywords: ["tour", "tutorial", "help", "guide", "walkthrough"],
       category: "Help",
       action: () => setShowTour(true),
+    },
+    {
+      id: "watch-organiser-videos",
+      label: "Watch organiser videos",
+      description: "Short video guides, starting with creating a group buy",
+      keywords: ["video", "videos", "watch", "help", "guide", "tutorial"],
+      category: "Help",
+      action: () => openHelpVideo("organiser-1-create"),
     },
     {
       id: "switch-setup",

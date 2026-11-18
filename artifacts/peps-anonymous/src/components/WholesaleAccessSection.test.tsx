@@ -5,6 +5,8 @@ vi.mock("@/components/PaymentPanel", () => ({
     "data-payment-prefix": props.apiPrefix, "data-total": props.grandTotal,
   }),
 }));
+// The Watch link reads the signed-in account, which needs the app's query provider; it is not under test here.
+vi.mock("@/components/help/WatchLink", () => ({ WatchLink: () => null }));
 const dom = new JSDOM("<html><body></body></html>", { url: "https://example.test" });
 for (const key of ["window", "document", "navigator", "HTMLElement"])
   Object.defineProperty(globalThis, key, { configurable: true, value: (dom.window as any)[key] });

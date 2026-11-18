@@ -1,5 +1,6 @@
 import { hasFreeDirectHomeShipping } from "@workspace/shipping/group-buy-direct";
 import { HghBatchGuide } from "@/components/HghBatchGuide";
+import { WatchLink } from "@/components/help/WatchLink";
 import { formatOrderPrice } from "@/lib/order-money";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -1342,6 +1343,7 @@ export default function OrderForm() {
           <header className="order-form-intro">
             <h1>Build your order</h1>
             <p>Choose your products and delivery, then review your total.</p>
+            <div className="mt-1"><WatchLink slug="ordering-and-paying" label="Watch: ordering and paying" /></div>
           </header>
         )}
 
@@ -1351,6 +1353,7 @@ export default function OrderForm() {
             <div className="pt-1">
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1 text-center" style={{ color: "var(--t-blue-deep)" }}>Group Buy</p>
               <h1 className="text-2xl font-extrabold tracking-tight text-center" style={{ color: "var(--t-text)" }}>{pageTitle}</h1>
+              <div className="mt-1 flex justify-center"><WatchLink slug="batch-system" label="Watch: how the batch system works" /></div>
             </div>
 
             {/* Order page message banner */}

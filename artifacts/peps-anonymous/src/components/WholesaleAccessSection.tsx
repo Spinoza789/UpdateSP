@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { CheckCircle, XCircle, Loader2, ChevronRight, Clock } from "lucide-react";
 import PaymentPanel from "@/components/PaymentPanel";
+import { WatchLink } from "@/components/help/WatchLink";
 
 type WARStatus = "pending" | "confirmed" | "rejected";
 type WARData = {
@@ -174,6 +175,7 @@ export function WholesaleAccessSection() {
       <div className="w-full max-w-[520px] space-y-6">
         <div className="rounded-xl p-5 space-y-4" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
           <h3 className="text-base font-bold" style={{ color: "var(--t-text)" }}>How it works</h3>
+          <div className="!mt-1"><WatchLink slug="wholesale" label="Watch: how wholesale works" /></div>
           <ol className="space-y-3">
             {[
               { n: "1", text: "Select Get Wholesale Access from the navigation." },

@@ -8,7 +8,8 @@ import {
 import { getVendors } from "../routes/config";
 import { calcTotalShipping, pickRegionForCountry } from "./wholesale-shipping";
 import { assertNoActiveRefunds, refundMutationPredicate } from "./refund-mutation-guard";
-import { supplierCatalogueCosts, supplierItems, requiredShipping, sourceFingerprint, previewFingerprint, VendorPortalError, type VendorApplicationInput } from "./vendor-portal-model";
+import { supplierCatalogueCosts, supplierItems, requiredShipping, sourceFingerprint, previewFingerprint, VendorPortalError, followSourceOrders, publicVendorOrder, type VendorApplicationInput } from "./vendor-portal-model";
+import { getTrackingPackages } from "@workspace/shipping/tracking";
 import { centsToUsdString, usdToCents } from "./refund-money";
 import { supplierTextDetails } from "./vendor-supplier-export";
 import { loadFs3CostMatches } from "./fs3-cost-matches";
@@ -172,6 +173,15 @@ export async function inspectVendorSubmission(tx: Executor, row: any, reads?: Ve
     if (error instanceof VendorPortalError || (error as any)?.name === "RefundMutationBlockedError") return { source: null, stale: true };
     throw error;
   }
+}
+/** The shipment row with its status and tracking brought in line with the Salt&Peps order(s) behind it. */
+export function rowFollowingSource(row: any, source: { orders: any[]; vendorIds: string[] } | null) {
+  return source ? followSourceOrders(row, source.orders, order => getTrackingPackages(order) as any, source.vendorIds.length <= 1) : row;
+}
+/** What a vendor or admin list shows for one shipment: one source read gives both staleness and the live status. */
+export async function vendorOrderView(tx: Executor, row: any, images: any[]) {
+  const { source, stale } = await inspectVendorSubmission(tx, row);
+  return publicVendorOrder(rowFollowingSource(row, source), stale, images);
 }
 export async function isVendorSubmissionStale(tx: Executor, row: any): Promise<boolean> {
   return (await inspectVendorSubmission(tx, row)).stale;

@@ -15,6 +15,7 @@ import {
   signupLimiter,
 } from "../middleware/rate-limits";
 import healthRouter from "./health";
+import helpVideosRouter from "./help-videos";
 import hghBatchGuideRouter from "./hgh-batch-guide";
 import productsRouter from "./products";
 import jbgYtCatalogueImportRouter from "./jbg-yt-catalogue-import";
@@ -107,6 +108,7 @@ router.use("/tmd", testmedaddyRouter);
 
 router.use(healthRouter);
 router.use(hghBatchGuideRouter);
+router.use(helpVideosRouter);
 
 // Tight rate limit on admin auth-check (on top of brute-force lockout)
 router.use("/admin/auth-check", adminAuthLimiter);

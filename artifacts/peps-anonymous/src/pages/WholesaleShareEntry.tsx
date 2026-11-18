@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Loader2, ArrowRight, Users, Share2, Clock, Globe, ShieldAlert, Package, MapPin, EyeOff, RotateCcw } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
+import { WatchLink } from "@/components/help/WatchLink";
 import { WholesaleShell } from "@/components/WholesaleShell";
 import { useAccount } from "@/hooks/use-account";
 import { SupplierSelection, type SharedSupplier } from "@/components/wholesale-shared/SupplierSelection";
@@ -126,6 +127,7 @@ export default function WholesaleShareEntry() {
               <p className="text-sm" style={{ color: "var(--t-muted)" }}>
                 Pool one parcel with other members — everyone adds their own items and pays their own share, with vendor shipping split between you.
               </p>
+              <div><WatchLink slug="shared-orders" label="Watch: how shared orders work" /></div>
             </div>
 
             {!configLoaded ? (

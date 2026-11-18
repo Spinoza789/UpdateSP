@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import { db } from "@workspace/db";
 import { bloodTestSessionsTable, bloodTestValuesTable, compoundLogsTable, accountsTable, btConversationsTable, siteConfigTable, btKnowledgeCacheTable, customerActivityLogsTable, labTestsTable, glp1LogsTable } from "@workspace/db";
 import { eq, and, desc, sql, inArray, gte, count } from "drizzle-orm";
@@ -9,6 +9,9 @@ import { type Glp1LogCtx } from "../lib/sage-system-prompt";
 import { findProtocol, formatProtocolForSage } from "../lib/protocol-data";
 import { logCustomerActivity } from "../lib/activity-log";
 import { fetchPepPediaContext } from "../lib/pep-pedia";
+import { buildSageHelpVideoBlock, extractVideoSlugs, filterVideoSlugs, sageHelpVideos } from "../lib/help-video-assistant";
+import { helpViewerForRequest, helpVideosVisibleTo } from "./help-videos";
+import type { HelpVideo } from "../../../peps-anonymous/src/data/help-videos";
 import { searchPeppysArticles } from "../lib/peppys-search";
 import { isWebSearchEnabled, getSageSystemPromptTemplate } from "./admin-sage-settings";
 import {
@@ -879,7 +882,9 @@ const Q_TAG_RE = /\[Q\]([\s\S]*?)\[\/Q\]/g;
 
 interface DiscussSource { label: string; url: string; type: "study" | "forum" | "other" }
 
-function parseResponse(raw: string): { text: string; chips: string[]; sources: DiscussSource[]; chartMarkers: string[] } {
+function parseResponse(rawWithVideos: string): { text: string; chips: string[]; sources: DiscussSource[]; chartMarkers: string[]; videoSlugs: string[] } {
+  // Guide videos: the block is stripped here; the slugs are checked against the viewer's list by the caller.
+  const { text: raw, slugs: videoSlugs } = extractVideoSlugs(rawWithVideos);
   const chipsMatch = raw.match(CHIPS_RE);
   let chips: string[] = [];
   if (chipsMatch) {
@@ -916,7 +921,7 @@ function parseResponse(raw: string): { text: string; chips: string[]; sources: D
   // Strip [Q] tags from displayed text
   text = text.replace(Q_TAG_RE, "").trim();
 
-  return { text: text || "Sorry, I wasn't able to generate a response. Please try again.", chips, sources, chartMarkers };
+  return { text: text || "Sorry, I wasn't able to generate a response. Please try again.", chips, sources, chartMarkers, videoSlugs };
 }
 
 // ─── Sage output safety filter ────────────────────────────────────────────────
@@ -1029,6 +1034,15 @@ async function scanSageInput(
   return { blocked: true, reason: matchedLabel, autoSuspended };
 }
 
+/** The guide videos Sage may offer this member. An empty list if the lookup fails, so the chat still answers. */
+async function sageHelpVideosForRequest(req: Request): Promise<HelpVideo[]> {
+  try { return sageHelpVideos(helpVideosVisibleTo(await helpViewerForRequest(req))); }
+  catch (error) {
+    console.error("[discuss] could not load guide videos:", error instanceof Error ? error.message : "unknown error");
+    return [];
+  }
+}
+
 async function callGeminiDiscuss(
   message: string,
   sessionName: string,
@@ -1044,7 +1058,8 @@ async function callGeminiDiscuss(
   glp1Logs: Glp1LogCtx[] = [],
   onToken?: (text: string) => void,
   onStatus?: (msg: string) => void,
-): Promise<{ text: string; chips: string[]; sources: DiscussSource[]; charts: ChartSeries[] }> {
+  helpVideos: HelpVideo[] = [],
+): Promise<{ text: string; chips: string[]; sources: DiscussSource[]; charts: ChartSeries[]; videos: string[] }> {
   const seriesMap = buildChartableSeries(sessionDate, biomarkers, historicalSessions);
   const chartableMarkers = [...seriesMap.values()].filter(s => s.points.length >= 2).map(s => s.marker);
 
@@ -1069,6 +1084,10 @@ async function callGeminiDiscuss(
       .join("\n\n---\n\n");
     systemPrompt += `\n\n─── PEPPYS COMMUNITY RESEARCH ───\nThe following are relevant threads from the Peppys private peptide research community (chat.peppys.org):\n\n${snippets}\n─── END PEPPYS RESEARCH ───\n\nUse this community research as a real-world experience supplement to scientific sources. When citing, use the URL provided for each thread.`;
   }
+
+  // Guide videos this member may watch, plus how to offer them. Appended in code
+  // (not via the admin-edited template) so it applies whatever the live template says.
+  systemPrompt += `\n\n${buildSageHelpVideoBlock(helpVideos)}`;
 
   const webSearchSources: DiscussSource[] = [];
 
@@ -1143,7 +1162,7 @@ async function callGeminiDiscuss(
     sources = merged.slice(0, 5);
   }
 
-  return { text: parsed.text, chips: parsed.chips, sources, charts };
+  return { text: parsed.text, chips: parsed.chips, sources, charts, videos: filterVideoSlugs(parsed.videoSlugs, helpVideos) };
 }
 
 // ─── Health Insights AI helper ────────────────────────────────────────────────
@@ -1977,6 +1996,7 @@ router.post("/blood-tests/discuss", requireAccount, async (req, res): Promise<vo
         glp1Logs,
         (text) => sseWrite({ type: "token", text }),
         (msg) => sseWrite({ type: "status", text: msg }),
+        await sageHelpVideosForRequest(req),
       );
 
       logCustomerActivity({
@@ -1997,7 +2017,7 @@ router.post("/blood-tests/discuss", requireAccount, async (req, res): Promise<vo
         metadata: { sender: "ai", content: result.text, conversationId: "compounds-only", characterCount: result.text.length },
       }).catch(() => {});
 
-      sseWrite({ type: "done", response: result.text, sources: result.sources, chips: result.chips, charts: result.charts, contextSession: null, used: newCountNoBt, limit: effectiveLimit });
+      sseWrite({ type: "done", response: result.text, sources: result.sources, chips: result.chips, charts: result.charts, videos: result.videos, contextSession: null, used: newCountNoBt, limit: effectiveLimit });
       res.end();
     } catch (err) {
       console.error("[discuss] Gemini error (compounds-only):", err);
@@ -2109,6 +2129,7 @@ router.post("/blood-tests/discuss", requireAccount, async (req, res): Promise<vo
   let responseChips: string[] = [];
   let responseSources: DiscussSource[] = [];
   let responseCharts: ChartSeries[] = [];
+  let responseVideos: string[] = [];
   try {
     const effectiveHistory = biomarkers.length > 0
       ? removeStaleNoDataAssistantMessages(history)
@@ -2136,11 +2157,12 @@ router.post("/blood-tests/discuss", requireAccount, async (req, res): Promise<vo
       calories: r.calories != null ? parseFloat(String(r.calories)) : null,
       proteinG: r.proteinG != null ? parseFloat(String(r.proteinG)) : null,
     }));
-    const result = await callGeminiDiscuss(message, sessionDisplayName, session.testDate, biomarkers, effectiveHistory, activeCompounds, historicalSessions, cachedKnowledge, labTests, allCompoundsWithStatus, true, glp1Logs, (text) => sseWrite({ type: "token", text }), (msg) => sseWrite({ type: "status", text: msg }));
+    const result = await callGeminiDiscuss(message, sessionDisplayName, session.testDate, biomarkers, effectiveHistory, activeCompounds, historicalSessions, cachedKnowledge, labTests, allCompoundsWithStatus, true, glp1Logs, (text) => sseWrite({ type: "token", text }), (msg) => sseWrite({ type: "status", text: msg }), await sageHelpVideosForRequest(req));
     responseText = result.text;
     responseChips = result.chips;
     responseSources = result.sources;
     responseCharts = result.charts;
+    responseVideos = result.videos;
   } catch (err) {
     console.error("[discuss] Sage AI error:", err);
     await db
@@ -2180,7 +2202,7 @@ router.post("/blood-tests/discuss", requireAccount, async (req, res): Promise<vo
     },
   }).catch(() => {});
 
-  sseWrite({ type: "done", response: responseText, sources: responseSources, chips: responseChips, charts: responseCharts, contextSession: { id: session.id, testName: session.testName ?? session.labName ?? "Blood Test", testDate: session.testDate }, used: newCount, limit: effectiveLimit });
+  sseWrite({ type: "done", response: responseText, sources: responseSources, chips: responseChips, charts: responseCharts, videos: responseVideos, contextSession: { id: session.id, testName: session.testName ?? session.labName ?? "Blood Test", testDate: session.testDate }, used: newCount, limit: effectiveLimit });
   res.end();
 });
 

@@ -1,4 +1,5 @@
 import { OnwardPaymentReadonly } from "@/components/onward-delivery/OnwardPayments";
+import { WatchLink } from "@/components/help/WatchLink";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -4321,6 +4322,8 @@ export default function ReshipperPage() {
             </p>
           )}
           <div className="flex items-center gap-2 shrink-0">
+            <WatchLink slug="reshippers" label="Watch: reshipper guide" showLength={false} />
+            <WatchLink slug="reshippers-2-qr-and-box-checks" label="QR codes and box checks" className="hidden md:inline-flex" />
             <button
               onClick={() => setShowJoinForm(v => !v)}
               className="flex items-center gap-1.5 px-3 rounded-lg text-[11.5px] font-bold whitespace-nowrap transition-all"

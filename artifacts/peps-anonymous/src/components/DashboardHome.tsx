@@ -4,8 +4,9 @@ import {
   ChevronLeft, ChevronRight, Plus, ArrowUp, MoreVertical, Star, Heart,
   Package, CheckCircle2, Award, FlaskConical, Clock, SlidersHorizontal,
   Syringe, Store, ArrowRight, QrCode, MapPin, Check, Sparkles, Droplet,
-  ClipboardList, HeartPulse, UsersRound, ReceiptText, History,
+  ClipboardList, HeartPulse, UsersRound, ReceiptText, History, X,
 } from "lucide-react";
+import { WatchLink } from "@/components/help/WatchLink";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
 import { useThemeStore } from "@/hooks/use-theme";
 import type { PortalNavProps } from "@/pages/CustomerPortal";
@@ -47,6 +48,14 @@ export function DashboardHome({
   const { dark } = useThemeStore();
   const [, navigate] = useLocation();
   const T = palette(dark);
+  // "New here?" tour card: dismissal is remembered in this browser only.
+  const [tourCardHidden, setTourCardHidden] = useState(() => {
+    try { return localStorage.getItem("sp-help-dashboard-tour-dismissed") === "1"; } catch { return false; }
+  });
+  const dismissTourCard = () => {
+    setTourCardHidden(true);
+    try { localStorage.setItem("sp-help-dashboard-tour-dismissed", "1"); } catch { /* private window */ }
+  };
   const [heroQ, setHeroQ] = useState("");
   const [heroFocused, setHeroFocused] = useState(false);
   const askSage = (q: string) => { navigate(`/sage?q=${encodeURIComponent(q)}`); };
@@ -164,6 +173,18 @@ export function DashboardHome({
 
         {/* LEFT column */}
         <div className="flex-1 min-w-0 flex flex-col gap-5">
+
+          {/* New here? Dashboard tour (dismissible) */}
+          {!tourCardHidden && (
+            <div className="flex items-center justify-between gap-3 px-3.5 py-2.5" data-testid="card-dashboard-tour"
+              style={{ borderRadius: 12, background: T.panel, border: `1px solid ${T.border}` }}>
+              <WatchLink slug="dashboard" label="New here? Watch the dashboard tour" />
+              <button type="button" onClick={dismissTourCard} aria-label="Dismiss dashboard tour"
+                className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ color: T.muted }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Hero — Meet Sage */}
           <div className="relative overflow-hidden" style={{ borderRadius: 14, background: HERO_GRAD, padding: "24px 28px 22px" }}>

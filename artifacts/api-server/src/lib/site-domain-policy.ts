@@ -76,7 +76,9 @@ export function siteDomainPolicy(options: { production: boolean; developmentHost
         || /^\/api\/admin\/vendor-portal\/(?:orders|vendor-images)\/[a-z0-9_-]+$/i.test(path)
         || /^\/api\/admin\/vendor-portal\/orders\/[a-z0-9_-]+\/update$/i.test(path)
         || VENDOR_PAYMENT_ADMIN_API.test(path);
-      if (!vendorApi && !vendorAdminApi && !VENDOR_PAGES.has(path) && !HEALTH_PATHS.has(path) && !staticAsset) {
+      // The vendor portal tour is the only guide video served on the vendor host.
+      const vendorGuideVideo = path === "/api/help-videos/vendor-portal" || path === "/api/help-videos/vendor-portal/poster";
+      if (!vendorApi && !vendorAdminApi && !vendorGuideVideo && !VENDOR_PAGES.has(path) && !HEALTH_PATHS.has(path) && !staticAsset) {
         res.status(404).json({ error: "Not found" }); return;
       }
     }

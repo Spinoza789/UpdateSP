@@ -54,6 +54,8 @@ import LearnLesson from "@/pages/LearnLesson";
 import PeptideExplorer from "@/pages/PeptideExplorer";
 import NotFound from "@/pages/not-found";
 import Feedback from "@/pages/Feedback";
+import Help from "@/pages/Help";
+import { HelpVideoHost } from "@/components/help/HelpVideoHost";
 import GbOrganiser from "@/pages/GbOrganiser";
 import GbOrganiserV2 from "@/pages/GbOrganiserV2";
 import GbQrViewer from "@/pages/GbQrViewer";
@@ -159,6 +161,8 @@ function Router() {
       <Route path="/learn/:courseSlug" component={LearnCourse} />
       <Route path="/learn/:courseSlug/:lessonSlug" component={LearnLesson} />
       <Route path="/feedback" component={Feedback} />
+      <Route path="/help" component={Help} />
+      <Route path="/help/:slug" component={Help} />
       <Route path="/gborganiser" component={GbOrganiser} />
       <Route path="/gborganiser-v2" component={GbOrganiserV2} />
       <Route path="/qr-viewer/:gbId" component={GbQrViewer} />
@@ -326,7 +330,8 @@ function SiteContent() {
     document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')?.setAttribute("href", surface === "vendor" ? "/brand/pepsanonymous-apple-touch-180.png" : "/brand/salt-peps-apple-touch-180.png");
   }, [surface]);
   if (surface === "blocked") return <SiteNotFound />;
-  if (surface === "vendor") return (
+  if (surface === "vendor") return (<>
+    <HelpVideoHost />
     <Switch>
       <Route path="/vendor/admin" component={PepsAdmin} />
       <Route path="/vendor/admin/" component={PepsAdmin} />
@@ -339,12 +344,13 @@ function SiteContent() {
       <Route path="/login/" component={VendorLogin} />
       <Route component={SiteNotFound} />
     </Switch>
-  );
+  </>);
   return <>
     <TelegramAutoLogin />
     <AccountSessionActivity />
     <AccountSessionRecoveryNotice />
     <Router />
+    <HelpVideoHost />
     <DiscordLoginSetupModal />
   </>;
 }

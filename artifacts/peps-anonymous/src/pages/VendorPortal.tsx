@@ -70,14 +70,9 @@ type Stage = "new" | "processing" | "shipped" | "hold";
 function stage(o: VendorOrder): Stage {
   if (o.stale) return "hold";
   const s = o.status.toLowerCase();
-  if (o.trackingNumber || s.includes("ship")) return "shipped";
+  if (s.includes("cancel")) return "hold";
+  if (o.trackingNumber || s.includes("ship") || s.includes("complete")) return "shipped";
   return s.includes("process") ? "processing" : "new";
-}
-const OVERDUE_HOURS = 48;
-function overdue(o: VendorOrder) {
-  const st = stage(o);
-  const t = new Date(o.submittedAt).getTime();
-  return (st === "new" || st === "processing") && !isNaN(t) && Date.now() - t > OVERDUE_HOURS * 3_600_000;
 }
 
 /* ---------------------------------------------------------------------------
@@ -137,7 +132,7 @@ export function ShippingBlock({ order }: { order: VendorOrder }) {
  * ------------------------------------------------------------------------- */
 type Tab = Stage | "all";
 type View = "home" | "orders" | "settings" | "messages";
-type Counts = Record<Tab, number> & { overdue: number };
+type Counts = Record<Tab, number>;
 interface NavProps { view: View; tab: Tab; counts: Counts; onNav: (v: View, tab?: Tab) => void; unreadMessages?: number }
 
 function patchOrder(id: string, body: object) {
@@ -238,8 +233,8 @@ export default function VendorPortal() {
   };
 
   const counts = useMemo<Counts>(() => {
-    const c: Counts = { new: 0, processing: 0, shipped: 0, hold: 0, all: 0, overdue: 0 };
-    for (const o of orders ?? []) { c[stage(o)]++; c.all++; if (overdue(o)) c.overdue++; }
+    const c: Counts = { new: 0, processing: 0, shipped: 0, hold: 0, all: 0 };
+    for (const o of orders ?? []) { c[stage(o)]++; c.all++; }
     return c;
   }, [orders]);
 
@@ -358,7 +353,6 @@ export default function VendorPortal() {
 
         <VendorTrackingImport orders={orders ?? []} onChanged={load} />
 
-        {counts.overdue > 0 && <div className="mb-4"><Banner tone="critical" testId="text-overdue">{vt(counts.overdue)}  {t("order")}{vt(counts.overdue === 1 ? " has" : "s have")}  {t("been waiting more than")} {vt(OVERDUE_HOURS)}  {t("hours without tracking.")}</Banner></div>}
 
         <Card flush>
           <div className="flex items-center gap-1 overflow-x-auto px-3 pt-3 pb-2" role="tablist">
@@ -434,7 +428,6 @@ function HomeView({ me, orders, counts, attention, updated, refreshBtn, listErro
   const ready = orders !== null;
 
   const allTodos: { n: number; text: string; tone: Tone; icon: typeof Package; tab: Tab }[] = [
-    { n: counts.overdue, text: `overdue · waiting more than ${OVERDUE_HOURS}h without tracking`, tone: "critical", icon: Clock, tab: "all" },
     { n: counts.new, text: "to start packing", tone: "attention", icon: Package, tab: "new" },
     { n: counts.processing, text: "in progress and waiting for a tracking number", tone: "info", icon: Truck, tab: "processing" },
     { n: counts.hold, text: "on hold · changed by Peps Anonymous after submission", tone: "warning", icon: PauseCircle, tab: "hold" },
@@ -449,7 +442,7 @@ function HomeView({ me, orders, counts, attention, updated, refreshBtn, listErro
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Metric label="Awaiting fulfilment" value={ready ? String(m.open) : "–"} onClick={() => onNav("orders", "all")}
-          foot={counts.overdue ? <span style={{ color: TONES.critical.fg }}>{vt(counts.overdue)}  {t("overdue")}</span> : "All within 48h"} />
+          foot="Still to ship" />
         <Metric label="Received · last 7 days" value={ready ? String(m.recent) : "–"}
           foot={delta === null ? `${m.prior} the week before` : <span className="inline-flex items-center gap-0.5" style={{ color: delta >= 0 ? "#0C5132" : "#8E1F0B" }}>
             {delta >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}{vt(Math.abs(delta))}{t("% vs prior week")}</span>} />
@@ -555,7 +548,6 @@ function CompactRow({ order: o, flagged, onOpen }: { order: VendorOrder; flagged
       <button onClick={onOpen} className="text-left min-w-0 flex-1 after:absolute after:inset-0 focus-visible:outline-none" data-testid={`card-order-${o.id}`}>
         <span className="flex items-center gap-2 flex-wrap">
           <span className="text-[13px] font-semibold" style={{ color: "var(--t-text)" }}>#{o.reference}</span>
-          {overdue(o) && <Badge tone="critical">{t("Overdue")}</Badge>}
           {flagged && <Badge tone="critical">{t("Problem")}</Badge>}
         </span>
         <span className="block text-xs mt-0.5 truncate" style={muted}>{vt(when(o.submittedAt))} · {o.shipping.name}, {o.shipping.country} · {vt(units(o))}  {t("item")}{vt(units(o) === 1 || getVendorLanguage() === "zh" ? "" : "s")} · {money(o.totalCost, o.currency)}</span>
@@ -567,7 +559,7 @@ function CompactRow({ order: o, flagged, onOpen }: { order: VendorOrder; flagged
 }
 
 function OrderRow({ order: o, cols, selectable, flagged, picked, onPick, onOpen }: { order: VendorOrder; cols: string; selectable?: boolean; flagged?: boolean; picked: boolean; onPick?: (v: boolean) => void; onOpen: () => void }) {
-  const st = stage(o); const late = overdue(o); const cta = ctaFor(st);
+  const st = stage(o); const cta = ctaFor(st);
   return (
     <li className={`relative grid ${selectable ? "grid-cols-[28px_minmax(0,1fr)]" : "grid-cols-1"} ${cols} gap-x-3 gap-y-1 px-4 py-3 items-center hover:bg-[var(--t-surface2)]`}
       style={{ borderBottom: "1px solid var(--t-border)", background: picked ? "var(--t-blue-06)" : undefined, opacity: o.stale ? 0.85 : 1 }}>
@@ -575,7 +567,6 @@ function OrderRow({ order: o, cols, selectable, flagged, picked, onPick, onOpen 
       <button onClick={onOpen} className="text-left min-w-0 after:absolute after:inset-0 focus-visible:outline-none" data-testid={`card-order-${o.id}`}>
         <span className="flex items-center gap-2 flex-wrap">
           <span className="text-[13px] font-semibold" style={{ color: "var(--t-text)" }}>#{o.reference}</span>
-          {late && <Badge tone="critical">{t("Overdue")}</Badge>}
           {flagged && <Badge tone="critical">{t("Problem")}</Badge>}
           <span className="md:hidden ml-auto"><StageBadge order={o} /></span>
         </span>
@@ -842,7 +833,6 @@ export function OrderDetail({ order, onBack, onChanged, prev, next, onOpen, issu
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold tracking-tight" style={{ color: "var(--t-text)" }} data-testid="text-reference">#{order.reference}</h1>
             <StageBadge order={order} />
-            {overdue(order) && <Badge tone="critical">{t("Overdue")}</Badge>}
             <IssueBadge issue={issue} />
           </div>
           <p className="text-xs mt-0.5" style={subtle} title={t(date(order.submittedAt))}>{t("Submitted")} {vt(when(order.submittedAt))} · {vt(order.items.length)}  {t("line")}{vt(order.items.length === 1 || getVendorLanguage() === "zh" ? "" : "s")} · {vt(units(order))}  {t("units")}</p>
@@ -1039,8 +1029,8 @@ export function VendorPortalPreview({ vendor, orders, loading, error, onRetry, l
   const [full, setFull] = useState<Record<string, VendorOrder>>({});
   const me: VendorMe = { vendorId: vendor.id, vendorName: vendor.name, username: "staff preview" };
   const counts = useMemo<Counts>(() => {
-    const c: Counts = { new: 0, processing: 0, shipped: 0, hold: 0, all: 0, overdue: 0 };
-    for (const o of orders ?? []) { c[stage(o)]++; c.all++; if (overdue(o)) c.overdue++; }
+    const c: Counts = { new: 0, processing: 0, shipped: 0, hold: 0, all: 0 };
+    for (const o of orders ?? []) { c[stage(o)]++; c.all++; }
     return c;
   }, [orders]);
   const visible = useMemo(() => {
@@ -1123,7 +1113,6 @@ export function VendorPortalPreview({ vendor, orders, loading, error, onRetry, l
   return shell(
     <div className="max-w-[1120px] mx-auto">
       <PageHeader title={t("Orders")} subtitle={updated} actions={refreshBtn} />
-      {counts.overdue > 0 && <div className="mb-4"><Banner tone="critical" testId="text-overdue">{vt(counts.overdue)}  {t("order")}{vt(counts.overdue === 1 ? " has" : "s have")}  {t("been waiting more than")} {vt(OVERDUE_HOURS)}  {t("hours without tracking.")}</Banner></div>}
       <Card flush>
         <div className="flex items-center gap-1 overflow-x-auto px-3 pt-3 pb-2" role="tablist">
           {(["all", ...STAGES.map(s => s.key)] as Tab[]).map(key => {

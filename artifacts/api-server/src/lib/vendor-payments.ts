@@ -358,6 +358,17 @@ export async function recordVendorPayment(
             amountUsd: o.amountUsd,
           })),
         );
+      // Paying the vendor starts the order: move anything still "Submitted" to "Processing", exactly as the
+      // vendor's own "mark as processing" does. Shipped and completed orders are left alone, nobody is
+      // notified, and voiding the payment later does not move them back.
+      const startedAt = new Date();
+      const orderIds = [...new Set(rows.flatMap((r: any) => (r.orderIds ?? []) as string[]))];
+      if (orderIds.length) {
+        await tx.update(ordersTable).set({ status: "Processing", updatedAt: startedAt })
+          .where(and(inArray(ordersTable.id, orderIds), eq(ordersTable.status, "Submitted")));
+      }
+      await tx.update(vendorSubmissionsTable).set({ status: "Processing", updatedAt: startedAt })
+        .where(and(inArray(vendorSubmissionsTable.id, rows.map((r: any) => r.id)), eq(vendorSubmissionsTable.status, "Submitted")));
       await auditVendor(tx, actor, "payment_recorded", null, {
         paymentId: payment.id,
         vendorId: input.vendorId,

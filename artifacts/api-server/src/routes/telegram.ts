@@ -29,6 +29,8 @@ import {
   formatTrackingPackagePage,
 } from "../lib/telegram-package-tracking";
 
+import { applyTelegramVideoMarker, buildTelegramHelpVideoBlock } from "../lib/help-video-assistant";
+
 const router: IRouter = Router();
 const appUrl = (process.env["APP_URL"] ?? "https://saltandpeps.co.uk").replace(/\/+$/, "");
 
@@ -121,6 +123,8 @@ async function generateAiResponse(transcript: string, contactHandle: string, use
     `- If you genuinely cannot answer, say so and suggest contacting ${contactHandle}`,
     "- Respond in plain text — no markdown, no asterisks, no bullet symbols (this is Telegram)",
     "- Do not mention that you are an AI unless directly asked",
+    "",
+    buildTelegramHelpVideoBlock(),
   ].filter(Boolean).join("\n");
 
   const reply = await callSageAI({
@@ -131,7 +135,8 @@ async function generateAiResponse(transcript: string, contactHandle: string, use
     temperature: 0.3,
   });
 
-  return reply.trim() || "I'm not sure about that. Please contact support for more help.";
+  // "VIDEO: <slug>" becomes one last line with the video title and its link; unknown slugs are dropped.
+  return applyTelegramVideoMarker(reply, appUrl) || "I'm not sure about that. Please contact support for more help.";
 }
 
 // ── Feedback conversation state machine ───────────────────────────────────────

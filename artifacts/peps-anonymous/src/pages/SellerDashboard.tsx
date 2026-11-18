@@ -8,6 +8,7 @@ import {
   UserPlus, Lock, Globe, Send, MessageCircle, KeyRound, RotateCcw, CheckCircle2, ShieldCheck,
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
+import { WatchLink } from "@/components/help/WatchLink";
 import { resolveTurnstileSiteKey } from "@/lib/account-verification-flow";
 import { buildSellerSignupBody, canSubmitSellerSignup } from "@/lib/seller-signup";
 import { formatVialMoney } from "@/lib/vial-money";
@@ -340,6 +341,7 @@ function LoginScreen({ onLogin, passwordChanged }: { onLogin: (s: SellerSession)
             </button>
           ))}
         </div>
+        <div className="flex justify-center"><WatchLink slug="selling-on-the-lonely-vial" label="Watch: selling on The Lonely Vial" /></div>
 
         <AnimatePresence mode="wait">
           {tab === "login" ? (
@@ -1647,6 +1649,7 @@ export default function SellerDashboard() {
                 <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>
                   {session ? "Manage your listings" : "Seller Portal"}
                 </p>
+                {session && <div className="mt-1"><WatchLink slug="selling-on-the-lonely-vial" label="Watch: selling on The Lonely Vial" className="!text-white" /></div>}
               </div>
             </div>
             {session && (

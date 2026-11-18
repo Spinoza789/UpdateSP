@@ -7,6 +7,7 @@ import {
   ExternalLink, Users, ChevronLeft, Trophy, ClipboardList, FileText,
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
+import { WatchLink } from "@/components/help/WatchLink";
 import { useAccount } from "@/hooks/use-account";
 import { HubBottomNav, HubSection } from "@/components/HubBottomNav";
 import { ClinicalPoolGauge } from "@/components/testing-pool/ClinicalPoolGauge";
@@ -743,6 +744,7 @@ export default function GbTestingPool() {
             <p className="clinical-testing__member-note">
               {round.fundingNote || "Community-funded independent testing for the winning product batch."}
             </p>
+            <div className="mt-1"><WatchLink slug="gb-testing-pool" label="Watch: group buy testing explained" /></div>
           </div>
           <div className="clinical-testing__member-actions">
             <span

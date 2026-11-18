@@ -37,6 +37,7 @@ import {
   LifeBuoy,
   MessageSquarePlus,
   Sparkles,
+  HelpCircle,
 } from "lucide-react";
 import { useThemeStore } from "@/hooks/use-theme";
 import { palette, ACCENT, ACCENT_SOFT, FONT } from "@/components/dashboard-theme";
@@ -61,6 +62,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "shop",          label: "Lonely Vial",         shortLabel: "Vials",     icon: Droplets,      path: "/shop",           altPaths: ["/shop/checkout"], section: "shop"     },
   { id: "protocols",     label: "Protocols",          shortLabel: "Protocols",  icon: BookMarked,    path: "/protocols",     altPaths: ["/medications", "/medications/", "/trt-aas"], section: "research" },
   { id: "learn",         label: "Learning Hub",       shortLabel: "Learn",      icon: GraduationCap, path: "/learn",          altPaths: ["/learn/"],         section: "research" },
+  { id: "help",          label: "Help",               shortLabel: "Help",       icon: HelpCircle,    path: "/help",                                         section: "research" },
   { id: "lab",           label: "Lab Tests",          shortLabel: "Lab",        icon: ClipboardList, path: "/tests",                                        section: "research" },
   { id: "sage",            label: "Sage AI",            shortLabel: "Sage",       icon: Sparkles,          path: "/sage",        section: "research" },
   { id: "calculator",      label: "Calculator",         shortLabel: "Calc",       icon: Hash,             path: "/calculator",  section: "tools"    },
@@ -210,6 +212,7 @@ const PORTAL_NAV_GROUPS: {
     key: "support",
     groupLabel: "Support",
     items: [
+      { section: "help",     label: "Help",     Icon: HelpCircle,        externalPath: "/help" },
       { section: "support",  label: "Tickets",  Icon: LifeBuoy          },
       { section: "feedback", label: "Feedback", Icon: MessageSquarePlus, externalPath: "/feedback" },
     ],
@@ -435,7 +438,7 @@ function Sidebar({ location, expanded, onExpand, onCollapse }: {
         ) : (
           <>
             {NAV_SECTIONS.map(({ key, label }) => {
-              const items = NAV_ITEMS.filter(n => n.section === key && (enabledNavIds === null || enabledNavIds.has(n.id)));
+              const items = NAV_ITEMS.filter(n => n.section === key && (enabledNavIds === null || n.id === "help" || enabledNavIds.has(n.id)));
               if (items.length === 0) return null;
               return (
                 <React.Fragment key={key}>
@@ -925,7 +928,7 @@ function MobileMoreDrawer({ open, onClose }: { open: boolean; onClose: () => voi
             </button>
 
             {NAV_SECTIONS.map((sec, secIdx) => {
-              const items = NAV_ITEMS.filter(n => n.section === sec.key && (enabledNavIds === null || enabledNavIds.has(n.id)));
+              const items = NAV_ITEMS.filter(n => n.section === sec.key && (enabledNavIds === null || n.id === "help" || enabledNavIds.has(n.id)));
               if (items.length === 0) return null;
               return (
                 <div key={sec.key} className="mb-4">

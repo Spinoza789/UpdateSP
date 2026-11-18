@@ -9,6 +9,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { SiteAnnouncements } from "@/components/SiteAnnouncements";
 import { useState, useEffect } from "react";
 import PaymentPanel from "@/components/PaymentPanel";
+import { WatchLink } from "@/components/help/WatchLink";
 import { OnwardPaymentCard } from "@/components/onward-delivery/OnwardPayments";
 import { HubBottomNav, type HubSection } from "@/components/HubBottomNav";
 import { useAccount, useAccountOrders, useAccountOrderDetail, useLogout, useMyGroupBuys } from "@/hooks/use-account";
@@ -440,6 +441,7 @@ export default function Success() {
         >
           Order {action === "updated" ? "Updated" : "Placed"}!
         </motion.h2>
+        <div className="flex justify-center mb-2"><WatchLink slug="ordering-and-paying" label="Watch: what happens next" showLength={false} /></div>
 
         <motion.p
           initial={{ y: 20, opacity: 0 }}

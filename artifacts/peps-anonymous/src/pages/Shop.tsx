@@ -8,6 +8,7 @@ import {
   Globe, Store, Send, FileText, Tag, CreditCard, Star, Lock,
 } from "lucide-react";
 import { useVialCart } from "@/hooks/use-vial-cart";
+import { WatchLink } from "@/components/help/WatchLink";
 import { formatVialMoney } from "@/lib/vial-money";
 import { PageLayout } from "@/components/PageLayout";
 import { T } from "@/lib/theme";
@@ -635,6 +636,7 @@ export default function Shop() {
 
         {/* Filters */}
         <div style={{ background: T.bg }}>
+          <div className="max-w-xl mx-auto px-4 pt-2 empty:hidden"><WatchLink slug="the-lonely-vial-shop" label="Watch: how the shop works" /></div>
           <div className="max-w-xl mx-auto px-4 py-2">
             <button
               onClick={() => setFiltersOpen(v => !v)}

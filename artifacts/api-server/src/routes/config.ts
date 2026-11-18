@@ -9,7 +9,7 @@ import { parseFreeShippingThreshold } from "../lib/wholesale-shipping";
 
 const router: IRouter = Router();
 
-async function getConfigValue(key: string): Promise<string | null> {
+export async function getConfigValue(key: string): Promise<string | null> {
   const [row] = await db.select().from(siteConfigTable).where(eq(siteConfigTable.key, key));
   return row?.value ?? null;
 }

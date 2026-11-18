@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAccount } from "@/hooks/use-account";
+import { WatchLink } from "@/components/help/WatchLink";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FlaskConical, Search, X, Loader2, Users, CheckCircle2,
@@ -193,6 +194,7 @@ export default function PublicTestingPools({ bare }: { bare?: boolean } = {}) {
           Community-funded testing pools where members pool funds to send products to independent labs.
           Browse by vendor or compound to find results for specific batches.
         </p>
+        <div className="mt-1"><WatchLink slug="testing-pools" label="Watch: how testing pools work" /></div>
       </div>
 
       {/* ── Search + Quick Filters ────────────────────────────────────────── */}

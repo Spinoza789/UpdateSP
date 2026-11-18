@@ -1,5 +1,6 @@
 import { OnwardPaymentCard } from "@/components/onward-delivery/OnwardPayments";
 import { OrderReference } from "@/components/OrderReference";
+import { WatchLink } from "@/components/help/WatchLink";
 import { orderReference } from "@/lib/order-reference";
 import { VendorOrderImages } from "@/components/VendorOrderImages";
 import { VendorShipments } from "@/components/VendorShipments";
@@ -1023,6 +1024,7 @@ function AccountQrSection({
           )}
         </p>
       )}
+      <div className="mb-3"><WatchLink slug="uploading-your-qr-code" label="Watch: how to upload your QR code" /></div>
 
       {previewSrc && (
         <div className="mb-3">

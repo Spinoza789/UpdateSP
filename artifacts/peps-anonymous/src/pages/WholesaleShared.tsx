@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, type KeyboardEvent as ReactKeyboa
 import { createPortal } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { VendorOrderImages } from "@/components/VendorOrderImages";
+import { WatchLink } from "@/components/help/WatchLink";
 import { VendorShipments } from "@/components/VendorShipments";
 import { VendorShippingBreakdown } from "@/components/wholesale-shared/VendorShippingBreakdown";
 import { SupplierSelection } from "@/components/wholesale-shared/SupplierSelection";
@@ -1026,6 +1027,7 @@ export default function WholesaleShared() {
           <p className="text-sm mt-0.5" style={{ color: "var(--t-muted)" }}>
             One parcel, split between members. Everyone pays their own items.
           </p>
+          <div className="mt-1"><WatchLink slug="shared-orders" label="Watch: how shared orders work" /></div>
         </div>
         <StatusBadge status={share.status} />
       </div>
@@ -2906,6 +2908,7 @@ export default function WholesaleShared() {
         <p className="text-sm mt-0.5" style={{ color: "var(--t-muted)" }}>
           Finish each step and your full order opens.
         </p>
+        <div className="mt-1"><WatchLink slug="shared-orders" label="Watch: how shared orders work" /></div>
       </div>
 
       {setupSteps.map((sid, i) => {

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, ExternalLink, Trash2, X, Users, FileCheck, ChevronDown, ChevronUp, MessageSquare, Send, ArrowUp, ArrowDown, FlaskConical, TestTube, CheckCircle2, Circle, ToggleLeft, ToggleRight, AlertCircle, Pencil, Image, Settings, Wallet, DollarSign, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { WatchLink } from "@/components/help/WatchLink";
 
 type LeaderStatus = {
   status: string | null;
@@ -108,6 +109,7 @@ export function PoolLeaderDashboard({ compact = false }: { compact?: boolean }) 
           >
             Apply to be a pool leader
           </button>
+          <WatchLink slug="pool-leader" label="Watch: what a pool leader does" className="ml-3 align-middle" />
           {showApply && <ApplyModal onClose={() => setShowApply(false)} onSuccess={() => { setShowApply(false); qc.invalidateQueries({ queryKey: ["/api/account/pool-leader/status"] }); }} />}
         </>
       );
@@ -118,12 +120,15 @@ export function PoolLeaderDashboard({ compact = false }: { compact?: boolean }) 
         <p className="text-xs mb-4" style={{ color: "var(--t-muted)" }}>
           Apply to lead standalone testing pools. You'll receive crypto contributions to your wallet and coordinate lab tests for the community.
         </p>
-        <button
-          onClick={() => setShowApply(true)}
-          className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold transition-opacity hover:opacity-90"
-        >
-          Apply to be a leader
-        </button>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <button
+            onClick={() => setShowApply(true)}
+            className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold transition-opacity hover:opacity-90"
+          >
+            Apply to be a leader
+          </button>
+          <WatchLink slug="pool-leader" label="Watch: what a pool leader does" />
+        </div>
         {showApply && <ApplyModal onClose={() => setShowApply(false)} onSuccess={() => { setShowApply(false); qc.invalidateQueries({ queryKey: ["/api/account/pool-leader/status"] }); }} />}
       </div>
     );
@@ -167,6 +172,10 @@ export function PoolLeaderDashboard({ compact = false }: { compact?: boolean }) 
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <WatchLink slug="pool-leader" label="Watch: running a pool" />
+        <WatchLink slug="pool-leader-2-options" label="Your options" />
+      </div>
       <div className="rounded-xl p-4" style={{ background: "rgba(16,185,129,0.06)", border: "1.5px solid rgba(16,185,129,0.25)" }}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">

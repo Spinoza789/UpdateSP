@@ -357,7 +357,7 @@ export default function VendorPaymentsAdmin({ active = true, auth = adminAuth, h
       <div className="min-w-0" hidden={!heading}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-subtle)" }}>Supplier accounts</p>
         <h2 className="flex items-center gap-2 text-xl font-bold" style={{ color: "var(--t-text)" }}><Landmark className="h-5 w-5" style={{ color: "var(--t-blue)" }} />Peps Anon Payment</h2>
-        <p className="mt-0.5 max-w-xl text-xs" style={{ color: "var(--t-subtle)" }}>Supplier-order costs and receipts for transfers sent outside this website. Recording never sends funds, verifies a blockchain, or changes customer payment or fulfilment status.</p>
+        <p className="mt-0.5 max-w-xl text-xs" style={{ color: "var(--t-subtle)" }}>Supplier-order costs and receipts for transfers sent outside this website. Recording never sends funds or verifies a blockchain. It moves orders that are still Submitted to Processing; it never marks anything shipped or notifies the customer.</p>
       </div>
       <div className="flex flex-wrap items-end gap-2">
         <label className="block min-w-[200px] text-xs" style={{ color: "var(--t-subtle)" }}>Vendor

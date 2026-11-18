@@ -16,7 +16,7 @@ import { getVendors } from "./config";
 import { normalizeTg } from "../lib/normalize";
 import {
   auditVendor, vendorAccess, prepareVendorShipments, vendorPreviewToken,
-  submitVendorOrders, loadVendorSource, isVendorSubmissionStale,
+  submitVendorOrders, loadVendorSource, isVendorSubmissionStale, vendorOrderView, rowFollowingSource,
   vendorApplicationFor, applyForVendorAccess, reviewVendorApplication,
 } from "../lib/vendor-portal-service";
 import { publicVendorOrder, publicVendorApplication, vendorApplicationInput, VendorPortalError } from "../lib/vendor-portal-model";
@@ -99,7 +99,7 @@ router.get("/vendor/orders", requireVendorAccount, handled(async (req, res) => {
   const access = await vendorAccess(db, username(req), false, req.vendor!.tokenHash);
   const rows = await db.select().from(vendorSubmissionsTable).where(eq(vendorSubmissionsTable.vendorId, access.vendorId)).orderBy(desc(vendorSubmissionsTable.submittedAt));
   const orders = [];
-  orders.push(...await mapLimit(rows, async (row: any) => publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "vendor"))));
+  orders.push(...await mapLimit(rows, async (row: any) => vendorOrderView(db, row, await imageList(row, "vendor"))));
   res.set("Cache-Control", "no-store").json({ orders });
 }));
 // Authentication and ownership are checked before any provider quota is used.
@@ -154,6 +154,8 @@ async function updateShipment(req: Request, res: Response, admin = false): Promi
       let packages;
       try {
         if (body.expectedTrackingPackages !== undefined &&
+            JSON.stringify(normalizeTrackingPackages(body.expectedTrackingPackages)) !==
+            JSON.stringify(normalizeTrackingPackages(publicVendorOrder(rowFollowingSource(row, source), false, []).trackingPackages)) &&
             JSON.stringify(normalizeTrackingPackages(body.expectedTrackingPackages)) !==
             JSON.stringify(normalizeTrackingPackages(publicVendorOrder(row, false, []).trackingPackages))) {
           throw new VendorPortalError("Tracking changed since you opened this order. Reload it before saving.", 409);
@@ -359,7 +361,7 @@ router.get("/admin/vendor-portal/orders", handled(async (req, res) => {
   const rows = await db.select().from(vendorSubmissionsTable).where(where)
     .orderBy(desc(vendorSubmissionsTable.submittedAt), desc(vendorSubmissionsTable.id)).limit(limit).offset((page - 1) * limit);
   const orders = await mapLimit(rows, async (row: any) => ({
-    ...publicVendorOrder(row, await isVendorSubmissionStale(db, row), []),
+    ...await vendorOrderView(db, row, []),
     vendorId: row.vendorId, vendorName: vendors.find(v => v.id === row.vendorId)?.name ?? row.vendorId,
   }));
   res.set("Cache-Control", "no-store").json({ vendors, orders, total, page, limit });
@@ -370,7 +372,7 @@ router.get("/admin/vendor-portal/orders/:id", handled(async (req, res) => {
   if (!row) throw new VendorPortalError("Submission not found.", 404);
   const vendors = await getVendors();
   res.set("Cache-Control", "no-store").json({
-    ...publicVendorOrder(row, await isVendorSubmissionStale(db, row), await imageList(row, "admin/vendor-portal")),
+    ...await vendorOrderView(db, row, await imageList(row, "admin/vendor-portal")),
     vendorId: row.vendorId, vendorName: vendors.find(v => v.id === row.vendorId)?.name ?? row.vendorId,
   });
 }));

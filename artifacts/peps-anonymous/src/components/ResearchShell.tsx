@@ -5,12 +5,13 @@ import { PageLayout } from "@/components/PageLayout";
 import { useAccount, useLogout, useAccountOrders } from "@/hooks/use-account";
 import type { PortalNavProps } from "@/pages/CustomerPortal";
 
-type ResearchSection = "protocols" | "learn" | "calculator";
+type ResearchSection = "protocols" | "learn" | "calculator" | "help";
 
 const SECTION_TITLE: Record<ResearchSection, string> = {
   protocols:  "Protocols",
   learn:      "Learning Hub",
   calculator: "Calculator",
+  help:       "Help and video guides",
 };
 
 export function ResearchShell({

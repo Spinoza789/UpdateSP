@@ -1,13 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Sparkles, ArrowUp, X, Loader2, History, Plus, MessageSquare, Trash2, CheckCircle2, Search, SquarePen, Activity, FlaskConical, BookMarked } from "lucide-react";
+import { Sparkles, ArrowUp, X, Loader2, History, Plus, MessageSquare, Trash2, CheckCircle2, Search, SquarePen, Activity, FlaskConical, BookMarked, Play } from "lucide-react";
 import { type DiscussMessage, type DiscussChart, type DiscussSource } from "@/hooks/use-blood-tests";
 import { SageTrendChart } from "@/components/SageTrendChart";
 import { buildSageDiscussRequestBody } from "@/lib/sage-discuss-request";
+import { HELP_VIDEO_BY_SLUG } from "@/data/help-videos";
+import { HelpVideoThumb } from "@/components/help/HelpVideoThumb";
+import { openHelpVideo } from "@/components/help/help-video-store";
 
 const ACCENT = "#0176D3";
 
 function stripMarkers(text: string): string {
-  return text.replace(/[\n\r\s]*(?:I?SOURCES?_?JSON_?START|CHIPS?_?JSON_?START|CHARTS?_?JSON_?START)[\s\S]*/i, "").trim();
+  return text.replace(/[\n\r\s]*(?:I?SOURCES?_?JSON_?START|CHIPS?_?JSON_?START|CHARTS?_?JSON_?START|VIDEOS?_?JSON_?START)[\s\S]*/i, "").trim();
 }
 
 type Tokens = {
@@ -23,6 +26,46 @@ type Tokens = {
 
 interface SageMessage extends DiscussMessage {
   greeting?: boolean;
+  /** Slugs of the guide videos Sage offered with this reply (two at most). */
+  videos?: string[];
+}
+
+/** Guide videos offered under a reply. Each card opens the shared pop-up player. */
+function SageVideoCards({ slugs, t, accent }: { slugs?: string[]; t: Tokens; accent: string }) {
+  const videos = (Array.isArray(slugs) ? slugs : [])
+    .filter((slug, i, all) => typeof slug === "string" && all.indexOf(slug) === i)
+    .map((slug) => HELP_VIDEO_BY_SLUG[slug])
+    .filter(Boolean)
+    .slice(0, 2);
+  if (videos.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      {videos.map((video) => (
+        <button
+          key={video.slug}
+          type="button"
+          onClick={() => openHelpVideo(video.slug)}
+          aria-label={`Watch the video: ${video.title} (${video.length})`}
+          className="flex items-center gap-2.5 rounded-xl text-left active:scale-[0.99]"
+          style={{ padding: 6, background: t.chip, border: `1px solid ${t.border}`, maxWidth: 360 }}
+        >
+          <span
+            className="relative flex items-center justify-center shrink-0 overflow-hidden rounded-lg"
+            style={{ width: 88, height: 50, background: t.panel2 }}
+          >
+            <HelpVideoThumb slug={video.slug} />
+            <span className="relative flex items-center justify-center rounded-full" style={{ width: 24, height: 24, background: accent }}>
+              <Play className="w-3 h-3" style={{ color: "#fff", fill: "#fff" }} />
+            </span>
+          </span>
+          <span className="flex flex-col min-w-0" style={{ paddingRight: 6 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: t.text, lineHeight: 1.3 }}>{video.title}</span>
+            <span style={{ fontSize: 11, color: t.muted }}>Video · {video.length}</span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 interface StoredConversation {
@@ -297,7 +340,7 @@ export function SageChat({ open, onClose, sessionId, seed, openToHistory, t, acc
         const decoder = new TextDecoder();
         let buffer = "";
         let accumulated = "";
-        let donePayload: { response?: string; sources?: DiscussSource[]; chips?: string[]; charts?: DiscussChart[]; contextSession?: { id: string; testName: string; testDate: string } | null; used?: number; limit?: number } | null = null;
+        let donePayload: { response?: string; sources?: DiscussSource[]; chips?: string[]; charts?: DiscussChart[]; videos?: string[]; contextSession?: { id: string; testName: string; testDate: string } | null; used?: number; limit?: number } | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -340,6 +383,7 @@ export function SageChat({ open, onClose, sessionId, seed, openToHistory, t, acc
           chips: donePayload?.chips ?? [],
           sources: donePayload?.sources ?? [],
           charts: donePayload?.charts ?? [],
+          videos: donePayload?.videos ?? [],
           contextSession: donePayload?.contextSession ?? null,
           timestamp: new Date(),
         };
@@ -657,6 +701,7 @@ export function SageChat({ open, onClose, sessionId, seed, openToHistory, t, acc
                         ))}
                       </div>
                     )}
+                    <SageVideoCards slugs={m.videos} t={t} accent={accent} />
                     {m.chips && m.chips.length > 0 && !sending && (
                       <div className="flex flex-wrap gap-1.5">
                         {m.chips.slice(0, 4).map((chip, i) => (
@@ -1048,6 +1093,11 @@ export function SageChat({ open, onClose, sessionId, seed, openToHistory, t, acc
                           {m.charts && m.charts.length > 0 && (
                             <div className="flex flex-col gap-2" style={{ paddingLeft: 30 }}>
                               {m.charts.map((c: DiscussChart, i: number) => <SageTrendChart key={`${m.id}-chart-${i}`} chart={c} />)}
+                            </div>
+                          )}
+                          {m.videos && m.videos.length > 0 && (
+                            <div style={{ paddingLeft: 30 }}>
+                              <SageVideoCards slugs={m.videos} t={t} accent={accent} />
                             </div>
                           )}
                           {m.chips && m.chips.length > 0 && !sending && (

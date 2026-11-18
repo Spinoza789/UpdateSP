@@ -36,7 +36,6 @@ type View = "home" | "orders" | "analytics" | "payments" | "telegram";
 type StageKey = "new" | "process" | "ship" | "hold" | "terminal";
 type Sort = "newest" | "oldest" | "value";
 const LIMIT = 50;
-const OVERDUE_HOURS = 48;
 const money = (v: string | number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(v) || 0);
 const date = (v: string) => { const d = new Date(v); return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }); };
 /** Same relative stamp as the vendor portal: "Today at 10:12", "Yesterday at 16:40", "12 Oct at 09:03". */
@@ -69,7 +68,6 @@ const STAGES: { key: Exclude<StageKey, "terminal">; label: string; tone: Tone; p
 ];
 const stageLabel = (o: Order) => { const k = stageKey(o); return k === "terminal" ? (/refund/i.test(o.status) ? "Refunded" : /cancel/i.test(o.status) ? "Cancelled" : "Completed") : STAGES.find(s => s.key === k)!.label; };
 const isOpen = (o: Order) => { const k = stageKey(o); return k === "new" || k === "process"; };
-const overdue = (o: Order) => isOpen(o) && !!time(o) && Date.now() - time(o) > OVERDUE_HOURS * 3_600_000;
 function StageBadge({ order }: { order: Order }) {
   const meta = STAGES.find(s => s.key === stageKey(order));
   return <Badge tone={meta?.tone ?? "neutral"} progress={meta?.progress ?? "complete"} testId="status-order">{stageLabel(order)}</Badge>;
@@ -274,8 +272,8 @@ export default function PepsAdmin() {
     return matchesStatus && (!q || [o.reference, o.vendorName, o.shipping.name, o.shipping.country, ...vendorTrackingParcels(o).map(p => p.internationalTrackingNumber), ...o.items.map(i => i.productName)].some(x => x.toLowerCase().includes(q)));
   }).sort((a, b) => sort === "value" ? Number(b.totalCost) - Number(a.totalCost) : sort === "oldest" ? time(a) - time(b) : time(b) - time(a)), [orders, query, statusFilter, sort]);
   const counts = useMemo(() => {
-    const c = { all: orders.length, new: 0, process: 0, ship: 0, hold: 0, terminal: 0, overdue: 0 };
-    for (const o of orders) { c[stageKey(o)]++; if (overdue(o)) c.overdue++; }
+    const c = { all: orders.length, new: 0, process: 0, ship: 0, hold: 0, terminal: 0 };
+    for (const o of orders) c[stageKey(o)]++;
     return c;
   }, [orders]);
   // Home: the oldest shipments still waiting on a vendor.
@@ -483,7 +481,6 @@ export default function PepsAdmin() {
         {refreshBtn}{submitBtn}
       </>} />
       {errorBanner}
-      {counts.overdue > 0 && <div className="mb-4"><Banner tone="critical" testId="text-overdue">{counts.overdue} order{counts.overdue === 1 ? " has" : "s have"} been waiting more than {OVERDUE_HOURS} hours without tracking.</Banner></div>}
       <Card flush>
         <div className="flex items-center gap-1 overflow-x-auto px-3 pt-3 pb-2" role="tablist">
           {(["all", ...STAGES.map(s => s.key)] as const).map(key => {
@@ -553,7 +550,7 @@ export default function PepsAdmin() {
       <h2 id="fulfil-title" className="text-base font-semibold" style={{ color: "var(--t-text)" }}>Mark {fulfilIds.length === 1 ? "this order" : `${fulfilIds.length} orders`} as fulfilled?</h2>
       <p className="text-[13px] mt-1 mb-3" style={muted}>Use this for shipments that were already sent before this panel existed.</p>
       <ul className="text-[13px] space-y-1.5 mb-3 list-disc pl-5" style={muted}>
-        <li>The vendor shipment moves to <strong>Fulfilled</strong>, here and in the vendor’s portal, and overdue reminders stop.</li>
+        <li>The vendor shipment moves to <strong>Fulfilled</strong>, here and in the vendor’s portal, and reminders about it stop.</li>
         <li><strong>The customer is not notified</strong> and their order is not changed.</li>
         <li>No tracking number is added. You can still add one afterwards, which does notify the customer as usual.</li>
       </ul>
@@ -671,7 +668,7 @@ function Modal({ children, onClose, closeDisabled, wide, labelId }: { children: 
 /* ---------------------------------------------------------------------------
  * Shell: top bar + sidebar (same frame as the vendor portal)
  * ------------------------------------------------------------------------- */
-type Counts = Record<StageKey | "all", number> & { overdue: number };
+type Counts = Record<StageKey | "all", number>;
 function Shell({ children, view, stage, counts, onNav, vendors, vendorId, onVendor, onViewAs, onLogout, logoutBusy, query, onQuery }: {
   children: ReactNode; view: View; stage: StageKey | "all"; counts: Counts; onNav: (v: View, s?: StageKey | "all") => void;
   vendors: Vendor[]; vendorId: string; onVendor: (id: string) => void; onViewAs: (vendor: Vendor) => void;
@@ -812,7 +809,6 @@ function HomeView({ orders, ready, counts, attention, vendorName, updated, scope
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", month: "long", day: "numeric" });
   const delta = m.prior ? Math.round(((m.recent - m.prior) / m.prior) * 100) : null;
   const todos = ([
-    { n: counts.overdue, text: `overdue · waiting more than ${OVERDUE_HOURS}h without tracking`, tone: "critical", icon: Clock, stage: "all" },
     { n: counts.new, text: "not started by the vendor yet", tone: "attention", icon: Package, stage: "new" },
     { n: counts.process, text: "in progress and waiting for a tracking number", tone: "info", icon: Truck, stage: "process" },
     { n: counts.hold, text: "on hold · changed after submission, resubmit to unlock", tone: "warning", icon: PauseCircle, stage: "hold" },
@@ -825,7 +821,7 @@ function HomeView({ orders, ready, counts, attention, vendorName, updated, scope
       {banners}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Metric label="Awaiting fulfilment" value={ready ? String(m.open) : "–"} onClick={() => onNav("orders", "all")}
-          foot={counts.overdue ? <span style={{ color: TONES.critical.fg }}>{counts.overdue} overdue</span> : "All within 48h"} />
+          foot="Still with vendors" />
         <Metric label="Submitted · last 7 days" value={ready ? String(m.recent) : "–"}
           foot={delta === null ? `${m.prior} the week before` : <span className="inline-flex items-center gap-0.5" style={{ color: delta >= 0 ? "#0C5132" : "#8E1F0B" }}>
             {delta >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}{Math.abs(delta)}% vs prior week</span>} />
@@ -884,13 +880,12 @@ function AnalyticsView({ vendors, vendorId, onVendor, orders, total, ready, acti
 }) {
   const [tab, setTab] = useState<"profit" | "comparison">("profit");
   const rows = useMemo(() => {
-    const byVendor = new Map<string, { id: string; name: string; orders: number; open: number; overdue: number; fulfilled: number; hold: number; value: number; openValue: number }>();
+    const byVendor = new Map<string, { id: string; name: string; orders: number; open: number; fulfilled: number; hold: number; value: number; openValue: number }>();
     for (const o of orders) {
-      const row = byVendor.get(o.vendorId) ?? { id: o.vendorId, name: o.vendorName, orders: 0, open: 0, overdue: 0, fulfilled: 0, hold: 0, value: 0, openValue: 0 };
+      const row = byVendor.get(o.vendorId) ?? { id: o.vendorId, name: o.vendorName, orders: 0, open: 0, fulfilled: 0, hold: 0, value: 0, openValue: 0 };
       const k = stageKey(o), cost = Number(o.totalCost) || 0;
       row.orders++; row.value += cost;
       if (isOpen(o)) { row.open++; row.openValue += cost; }
-      if (overdue(o)) row.overdue++;
       if (k === "ship" || k === "terminal") row.fulfilled++;
       if (k === "hold") row.hold++;
       byVendor.set(o.vendorId, row);
@@ -911,13 +906,12 @@ function AnalyticsView({ vendors, vendorId, onVendor, orders, total, ready, acti
           : <div className="overflow-x-auto"><table className="w-full text-[13px] min-w-[640px]">
             <thead><tr className="text-xs" style={{ ...subtle, borderBottom: "1px solid var(--t-border)" }}>
               <th className="text-left font-medium p-2.5 pl-4">Vendor</th><th className="text-right font-medium p-2.5">Orders</th><th className="text-right font-medium p-2.5">Open</th>
-              <th className="text-right font-medium p-2.5">Overdue</th><th className="text-right font-medium p-2.5">On hold</th><th className="text-right font-medium p-2.5">Fulfilled</th>
+              <th className="text-right font-medium p-2.5">On hold</th><th className="text-right font-medium p-2.5">Fulfilled</th>
               <th className="text-right font-medium p-2.5">Open value</th><th className="text-right font-medium p-2.5 pr-4">Total cost</th></tr></thead>
             <tbody>{rows.map(r => (
               <tr key={r.id} className="hover:bg-[var(--t-surface2)]" style={{ borderTop: "1px solid var(--t-border)", color: "var(--t-text)" }}>
                 <td className="p-2.5 pl-4"><button onClick={() => onVendor(vendorId === r.id ? "" : r.id)} className="font-semibold text-left hover:underline" style={{ color: "var(--t-blue)" }} data-testid={`analytics-vendor-${r.id}`}>{r.name}</button></td>
                 <td className={num}>{r.orders}</td><td className={num}>{r.open}</td>
-                <td className={num} style={r.overdue ? { color: TONES.critical.fg, fontWeight: 600 } : undefined}>{r.overdue}</td>
                 <td className={num}>{r.hold}</td>
                 <td className={num}>{r.fulfilled} <span style={subtle}>({Math.round((r.fulfilled / r.orders) * 100)}%)</span></td>
                 <td className={num}>{money(r.openValue)}</td><td className={`${num} pr-4 font-medium`}>{money(r.value)}</td>
@@ -1038,7 +1032,6 @@ function OrdersTable({ orders, onOpen, pickable, picked, setPicked }: {
           <button onClick={() => onOpen(o.id)} className="text-left min-w-0 after:absolute after:inset-0 focus-visible:outline-none" data-testid={`row-order-${o.id}`}>
             <span className="flex items-center gap-2 flex-wrap">
               <span className="text-[13px] font-semibold" style={{ color: "var(--t-text)" }}>#{o.reference}</span>
-              {overdue(o) && <Badge tone="critical">Overdue</Badge>}
               <span className="md:hidden ml-auto"><StageBadge order={o} /></span>
             </span>
             <span className="block text-xs mt-0.5 md:hidden" style={muted}>{when(o.submittedAt)} · {o.vendorName} · {o.shipping.name}, {o.shipping.country} · {units(o)} items · {money(o.totalCost)}</span>
@@ -1065,7 +1058,6 @@ function CompactRow({ order: o, onOpen }: { order: Order; onOpen: () => void }) 
       <button onClick={onOpen} className="text-left min-w-0 flex-1 after:absolute after:inset-0 focus-visible:outline-none" data-testid={`card-order-${o.id}`}>
         <span className="flex items-center gap-2 flex-wrap">
           <span className="text-[13px] font-semibold" style={{ color: "var(--t-text)" }}>#{o.reference}</span>
-          {overdue(o) && <Badge tone="critical">Overdue</Badge>}
         </span>
         <span className="block text-xs mt-0.5 truncate" style={muted}>{when(o.submittedAt)} · {o.vendorName} · {o.shipping.name}, {o.shipping.country} · {units(o)} item{units(o) === 1 ? "" : "s"} · {money(o.totalCost)}</span>
       </button>
@@ -1123,7 +1115,6 @@ function DetailView({ order, loading, error, onBack, onRetry, trackingNumber, se
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold tracking-tight" style={{ color: "var(--t-text)" }} data-testid="text-reference">#{order.reference}</h1>
             <StageBadge order={order} />
-            {overdue(order) && <Badge tone="critical">Overdue</Badge>}
           </div>
           <p className="text-xs mt-0.5" style={subtle} title={date(order.submittedAt)}>{order.vendorName} · Submitted {when(order.submittedAt)} · {order.items.length} line{order.items.length === 1 ? "" : "s"} · {units(order)} units</p>
         </div>

@@ -5,7 +5,9 @@ import {
   type VendorTelegramPrefs,
 } from "@workspace/db";
 import { getVendors } from "../routes/config";
-import { isVendorSubmissionStale } from "./vendor-portal-service";
+import { inspectVendorSubmission, isVendorSubmissionStale, rowFollowingSource } from "./vendor-portal-service";
+import { createAlert } from "./create-alert";
+import { sendAdminMessage } from "./telegram";
 import { VendorPortalError } from "./vendor-portal-model";
 import { registerScheduler } from "./scheduler-registry";
 import { pushVendorNotification, pruneNotifications } from "./vendor-notifications";
@@ -26,6 +28,45 @@ export const PREF_KEYS = ["newOrders", "holds", "overdue", "issues", "messages"]
 const PREF_FOR_KIND: Record<EventKind, keyof VendorTelegramPrefs | null> = { new_order: "newOrders", hold: "holds", overdue: "overdue", overdue_critical: "overdue", issue_resolved: "issues", message: "messages", test: null };
 const CRITICAL_OVERDUE_HOURS = 96;
 const OVERDUE_HOURS = 48;
+/** Staff are told once when a shipment has gone this long without being shipped. */
+export const ADMIN_UNSHIPPED_HOURS = 96;
+const ADMIN_UNSHIPPED_KIND = "admin_unshipped";
+/** True while the shipment, read together with its Salt&Peps order, still needs shipping. */
+async function stillUnshipped(row: any): Promise<boolean> {
+  try {
+    const { source } = await inspectVendorSubmission(db, row);
+    return ["Submitted", "Processing"].includes(rowFollowingSource(row, source).status);
+  } catch { return true; }
+}
+/** Text of the one message staff get per run, however many shipments crossed the line. */
+export function adminUnshippedMessage(rows: Array<{ reference: string; vendorName: string; submittedAt: Date | string }>, now = new Date()) {
+  const days = (row: { submittedAt: Date | string }) => Math.floor((now.getTime() - new Date(row.submittedAt).getTime()) / 86_400_000);
+  const shown = rows.slice(0, 15).map(row => `• #${esc(row.reference)} · ${esc(row.vendorName)} · ${days(row)} days`);
+  const more = rows.length > shown.length ? `\n…and ${rows.length - shown.length} more` : "";
+  return `📦 <b>${rows.length} order${rows.length === 1 ? "" : "s"} not shipped after ${ADMIN_UNSHIPPED_HOURS / 24} days</b>\n${shown.join("\n")}${more}\n\nOpen the Peps Anonymous admin → Orders to chase the vendor or mark them fulfilled.`;
+}
+/** Tells staff, once per shipment, about anything still unshipped after four days. */
+async function notifyAdminUnshipped(open: any[], now: Date, failures: string[]) {
+  const cutoff = now.getTime() - ADMIN_UNSHIPPED_HOURS * 3_600_000;
+  const old = open.filter((row: any) => new Date(row.submittedAt).getTime() < cutoff);
+  const done = await handledIds(ADMIN_UNSHIPPED_KIND as EventKind, old.map((row: any) => row.id));
+  const due: any[] = [];
+  for (const row of old) {
+    if (done.has(row.id) || !(await stillUnshipped(row))) continue;
+    // Insert first: a duplicate key means another run already reported it.
+    const inserted = await db.insert(vendorTelegramEventsTable).values({ id: randomUUID(), kind: ADMIN_UNSHIPPED_KIND, submissionId: row.id, vendorId: row.vendorId })
+      .onConflictDoNothing().returning({ id: vendorTelegramEventsTable.id });
+    if (inserted.length) due.push(row);
+  }
+  if (!due.length) return;
+  const vendors = await getVendors().catch(() => []);
+  const rows = due.map(row => ({ reference: row.reference as string, submittedAt: row.submittedAt, vendorName: vendors.find(v => v.id === row.vendorId)?.name ?? row.vendorId }))
+    .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
+  const title = `${rows.length} vendor order${rows.length === 1 ? "" : "s"} not shipped after ${ADMIN_UNSHIPPED_HOURS / 24} days`;
+  const summary = rows.slice(0, 15).map(row => `#${row.reference} (${row.vendorName})`).join(", ") + (rows.length > 15 ? ` and ${rows.length - 15} more` : "");
+  await createAlert("order", "high", title, summary, { linkUrl: "#vendor-portal" }).catch(e => failures.push(`admin alert: ${e instanceof Error ? e.message : e}`));
+  await sendAdminMessage(adminUnshippedMessage(rows, now)).catch(e => failures.push(`admin message: ${e instanceof Error ? e.message : e}`));
+}
 const LINK_TTL_MS = 15 * 60_000;
 
 /* ---- Transport (injectable for tests) ------------------------------------ */
@@ -303,13 +344,15 @@ export async function notifyVendorEvents(now = new Date(), options: { vendorIds?
       if (stale) await recordAndSend("hold", row).catch(e => failures.push(`hold ${row.reference}: ${e instanceof Error ? e.message : e}`));
     }
     for (const row of late) {
-      if (doneLate.has(row.id) || doneHold.has(row.id)) continue;
+      // Shipped or moved on in the Salt&Peps admin: nothing to chase the vendor for.
+      if (doneLate.has(row.id) || doneHold.has(row.id) || !(await stillUnshipped(row))) continue;
       await recordAndSend("overdue", row).catch(e => failures.push(`overdue ${row.reference}: ${e instanceof Error ? e.message : e}`));
     }
     for (const row of veryLate) {
-      if (doneCritical.has(row.id) || doneHold.has(row.id)) continue;
+      if (doneCritical.has(row.id) || doneHold.has(row.id) || !(await stillUnshipped(row))) continue;
       await recordAndSend("overdue_critical", row).catch(e => failures.push(`critical ${row.reference}: ${e instanceof Error ? e.message : e}`));
     }
+    await notifyAdminUnshipped(open, now, failures).catch(e => failures.push(`admin unshipped: ${e instanceof Error ? e.message : e}`));
     await pruneNotifications(db).catch(() => undefined);
     lastFailure = failures.join("; ") || null;
     if (lastFailure) throw new Error(lastFailure);

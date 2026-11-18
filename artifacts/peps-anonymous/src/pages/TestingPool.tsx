@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/PageLayout";
+import { WatchLink } from "@/components/help/WatchLink";
 import { HubBottomNav, HubSection } from "@/components/HubBottomNav";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -1709,6 +1710,7 @@ export default function TestingPool() {
                   </span>
                 </div>
                 <h1 className="text-[20px] sm:text-[22px] font-extrabold text-white leading-tight">{pool.title}</h1>
+                <div className="mt-1"><WatchLink slug="testing-pools" label="Watch: how testing pools work" className="!text-white" /></div>
                 {(pool.labName || pool.compoundName || pool.manufacturer) && (
                   <p className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>
                     {[pool.labName, pool.compoundName, pool.manufacturer].filter(Boolean).join(" · ")}

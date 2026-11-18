@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { useDraftStore } from "@/hooks/use-draft-store";
+import { WatchLink } from "@/components/help/WatchLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, ChevronDown, Loader2, Package, RefreshCw } from "lucide-react";
 import { HalfKitClaimDialog } from "@/components/half-kits/HalfKitClaimDialog";
@@ -206,6 +207,7 @@ export function HalfKitOffers({ gbId, embedded = false, enabled = true }: { gbId
           <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-[#E9A020]">Available half kits</p>
           <h1 className="text-2xl font-bold text-white">{q.data?.group.name ?? "Group buy"}</h1>
           <p className="mt-1 text-sm text-white/75">Add a remaining half kit to an existing order, or create a new order with normal group-buy shipping.</p>
+          <div className="mt-2"><WatchLink slug="half-kits" label="Watch: how half kits work" className="!text-white" /></div>
         </div>
       </header>
       )}

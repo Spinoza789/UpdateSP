@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, ShoppingCart, ArrowRight, Minus, Plus, Truck, Heart, ChevronDown, Save, Check, TestTube, X, AlertCircle } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
+import { WatchLink } from "@/components/help/WatchLink";
 import { WholesaleShell } from "@/components/WholesaleShell";
 import { SiteAnnouncements } from "@/components/SiteAnnouncements";
 import { WholesaleUpdates } from "@/components/WholesaleUpdates";
@@ -598,14 +599,17 @@ export default function WholesaleOrder() {
               <p className="whj-eyebrow">Member ordering</p>
               <div className="whj-heading">
                 <h1>Wholesale order</h1>
-                <button
-                  onClick={() => setLocation("/wholesale/tracking")}
-                  className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold transition-opacity hover:opacity-70 px-3 py-1.5 rounded-lg border bg-white shadow-sm"
-                  style={{ color: "var(--t-blue)", borderColor: "var(--t-border)" }}
-                >
-                  <Truck className="w-3.5 h-3.5" />
-                  Tracking
-                </button>
+                <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
+                  <WatchLink slug="wholesale" label="Watch: how wholesale works" />
+                  <button
+                    onClick={() => setLocation("/wholesale/tracking")}
+                    className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold transition-opacity hover:opacity-70 px-3 py-1.5 rounded-lg border bg-white shadow-sm"
+                    style={{ color: "var(--t-blue)", borderColor: "var(--t-border)" }}
+                  >
+                    <Truck className="w-3.5 h-3.5" />
+                    Tracking
+                  </button>
+                </div>
               </div>
               <p className="text-sm" style={{ color: "var(--t-muted)" }}>
                 {requiresApproval

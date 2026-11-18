@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "@/hooks/use-toast";
+import { WatchLink } from "@/components/help/WatchLink";
 import { PROTOCOLS } from "@/data/protocols";
 import { PageLayout } from "@/components/PageLayout";
 import { PEPTIDE_GROUPS, getCanonicalGroup, getPeptideDisplayName } from "@/lib/peptide-groups";
@@ -2563,6 +2564,7 @@ export default function LabTests({ bare }: { bare?: boolean } = {}) {
             <div>
               <h1 className="text-xl font-bold tracking-tight leading-none" style={{ color: "var(--t-text)" }}>Lab Reports</h1>
               <p className="text-[11px] font-medium mt-1 uppercase tracking-wider" style={{ color: "var(--t-subtle)" }}>Third-party verification & community data</p>
+              <div className="mt-1.5"><WatchLink slug="faq-lab-tests" label="Watch: reading lab reports" /></div>
             </div>
           </div>
           <div className="flex gap-4 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
