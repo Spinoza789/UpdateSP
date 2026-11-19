@@ -118,3 +118,58 @@ it("rolls back if a refund/status guard or note insertion fails", async () => {
   state.failUpdate = true; expect((await pay()).status).toBe(409); expect(state.notes).toEqual([]);
   state.failUpdate = false; state.failNote = true; expect((await pay()).status).toBe(500); expect(state.updates).toEqual([]);
 });
+
+async function payBalance(expectedAmountDue = 20, note = "Extra kit fee received", signedIn = true) {
+  const response = await fetch(`${base}/organiser/group-buys/G/orders/mark-balance-paid`, {
+    method: "POST", headers: { "Content-Type": "application/json", ...(signedIn ? { "x-organiser": "owner" } : {}) },
+    body: JSON.stringify({ orderIds: ["O"], note, expectedAmountDue }),
+  });
+  return { status: response.status, body: await response.json() };
+}
+it("settles only the outstanding balance, preserving original payment, TXIDs and fulfilment", async () => {
+  state.orders[0].paymentStatus = "confirmed";
+  expect((await payBalance()).status).toBe(200);
+  const patch = state.updates[0];
+  expect(patch).toMatchObject({ amountDue: "0.00", balancePaymentStatus: "confirmed", balanceCryptoQuote: null });
+  expect(patch.balanceConfirmedAt).toBeInstanceOf(Date);
+  expect(patch.adminNotes).toContain("20.00");
+  expect(patch.adminNotes).toContain("@owner");
+  expect(patch.adminNotes).toContain("Extra kit fee received");
+  for (const key of ["paymentStatus", "paymentConfirmedAt", "paymentTxHash", "balanceTxHash", "grandTotal", "status"]) expect(patch).not.toHaveProperty(key);
+  expect(state.notes[0].body).toContain("Extra kit fee received");
+  const telegram = await import("../lib/telegram");
+  expect(telegram.notifyUserFromTemplate).not.toHaveBeenCalled();
+});
+it("rejects stale balances and makes confirmed replays harmless", async () => {
+  expect((await payBalance(6)).status).toBe(409);
+  expect(state.updates).toHaveLength(0);
+  state.orders[0].amountDue = "0.00";
+  state.orders[0].balancePaymentStatus = "confirmed";
+  expect((await payBalance()).body).toMatchObject({ updated: 0, skipped: 1 });
+  expect(state.notes).toHaveLength(0);
+});
+it("protects balance confirmation with authentication, ownership, permission, refund and note checks", async () => {
+  expect((await payBalance(20, "Received", false)).status).toBe(401);
+  state.owned = false; expect((await payBalance()).status).toBe(404); state.owned = true;
+  state.allowed = false; expect((await payBalance()).status).toBe(403); state.allowed = true;
+  state.activeRefund = true; expect((await payBalance()).status).toBe(409); state.activeRefund = false;
+  expect((await payBalance(20, " ")).status).toBe(400);
+  state.orders[0].status = "Cancelled"; expect((await payBalance()).status).toBe(409);
+  expect(state.updates).toHaveLength(0);
+});
+it("does not settle zero balances and rolls back if saving the receipt note fails", async () => {
+  state.orders[0].amountDue = "0.00";
+  expect((await payBalance()).status).toBe(409);
+  state.orders[0].amountDue = "20.00";
+  state.failNote = true;
+  expect((await payBalance()).status).toBe(500);
+  expect(state.updates).toHaveLength(0);
+});
+it.each([0, -1, "20", null])("rejects an invalid expected balance (%s)", async expectedAmountDue => {
+  const response = await fetch(`${base}/organiser/group-buys/G/orders/mark-balance-paid`, {
+    method: "POST", headers: { "Content-Type": "application/json", "x-organiser": "owner" },
+    body: JSON.stringify({ orderIds: ["O"], note: "Received", expectedAmountDue }),
+  });
+  expect(response.status).toBe(400);
+  expect(state.updates).toHaveLength(0);
+});

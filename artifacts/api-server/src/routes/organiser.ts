@@ -2369,7 +2369,7 @@ router.get("/organiser/group-buys/:id/orders", requireOrganiser, async (req, res
   const { country, countryLegId } = req.query as { country?: string; countryLegId?: string };
 
   const [gb] = await db
-    .select({ id: groupBuysTable.id })
+    .select({ id: groupBuysTable.id, currency: groupBuysTable.currency })
     .from(groupBuysTable)
     .where(gbOwner(req, id));
 
@@ -2482,6 +2482,7 @@ router.get("/organiser/group-buys/:id/orders", requireOrganiser, async (req, res
 
     return {
       ...rest,
+      currency: gb.currency,
       multipleGbOrderCount: multipleCounts.get(gbOrderPersonKey(id, o.telegramUsername)) ?? 0,
       grandTotal: parseFloat(String(o.grandTotal)),
       creditsApplied: parseFloat(String(o.creditsApplied ?? "0")),

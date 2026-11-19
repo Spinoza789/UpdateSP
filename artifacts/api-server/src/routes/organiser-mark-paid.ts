@@ -13,16 +13,25 @@ class PaymentConflict extends Error {
 
 // A scoped receipt-confirmation action, not permission to edit products, totals,
 // TXIDs, fulfilment, or independent balance payments.
-router.post("/organiser/group-buys/:gbId/orders/mark-paid", requireOrganiser, async (req, res) => {
+router.post(["/organiser/group-buys/:gbId/orders/mark-paid", "/organiser/group-buys/:gbId/orders/mark-balance-paid"], requireOrganiser, async (req, res) => {
+  const balanceOnly = req.path.endsWith("/mark-balance-paid");
   const { orderIds, note } = req.body ?? {};
   if (!Array.isArray(orderIds) || !orderIds.length || orderIds.length > 100 ||
       orderIds.some(id => typeof id !== "string" || !id.trim() || id.length > 200) ||
       typeof note !== "string" || !note.trim() || note.trim().length > 2000) {
     res.status(400).json({ error: "Select 1–100 orders and enter a payment note (maximum 2,000 characters)." }); return;
   }
+  const expectedAmountDue = req.body.expectedAmountDue;
+  if (balanceOnly && (orderIds.length !== 1 || typeof expectedAmountDue !== "number" ||
+      !Number.isFinite(expectedAmountDue) || expectedAmountDue <= 0)) {
+    res.status(400).json({ error: "Select one order and supply its current outstanding balance." }); return;
+  }
   const ids = [...new Set<string>(orderIds)];
   const gbId = String(req.params.gbId);
   const actor = req.organiser!.telegramUsername;
+  if (req.organiser!.isAdmin && req.organiser!.adminGbId !== gbId) {
+    res.status(403).json({ error: "This Admin session is scoped to a different group buy." }); return;
+  }
   try {
     const result = await db.transaction(async tx => {
       const [group] = await tx.select({ id: groupBuysTable.id, canEditPayment: groupBuysTable.organiserCanEditPaymentStatus }).from(groupBuysTable)
@@ -46,9 +55,16 @@ router.post("/organiser/group-buys/:gbId/orders/mark-paid", requireOrganiser, as
       const now = new Date();
       const changed: string[] = [];
       for (const order of orders) {
-        if (order.paymentStatus === "confirmed") continue;
-        const stampedNote = `Manual payment confirmed · @${actor} · ${now.toISOString()}\n${note.trim()}`;
-        const updated = await tx.update(ordersTable).set({
+        if (balanceOnly ? order.balancePaymentStatus === "confirmed" && Number(order.amountDue ?? 0) === 0 : order.paymentStatus === "confirmed") continue;
+        if (balanceOnly && (Number(order.amountDue ?? 0) <= 0 ||
+            Math.round(Number(order.amountDue) * 100) !== Math.round(expectedAmountDue * 100))) {
+          throw new PaymentConflict("The outstanding balance changed. Refresh the order and review the current amount before confirming.", 409);
+        }
+        const stampedNote = `${balanceOnly ? `Manual balance payment confirmed · ${Number(order.amountDue).toFixed(2)}` : "Manual payment confirmed"} · @${actor} · ${now.toISOString()}\n${note.trim()}`;
+        const updated = await tx.update(ordersTable).set(balanceOnly ? {
+          amountDue: "0.00", balancePaymentStatus: "confirmed", balanceConfirmedAt: now, balanceCryptoQuote: null,
+          adminNotes: [order.adminNotes, stampedNote].filter(Boolean).join("\n\n"),
+        } : {
           paymentStatus: "confirmed",
           paymentConfirmedAt: now,
           paymentRejectionReason: null,
@@ -56,17 +72,18 @@ router.post("/organiser/group-buys/:gbId/orders/mark-paid", requireOrganiser, as
         }).where(refundMutableOrderWhere(and(
           eq(ordersTable.id, order.id), eq(ordersTable.groupBuyId, gbId),
           eq(ordersTable.paymentStatus, order.paymentStatus), isNull(ordersTable.deletedAt),
+          ...(balanceOnly ? [eq(ordersTable.amountDue, order.amountDue!)] : []),
         ))).returning({ id: ordersTable.id });
         if (!updated.length) throw new PaymentConflict("An order changed while confirming payment. Refresh and try again.", 409);
         await tx.insert(orderNotesTable).values({
-          id: `manual-paid:${randomUUID()}`, orderId: order.id, author: actor, body: note.trim(), createdAt: now,
+          id: `manual-paid:${randomUUID()}`, orderId: order.id, author: actor, body: balanceOnly ? stampedNote : note.trim(), createdAt: now,
         });
         changed.push(order.id);
       }
       return { updated: changed.length, skipped: orders.length - changed.length, orderIds: changed };
     });
-    if (result.updated) await writeLog("payment", "info", "organiser_manual_payment_confirmed",
-      `Organiser @${actor} manually confirmed ${result.updated} order payment(s) with a private note.`,
+    if (result.updated) await writeLog("payment", "info", balanceOnly ? "organiser_manual_balance_confirmed" : "organiser_manual_payment_confirmed",
+      `Organiser @${actor} manually confirmed ${result.updated} ${balanceOnly ? "balance" : "order"} payment(s) with a private note.`,
       { gbId, username: actor, orderIds: result.orderIds });
     res.json(result);
   } catch (error) {

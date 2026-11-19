@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label = "Mark as paid", allowed = true, paymentStatusField }: {
+export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label, allowed = true, paymentStatusField, balance }: {
   groupBuyId: string; orderIds: string[]; onSaved: () => void | Promise<void>; label?: string; allowed?: boolean;
   paymentStatusField?: { value: string; onChange: (value: string) => void };
+  balance?: { amount: number; currency: string };
 }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -19,13 +20,13 @@ export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label = "Mark as
     if (!note.trim() || saving) return;
     setSaving(true); setError("");
     try {
-      const response = await fetch(`/api/organiser/group-buys/${encodeURIComponent(groupBuyId)}/orders/mark-paid`, {
+      const response = await fetch(`/api/organiser/group-buys/${encodeURIComponent(groupBuyId)}/orders/${balance ? "mark-balance-paid" : "mark-paid"}`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderIds, note: note.trim() }),
+        body: JSON.stringify({ orderIds, note: note.trim(), ...(balance ? { expectedAmountDue: balance.amount } : {}) }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to confirm payment.");
-      setResult(`${data.updated} order${data.updated === 1 ? "" : "s"} marked paid.${data.skipped ? ` ${data.skipped} already paid; left unchanged.` : ""}`);
+      setResult(balance ? (data.updated ? "Outstanding balance marked paid." : "Balance already paid; left unchanged.") : `${data.updated} order${data.updated === 1 ? "" : "s"} marked paid.${data.skipped ? ` ${data.skipped} already paid; left unchanged.` : ""}`);
       // Do not offer a duplicate payment action if a refresh fails after saving.
       setOpen(false); setNote("");
       try { await onSaved(); }
@@ -46,7 +47,8 @@ export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label = "Mark as
         <option key={status} value={status}>{status === "confirmed" ? "Paid" : status.replaceAll("_", " ")}</option>)}
     </select> : <button type="button" disabled={disabled} onClick={openConfirmation}
       className="rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50"
-      style={{ background: "var(--t-blue-10)", border: "1px solid var(--t-border)", color: "var(--t-blue-deep)" }}>{label}</button>}
+      data-testid={balance ? `mark-balance-paid-${orderIds[0]}` : undefined}
+      style={{ background: "var(--t-blue-10)", border: "1px solid var(--t-border)", color: "var(--t-blue-deep)" }}>{label ?? (balance ? "Mark balance paid" : "Mark as paid")}</button>}
     {!allowed && <span className="text-xs" style={{ color: "var(--t-muted)" }}>Admin must enable payment-status editing for this group buy.</span>}
     {orderIds.length > 100 && <span className="text-xs" style={{ color: "var(--t-muted)" }}>Select up to 100 orders at a time.</span>}
     {result && <span role="status" className="text-xs" style={{ color: "var(--t-text)" }}>{result}</span>}
@@ -54,8 +56,10 @@ export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label = "Mark as
     <Dialog open={open} onOpenChange={value => { if (!saving) setOpen(value); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Mark {orderIds.length === 1 ? "order" : `${orderIds.length} orders`} as paid</DialogTitle>
-          <DialogDescription>Only confirm money you have received. This confirms the main order payment, not a separate outstanding balance. No blockchain transaction ID is required.</DialogDescription>
+          <DialogTitle>{balance ? "Mark outstanding balance paid" : `Mark ${orderIds.length === 1 ? "order" : `${orderIds.length} orders`} as paid`}</DialogTitle>
+          <DialogDescription>{balance
+            ? `Confirm you received ${balance.currency} ${balance.amount.toFixed(2)}. This settles only the outstanding balance; the original payment and fulfilment stay unchanged. No member notification is sent.`
+            : "Only confirm money you have received. This confirms the main order payment, not a separate outstanding balance. No blockchain transaction ID is required."}</DialogDescription>
         </DialogHeader>
         <label className="text-sm font-semibold">Payment note (staff only)
           <textarea value={note} onChange={event => setNote(event.target.value)} maxLength={2000} rows={4} disabled={saving}

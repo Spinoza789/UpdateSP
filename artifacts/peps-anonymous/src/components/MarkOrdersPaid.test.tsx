@@ -92,6 +92,22 @@ test("manual payment requires a private note, preserves it on failure, and refre
       paymentStatusField: { value: "failed", onChange: () => {} },
     })));
     assert.equal(dom.window.document.querySelector("select")!.disabled, true);
+    await act(async () => root.render(React.createElement(MarkOrdersPaid, {
+      groupBuyId: "G", orderIds: ["O"], balance: { amount: 6, currency: "USDT" },
+      onSaved: async () => { refreshed++; },
+    })));
+    await act(async () => button("Mark balance paid").click());
+    assert.match(dom.window.document.body.textContent!, /USDT 6.00/);
+    assert.match(dom.window.document.body.textContent!, /No member notification/);
+    assert.equal(button("Confirm paid").disabled, true);
+    await input("PayPal received");
+    await act(async () => button("Confirm paid").click());
+    assert.deepEqual(requests.at(-1), {
+      url: "/api/organiser/group-buys/G/orders/mark-balance-paid",
+      body: { orderIds: ["O"], note: "PayPal received", expectedAmountDue: 6 }, credentials: "include",
+    });
+    assert.equal(refreshed, 3);
+    assert.match(dom.window.document.body.textContent!, /balance marked paid/);
   } finally {
     await act(async () => root.unmount()); globalThis.fetch = originalFetch; dom.window.close();
     for (const [key, descriptor] of previous) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); }

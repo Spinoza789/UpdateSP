@@ -396,6 +396,9 @@ export function mapApiOrder(value: ApiOrganiserOrder): OrganiserOrder {
       : undefined,
     testPaymentTxHash: typeof value.testPaymentTxHash === "string" ? value.testPaymentTxHash : undefined,
     balanceTxHash: typeof value.balanceTxHash === "string" ? value.balanceTxHash : undefined,
+    amountDue: numberValue(value.amountDue),
+    balancePaymentStatus: typeof value.balancePaymentStatus === "string" ? value.balancePaymentStatus : undefined,
+    currency: typeof value.currency === "string" ? value.currency : undefined,
     trackingNumber: typeof value.trackingNumber === "string" && value.trackingNumber.trim()
       ? value.trackingNumber.trim()
       : undefined,

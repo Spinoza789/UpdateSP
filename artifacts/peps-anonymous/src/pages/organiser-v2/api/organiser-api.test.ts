@@ -57,6 +57,9 @@ test("mapApiOrder normalizes the live organiser order response", () => {
     telegramUsername: "@member_one",
     status: "Processing",
     paymentStatus: "confirmed",
+    amountDue: "6.00",
+    balancePaymentStatus: "unpaid",
+    currency: "USDT",
     grandTotal: 92.5,
     deliveryMethod: "UK Tracked",
     shippingName: "Member One",
@@ -82,6 +85,9 @@ test("mapApiOrder normalizes the live organiser order response", () => {
   });
 
   assert.equal(order.id, "order-1");
+  assert.equal(order.amountDue, 6);
+  assert.equal(order.balancePaymentStatus, "unpaid");
+  assert.equal(order.currency, "USDT");
   assert.equal(order.memberUsername, "member_one");
   assert.equal(order.memberName, "Member One");
   assert.equal(order.status, "processing");

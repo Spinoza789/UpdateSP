@@ -8,3 +8,9 @@ Organisers can manually mark one or selected group-buy orders paid with a requir
 **Why:** The user explicitly approved manual paid status with a required staff-only note for single or selected orders.
 
 **How to apply:** This records money already received, not a transfer or blockchain verification. Confirm only the primary payment; preserve transaction references, fulfilment status, and separate outstanding balances. Keep existing organiser payment-edit permissions.
+
+Organisers may separately mark an outstanding balance paid with a required private receipt note and actor/time history. This settles only the balance, leaves the original payment and fulfilment unchanged, and sends no member notifications.
+
+**Why:** The user approved a separate receipt-confirmation action for additional money owed, rather than reusing the primary Paid status.
+
+**How to apply:** Keep the two payment actions distinct, respect payment-edit permissions, and reject confirmation when the outstanding amount has changed.

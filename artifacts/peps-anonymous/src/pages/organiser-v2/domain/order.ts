@@ -55,6 +55,9 @@ export interface OrganiserOrder {
   paymentTxHashes?: string[];
   testPaymentTxHash?: string;
   balanceTxHash?: string;
+  amountDue?: number;
+  balancePaymentStatus?: string;
+  currency?: string;
   trackingNumber?: string;
   internalNotes?: string;
   flagged?: OrderFlag;
@@ -186,6 +189,9 @@ export function normalizeOrder(value: unknown, fallbackId?: string): OrganiserOr
       : undefined,
     testPaymentTxHash: optionalString(value, "testPaymentTxHash"),
     balanceTxHash: optionalString(value, "balanceTxHash"),
+    amountDue: Number.isFinite(Number(value["amountDue"])) ? Number(value["amountDue"]) : 0,
+    balancePaymentStatus: optionalString(value, "balancePaymentStatus"),
+    currency: optionalString(value, "currency"),
     trackingNumber: optionalString(value, "trackingNumber"),
     internalNotes: optionalString(value, "internalNotes"),
     flagged: normalizeFlag(value["flagged"]),

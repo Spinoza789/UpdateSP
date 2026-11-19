@@ -9390,7 +9390,7 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
                   <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: "rgba(255,255,255,0.07)", color: "#94a3b8" }}>{o.status}</span>
                   {o.orderType === "test" && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "rgba(249,115,22,0.15)", color: "#F97316", border: "1px solid rgba(249,115,22,0.3)" }}>🧪 TEST</span>}
                   {o.paymentMethod && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, color: "#fff", background: pmColor(o.paymentMethod) }}>{pmLabel(o.paymentMethod)}</span>}
-                  {o.amountDue > 0 && (
+                  {o.amountDue > 0 && o.balancePaymentStatus !== "confirmed" && o.balancePaymentStatus !== "waived" && (
                     <span
                       style={{
                         fontSize: 10,
@@ -9406,7 +9406,13 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
                       Owes {gb.currency} {o.amountDue.toFixed(2)}
                     </span>
                   )}
-                  {o.amountDue > 0 && o.balancePaymentStatus === "confirmed" && (
+                  {o.amountDue > 0 && o.balancePaymentStatus !== "confirmed" && o.balancePaymentStatus !== "waived" &&
+                    !["Cancelled", "Refunded", "Draft"].includes(o.status) && (
+                    <MarkOrdersPaid groupBuyId={gb.id} orderIds={[o.id]} allowed={gb.organiserCanEditPaymentStatus}
+                      balance={{ amount: o.amountDue, currency: gb.currency }}
+                      onSaved={async () => { closeEdit(o.id); await loadOrders(); }} />
+                  )}
+                  {o.balancePaymentStatus === "confirmed" && (
                     <span
                       style={{
                         fontSize: 10,
