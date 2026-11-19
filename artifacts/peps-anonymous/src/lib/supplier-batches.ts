@@ -9,7 +9,7 @@ export interface BatchCorrectionNote {
   reason: string; createdAt: string; actor: string;
   undoneAt?: string; undoneBy?: string; undoReason?: string;
 }
-export interface BatchProposal { region: BatchRegion; token: string; orders: BatchOrder[]; kits: number; queuedKits: number; remainingKits: number; ready: boolean; readyAt: string | null; limitBlocked?: boolean; products: {productId: string; productName: string; quantity: number}[]; allQueued?: BatchProposal; corrections?: BatchCorrectionNote[]; refundRemovals?: { refundId: string; orderCode: string; kits: number }[] }
+export interface BatchProposal { region: BatchRegion; token: string; orders: BatchOrder[]; kits: number; queuedKits: number; remainingKits: number; ready: boolean; readyAt: string | null; limitBlocked?: boolean; fullBatchOnly?: boolean; openBatchNumber?: number; oversizedOrder?: boolean; products: {productId: string; productName: string; quantity: number}[]; allQueued?: BatchProposal; corrections?: BatchCorrectionNote[]; refundRemovals?: { refundId: string; orderCode: string; kits: number }[] }
 export interface AddedBatchQuantity { orderId: string; productId: string; productName: string; quantity: number }
 export interface SupplierMoveUndo { eventId: string; targetReference: string; expectedTargetToken: string; kits: number; orderCodes: string[] }
 export interface LateBatchOrder { orderId: string; kits: number; addedAt: string }

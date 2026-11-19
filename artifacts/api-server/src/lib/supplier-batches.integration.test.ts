@@ -62,6 +62,42 @@ describe.skipIf(process.env.SUPPLIER_BATCH_DB_TESTS !== "1")("regional supplier 
     const result = await api.saveSupplierConfig(id, admin, {expectedVersion: 0, config: {enabled:true,telegramAlerts,regions:[{id:"eu",name:"EU",countries:["IT","DE"],targetKits:100}]}});
     return {id, ids, result};
   }
+  it("fills open batches without allowing incomplete or stale preparation", async () => {
+    const f = await fixture([19, 8, 6]);
+    const model = await import("./supplier-batches-model");
+    const original = model.regionalQueueProposals;
+    // Exercise the scoped policy using synthetic orders, never the live group.
+    const policy = vi.spyOn(model, "regionalQueueProposals").mockImplementation((id, queue, region) =>
+      original(id === f.id ? "5ZZ87" : id, queue, region));
+    try {
+      let view = await api.saveSupplierConfig(f.id, admin, {
+        expectedVersion: f.result.version,
+        config: { ...f.result.config, regions: [{ ...f.result.config.regions[0], targetKits: 25, hardLimitKits: 25 }] },
+      });
+      expect(view.proposals.map((p: any) => [p.kits, p.ready])).toEqual([[25, true], [8, false]]);
+      const full = view.proposals[0], incomplete = view.proposals[1];
+      await expect(api.confirmSupplierBatch(f.id, admin, {
+        regionId: "eu", token: incomplete.token,
+      })).rejects.toThrow(/no longer ready/i);
+      await expect(api.confirmSupplierBatch(f.id, admin, {
+        regionId: "eu", token: incomplete.token, includeAll: true,
+      })).rejects.toThrow(/no longer ready/i);
+      const beforeOrders = await store.db.select().from(store.ordersTable).where(eq(store.ordersTable.groupBuyId, f.id));
+      view = await api.confirmSupplierBatch(f.id, admin, { regionId: "eu", token: full.token });
+      expect(view.batches[0].snapshot.orders.map((o: any) => o.id)).toEqual([f.ids[0], f.ids[2]]);
+      expect(view.proposals[0].kits).toBe(8);
+      const snapshot = view.batches[0].snapshot;
+      const replay = await api.confirmSupplierBatch(f.id, admin, { regionId: "eu", token: full.token });
+      expect(replay.batches).toHaveLength(1);
+      expect(replay.batches[0].snapshot).toEqual(snapshot);
+      await expect(api.confirmSupplierBatch(f.id, admin, { regionId: "eu", token: "stale-preview" })).rejects.toThrow(/changed/i);
+      await expect(api.appendSupplierBatch(f.id, view.batches[0].id, admin, {
+        regionId: "eu", token: view.proposals[0].token, expectedBatchToken: snapshot.token,
+      })).rejects.toThrow(/prepared separately/i);
+      const afterOrders = await store.db.select().from(store.ordersTable).where(eq(store.ordersTable.groupBuyId, f.id));
+      expect(afterOrders).toEqual(beforeOrders);
+    } finally { policy.mockRestore(); }
+  });
   it("completes and reopens submitted batches without changing orders, allocations or notifications", async () => {
     const f = await fixture([100]);
     let view = await api.confirmSupplierBatch(f.id, admin, { regionId: "eu", token: f.result.proposals[0].token });

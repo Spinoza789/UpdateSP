@@ -34,6 +34,34 @@ const existingBatch: SupplierBatch = {
   createdAt: "2026-01-01T00:00:00Z", createdBy: "admin", orderedAt: null,
   releasedAt: null, releaseReason: null, snapshot: target, exceptions: [],
 };
+test("full-batch proposals show separate progress and cannot prepare or append an incomplete batch", async () => {
+  const host = document.createElement("div"); document.body.append(host);
+  const root = createRoot(host);
+  const calls: unknown[] = [];
+  const p: BatchProposal = { ...target,
+    region: { ...target.region, targetKits: 25, hardLimitKits: 25 },
+    fullBatchOnly: true, openBatchNumber: 1, orders: [order("nineteen", 19)],
+    kits: 19, queuedKits: 27, remainingKits: 8, ready: false,
+  };
+  const props = { p, enabled: true, busy: false, batches: [existingBatch],
+    onConfirm: async (...args: unknown[]) => { calls.push(args); return true; } };
+  try {
+    await act(async () => root.render(createElement(ProposalCard, props)));
+    assert.match(host.textContent!, /Open batch 1/);
+    assert.match(host.textContent!, /19 \/ 25/);
+    assert.match(host.textContent!, /oldest open batch they fit/);
+    assert.equal(host.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "19");
+    await act(async () => (host.querySelector('[data-testid="button-preview-batch-uk"]') as HTMLButtonElement).click());
+    const confirm = host.querySelector('[data-testid="button-confirm-batch-uk"]') as HTMLButtonElement;
+    assert.equal(confirm.disabled, true);
+    assert.equal(host.querySelectorAll("select option").length, 1);
+    await act(async () => confirm.click());
+    assert.deepEqual(calls, []);
+    await act(async () => root.render(createElement(ProposalCard, { ...props, p: { ...p, kits: 25, ready: true, token: "new-full" } })));
+    assert.match(host.textContent!, /queue changed/i);
+    assert.equal((host.querySelector('[data-testid="button-confirm-batch-uk"]') as HTMLButtonElement).disabled, true);
+  } finally { await act(async () => root.unmount()); host.remove(); }
+});
 test("submitted batches require confirmation to complete and can be reopened without customer changes", async () => {
   const host = document.createElement("div"); document.body.append(host);
   const root = createRoot(host);

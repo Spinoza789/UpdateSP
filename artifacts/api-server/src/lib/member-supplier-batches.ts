@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db, accountsTable, accountGroupBuysTable, gbCountryLegsTable, groupBuysTable, ordersTable, orderLineItemsTable, groupBuyRefundsTable, gbSupplierEligibilityTable, gbSupplierSettingsTable, gbSupplierBatchesTable, gbSupplierAllocationsTable, gbSupplierShipmentsTable } from "@workspace/db";
 import { reservationBatch } from "./supplier-batch-additions";
-import { SupplierBatchError, collectSupplierQueues, isDirectSupplierOrder, propose, regionalBatchReference, type BatchOrder, type SupplierConfig } from "./supplier-batches-model";
+import { SupplierBatchError, collectSupplierQueues, isDirectSupplierOrder, propose, regionalQueueProposals, regionalBatchReference, type BatchOrder, type SupplierConfig } from "./supplier-batches-model";
 import { orderReadiness, type QuantityShipment } from "./supplier-fulfilment-model";
 import { normalizeToCode } from "./country-utils";
 import { canonicalUsername } from "./group-buy-updates-model";
@@ -28,15 +28,15 @@ export function memberCanViewBatch(batch: MemberBatch, countries: Set<string>) {
   const covered = batch.snapshot.region.countries ?? batch.snapshot.orders.map(o => o.country);
   return covered.some(c => canonical.has(countryCode(c)));
 }
-export function memberRegionalProgress(config: SupplierConfig, queues: Map<string, BatchOrder[]>, countries: Set<string>, ownOrderIds: Set<string> = new Set()) {
+export function memberRegionalProgress(config: SupplierConfig, queues: Map<string, BatchOrder[]>, countries: Set<string>, ownOrderIds: Set<string> = new Set(), groupId = "") {
   if (!config.enabled) return [];
   const canonical = new Set([...countries].map(countryCode));
   return config.regions.filter(r => r.countries.some(c => canonical.has(countryCode(c)))).map(region => {
     const queue = queues.get(region.id) ?? [];
-    const progress = propose(queue, region.targetKits);
+    const progress = groupId === "5ZZ87" ? regionalQueueProposals(groupId, queue, region)[0] : propose(queue, region.targetKits);
     const yourOrderStatus = progress.orders.some(o => ownOrderIds.has(o.id)) ? "included"
       : queue.some(o => ownOrderIds.has(o.id)) ? "waiting" : "not_included";
-    return { id: region.id, name: region.name, kits: progress.queuedKits, targetKits: region.targetKits,
+    return { id: region.id, name: region.name, kits: groupId === "5ZZ87" ? progress.kits : progress.queuedKits, targetKits: region.targetKits,
       status: progress.ready ? "Ready" : "Filling", yourOrderStatus };
   });
 }
@@ -126,7 +126,7 @@ export async function memberSupplierBatches(id: string, username: string, databa
     const pendingCountries = new Set(ownActiveOrders
       .filter(o => ownOrderIds.has(o.id) && !allocations.has(o.id))
       .map(o => countryCode(o.shippingCountry)).filter(Boolean));
-    const regions = memberRegionalProgress(config, queues, batches.length ? pendingCountries : countries, ownOrderIds);
+    const regions = memberRegionalProgress(config, queues, batches.length ? pendingCountries : countries, ownOrderIds, id);
     if (!batches.length) return { ...empty, regions };
     const ids = batches.map(b => b.id);
     const shipments = await tx.select({ batchId: gbSupplierShipmentsTable.batchId, contents: gbSupplierShipmentsTable.contents, receipt: gbSupplierShipmentsTable.receipt,

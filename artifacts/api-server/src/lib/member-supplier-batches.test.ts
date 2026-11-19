@@ -44,6 +44,17 @@ const paid = (id: string, country: string, quantity: number, extra: any = {}) =>
   ...extra,
 });
 describe("member regional privacy and queue progress", () => {
+  it("does not present a 19-kit Uther batch as full because another eight-kit order is queued", () => {
+    const config = { enabled: true, telegramAlerts: false,
+      regions: [{ id: "uk", name: "United Kingdom", countries: ["GB"], targetKits: 25, hardLimitKits: 25 }] };
+    const { queues } = collectSupplierQueues({
+      config, used: [], elig: [],
+      all: [paid("first", "GB", 19), paid("second", "GB", 8, { paymentConfirmedAt: new Date("2026-10-02Z") })],
+    });
+    const progress = memberRegionalProgress(config, queues, new Set(["GB"]), new Set(["second"]), "5ZZ87");
+    expect(progress).toEqual([{ id: "uk", name: "United Kingdom", kits: 19, targetKits: 25, status: "Filling", yourOrderStatus: "waiting" }]);
+    expect(JSON.stringify(progress)).not.toMatch(/SECRET-CODE|private|Private product/);
+  });
   it("uses active order destinations; falls back to joined/profile country only without a usable order destination", () => {
     expect([...memberDestinationCountries([paid("a", "Italy", 1)], "GB", "US")]).toEqual(["IT"]);
     expect([...memberDestinationCountries([paid("a", "US", 1, { status: "Cancelled" })], "UK", "US")]).toEqual(["GB"]);

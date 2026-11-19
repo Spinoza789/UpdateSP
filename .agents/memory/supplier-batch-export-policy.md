@@ -150,6 +150,16 @@ Automatic preparation reserves each full batch once and continues with the next
 queue. Keep the existing manual supplier-placement confirmation and staff-only
 alerts. Do not reintroduce a separate batch-member message composer.
 
+**Uther November exception:** The user approved filling the oldest open batch
+that each whole order fits. Overflow starts later open batches; subsequent small
+orders fill earlier gaps. Only full 25-kit batches may be prepared, with manual
+preparation and supplier submission. Do not repack already-prepared or submitted
+batches or apply this exception to other group buys.
+
+**Why:** The kit fee covers delivery costs for a full batch; preparing an
+underfilled batch loses money. The user explicitly replaced strict FIFO blocking
+for this group with oldest-fitting full-batch filling.
+
 Uther batch conversion creates **one combined wholesale order** for the organiser
 to review and pay through the normal wholesale checkout. It is not a migration
 of member orders or evidence that the organiser has already paid.

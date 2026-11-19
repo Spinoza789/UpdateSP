@@ -228,30 +228,34 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
   const [preview, setPreview] = useState<BatchProposal | null>(null);
   const [includeAll, setIncludeAll] = useState(false);
   const [destination, setDestination] = useState<SupplierBatch | null>(null);
-  const destinations = batches.filter(b => b.state === "prepared" && !b.exceptions.length
+  const destinations = batches.filter(b => !p.fullBatchOnly && b.state === "prepared" && !b.exceptions.length
     && b.snapshot.region.id === p.region.id
     && [...b.snapshot.region.countries].sort().join(",") === [...p.region.countries].sort().join(",")
     && [b.snapshot.region.hardLimitKits, p.region.hardLimitKits].every(cap =>
       cap == null || b.snapshot.kits + (preview?.kits ?? p.kits) <= cap));
   const destinationStale = destination && !destinations.some(b => b.id === destination.id && b.snapshot.token === destination.snapshot.token);
-  const pct = Math.min(100, (p.queuedKits / (p.region.targetKits || 1)) * 100);
+  const progressKits = p.fullBatchOnly ? p.kits : p.queuedKits;
+  const pct = Math.min(100, (progressKits / (p.region.targetKits || 1)) * 100);
   const stale = preview && preview.token !== (includeAll ? p.allQueued?.token : p.token);
   return (
     <div data-testid={`card-proposal-${p.region.id}`} className="rounded-xl border p-3 space-y-2" style={{ borderColor: V.border }}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-sm font-bold" style={{ color: V.text }}>{p.region.name} <span className="text-[11px] font-mono font-normal" style={{ color: V.muted }}>{p.region.countries.join(" ")}</span></span>
+        <span className="text-sm font-bold" style={{ color: V.text }}>{p.region.name}{p.fullBatchOnly && (p.oversizedOrder ? " · Order needs review" : ` · Open batch ${p.openBatchNumber}`)} <span className="text-[11px] font-mono font-normal" style={{ color: V.muted }}>{p.region.countries.join(" ")}</span></span>
         <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${p.ready ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>{p.ready ? "Ready" : "Filling"}</span>
       </div>
       {p.region.hardLimitKits != null && <p className="text-xs" style={{ color: V.muted }}>Hard limit: {kits(p.region.hardLimitKits)} kits · Whole orders only</p>}
-      {p.region.autoPrepare && <p className="text-xs" style={{ color: V.muted }}>Automatic preparation for staff review is on.</p>}
+      {p.fullBatchOnly && <p role="status" className="text-xs" style={{ color: V.muted }}>{p.oversizedOrder
+        ? "This whole order exceeds the batch target. Staff must review it; it will not be split or prepared automatically."
+        : `Waiting for exactly ${kits(p.region.targetKits)} kits. New orders fill the oldest open batch they fit; larger orders go into later open batches. Preparation and supplier submission are manual.`}</p>}
+      {p.region.autoPrepare && !p.fullBatchOnly && <p className="text-xs" style={{ color: V.muted }}>Automatic preparation for staff review is on.</p>}
       {p.limitBlocked && <p role="status" className="text-xs text-amber-700">The next whole order does not fit the hard limit. It stays queued; no order is split or skipped. Review the target/limit or prepare an eligible batch manually.</p>}
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: V.surface2 }} role="progressbar" aria-label={`${p.region.name} queued kits`} aria-valuenow={p.queuedKits} aria-valuemax={p.region.targetKits}>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: V.surface2 }} role="progressbar" aria-label={`${p.region.name} queued kits`} aria-valuenow={progressKits} aria-valuemax={p.region.targetKits}>
         <div className="h-full" style={{ width: `${pct}%`, background: "#2D6BCC" }} />
       </div>
       <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        {[["Queued / target", `${kits(p.queuedKits)} / ${kits(p.region.targetKits)}`], ["Proposed kits", kits(p.kits)],
+        {[[p.fullBatchOnly ? "This batch / target" : "Queued / target", `${kits(progressKits)} / ${kits(p.region.targetKits)}`], [p.fullBatchOnly ? "Space remaining" : "Proposed kits", kits(p.fullBatchOnly ? Math.max(0, p.region.targetKits - p.kits) : p.kits)],
           ["Members / orders", `${new Set(p.orders.map(o => o.username)).size} / ${p.orders.length}`],
-          ["Left in queue", `${kits(p.remainingKits)}${p.readyAt ? ` · ready ${fmt(p.readyAt)}` : ""}`]].map(([k, v]) => (
+          [p.fullBatchOnly ? "Kits in other open batches" : "Left in queue", `${kits(p.remainingKits)}${p.readyAt ? ` · ready ${fmt(p.readyAt)}` : ""}`]].map(([k, v]) => (
           <div key={k}><dt style={{ color: V.muted }} className="text-[10px]">{k}</dt><dd className="font-semibold tabular-nums" style={{ color: V.text }}>{v}</dd></div>
         ))}
       </dl>
@@ -483,7 +487,7 @@ function Body({ groupBuyId, scope, headers, onViewOrders, onDispatch }: Props) {
         {!d.config.enabled && <p className="text-xs" style={{ color: V.muted }}>Batching is disabled. History stays available; new batches cannot be confirmed.</p>}
         {d.proposals.length === 0 && <p className="text-xs" style={{ color: V.muted }}>No regional queues yet.</p>}
         {d.proposals.map(p => (
-          <ProposalCard key={p.region.id} p={p} batches={d.batches} enabled={d.config.enabled} busy={busy}
+          <ProposalCard key={`${p.region.id}:${p.openBatchNumber ?? p.orders[0]?.id ?? "queue"}`} p={p} batches={d.batches} enabled={d.config.enabled} busy={busy}
             onConfirm={async (snap, includeAll, destination) => destination
               ? act(`/${encodeURIComponent(destination.id)}/append`, { regionId: snap.region.id, token: snap.token, includeAll, expectedBatchToken: destination.snapshot.token }, `Added ${snap.orders.length} orders (${kits(snap.kits)} kits) to ${destination.reference}.`)
               : act("/confirm", { regionId: snap.region.id, token: snap.token, includeAll }, `Batch prepared for ${snap.region.name}: ${kits(snap.kits)} kits from ${snap.orders.length} orders.`)} />

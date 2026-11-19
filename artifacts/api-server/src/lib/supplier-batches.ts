@@ -12,7 +12,7 @@ import { supplierTxt, type TxtBlock, type SupplierContact } from "./supplier-txt
 import { getActiveWholesaleVendor } from "../routes/config";
 import { COUNTRY_CODE_TO_NAME, normalizeToCode } from "./country-utils";
 import { calcPackageShipping, pickRegionForCountry } from "./wholesale-shipping";
-import { SupplierBatchError, assertBatchHardLimit, validateRegions, eligibleOrder, isDirectSupplierOrder, snapshotOrder, collectSupplierQueues, propose, fingerprint, csv, regionalBatchReference, type SupplierConfig, type BatchOrder } from "./supplier-batches-model";
+import { SupplierBatchError, assertBatchHardLimit, validateRegions, eligibleOrder, isDirectSupplierOrder, snapshotOrder, collectSupplierQueues, propose, regionalQueueProposals, fingerprint, csv, regionalBatchReference, type SupplierConfig, type BatchOrder } from "./supplier-batches-model";
 import { canonicalUsername, type UpdateActor } from "./group-buy-updates-model";
 import { lockHalfKitMoney } from "./half-kit-lock";
 import { assertNoActiveRefunds } from "./refund-mutation-guard";
@@ -92,10 +92,10 @@ export async function state(tx: any, group: any, reconcile = true) {
     }
   }
   const readiness: Record<string, any> = { ...((data.stored?.readiness ?? {}) as any) };
-  const proposals = data.config.regions.map(region => {
-    const p = propose(queues.get(region.id) ?? [], region.targetKits, false, region.hardLimitKits);
+  const proposals = data.config.regions.flatMap(region => regionalQueueProposals(id, queues.get(region.id) ?? [], region).map(p => {
+    const readinessKey = p.fullBatchOnly ? `${region.id}:open:${p.openBatchNumber ?? p.orders[0]?.id}` : region.id;
     const token = fingerprint({ version: data.stored?.version ?? 0, region, orders: p.orders });
-    const prior = readiness[region.id];
+    const prior = readiness[readinessKey];
     let readyAt = prior?.readyAt ?? null;
     // Readiness is a persisted transition, not "whenever someone opens the UI".
     if (reconcile) {
@@ -108,19 +108,19 @@ export async function state(tx: any, group: any, reconcile = true) {
           readyAt = thresholdPaidAt && data.stored?.checkedAt
             && thresholdPaidAt >= asDate(data.stored.checkedAt)! && thresholdPaidAt <= now.toISOString()
             ? thresholdPaidAt : now.toISOString();
-          readiness[region.id] = { readyAt, eventId: randomUUID(), thresholdPaidAt: p.orders.at(-1)?.orderingAt ?? null };
+          readiness[readinessKey] = { readyAt, eventId: randomUUID(), thresholdPaidAt: p.orders.at(-1)?.orderingAt ?? null };
         }
-      } else { delete readiness[region.id]; readyAt = null; }
+      } else { delete readiness[readinessKey]; readyAt = null; }
     }
     const all = propose(queues.get(region.id) ?? [], region.targetKits, true, region.hardLimitKits);
-    return { ...p, region, token, readyAt, allQueued: {
+    return { ...p, region, token, readyAt, allQueued: p.fullBatchOnly ? undefined : {
       ...all, region, readyAt,
       token: fingerprint({ version: data.stored?.version ?? 0, region, orders: all.orders, includeAll: true }),
     } };
-  });
+  }));
   if (reconcile && data.stored) {
     for (const p of proposals) {
-      const ready = readiness[p.region.id];
+      const ready = readiness[p.fullBatchOnly ? `${p.region.id}:open:${p.openBatchNumber ?? p.orders[0]?.id}` : p.region.id];
       if (!ready?.eventId) continue;
       const text = `${group.name}: ${p.region.name} supplier batch ready — ${p.kits} kits / target ${p.region.targetKits}. ${p.region.autoPrepare ? "Automatic preparation is enabled; review the prepared batches in the supplier batches panel." : "Review and prepare the batch in the group-buy supplier batches panel."} No supplier order has been placed.`;
       const inserted = await tx.insert(events).values({
@@ -220,7 +220,8 @@ export async function confirmSupplierBatch(id: string, actor: UpdateActor, body:
     if (existing && existing.state !== "released") return state(tx, group);
     const current = await state(tx, group);
     if (!current.config.enabled) throw new SupplierBatchError("Supplier batching is disabled.");
-    const regionProposal = current.proposals.find(p => p.region.id === body.regionId);
+    const regionProposal = current.proposals.find(p => p.region.id === body.regionId
+      && (p.token === body.token || p.allQueued?.token === body.token));
     if (!regionProposal) throw new SupplierBatchError("This preview changed or is no longer ready. Reload and review the latest orders before confirming.");
     const { allQueued, ...targetProposal } = regionProposal;
     const p = body.includeAll === true ? allQueued : targetProposal;
@@ -256,11 +257,13 @@ export async function appendSupplierBatch(id: string, batchId: string, actor: Up
     if (batch.state !== "prepared") throw new SupplierBatchError("Orders can only be added to a prepared batch, before supplier placement.");
     if (batch.exceptions.length) throw new SupplierBatchError("Resolve the existing batch's order/payment exceptions before adding orders.");
     if (batch.snapshot.token !== body.expectedBatchToken) throw new SupplierBatchError("The existing batch changed. Reload and review its latest totals before adding orders.");
-    const regionProposal = current.proposals.find(p => p.region.id === body.regionId);
+    const regionProposal = current.proposals.find(p => p.region.id === body.regionId
+      && (p.token === body.token || p.allQueued?.token === body.token));
     if (!regionProposal) throw new SupplierBatchError("This region preview changed. Reload and review the latest orders.");
+    if (regionProposal.fullBatchOnly) throw new SupplierBatchError("These open batches must fill to their target and be prepared separately. Existing prepared batches stay unchanged.");
     const { allQueued, ...targetProposal } = regionProposal;
     const p = body.includeAll === true ? allQueued : targetProposal;
-    if (p.token !== body.token || !p.orders.length) throw new SupplierBatchError("This preview changed. Reload and review the latest orders before adding them.");
+    if (!p || p.token !== body.token || !p.orders.length) throw new SupplierBatchError("This preview changed. Reload and review the latest orders before adding them.");
     if (batch.snapshot.region.id !== p.region.id
       || fingerprint([...batch.snapshot.region.countries].sort()) !== fingerprint([...p.region.countries].sort()))
       throw new SupplierBatchError("Choose a prepared batch for the same region and countries.");
@@ -670,7 +673,7 @@ export async function exportSupplierTxt(id: string, actor: UpdateActor, input: {
 export async function reconcileSupplierGroup(id: string, database = db) {
   return locked(id, null, async (tx, group) => {
     const current = await state(tx, group);
-    if (!current.config.enabled || !current.config.regions.some(r => r.autoPrepare)) return current;
+    if (id === "5ZZ87" || !current.config.enabled || !current.config.regions.some(r => r.autoPrepare)) return current;
     const data = await load(tx, id);
     const { queues } = collectSupplierQueues(data);
     let sequence = Math.max(0, ...data.history.map((b: any) => b.sequence)), prepared = 0;

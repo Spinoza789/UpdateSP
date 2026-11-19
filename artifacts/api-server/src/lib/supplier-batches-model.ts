@@ -142,6 +142,33 @@ export function propose(queue: BatchOrder[], target: number, includeAll = false,
   return { orders, kits, queuedKits: total, remainingKits: total - kits, ready: kits >= target, products: [...products.values()],
     ...(hardLimitKits != null ? { limitBlocked } : {}) };
 }
+/** Pending proposals only: existing prepared/purchased snapshots are never repacked. */
+export function regionalQueueProposals(groupId: string, queue: BatchOrder[], region: BatchRegion):
+  Array<ReturnType<typeof propose> & { fullBatchOnly?: boolean; openBatchNumber?: number; oversizedOrder?: boolean }> {
+  if (groupId !== "5ZZ87") return [propose(queue, region.targetKits, false, region.hardLimitKits)];
+  const bins: { orders: BatchOrder[]; kits: number }[] = [];
+  const oversized: BatchOrder[] = [];
+  const sorted = [...queue].sort((a, b) => a.orderingAt.localeCompare(b.orderingAt) || a.id.localeCompare(b.id));
+  for (const order of sorted) {
+    if (order.kits > region.targetKits) { oversized.push(order); continue; }
+    let bin = bins.find(b => b.kits + order.kits <= region.targetKits);
+    if (!bin) { bin = { orders: [], kits: 0 }; bins.push(bin); }
+    bin.orders.push(order); bin.kits += order.kits;
+  }
+  if (!bins.length) bins.push({ orders: [], kits: 0 });
+  const total = queue.reduce((sum, order) => sum + order.kits, 0);
+  return [
+    ...bins.map((bin, index) => ({
+      ...propose(bin.orders, region.targetKits, true, region.targetKits),
+      fullBatchOnly: true, openBatchNumber: index + 1, queuedKits: total,
+      remainingKits: total - bin.kits,
+    })),
+    ...oversized.map(order => ({
+      ...propose([order], region.targetKits, true),
+      fullBatchOnly: true, oversizedOrder: true, ready: false, queuedKits: total, remainingKits: total - order.kits,
+    })),
+  ];
+}
 export function assertBatchHardLimit(kits: number, saved: BatchRegion, configured?: BatchRegion) {
   const caps = [saved.hardLimitKits, configured?.hardLimitKits].filter((v): v is number => v != null);
   if (caps.length && kits > Math.min(...caps)) {
