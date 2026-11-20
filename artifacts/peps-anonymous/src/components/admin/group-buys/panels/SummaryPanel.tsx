@@ -102,6 +102,9 @@ export function SummarySubTab({ secret, gb }: { secret: string; gb: GroupBuy }) 
   type Leg = { id: string; countryName: string; countryCode: string };
 
   const [rows, setRows] = useState<GRow[]>([]);
+  const [allRows, setAllRows] = useState<GRow[]>([]);
+  const [summaryError, setSummaryError] = useState("");
+  const loadId = useRef(0);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
@@ -146,12 +149,26 @@ export function SummarySubTab({ secret, gb }: { secret: string; gb: GroupBuy }) 
   }, [statusFilter, paymentFilter, countryLegFilter, accountCountryFilter, reshipperFilter]);
 
   const load = useCallback(async () => {
+    const requestId = ++loadId.current;
     setLoading(true);
+    setSummaryError("");
     setExpandedProduct(null);
     setBreakdown([]);
-    const res = await fetch(apiUrl(`/admin/group-buys/${gb.id}/summary?${buildParams()}`), { headers: { "x-admin-secret": secret } });
-    setRows(res.ok ? await res.json() : []);
-    setLoading(false);
+    try {
+      const [res, allRes] = await Promise.all([
+        fetch(apiUrl(`/admin/group-buys/${gb.id}/summary?${buildParams()}`), { headers: { "x-admin-secret": secret } }),
+        fetch(apiUrl(`/admin/group-buys/${gb.id}/summary?status=all`), { headers: { "x-admin-secret": secret } }),
+      ]);
+      if (!res.ok || !allRes.ok) throw new Error("Could not load order totals. Please refresh.");
+      const [filtered, all] = await Promise.all([res.json(), allRes.json()]);
+      if (requestId !== loadId.current) return;
+      setRows(filtered);
+      setAllRows(all);
+    } catch (error) {
+      if (requestId === loadId.current) setSummaryError(error instanceof Error ? error.message : "Could not load order totals.");
+    } finally {
+      if (requestId === loadId.current) setLoading(false);
+    }
   }, [gb.id, secret, buildParams]);
 
   useEffect(() => { load(); }, [load]);
@@ -167,6 +184,8 @@ export function SummarySubTab({ secret, gb }: { secret: string; gb: GroupBuy }) 
 
   const totalValue = rows.reduce((s, r) => s + Number(r.totalValue), 0);
   const totalQty = rows.reduce((s, r) => s + Number(r.totalQty), 0);
+  const allTotalQty = allRows.reduce((sum, row) => sum + Number(row.totalQty), 0);
+  const allTotalValue = allRows.reduce((sum, row) => sum + Number(row.totalValue), 0);
 
   const displayRows = sortOrder === "az"
     ? [...rows].sort((a, b) => a.productName.localeCompare(b.productName))
@@ -260,17 +279,16 @@ export function SummarySubTab({ secret, gb }: { secret: string; gb: GroupBuy }) 
       </div>
 
       <p className="text-xs text-muted-foreground" role="status">
-        {statusFilter === "all" && paymentFilter === "all" && countryLegFilter === "all" && accountCountryFilter === "all" && reshipperFilter === "all"
-          ? "Totals include all order statuses, not just Submitted."
-          : "Totals reflect the filters above; they are not the whole group-buy total."}
+        Top totals always include all orders. Filters only change the order list and its download.
       </p>
-      {rows.length > 0 && (
+      {summaryError && <p role="alert" className="text-sm text-red-600">{summaryError}</p>}
+      {!summaryError && (
         <>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: "Products", value: String(rows.length) },
-              { label: "Total Qty", value: String(Number(totalQty)) },
-              { label: "Total Value", value: `${gb.currency ?? "GBP"} ${Number(totalValue).toFixed(2)}` },
+              { label: "Products", value: String(allRows.length) },
+              { label: "Total Qty", value: String(allTotalQty) },
+              { label: "Total Value", value: `${gb.currency ?? "GBP"} ${allTotalValue.toFixed(2)}` },
             ].map(s => (
               <div key={s.label} className="p-3 rounded-xl text-center border border-border bg-muted/30">
                 <p className="text-sm font-bold">{s.value}</p>
@@ -348,13 +366,13 @@ export function SummarySubTab({ secret, gb }: { secret: string; gb: GroupBuy }) 
               );
             })}
             <div className="px-4 py-3 flex justify-between font-bold text-xs border-t border-border bg-muted/40">
-              <span>Total</span>
+              <span>Order list total</span>
               <span className="tabular-nums">{gb.currency ?? "GBP"} {totalValue.toFixed(2)}</span>
             </div>
           </div>
         </>
       )}
-      {rows.length === 0 && <div className="text-center py-16 text-xs text-muted-foreground">No orders found for this filter.</div>}
+      {!summaryError && rows.length === 0 && <div className="text-center py-16 text-xs text-muted-foreground">No orders found for this filter.</div>}
       <GbCoverageSection secret={secret} gbId={gb.id} />
       <GroupBuyOrderBreakdown
         endpoint={apiUrl(`/admin/group-buys/${gb.id}/order-breakdown`)}

@@ -25,8 +25,12 @@ for (const [name, path] of sources) {
     assert.match(statuses, /"Submitted"/);
   });
 
-  test(`${name} summary explains whether its quantity is filtered`, () => {
-    assert.match(source, /Totals include all order statuses/);
-    assert.match(source, /Totals reflect the filters above/);
+  test(`${name} headline totals always use the unfiltered orders`, () => {
+    assert.ok(source.includes("/summary?status=all"), "Must fetch all orders separately from the filtered list");
+    assert.ok(source.includes("allRows.reduce"), "Headline totals must not use filtered rows");
+    assert.ok(source.includes('label: "Total Qty", value: String(allTotalQty)'));
+    assert.ok(source.includes('label: "Products", value: String(allRows.length)'));
+    assert.ok(source.includes("Top totals always include all orders"));
+    assert.ok(source.includes("summaryError"), "Failed totals must be shown as an error, not zero");
   });
 }

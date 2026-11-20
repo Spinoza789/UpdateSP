@@ -11378,6 +11378,9 @@ export function SummaryTab({ gb }: { gb: OrganiserGB }) {
   type GBreakdown = { orderId: string; orderCode: string; telegramUsername: string; quantity: number; unitPrice: number; lineTotal: number; orderStatus: string; paymentStatus: string; notes: string | null };
 
   const [rows, setRows] = useState<GRow[]>([]);
+  const [allRows, setAllRows] = useState<GRow[]>([]);
+  const [summaryError, setSummaryError] = useState("");
+  const loadId = useRef(0);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
@@ -11388,14 +11391,28 @@ export function SummaryTab({ gb }: { gb: OrganiserGB }) {
   const ORDER_STATUSES = ["Submitted", "Confirmed", "Processing", "Shipped", "Delivered"];
 
   const load = useCallback(async () => {
+    const requestId = ++loadId.current;
     setLoading(true);
+    setSummaryError("");
     setExpandedProduct(null);
     setBreakdown([]);
     const params = new URLSearchParams({ status: statusFilter });
     if (paymentFilter !== "all") params.set("paymentStatus", paymentFilter);
-    const res = await fetch(`/api/organiser/group-buys/${gb.id}/summary?${params}`, { credentials: "include" });
-    setRows(res.ok ? await res.json() : []);
-    setLoading(false);
+    try {
+      const [res, allRes] = await Promise.all([
+        fetch(`/api/organiser/group-buys/${gb.id}/summary?${params}`, { credentials: "include" }),
+        fetch(`/api/organiser/group-buys/${gb.id}/summary?status=all`, { credentials: "include" }),
+      ]);
+      if (!res.ok || !allRes.ok) throw new Error("Could not load order totals. Please refresh.");
+      const [filtered, all] = await Promise.all([res.json(), allRes.json()]);
+      if (requestId !== loadId.current) return;
+      setRows(filtered);
+      setAllRows(all);
+    } catch (error) {
+      if (requestId === loadId.current) setSummaryError(error instanceof Error ? error.message : "Could not load order totals.");
+    } finally {
+      if (requestId === loadId.current) setLoading(false);
+    }
   }, [gb.id, statusFilter, paymentFilter]);
 
   useEffect(() => { load(); }, [load]);
@@ -11413,6 +11430,8 @@ export function SummaryTab({ gb }: { gb: OrganiserGB }) {
 
   const totalValue = rows.reduce((s, r) => s + r.totalValue, 0);
   const totalQty = rows.reduce((s, r) => s + r.totalQty, 0);
+  const allTotalQty = allRows.reduce((sum, row) => sum + Number(row.totalQty), 0);
+  const allTotalValue = allRows.reduce((sum, row) => sum + Number(row.totalValue), 0);
 
   const handleDownload = () => {
     if (rows.length === 0) return;
@@ -11473,17 +11492,16 @@ export function SummaryTab({ gb }: { gb: OrganiserGB }) {
       </div>
 
       <p className="text-xs" style={{ color: "var(--t-muted)" }} role="status">
-        {statusFilter === "all" && paymentFilter === "all"
-          ? "Totals include all order statuses, not just Submitted."
-          : "Totals reflect the filters above; they are not the whole group-buy total."}
+        Top totals always include all orders. Filters only change the order list and its download.
       </p>
-      {rows.length > 0 && (
+      {summaryError && <p role="alert" className="text-sm text-red-600">{summaryError}</p>}
+      {!summaryError && (
         <>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: "Products", value: String(rows.length) },
-              { label: "Total Qty", value: String(totalQty) },
-              { label: "Total Value", value: `${gb.currency} ${totalValue.toFixed(2)}` },
+              { label: "Products", value: String(allRows.length) },
+              { label: "Total Qty", value: String(allTotalQty) },
+              { label: "Total Value", value: `${gb.currency} ${allTotalValue.toFixed(2)}` },
             ].map(s => (
               <div key={s.label} className="p-3 rounded-xl text-center" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
                 <p className="text-sm font-bold" style={{ color: "var(--t-text)" }}>{s.value}</p>
@@ -11561,13 +11579,13 @@ export function SummaryTab({ gb }: { gb: OrganiserGB }) {
               );
             })}
             <div className="px-4 py-3 flex justify-between font-bold text-xs" style={{ borderTop: "1px solid var(--t-border)", background: "var(--t-surface2)", color: "var(--t-text)" }}>
-              <span>Total</span>
+              <span>Order list total</span>
               <span className="tabular-nums">{gb.currency} {totalValue.toFixed(2)}</span>
             </div>
           </div>
         </>
       )}
-      {rows.length === 0 && <div className="text-center py-16 text-[12px]" style={{ color: "var(--t-muted)" }}>No orders found for this filter</div>}
+      {!summaryError && rows.length === 0 && <div className="text-center py-16 text-[12px]" style={{ color: "var(--t-muted)" }}>No orders found for this filter</div>}
       <GroupBuyOrderBreakdown
         endpoint={`/api/organiser/group-buys/${gb.id}/order-breakdown`}
         currency={gb.currency}

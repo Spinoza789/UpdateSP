@@ -141,3 +141,4 @@
 - [Shared GB vendors](group-buy-shared-vendor-policy.md) — multiple group buys may use the same vendor, including different organisers; retain normal approval checks.
 - [GB per-kit fee scope](group-buy-kit-fee-policy.md) — retain existing product-level fees; bulk-set selected group links, not a new group-wide charge or historical repricing.
 - [Typecheck memory contention](workspace-typecheck-memory.md) — full API checks can stall alongside the editor's large TypeScript cache; inspect memory and run checks sequentially.
+- [GB summary totals](group-buy-summary-total-policy.md) — headline totals always count all orders, independently of order-list filters.
