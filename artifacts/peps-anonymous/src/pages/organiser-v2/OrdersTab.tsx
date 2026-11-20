@@ -9,6 +9,7 @@ import { fmtMoney } from "./data";
 import { organiserApi } from "./api/organiser-api";
 import { useOrderRepository, useOrders } from "./domain/repository-context";
 import { MarkOrdersPaid } from "@/components/MarkOrdersPaid";
+import { OrderAdditionalPayment } from "@/components/OrderAdditionalPayment";
 import type { OrganiserOrder as Order, OrderStatus } from "./domain/order";
 import {
   cloneOrderFilters,
@@ -949,16 +950,10 @@ export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, c
             <div className="atlas-drawer-summary"><AtlasStatusBadge tone={quickViewOrder.status === "pending" ? "warning" : quickViewOrder.status === "cancelled" ? "danger" : "success"}>{STATUS_CONFIG[quickViewOrder.status].label}</AtlasStatusBadge><strong>{fmtMoney(quickViewOrder.total, "GBP")}</strong><span>{quickViewOrder.paymentMethod} · {quickViewOrder.country}</span></div>
             <AtlasDrawerSection title="Items"><div className="atlas-order-history">{quickViewOrder.products.map(product => <article key={product.name}><div><strong>{product.name}</strong><small>Quantity {product.quantity}</small></div><strong>{fmtMoney(product.price * product.quantity, "GBP")}</strong></article>)}</div></AtlasDrawerSection>
             <AtlasDrawerSection title="Payment">
-              {quickViewOrder.balancePaymentStatus === "confirmed" && <p className="text-sm font-semibold text-emerald-600">Balance paid</p>}
-              {(quickViewOrder.amountDue ?? 0) > 0 && quickViewOrder.balancePaymentStatus !== "confirmed" && quickViewOrder.balancePaymentStatus !== "waived" && (
-                <div className="mb-3">
-                  <p className="text-sm font-semibold">Outstanding: {quickViewOrder.currency} {quickViewOrder.amountDue!.toFixed(2)}</p>
-                  {selectedGbId && quickViewOrder.status !== "cancelled" && <MarkOrdersPaid groupBuyId={selectedGbId}
-                    orderIds={[quickViewOrder.id]} allowed={canMarkPaid}
-                    balance={{ amount: quickViewOrder.amountDue!, currency: quickViewOrder.currency ?? "" }}
-                    onSaved={async () => { const fresh = await orderRepository.load(); setQuickViewOrder(fresh.find(order => order.id === quickViewOrder.id) ?? null); }} />}
-                </div>
-              )}
+              {selectedGbId && <OrderAdditionalPayment groupBuyId={selectedGbId} orderId={quickViewOrder.id}
+                amountDue={quickViewOrder.amountDue} currency={quickViewOrder.currency ?? ""} balancePaymentStatus={quickViewOrder.balancePaymentStatus}
+                allowed={canMarkPaid} orderStatus={quickViewOrder.apiStatus}
+                onSaved={async () => { const fresh = await orderRepository.load(); setQuickViewOrder(fresh.find(order => order.id === quickViewOrder.id) ?? null); }} />}
               {selectedGbId && quickViewOrder.paymentStatus !== "confirmed" && quickViewOrder.status !== "cancelled" && (
                 <MarkOrdersPaid key={quickViewOrder.id} groupBuyId={selectedGbId} orderIds={[quickViewOrder.id]} allowed={canMarkPaid}
                   onSaved={async () => { const fresh = await orderRepository.load(); setQuickViewOrder(fresh.find(order => order.id === quickViewOrder.id) ?? null); }} />
@@ -1337,16 +1332,10 @@ export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, c
                   )}
                 </div>
                 <div>
-                  {editingOrder.balancePaymentStatus === "confirmed" && <p className="mb-2 text-sm font-semibold text-emerald-600">Balance paid</p>}
-                  {selectedGbId && (editingOrder.amountDue ?? 0) > 0 && editingOrder.balancePaymentStatus !== "confirmed" &&
-                    editingOrder.balancePaymentStatus !== "waived" && editingOrder.status !== "cancelled" && (
-                    <div className="mb-3">
-                      <p className="text-sm font-semibold">Outstanding: {editingOrder.currency} {editingOrder.amountDue!.toFixed(2)}</p>
-                      <MarkOrdersPaid groupBuyId={selectedGbId} orderIds={[editingOrder.id]} allowed={canMarkPaid}
-                        balance={{ amount: editingOrder.amountDue!, currency: editingOrder.currency ?? "" }}
-                        onSaved={async () => { closeEditModal(); await orderRepository.load(); }} />
-                    </div>
-                  )}
+                  {selectedGbId && <OrderAdditionalPayment groupBuyId={selectedGbId} orderId={editingOrder.id}
+                    amountDue={editingOrder.amountDue} currency={editingOrder.currency ?? ""} balancePaymentStatus={editingOrder.balancePaymentStatus}
+                    allowed={canMarkPaid} orderStatus={editingOrder.apiStatus}
+                    onSaved={async () => { closeEditModal(); await orderRepository.load(); }} />}
                   <div className="text-[12px] font-bold uppercase tracking-wide mb-2" style={{ color: "var(--t-subtle)" }}>Tracking Number</div>
                   <input
                     type="text"

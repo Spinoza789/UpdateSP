@@ -45,6 +45,7 @@ vi.mock("../middleware/require-organiser", () => ({
 vi.mock("../lib/audit-log", () => ({ writeLog: vi.fn(async () => {}) }));
 vi.mock("../lib/telegram", () => ({ notifyUserFromTemplate: vi.fn(async () => {}) }));
 import router from "./organiser-mark-paid";
+import { eligibleOrder, paymentDate } from "../lib/supplier-batches-model";
 let server: Server, base: string;
 beforeAll(async () => {
   const app = express(); app.use(express.json(), router);
@@ -139,6 +140,24 @@ it("settles only the outstanding balance, preserving original payment, TXIDs and
   expect(state.notes[0].body).toContain("Extra kit fee received");
   const telegram = await import("../lib/telegram");
   expect(telegram.notifyUserFromTemplate).not.toHaveBeenCalled();
+});
+it("makes a submitted order batch-eligible only after the additional payment is confirmed", async () => {
+  const original = {
+    ...state.orders[0], status: "Submitted", paymentStatus: "confirmed", amountDue: "6.00",
+    shippingCountry: "GB", paymentConfirmedAt: new Date("2026-11-13T10:00:00Z"),
+    lineItems: [{ productId: "P", productName: "Kit", quantity: 2, unitPrice: "100", lineTotal: "200" }],
+  };
+  state.orders = [original];
+  expect(eligibleOrder(original)).toBe("Outstanding order balance");
+  // Toggling the original Paid status must not invent receipt of the extra money.
+  expect((await pay()).body.updated).toBe(0);
+  expect(eligibleOrder(original)).toBe("Outstanding order balance");
+  expect((await payBalance(6)).status).toBe(200);
+  const settled = { ...original, ...state.updates[0] };
+  expect(eligibleOrder(settled)).toBeNull();
+  expect(paymentDate(settled)).toBe(settled.balanceConfirmedAt.toISOString());
+  expect(settled.paymentStatus).toBe("confirmed");
+  expect(settled.grandTotal).toBe(original.grandTotal);
 });
 it("rejects stale balances and makes confirmed replays harmless", async () => {
   expect((await payBalance(6)).status).toBe(409);

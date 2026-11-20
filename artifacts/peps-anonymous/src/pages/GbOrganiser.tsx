@@ -4,6 +4,7 @@ import { GroupBuyProductLabReports } from "@/components/GroupBuyProductLabReport
 import { ParcelDestinationField, ParcelDestinationSummary } from "@/components/ParcelDestinationField";
 import { BankTransferSettings } from "@/components/BankTransferSettings";
 import { MarkOrdersPaid } from "@/components/MarkOrdersPaid";
+import { OrderAdditionalPayment } from "@/components/OrderAdditionalPayment";
 import { parseBankTransfer, type BankTransfer } from "@workspace/api-zod/bank-transfer";
 import { ReshipperFulfilmentDownload } from "@/components/ReshipperFulfilmentDownload";
 import { EuCustomPostageImport, PostageKitBandInputs } from "@/components/onward-delivery/EuCustomPostageTools";
@@ -7859,7 +7860,7 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
 
   const loadOrders = useCallback(() => {
     setLoading(true);
-    fetch(`/api/organiser/group-buys/${gb.id}/orders`, { credentials: "include" })
+    return fetch(`/api/organiser/group-buys/${gb.id}/orders`, { credentials: "include" })
       .then(r => r.ok ? r.json() : [])
       .then(d => { setOrders(d); setLoading(false); })
       .catch(() => setLoading(false));
@@ -9732,6 +9733,10 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
                           )}
                         </div>
                       )}
+                      <OrderAdditionalPayment groupBuyId={gb.id} orderId={o.id}
+                        amountDue={o.amountDue} currency={gb.currency} balancePaymentStatus={o.balancePaymentStatus}
+                        allowed={gb.organiserCanEditPaymentStatus} orderStatus={o.status}
+                        onSaved={async () => { closeEdit(o.id); await loadOrders(); }} />
                       {gb.organiserCanEditTracking && (
                         <div>
                           <label className="block text-[10px] font-bold mb-1.5" style={{ color: "var(--t-muted)" }}>Tracking Numbers</label>

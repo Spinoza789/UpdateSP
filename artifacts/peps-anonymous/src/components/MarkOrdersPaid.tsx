@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label, allowed = true, paymentStatusField, balance }: {
@@ -6,6 +7,7 @@ export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label, allowed =
   paymentStatusField?: { value: string; onChange: (value: string) => void };
   balance?: { amount: number; currency: string };
 }) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -29,7 +31,12 @@ export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label, allowed =
       setResult(balance ? (data.updated ? "Outstanding balance marked paid." : "Balance already paid; left unchanged.") : `${data.updated} order${data.updated === 1 ? "" : "s"} marked paid.${data.skipped ? ` ${data.skipped} already paid; left unchanged.` : ""}`);
       // Do not offer a duplicate payment action if a refresh fails after saving.
       setOpen(false); setNote("");
-      try { await onSaved(); }
+      try {
+        await queryClient.invalidateQueries({
+          predicate: query => query.queryKey[0] === "supplier-batches" && query.queryKey[2] === groupBuyId,
+        });
+        await onSaved();
+      }
       catch { setError("Payment saved, but the order list could not refresh. Please refresh the page."); }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to confirm payment.");
@@ -56,9 +63,9 @@ export function MarkOrdersPaid({ groupBuyId, orderIds, onSaved, label, allowed =
     <Dialog open={open} onOpenChange={value => { if (!saving) setOpen(value); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{balance ? "Mark outstanding balance paid" : `Mark ${orderIds.length === 1 ? "order" : `${orderIds.length} orders`} as paid`}</DialogTitle>
+          <DialogTitle>{balance ? "Confirm additional payment received" : `Mark ${orderIds.length === 1 ? "order" : `${orderIds.length} orders`} as paid`}</DialogTitle>
           <DialogDescription>{balance
-            ? `Confirm you received ${balance.currency} ${balance.amount.toFixed(2)}. This settles only the outstanding balance; the original payment and fulfilment stay unchanged. No member notification is sent.`
+            ? `Confirm you received the additional payment of ${balance.currency} ${balance.amount.toFixed(2)}. This settles only the outstanding balance; the original payment and fulfilment stay unchanged. Batch eligibility is refreshed; other batch requirements still apply. No member notification is sent.`
             : "Only confirm money you have received. This confirms the main order payment, not a separate outstanding balance. No blockchain transaction ID is required."}</DialogDescription>
         </DialogHeader>
         <label className="text-sm font-semibold">Payment note (staff only)

@@ -19,7 +19,12 @@ test("manual payment requires a private note, preserves it on failure, and refre
   }
   const originalFetch = globalThis.fetch;
   const { createRoot } = await import("react-dom/client");
-  const { MarkOrdersPaid } = await import("./MarkOrdersPaid");
+  const { MarkOrdersPaid: PaymentControl } = await import("./MarkOrdersPaid");
+  const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
+  const queryClient = new QueryClient();
+  function MarkOrdersPaid(props: React.ComponentProps<typeof PaymentControl>) {
+    return React.createElement(QueryClientProvider, { client: queryClient }, React.createElement(PaymentControl, props));
+  }
   const root = createRoot(dom.window.document.getElementById("root")!);
   const { act } = React;
   let refreshed = 0, attempts = 0;
@@ -92,12 +97,15 @@ test("manual payment requires a private note, preserves it on failure, and refre
       paymentStatusField: { value: "failed", onChange: () => {} },
     })));
     assert.equal(dom.window.document.querySelector("select")!.disabled, true);
+    queryClient.setQueryData(["supplier-batches", "organiser", "G"], { proposals: [] });
+    queryClient.setQueryData(["supplier-batches", "organiser", "OTHER"], { proposals: [] });
     await act(async () => root.render(React.createElement(MarkOrdersPaid, {
       groupBuyId: "G", orderIds: ["O"], balance: { amount: 6, currency: "USDT" },
       onSaved: async () => { refreshed++; },
     })));
     await act(async () => button("Mark balance paid").click());
     assert.match(dom.window.document.body.textContent!, /USDT 6.00/);
+    assert.match(dom.window.document.body.textContent!, /additional payment/i);
     assert.match(dom.window.document.body.textContent!, /No member notification/);
     assert.equal(button("Confirm paid").disabled, true);
     await input("PayPal received");
@@ -107,9 +115,26 @@ test("manual payment requires a private note, preserves it on failure, and refre
       body: { orderIds: ["O"], note: "PayPal received", expectedAmountDue: 6 }, credentials: "include",
     });
     assert.equal(refreshed, 3);
+    assert.equal(queryClient.getQueryState(["supplier-batches", "organiser", "G"])?.isInvalidated, true,
+      "Batch eligibility must refresh immediately when the additional payment is settled");
+    assert.equal(queryClient.getQueryState(["supplier-batches", "organiser", "OTHER"])?.isInvalidated, false);
     assert.match(dom.window.document.body.textContent!, /balance marked paid/);
+    const { OrderAdditionalPayment } = await import("./OrderAdditionalPayment");
+    const balanceProps = {
+      groupBuyId: "G", orderId: "O", amountDue: 6, currency: "USDT", allowed: true,
+      orderStatus: "Submitted", onSaved: () => {},
+    };
+    await act(async () => root.render(React.createElement(QueryClientProvider, { client: queryClient },
+      React.createElement(OrderAdditionalPayment, balanceProps))));
+    assert.match(dom.window.document.body.textContent!, /Outstanding: USDT 6.00/);
+    assert.match(dom.window.document.body.textContent!, /original order Paid again does not confirm/);
+    assert.ok(button("Mark additional USDT 6.00 paid"));
+    await act(async () => root.render(React.createElement(QueryClientProvider, { client: queryClient },
+      React.createElement(OrderAdditionalPayment, { ...balanceProps, amountDue: 0, balancePaymentStatus: "confirmed" }))));
+    assert.match(dom.window.document.body.textContent!, /Additional payment paid/);
+    assert.doesNotMatch(dom.window.document.body.textContent!, /Outstanding/);
   } finally {
-    await act(async () => root.unmount()); globalThis.fetch = originalFetch; dom.window.close();
+    await act(async () => root.unmount()); queryClient.clear(); globalThis.fetch = originalFetch; dom.window.close();
     for (const [key, descriptor] of previous) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); }
   }
 });
