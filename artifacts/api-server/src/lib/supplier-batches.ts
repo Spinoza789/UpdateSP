@@ -214,6 +214,7 @@ export async function saveSupplierConfig(id: string, actor: UpdateActor, body: a
 export async function confirmSupplierBatch(id: string, actor: UpdateActor, body: any, database = db) {
   if (typeof body?.regionId !== "string" || typeof body?.token !== "string") throw new SupplierBatchError("Select a displayed batch preview.", 400);
   if (body.includeAll !== undefined && typeof body.includeAll !== "boolean") throw new SupplierBatchError("Choose target-sized or all queued orders.", 400);
+  if (body.allowUnderTarget !== undefined && typeof body.allowUnderTarget !== "boolean") throw new SupplierBatchError("Explicitly acknowledge preparing below the target.", 400);
   return locked(id, actor, async (tx, group) => {
     const [existing] = await tx.select().from(batches).where(and(eq(batches.groupBuyId, id), eq(batches.previewToken, body.token)));
     // Only replay a still-active exact preparation; released proposals must be refreshed.
@@ -225,14 +226,17 @@ export async function confirmSupplierBatch(id: string, actor: UpdateActor, body:
     if (!regionProposal) throw new SupplierBatchError("This preview changed or is no longer ready. Reload and review the latest orders before confirming.");
     const { allQueued, ...targetProposal } = regionProposal;
     const p = body.includeAll === true ? allQueued : targetProposal;
-    if (!p || !p.ready || p.token !== body.token || existing) throw new SupplierBatchError("This preview changed or is no longer ready. Reload and review the latest orders before confirming.");
+    if (!p || p.token !== body.token || existing || !p.orders.length || p.kits <= 0
+      || (!p.ready && (regionProposal.fullBatchOnly || body.allowUnderTarget !== true)))
+      throw new SupplierBatchError("This preview changed or is no longer ready. Reload and review the latest orders before confirming.");
     assertBatchHardLimit(p.kits, p.region);
     await assertNoActiveRefunds(tx, p.orders.map(o => o.id));
     const sequence = Math.max(0, ...current.batches.map((b: any) => b.sequence)) + 1;
     const batchId = randomUUID(), reference = regionalBatchReference(`GB-${id.slice(0, 8)} / ${String(sequence).padStart(3, "0")}`, p.region);
     await tx.insert(batches).values({ id: batchId, groupBuyId: id, sequence, reference, previewToken: p.token, snapshot: p, createdBy: actor.username });
     await tx.insert(allocations).values(p.orders.map(o => ({ orderId: o.id, batchId })));
-    await audit(tx, id, actor.username, "prepared", { batchId, reference, orderIds: p.orders.map(o => o.id), kits: p.kits });
+    await audit(tx, id, actor.username, "prepared", { batchId, reference, orderIds: p.orders.map(o => o.id), kits: p.kits,
+      underTarget: !p.ready, targetKits: p.region.targetKits });
     return state(tx, group);
   }, database);
 }

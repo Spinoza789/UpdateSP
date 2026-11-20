@@ -224,10 +224,11 @@ function OrdersDetail({ p, batch, batches = [], scope, busy = false, act }: {
   );
 }
 
-export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p: BatchProposal; enabled: boolean; busy: boolean; batches?: SupplierBatch[]; onConfirm: (p: BatchProposal, includeAll: boolean, destination?: SupplierBatch) => Promise<boolean> }) {
+export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p: BatchProposal; enabled: boolean; busy: boolean; batches?: SupplierBatch[]; onConfirm: (p: BatchProposal, includeAll: boolean, destination?: SupplierBatch, allowUnderTarget?: boolean) => Promise<boolean> }) {
   const [preview, setPreview] = useState<BatchProposal | null>(null);
   const [includeAll, setIncludeAll] = useState(false);
   const [destination, setDestination] = useState<SupplierBatch | null>(null);
+  const [underTargetToken, setUnderTargetToken] = useState<string | null>(null);
   const destinations = batches.filter(b => !p.fullBatchOnly && b.state === "prepared" && !b.exceptions.length
     && b.snapshot.region.id === p.region.id
     && [...b.snapshot.region.countries].sort().join(",") === [...p.region.countries].sort().join(",")
@@ -237,6 +238,9 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
   const progressKits = p.fullBatchOnly ? p.kits : p.queuedKits;
   const pct = Math.min(100, (progressKits / (p.region.targetKits || 1)) * 100);
   const stale = preview && preview.token !== (includeAll ? p.allQueued?.token : p.token);
+  const underTarget = !!preview && !destination && !preview.ready && !p.fullBatchOnly
+    && preview.kits > 0 && preview.orders.length > 0;
+  const underTargetApproved = underTarget && underTargetToken === preview?.token;
   return (
     <div data-testid={`card-proposal-${p.region.id}`} className="rounded-xl border p-3 space-y-2" style={{ borderColor: V.border }}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -262,22 +266,22 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
       {p.products.length > 0 && <p className="text-[11px]" style={{ color: V.muted }}>{p.products.map(x => `${x.productName} ×${x.quantity}`).join(" · ")}</p>}
       {p.orders.length > 0 && <OrdersDetail p={p} />}
       {!preview ? (
-        <button type="button" data-testid={`button-preview-batch-${p.region.id}`} disabled={!enabled || busy || p.orders.length === 0} onClick={() => { setIncludeAll(false); setDestination(null); setPreview(p); }} className={btn} style={{ background: NAVY }}>Preview batch</button>
+        <button type="button" data-testid={`button-preview-batch-${p.region.id}`} disabled={!enabled || busy || p.orders.length === 0} onClick={() => { setUnderTargetToken(null); setIncludeAll(false); setDestination(null); setPreview(p); }} className={btn} style={{ background: NAVY }}>Preview batch</button>
       ) : (
         <div data-testid={`preview-batch-${p.region.id}`} className="rounded-lg p-3 space-y-2 text-xs" style={{ background: "var(--t-blue-08, rgba(45,107,204,0.08))", color: V.text }}>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Orders to include in this batch">
             <button type="button" aria-pressed={!includeAll} disabled={busy}
-              onClick={() => { setIncludeAll(false); setPreview(p); }}
+              onClick={() => { setUnderTargetToken(null); setIncludeAll(false); setPreview(p); }}
               className={ghost} style={{ borderColor: V.border, color: V.text }}>Target-sized batch · {kits(p.kits)} kits</button>
             {p.allQueued && <button type="button" aria-pressed={includeAll} disabled={busy}
               data-testid={`button-all-queued-${p.region.id}`}
-              onClick={() => { setIncludeAll(true); setPreview(p.allQueued!); }}
+              onClick={() => { setUnderTargetToken(null); setIncludeAll(true); setPreview(p.allQueued!); }}
               className={ghost} style={{ borderColor: V.border, color: V.text }}>{p.region.hardLimitKits != null ? "Queued orders within hard limit" : "All queued orders"} · {kits(p.allQueued.kits)} kits ({p.allQueued.orders.length} orders)</button>}
           </div>
           <label className="block space-y-1">
             <span className="font-semibold">Batch destination</span>
             <select data-testid={`select-batch-destination-${p.region.id}`} value={destination?.id ?? ""} disabled={busy}
-              onChange={e => setDestination(destinations.find(b => b.id === e.target.value) ?? null)}
+              onChange={e => { setUnderTargetToken(null); setDestination(destinations.find(b => b.id === e.target.value) ?? null); }}
               className={inputCls} style={inputStyle}>
               <option value="">Create a new batch</option>
               {destinations.map(b => <option key={b.id} value={b.id}>Add to {b.reference} · {kits(b.snapshot.kits)} kits · {b.snapshot.orders.length} orders</option>)}
@@ -297,10 +301,18 @@ export function ProposalCard({ p, enabled, busy, batches = [], onConfirm }: { p:
           <p className="font-semibold">{destination ? "Add" : "Prepare"} {kits(preview.kits)} kits from {preview.orders.length} paid orders ({preview.orders.map(o => o.code).join(", ")}).</p>
           <OrdersDetail p={preview} />
           <p style={{ color: V.muted }}>This records a supplier batch only. No supplier order is placed and no member parcel status changes.</p>
+          {underTarget && <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2 text-amber-900">
+            <p role="status">Under-target batch: {kits(preview.kits)} of {kits(preview.region.targetKits)} kits — {kits(preview.region.targetKits - preview.kits)} kits short. Delivery costs may not be fully covered. Automatic preparation still waits for the target.</p>
+            <label className="flex items-start gap-2">
+              <input type="checkbox" data-testid={`acknowledge-under-target-${p.region.id}`} disabled={busy}
+                checked={underTargetApproved} onChange={e => setUnderTargetToken(e.target.checked ? preview.token : null)} />
+              <span>I understand this batch is below target and want to prepare it manually.</span>
+            </label>
+          </div>}
           {stale && <p role="alert" className="text-amber-700">The queue changed since this preview. Confirming uses the preview shown above; the server will reject it if it is no longer valid. Close and re-preview to see the latest.</p>}
           <div className="flex gap-2">
-            <button type="button" data-testid={`button-confirm-batch-${p.region.id}`} disabled={!enabled || busy || !!stale || !!destinationStale || (!destination && !preview.ready)} onClick={async () => { if (await onConfirm(preview, includeAll, destination ?? undefined)) setPreview(null); }} className={btn} style={{ background: NAVY }}>
-              {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {destination ? `Add ${preview.orders.length} orders to batch` : includeAll ? `Confirm all ${preview.orders.length} orders` : "Confirm batch"}
+            <button type="button" data-testid={`button-confirm-batch-${p.region.id}`} disabled={!enabled || busy || !!stale || !!destinationStale || (!destination && !preview.ready && !underTargetApproved)} onClick={async () => { if (await onConfirm(preview, includeAll, destination ?? undefined, underTargetApproved || undefined)) setPreview(null); }} className={btn} style={{ background: NAVY }}>
+              {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {destination ? `Add ${preview.orders.length} orders to batch` : underTarget ? `Confirm under-target batch (${kits(preview.kits)} kits)` : includeAll ? `Confirm all ${preview.orders.length} orders` : "Confirm batch"}
             </button>
             <button type="button" onClick={() => setPreview(null)} disabled={busy} className="h-9 px-3 font-semibold" style={{ color: V.muted }}>Close</button>
           </div>
@@ -488,9 +500,9 @@ function Body({ groupBuyId, scope, headers, onViewOrders, onDispatch }: Props) {
         {d.proposals.length === 0 && <p className="text-xs" style={{ color: V.muted }}>No regional queues yet.</p>}
         {d.proposals.map(p => (
           <ProposalCard key={`${p.region.id}:${p.openBatchNumber ?? p.orders[0]?.id ?? "queue"}`} p={p} batches={d.batches} enabled={d.config.enabled} busy={busy}
-            onConfirm={async (snap, includeAll, destination) => destination
+            onConfirm={async (snap, includeAll, destination, allowUnderTarget) => destination
               ? act(`/${encodeURIComponent(destination.id)}/append`, { regionId: snap.region.id, token: snap.token, includeAll, expectedBatchToken: destination.snapshot.token }, `Added ${snap.orders.length} orders (${kits(snap.kits)} kits) to ${destination.reference}.`)
-              : act("/confirm", { regionId: snap.region.id, token: snap.token, includeAll }, `Batch prepared for ${snap.region.name}: ${kits(snap.kits)} kits from ${snap.orders.length} orders.`)} />
+              : act("/confirm", { regionId: snap.region.id, token: snap.token, includeAll, ...(allowUnderTarget ? { allowUnderTarget: true } : {}) }, `Batch prepared for ${snap.region.name}: ${kits(snap.kits)} kits from ${snap.orders.length} orders.`)} />
         ))}
       </section>
       {d.review.length > 0 && (

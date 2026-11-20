@@ -34,6 +34,35 @@ const existingBatch: SupplierBatch = {
   createdAt: "2026-01-01T00:00:00Z", createdBy: "admin", orderedAt: null,
   releasedAt: null, releaseReason: null, snapshot: target, exceptions: [],
 };
+test("manual under-target preparation requires a warning acknowledgement and resets when selection changes", async () => {
+  const host = document.createElement("div"); document.body.append(host);
+  const root = createRoot(host);
+  const calls: unknown[] = [];
+  const p: BatchProposal = { ...target, token: "small", orders: [order("one", 22)],
+    kits: 22, queuedKits: 22, remainingKits: 0, ready: false,
+    allQueued: { ...target, token: "small-all", orders: [order("one", 22)],
+      kits: 22, queuedKits: 22, remainingKits: 0, ready: false } };
+  try {
+    await act(async () => root.render(createElement(ProposalCard, {
+      p, enabled: true, busy: false, onConfirm: async (...args: unknown[]) => { calls.push(args); return true; },
+    })));
+    await act(async () => (host.querySelector('[data-testid="button-preview-batch-uk"]') as HTMLButtonElement).click());
+    const confirm = () => host.querySelector('[data-testid="button-confirm-batch-uk"]') as HTMLButtonElement;
+    assert.equal(confirm().disabled, true);
+    assert.match(host.textContent!, /22.*50.*28/);
+    const acknowledge = () => host.querySelector('[data-testid="acknowledge-under-target-uk"]') as HTMLInputElement;
+    assert.ok(acknowledge(), "Show an explicit under-target acknowledgement");
+    await act(async () => acknowledge().click());
+    assert.equal(confirm().disabled, false);
+    await act(async () => (host.querySelector('[data-testid="button-all-queued-uk"]') as HTMLButtonElement).click());
+    assert.equal(acknowledge().checked, false);
+    assert.equal(confirm().disabled, true);
+    await act(async () => acknowledge().click());
+    await act(async () => confirm().click());
+    assert.deepEqual(calls, [[p.allQueued, true, undefined, true]]);
+  } finally { await act(async () => root.unmount()); host.remove(); }
+});
+
 test("full-batch proposals show separate progress and cannot prepare or append an incomplete batch", async () => {
   const host = document.createElement("div"); document.body.append(host);
   const root = createRoot(host);
@@ -50,6 +79,7 @@ test("full-batch proposals show separate progress and cannot prepare or append a
     assert.match(host.textContent!, /Open batch 1/);
     assert.match(host.textContent!, /19 \/ 25/);
     assert.match(host.textContent!, /oldest open batch they fit/);
+    assert.equal(host.querySelector('[data-testid="acknowledge-under-target-uk"]'), null);
     assert.equal(host.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "19");
     await act(async () => (host.querySelector('[data-testid="button-preview-batch-uk"]') as HTMLButtonElement).click());
     const confirm = host.querySelector('[data-testid="button-confirm-batch-uk"]') as HTMLButtonElement;

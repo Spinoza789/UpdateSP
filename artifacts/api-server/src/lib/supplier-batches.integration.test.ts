@@ -62,6 +62,44 @@ describe.skipIf(process.env.SUPPLIER_BATCH_DB_TESTS !== "1")("regional supplier 
     const result = await api.saveSupplierConfig(id, admin, {expectedVersion: 0, config: {enabled:true,telegramAlerts,regions:[{id:"eu",name:"EU",countries:["IT","DE"],targetKits:100}]}});
     return {id, ids, result};
   }
+  it.each([true, false])("manually prepares an under-target batch with explicit approval (admin=%s)", async (isAdmin) => {
+    const f = await fixture([10, 5, 4, 3]);
+    const actor = isAdmin ? admin : { username: "synthetic-organiser", admin: false };
+    let view = await api.saveSupplierConfig(f.id, admin, {
+      expectedVersion: f.result.version,
+      config: { ...f.result.config, regions: [{ ...f.result.config.regions[0], targetKits: 50, autoPrepare: true }] },
+    });
+    view = await api.reconcileSupplierGroup(f.id);
+    expect(view.batches).toHaveLength(0);
+    const p = view.proposals[0];
+    expect(p.kits).toBe(22);
+    expect(p.ready).toBe(false);
+    const beforeOrders = await store.db.select().from(store.ordersTable).where(eq(store.ordersTable.groupBuyId, f.id));
+    await expect(api.confirmSupplierBatch(f.id, actor, { regionId: "eu", token: p.token })).rejects.toThrow();
+    await expect(api.confirmSupplierBatch(f.id, actor, { regionId: "eu", token: p.token, allowUnderTarget: "true" })).rejects.toThrow();
+    await expect(api.confirmSupplierBatch(f.id, actor, { regionId: "eu", token: "stale", allowUnderTarget: true })).rejects.toThrow();
+    view = await api.confirmSupplierBatch(f.id, actor, { regionId: "eu", token: p.token, allowUnderTarget: true });
+    expect(view.batches).toHaveLength(1);
+    expect(view.batches[0].state).toBe("prepared");
+    expect(view.batches[0].snapshot.kits).toBe(22);
+    expect(view.batches[0].snapshot.orders).toHaveLength(4);
+    expect(view.config.regions[0].targetKits).toBe(50);
+    const replay = await api.confirmSupplierBatch(f.id, actor, { regionId: "eu", token: p.token, allowUnderTarget: true });
+    expect(replay.batches).toHaveLength(1);
+    const afterOrders = await store.db.select().from(store.ordersTable).where(eq(store.ordersTable.groupBuyId, f.id));
+    expect(afterOrders).toEqual(beforeOrders);
+    const preparedEvents = await store.db.select().from(store.gbSupplierEventsTable).where(eq(store.gbSupplierEventsTable.groupBuyId, f.id));
+    expect(preparedEvents.find((e: any) => e.kind === "prepared").detail).toMatchObject({
+      underTarget: true, kits: 22, targetKits: 50,
+    });
+  });
+  it("does not let manual under-target approval create an empty batch", async () => {
+    const f = await fixture([]);
+    const p = f.result.proposals[0];
+    await expect(api.confirmSupplierBatch(f.id, admin, {
+      regionId: "eu", token: p.token, allowUnderTarget: true,
+    })).rejects.toThrow();
+  });
   it("fills open batches without allowing incomplete or stale preparation", async () => {
     const f = await fixture([19, 8, 6]);
     const model = await import("./supplier-batches-model");
@@ -81,6 +119,9 @@ describe.skipIf(process.env.SUPPLIER_BATCH_DB_TESTS !== "1")("regional supplier 
       })).rejects.toThrow(/no longer ready/i);
       await expect(api.confirmSupplierBatch(f.id, admin, {
         regionId: "eu", token: incomplete.token, includeAll: true,
+      })).rejects.toThrow(/no longer ready/i);
+      await expect(api.confirmSupplierBatch(f.id, admin, {
+        regionId: "eu", token: incomplete.token, allowUnderTarget: true,
       })).rejects.toThrow(/no longer ready/i);
       const beforeOrders = await store.db.select().from(store.ordersTable).where(eq(store.ordersTable.groupBuyId, f.id));
       view = await api.confirmSupplierBatch(f.id, admin, { regionId: "eu", token: full.token });

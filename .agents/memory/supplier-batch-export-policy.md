@@ -160,6 +160,18 @@ batches or apply this exception to other group buys.
 underfilled batch loses money. The user explicitly replaced strict FIFO blocking
 for this group with oldest-fitting full-batch filling.
 
+Other group buys may be prepared manually below their regional kit target after
+staff explicitly acknowledge the shortfall and possible delivery-cost impact.
+Automatic preparation still requires the target; the Uther November full-batch
+exception above remains protected.
+
+**Why:** The user approved “Allow manual under-target batches” after the HGH EU
+queue contained 22 paid kits against a target of 50.
+
+**How to apply:** Require a fresh reviewed preview and explicit acknowledgement,
+retain whole orders and hard limits, and record who approved the under-target
+preparation. This prepares only a batch, not a supplier purchase or member dispatch.
+
 Uther batch conversion creates **one combined wholesale order** for the organiser
 to review and pay through the normal wholesale checkout. It is not a migration
 of member orders or evidence that the organiser has already paid.

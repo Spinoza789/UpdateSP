@@ -241,6 +241,18 @@ test("a polled change to the chosen move destination requires explicit re-review
 });
 
 for (const scope of ["organiser", "admin"] as const) {
+  test(`${scope}: manual under-target confirmation sends explicit approval`, async () => {
+    state = fresh();
+    state.proposals = [{ ...proposal("small"), ready: false, kits: 1.5, queuedKits: 1.5, remainingKits: 0 }];
+    await mount(scope);
+    await click("button-preview-batch-eu");
+    assert.equal(el<HTMLButtonElement>("button-confirm-batch-eu").disabled, true);
+    await click("acknowledge-under-target-eu");
+    await click("button-confirm-batch-eu");
+    assert.deepEqual(requests[0].body, { regionId: "eu", token: "small", includeAll: false, allowUnderTarget: true });
+    assert.ok(requests[0].url.endsWith(`/api/${scope}/group-buys/G/supplier-batches/confirm`));
+  });
+
   test(`${scope}: dirty settings survive polled data`, async () => {
     state = fresh(); await mount(scope);
     await change("input-region-name-0", "Europe draft");
