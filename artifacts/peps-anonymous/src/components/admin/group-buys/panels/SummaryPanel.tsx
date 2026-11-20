@@ -103,7 +103,7 @@ export function SummarySubTab({ secret, gb }: { secret: string; gb: GroupBuy }) 
 
   const [rows, setRows] = useState<GRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("Submitted");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [countryLegFilter, setCountryLegFilter] = useState("all");
   const [accountCountryFilter, setAccountCountryFilter] = useState("all");
@@ -116,7 +116,7 @@ export function SummarySubTab({ secret, gb }: { secret: string; gb: GroupBuy }) 
   const [memberCountries, setMemberCountries] = useState<string[]>([]);
   const [reshippers, setReshippers] = useState<string[]>([]);
 
-  const ORDER_STATUSES = ["Submitted", "Confirmed", "Shipped", "Delivered"];
+  const ORDER_STATUSES = ["Submitted", "Confirmed", "Processing", "Shipped", "Delivered"];
 
   useEffect(() => {
     if (gb.countryLegsEnabled) {
@@ -259,6 +259,11 @@ export function SummarySubTab({ secret, gb }: { secret: string; gb: GroupBuy }) 
         )}
       </div>
 
+      <p className="text-xs text-muted-foreground" role="status">
+        {statusFilter === "all" && paymentFilter === "all" && countryLegFilter === "all" && accountCountryFilter === "all" && reshipperFilter === "all"
+          ? "Totals include all order statuses, not just Submitted."
+          : "Totals reflect the filters above; they are not the whole group-buy total."}
+      </p>
       {rows.length > 0 && (
         <>
           <div className="grid grid-cols-3 gap-2">

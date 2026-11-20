@@ -11379,13 +11379,13 @@ export function SummaryTab({ gb }: { gb: OrganiserGB }) {
 
   const [rows, setRows] = useState<GRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("Submitted");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [breakdown, setBreakdown] = useState<GBreakdown[]>([]);
   const [breakdownLoading, setBreakdownLoading] = useState(false);
 
-  const ORDER_STATUSES = ["Submitted", "Confirmed", "Shipped", "Delivered"];
+  const ORDER_STATUSES = ["Submitted", "Confirmed", "Processing", "Shipped", "Delivered"];
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -11472,6 +11472,11 @@ export function SummaryTab({ gb }: { gb: OrganiserGB }) {
         )}
       </div>
 
+      <p className="text-xs" style={{ color: "var(--t-muted)" }} role="status">
+        {statusFilter === "all" && paymentFilter === "all"
+          ? "Totals include all order statuses, not just Submitted."
+          : "Totals reflect the filters above; they are not the whole group-buy total."}
+      </p>
       {rows.length > 0 && (
         <>
           <div className="grid grid-cols-3 gap-2">
