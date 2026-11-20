@@ -1,4 +1,5 @@
 import { hasFreeDirectHomeShipping } from "@workspace/shipping/group-buy-direct";
+import { groupBuyCapacityFill } from "@/lib/group-buy-capacity";
 import { HghBatchGuide } from "@/components/HghBatchGuide";
 import { WatchLink } from "@/components/help/WatchLink";
 import { formatOrderPrice } from "@/lib/order-money";
@@ -546,7 +547,7 @@ export default function OrderForm() {
     staleTime: 3 * 60 * 1000,
   });
 
-  type CapacityItem = { productName: string; totalOrdered: number; stock: number; fillPercent: number; status: "available" | "limited" | "low" | "full"; mapped: boolean };
+  type CapacityItem = { productName: string; totalOrdered: number; stock: number; fillPercent: number; status: "available" | "limited" | "low" | "full"; mapped: boolean; unlimited?: boolean };
   type CapacityResponse = { items: CapacityItem[]; stockViewEnabled: boolean };
   const { data: capacityData } = useQuery<CapacityResponse>({
     queryKey: ["gb-capacity", gbId],
@@ -1774,21 +1775,13 @@ export default function OrderForm() {
                         if (!cap) return null;
 
                         const myQty = item.quantity;
-                        // Others' portion = inventory taken by the rest of the group (blue)
-                        const othersFillPct = cap.stock > 0
-                          ? Math.min(100, Math.round((cap.totalOrdered / cap.stock) * 100))
-                          : cap.totalOrdered > 0 ? 100 : 0;
-                        // My portion = my order's share of stock (amber — reacts live to +/−)
-                        const myFillPct = cap.stock > 0
-                          ? Math.min(100 - othersFillPct, Math.round((myQty / cap.stock) * 100))
-                          : 0;
-                        const liveFillPct = Math.min(100, othersFillPct + myFillPct);
+                        const { othersFillPct, myFillPct, liveStatus } = groupBuyCapacityFill(cap, myQty);
 
                         // Status label still reflects overall fullness
                         const statusLabel =
-                          liveFillPct >= 95 ? { text: "#FCA5A5", label: "OOS" } :
-                          liveFillPct >= 75 ? { text: "#FDBA74", label: "Low" } :
-                          liveFillPct >= 50 ? { text: "#FCD34D", label: "Med" } :
+                          liveStatus === "full" ? { text: "#FCA5A5", label: "OOS" } :
+                          liveStatus === "low" ? { text: "#FDBA74", label: "Low" } :
+                          liveStatus === "limited" ? { text: "#FCD34D", label: "Med" } :
                                              { text: "#93C5FD", label: "In Stock" };
 
                         return (
@@ -2489,15 +2482,7 @@ export default function OrderForm() {
               (li.productName ?? "").trim().toLowerCase() === cap.productName.trim().toLowerCase()
             );
             const myQty = matchedItem?.quantity ?? 0;
-            const othersFillPct = cap.stock > 0
-              ? Math.min(100, Math.round((cap.totalOrdered / cap.stock) * 100))
-              : cap.totalOrdered > 0 ? 100 : 0;
-            const myFillPct = cap.stock > 0
-              ? Math.min(100 - othersFillPct, Math.round((myQty / cap.stock) * 100))
-              : 0;
-            const liveFillPct = Math.min(100, othersFillPct + myFillPct);
-            const liveStatus: "full" | "low" | "limited" | "available" =
-              liveFillPct >= 95 ? "full" : liveFillPct >= 75 ? "low" : liveFillPct >= 50 ? "limited" : "available";
+            const { othersFillPct, myFillPct, liveStatus } = groupBuyCapacityFill(cap, myQty);
             return { cap, myQty, othersFillPct, myFillPct, liveStatus };
           });
           const visibleItems = enriched.filter(({ cap, liveStatus }) => {
