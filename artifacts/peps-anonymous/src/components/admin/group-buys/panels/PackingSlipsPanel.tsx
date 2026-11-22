@@ -3,6 +3,7 @@ import { Loader2, Printer, RefreshCw } from "lucide-react";
 import { PrintModal, type DispatchOrder } from "@/components/AdminDispatch";
 import { COUNTRY_LIST } from "@/data/countries";
 import { supplierUrl, type SupplierBatch } from "@/lib/supplier-batches";
+import { BatchSlipList, batchSlips, isDispatched as dispatched } from "@/components/supplier-batches/BatchSlipList";
 
 const countryNames = new Map(COUNTRY_LIST.map(c => [c.code.toLowerCase(), c.name]));
 function country(order: DispatchOrder) {
@@ -27,6 +28,9 @@ export function PackingSlipsPanel({ secret, groupBuyId, groupBuyName }: {
   const [printing, setPrinting] = useState(false);
   const [batches, setBatches] = useState<SupplierBatch[]>([]);
   const [batchFilter, setBatchFilter] = useState("");
+  const [tab, setTab] = useState<"orders" | "batches">("orders");
+  // Slips opened straight from the Batches tab: every order in one batch.
+  const [batchPrint, setBatchPrint] = useState<{ reference: string; orders: DispatchOrder[] } | null>(null);
 
   useEffect(() => {
     setBatchFilter("");
@@ -41,6 +45,7 @@ export function PackingSlipsPanel({ secret, groupBuyId, groupBuyName }: {
     setBatches([]);
     setSelected(new Set());
     setPrinting(false);
+    setBatchPrint(null);
     setLoading(true);
     setError("");
     async function load() {
@@ -88,20 +93,14 @@ export function PackingSlipsPanel({ secret, groupBuyId, groupBuyName }: {
     }));
     // Never fall back to full-order quantities when a batch was released or removed.
     if (!selectedBatch) return [];
-    const currentOrders = new Map(orders.map(order => [order.id, order]));
-    return selectedBatch.snapshot.orders.flatMap(allocation => {
-      const order = currentOrders.get(allocation.id);
-      const lineItems = allocation.items.filter(item => Number(item.quantity) > 0)
-        .map(item => ({ productName: item.productName, quantity: Number(item.quantity) }));
-      return order && lineItems.length ? [{ ...order, lineItems, supplierBatchReferences: [selectedBatch.reference] }] : [];
-    });
+    return batchSlips(selectedBatch, new Map(orders.map(order => [order.id, order])));
   }, [orders, batches, selectedBatch, batchFilter]);
   const countries = useMemo(() => [...new Set(orders.map(country).filter(Boolean))].sort(), [orders]);
   const reshippers = useMemo(() => [...new Set(orders.map(reshipper).filter(Boolean))].sort(), [orders]);
   const filtered = useMemo(() => batchOrders.filter(order =>
     (!countryFilter || country(order) === countryFilter)
     && (!reshipperFilter || (reshipperFilter === "__none__" ? !reshipper(order) : reshipper(order) === reshipperFilter))
-    && (statusFilter === "all" || !["Shipped", "Completed"].includes(order.status))
+    && (statusFilter === "all" || !dispatched(order))
   ), [batchOrders, countryFilter, reshipperFilter, statusFilter]);
   const printOrders = filtered.filter(order => selected.has(order.id));
   const fieldClass = "h-10 rounded-lg border border-input bg-background px-3 text-sm";
@@ -111,6 +110,23 @@ export function PackingSlipsPanel({ secret, groupBuyId, groupBuyName }: {
         <h3 className="text-lg font-bold">Packing slips</h3>
         <p className="text-sm text-muted-foreground">Print directly from this group buy, with or without an assigned reshipper. Printing does not mark orders as dispatched or notify members.</p>
       </div>
+      <div role="tablist" aria-label="Packing slip views" className="flex gap-1 border-b border-border">
+        {([["orders", "Orders"], ["batches", `Batches${loading || error ? "" : ` (${batches.length})`}`]] as const).map(([id, label]) => (
+          <button key={id} type="button" role="tab" id={`packing-slips-tab-${id}`} aria-selected={tab === id} aria-controls={`packing-slips-view-${id}`}
+            onClick={() => { setTab(id); setPrinting(false); setBatchPrint(null); }}
+            className={`-mb-px min-h-11 border-b-2 px-4 text-sm font-semibold ${tab === id ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "batches" && (
+        <div role="tabpanel" id="packing-slips-view-batches" aria-labelledby="packing-slips-tab-batches" className="space-y-4">
+          <BatchSlipList batches={batches} orders={orders} statusFilter={statusFilter} onStatusFilter={setStatusFilter}
+            loading={loading} error={error} onRefresh={() => setRevision(v => v + 1)} onPrint={setBatchPrint}
+            onChooseOrders={id => { setBatchFilter(id); setTab("orders"); }} />
+        </div>
+      )}
+      {tab === "orders" && <div role="tabpanel" id="packing-slips-view-orders" aria-labelledby="packing-slips-tab-orders" className="space-y-4">
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-background p-4">
         <label className="grid gap-1 text-xs font-medium">Batch
           <select aria-label="Batch" className={`${fieldClass} max-w-full`} value={batchFilter} onChange={e => setBatchFilter(e.target.value)} disabled={loading || !!error}>
@@ -170,7 +186,9 @@ export function PackingSlipsPanel({ secret, groupBuyId, groupBuyName }: {
             </label>)}
           </div>}
       </div>
-      {printing && printOrders.length > 0 && <PrintModal orders={printOrders} gbName={groupBuyName} onClose={() => setPrinting(false)} />}
+      </div>}
+      {tab === "orders" && printing && printOrders.length > 0 && <PrintModal orders={printOrders} gbName={groupBuyName} onClose={() => setPrinting(false)} />}
+      {tab === "batches" && batchPrint && batchPrint.orders.length > 0 && <PrintModal orders={batchPrint.orders} gbName={groupBuyName} onClose={() => setBatchPrint(null)} />}
     </div>
   );
 }

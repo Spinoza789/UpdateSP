@@ -135,6 +135,67 @@ it("prints only selected-batch allocations with its reference, preserves unassig
   } finally { await React.act(async () => root.unmount()); }
 });
 
+it("has a Batches tab that prints every order in one batch with only that batch's kits", async () => {
+  const base = { telegramUsername: "example", deliveryMethod: "Post", shippingCountry: "GB", reshipperUsername: null,
+    lineItems: [{ productName: "HGH full order", quantity: 12 }] };
+  vi.spyOn(globalThis, "fetch").mockImplementation(async input => Response.json(String(input).includes("/supplier-batches") ? { batches: [
+    { id: "batch-one", reference: "GB-UAJBM / 001", state: "ordered", snapshot: { region: { name: "United Kingdom" }, orders: [
+      { id: "one", items: [{ productId: "hgh", productName: "HGH 36IU", quantity: 2 }] },
+      { id: "two", items: [{ productId: "hgh", productName: "HGH 36IU", quantity: 3 }] },
+      { id: "sent", items: [{ productId: "hgh", productName: "HGH 36IU", quantity: 1 }] },
+    ] } },
+    { id: "batch-two", reference: "GB-UAJBM / 002", state: "prepared", snapshot: { region: { name: "Europe" }, orders: [
+      { id: "one", items: [{ productId: "hgh", productName: "HGH 36IU", quantity: 10 }] },
+    ] } },
+    { id: "released", reference: "Released batch", state: "released", snapshot: { orders: [] } },
+  ] } : { orders: [
+    { ...base, id: "one", code: "10001", status: "Submitted", shippingName: "First recipient" },
+    { ...base, id: "two", code: "10002", status: "Submitted", shippingName: "Second recipient" },
+    { ...base, id: "sent", code: "10003", status: "Shipped", shippingName: "Already sent" },
+    { ...base, id: "outside", code: "10004", status: "Submitted", shippingName: "Outside batch" },
+  ] }));
+  const el = document.createElement("div");
+  document.body.append(el);
+  const root = createRoot(el);
+  try {
+    await React.act(async () => { root.render(<PackingSlipsPanel secret="test-admin" groupBuyId="gb-example" groupBuyName="HGH GB" />); });
+    const tabs = [...el.querySelectorAll('[role="tab"]')] as HTMLElement[];
+    expect(tabs.map(tab => tab.textContent)).toEqual(["Orders", "Batches (2)"]);
+    expect(tabs[0].getAttribute("aria-selected")).toBe("true");
+    await React.act(async () => { tabs[1].click(); });
+    expect(el.querySelector('select[aria-label="Batch"]')).toBeNull();
+    const first = el.querySelector('[data-testid="packing-slip-batch-batch-one"]')!;
+    expect(first.textContent).toContain("GB-UAJBM / 001");
+    expect(first.textContent).toContain("United Kingdom · Submitted to vendor · 3 orders · 6 kits · 1 already dispatched");
+    expect(el.querySelector('[data-testid="packing-slip-batch-batch-two"]')!.textContent).toContain("Europe · Prepared · 1 order · 10 kits");
+    expect(el.textContent).not.toContain("Released batch");
+
+    await React.act(async () => { button(first, "Print slips (2)").click(); });
+    const modal = button(el, "Print / Save PDF").closest(".fixed")!;
+    const slips = modal.querySelectorAll(".slip");
+    expect(slips).toHaveLength(2);
+    expect(slips[0].querySelector(".slip-batches")?.textContent).toBe("Batch: GB-UAJBM / 001");
+    expect(modal.textContent).toContain("Total Kits — 2");
+    expect(modal.textContent).toContain("Total Kits — 3");
+    expect(modal.textContent).not.toContain("HGH full order");
+    expect(modal.textContent).not.toContain("Already sent");
+    expect(modal.textContent).not.toContain("Outside batch");
+    await React.act(async () => { button(el, "Close packing slips").click(); });
+
+    // Including dispatched orders adds the third slip.
+    await select(el, "Batch slip status", "all");
+    await React.act(async () => { button(el.querySelector('[data-testid="packing-slip-batch-batch-one"]')!, "Print slips (3)").click(); });
+    expect(button(el, "Print / Save PDF").closest(".fixed")!.querySelectorAll(".slip")).toHaveLength(3);
+    await React.act(async () => { button(el, "Close packing slips").click(); });
+
+    // "Choose orders" opens the Orders tab already filtered to that batch.
+    await React.act(async () => { button(el.querySelector('[data-testid="packing-slip-batch-batch-two"]')!, "Choose orders").click(); });
+    expect((el.querySelector('select[aria-label="Batch"]') as HTMLSelectElement).value).toBe("batch-two");
+    expect(el.textContent).toContain("First recipient");
+    expect(el.textContent).not.toContain("Second recipient");
+  } finally { await React.act(async () => root.unmount()); }
+});
+
 it("shows an error and does not allow printing a partial failed load", async () => {
   vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: false, json: async () => ({ error: "Session expired" }) } as Response);
   const el = document.createElement("div");

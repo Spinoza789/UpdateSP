@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import CombinedOrderShipping from "./combined-shipping/CombinedOrderShipping";
+import { BatchSlipList } from "./supplier-batches/BatchSlipList";
+import type { SupplierBatch } from "@/lib/supplier-batches";
 import { ReceiptShipmentActions } from "./combined-shipping/ReceiptShipmentActions";
 import { ShipmentContextPanel, ShipmentOrderBadges, SlipShipmentNotes, enrichForSlip, filterByShipmentBatch, linkedBlockReason, useShipmentContext } from "./combined-shipping/ShipmentContext";
 
@@ -207,7 +209,7 @@ export function DispatchManager({ cfg }: { cfg: DispatchCfg }) {
 
 function DispatchManagerInner() {
   const cfg = useDispatchCfg();
-  const [subTab, setSubTab] = useState<"packing" | "linked" | "halfkits" | "dispatched" | "shipped">("packing");
+  const [subTab, setSubTab] = useState<"packing" | "batches" | "linked" | "halfkits" | "dispatched" | "shipped">("packing");
   const [combinedPrint, setCombinedPrint] = useState<DispatchOrder | null>(null);
   const [groupBuys, setGroupBuys] = useState<GbStub[]>([]);
   const [selectedGb, setSelectedGb] = useState(cfg.gbId ?? "");
@@ -236,6 +238,8 @@ function DispatchManagerInner() {
       <div className="flex flex-nowrap gap-1 p-1 rounded-xl bg-muted max-w-full overflow-x-auto">
         {([
           ["packing", "Dispatch & Packing Slips"],
+          // Batch slips follow the supplier batches, which reshippers do not manage.
+          ...(cfg.role !== "reshipper" ? [["batches", "Batch slips"]] as const : []),
           ["linked", "Linked orders"],
           // Half Kits is admin-only — hidden on reshipper/organiser surfaces.
           ...(cfg.role === "admin" ? [["halfkits", "Half Kits"]] as const : []),
@@ -275,6 +279,9 @@ function DispatchManagerInner() {
       {subTab === "packing" && (
         <PackingSlipsTab selectedGb={selectedGb} />
       )}
+      {subTab === "batches" && (
+        <DispatchBatchSlips key={selectedGb} selectedGb={selectedGb} gbName={groupBuys.find(group => group.id === selectedGb)?.name} />
+      )}
       {subTab === "linked" && (
         <CombinedOrderShipping key={`${cfg.role}:${cfg.lockedScope?.scopeId ?? ""}:${selectedGb}`} groupBuyId={selectedGb} prefix={cfg.base}
           dfetch={cfg.dfetch} onPrint={setCombinedPrint} />
@@ -291,6 +298,63 @@ function DispatchManagerInner() {
         <ShippedItemsContent selectedGb={selectedGb} />
       )}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DispatchBatchSlips — packing slips for every order in one supplier batch
+// ─────────────────────────────────────────────────────────────────────────────
+function DispatchBatchSlips({ selectedGb, gbName }: { selectedGb: string; gbName?: string }) {
+  const cfg = useDispatchCfg();
+  const [orders, setOrders] = useState<DispatchOrder[]>([]);
+  const [batches, setBatches] = useState<SupplierBatch[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("pending");
+  const [print, setPrint] = useState<{ reference: string; orders: DispatchOrder[] } | null>(null);
+
+  useEffect(() => {
+    setOrders([]); setBatches([]); setPrint(null); setError("");
+    if (!selectedGb) return;
+    let cancelled = false;
+    setLoading(true);
+    async function load() {
+      const scope = cfg.role === "admin" ? "admin" : "organiser";
+      const batchResponse = await cfg.dfetch(`/${scope}/group-buys/${encodeURIComponent(selectedGb)}/supplier-batches`);
+      const batchData = await batchResponse.json();
+      if (!batchResponse.ok) throw new Error(batchData.error || "Could not load batches");
+      if (!Array.isArray(batchData.batches)) throw new Error("Invalid batches response");
+      // Every page is loaded: a slip must never be dropped because the order was on a later page.
+      const list: DispatchOrder[] = [];
+      let page = 1;
+      let totalPages = 1;
+      do {
+        const orderResponse = await cfg.dfetch(cfg.ordersPath(`groupBuyId=${encodeURIComponent(selectedGb)}&page=${page}&pageSize=500`));
+        const orderData = await orderResponse.json();
+        if (!orderResponse.ok) throw new Error(orderData.error || "Could not load orders");
+        const pageOrders = Array.isArray(orderData) ? orderData : orderData?.orders;
+        if (!Array.isArray(pageOrders)) throw new Error("Invalid orders response");
+        list.push(...pageOrders);
+        totalPages = Number(orderData?.pagination?.totalPages ?? 1);
+        page++;
+      } while (page <= totalPages);
+      if (cancelled) return;
+      setOrders([...new Map(list.filter(o => o.status !== "Cancelled").map(o => [o.id, o])).values()]);
+      setBatches(batchData.batches.filter((batch: SupplierBatch) => batch.state !== "released"));
+    }
+    load().catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : "Could not load batches"); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [cfg, selectedGb, revision]);
+
+  if (!selectedGb) return <p className="rounded-xl border border-border p-4 text-sm text-muted-foreground">Select a group buy to see its batches.</p>;
+  return (
+    <>
+      <BatchSlipList batches={batches} orders={orders} statusFilter={statusFilter} onStatusFilter={setStatusFilter}
+        loading={loading} error={error} onRefresh={() => setRevision(v => v + 1)} onPrint={setPrint} />
+      {print && print.orders.length > 0 && <PrintModal orders={print.orders} gbName={gbName} onClose={() => setPrint(null)} />}
+    </>
   );
 }
 
