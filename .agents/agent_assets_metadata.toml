@@ -288,3 +288,17 @@ mtime_ms = 1794518600084
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:bbc34ef6-d242-429e-ba8d-882d8f2a859e/5967ca77-a42b-489c-8163-644d323cb64f/26d55f43-849f-44a3-991f-520d4bd4a941"
 storage_version_token = "1794518637631793"
 content_type = "text/html"
+
+[[outputs]]
+id = "pTfWh22Ar5GO3ToyDyfgv"
+uri = "file://generated-artifacts/wholesale-analysis/Wholesale_sales_and_member_changes_2026-11-23.xlsx"
+type = "table"
+title = "Wholesale sales and member order comparison"
+description = "Nine-sheet Excel workbook covering May–November 2026, with monthly and weekly trends, matched October/November comparisons, ranked member reductions, and underlying orders. Includes standalone and shared wholesale. All 12,911 formulas verified."
+logical_id = "e862d0a3-2f86-43ff-84bf-fb415338fdb1"
+content_hash = "sha256:60fb55460f7df6e907821636912c9ebd535247fcc5a2bfdddda94d952e60a967"
+size = 480481
+mtime_ms = 1795453497611
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:bbc34ef6-d242-429e-ba8d-882d8f2a859e/e862d0a3-2f86-43ff-84bf-fb415338fdb1/9da16458-3dd1-4ce1-8c5a-50f8571b6f72"
+storage_version_token = "1795453639885993"
+content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
