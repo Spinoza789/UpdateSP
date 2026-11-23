@@ -43,3 +43,10 @@ test("updates when totals change and warns when shipping is not yet quoted", () 
 test("does not expose totals when group-buy prices or total are hidden", () => {
   assert.equal(renderToStaticMarkup(<OrderFormTotal {...base} hidden />), "");
 });
+
+test("shows the kit fee as its own charge before reviewing", () => {
+  const html = renderToStaticMarkup(<OrderFormTotal {...base} kitFees={6} total={94.5} />);
+  assert.match(html, /Kit fees/);
+  assert.match(html, /\$6\.00/);
+  assert.match(html, /\$94\.50/);
+});

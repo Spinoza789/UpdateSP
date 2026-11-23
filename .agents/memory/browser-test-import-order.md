@@ -41,3 +41,14 @@ Treat `React is not defined` in node/tsx JSX tests as a possible harness mismatc
 **Why:** The test runner can emit classic JSX for the project's preserve setting while Vite uses the automatic runtime; a functioning browser UI can therefore fail only in tests.
 
 **How to apply:** Supply the React namespace in the test process, following the existing JSX tests. Do not rewrite production imports, change Vite configuration, or install dependencies merely to fix that test-only mismatch.
+
+Browser-only HTML harnesses must import React Query using the exact optimized
+module URL, including Vite's version query, used by the rendered components.
+
+**Why:** The bare optimized URL and its versioned URL can create separate Query
+Client contexts, producing “No QueryClient set” despite a provider in the harness.
+
+**How to apply:** Read a transformed component or hook and reuse its resolved
+React Query import URL in the browser fixture. Keep any browser-side dynamic
+imports inside a string passed to Playwright evaluation: Vitest otherwise
+rewrites them to an SSR helper that does not exist in the browser.

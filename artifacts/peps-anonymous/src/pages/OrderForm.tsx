@@ -17,7 +17,8 @@ import { findProtocol, type Protocol } from "@/data/protocols";
 import { LabReportPopup } from "@/components/LabTestsPopup";
 import { resolveProductBatchPrefixes, anyBatchCodeMatches } from "@/lib/batch-prefixes";
 import { resolveReviewAdminFee } from "@/lib/group-buy-admin-fee";
-import { calculateOrderFormTotal } from "@/lib/order-form-total";
+import { calculateOrderFormTotal, calculateOrderKitFees } from "@/lib/order-form-total";
+import { useGroupBuyProducts } from "@/hooks/use-group-buy-products";
 import { clampOrderPanelQuantity } from "@/lib/order-panel-quantity";
 import { OrderFormTotal } from "@/components/OrderFormTotal";
 import { OrderItemsSummary } from "@/components/OrderItemsSummary";
@@ -474,17 +475,8 @@ export default function OrderForm() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: gbProducts = [], isLoading: isLoadingGbProducts } = useQuery<Array<{ id: string; name: string; price: number; description: string | null; sortOrder: number; category: string | null; mgSize: string | null; halfKitEnabled?: boolean; maxPerCustomer?: number | null; labReportId?: number | null }>>({
-    queryKey: ["gb-products", gbId],
-    queryFn: async () => {
-      if (!gbId) return [];
-      const res = await fetch(`/api/group-buys/${gbId}/products`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: !!gbId,
-    staleTime: 60 * 1000,
-  });
+  const gbProductsQuery = useGroupBuyProducts(gbId);
+  const { data: gbProducts = [], isLoading: isLoadingGbProducts } = gbProductsQuery;
 
   const { data: gbDeliveryMethods = [], isLoading: isLoadingGbMethods } = useQuery<Array<{ id: string; name: string; price: number; description: string | null }>>({
     queryKey: ["gb-delivery-methods", gbId],
@@ -984,6 +976,8 @@ export default function OrderForm() {
     (shippingEnabled && shippingAmount == null)
     || (draft.directShippingRequested && draft.deliveryPrice === 0)
   );
+  const kitFees = calculateOrderKitFees({ ...draft, groupBuyId: gbId }, gbProducts);
+  const kitFeesUnavailable = Boolean(gbId) && (gbProductsQuery.isPending || gbProductsQuery.isError);
   const grandTotal = calculateOrderFormTotal({
     lineTotals: draft.lineItems.map(item => item.lineTotal),
     deliveryPrice: draft.deliveryPrice,
@@ -991,6 +985,7 @@ export default function OrderForm() {
     tip: draft.tip,
     testingContribution: draft.testingContribution,
     adminFee: totalAdminFee,
+    kitFees,
     isTopUp,
   });
 
@@ -1160,6 +1155,7 @@ export default function OrderForm() {
   }, [gbId]);
 
   const handleReview = () => {
+    if (kitFeesUnavailable) return;
     if (isPreview) {
       setError("You're previewing this group buy as a buyer — orders can't be placed in preview mode.");
       return;
@@ -2426,6 +2422,13 @@ export default function OrderForm() {
           </AnimatePresence>
         </section>
 
+        {gbId && gbProductsQuery.isError && (
+          <div role="alert" className="text-sm space-y-2">
+            <p>{gbProductsQuery.error.message}</p>
+            <button type="button" onClick={() => void gbProductsQuery.refetch()}>Retry prices and kit fees</button>
+          </div>
+        )}
+        {gbId && gbProductsQuery.isPending && <p role="status">Loading prices and kit fees…</p>}
         <OrderFormTotal
           deliveryFree={selectedFreeDirectHome}
           total={grandTotal}
@@ -2433,6 +2436,7 @@ export default function OrderForm() {
           delivery={isTopUp ? 0 : draft.deliveryPrice}
           vendorShipping={totalVendorShipping}
           adminFee={totalAdminFee}
+          kitFees={kitFees}
           adminFeeLabel={totalAdminFeeLabel}
           tip={draft.tip}
           testing={draft.testingContribution}
@@ -2447,7 +2451,7 @@ export default function OrderForm() {
             <div className="order-form-review pt-2 pb-4">
               <button
                 onClick={handleReview}
-                disabled={isPreview || kitLimitBlocked}
+                disabled={isPreview || kitLimitBlocked || kitFeesUnavailable}
                 className="w-full h-12 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-black/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 disabled:active:scale-100"
                 style={{ background: "var(--t-blue-deep)" }}
               >

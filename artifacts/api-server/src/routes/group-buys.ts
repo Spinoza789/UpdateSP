@@ -471,6 +471,7 @@ router.get("/group-buys/:id/products", requireAccount, async (req, res): Promise
       active: groupBuyProductsTable.active,
       sortOrder: groupBuyProductsTable.sortOrder,
       maxPerCustomer: groupBuyProductsTable.maxPerCustomer,
+      feePerKit: groupBuyProductsTable.feePerKit,
       name: productsTable.name,
       category: productsTable.category,
       price: productsTable.price,
@@ -500,6 +501,7 @@ router.get("/group-buys/:id/products", requireAccount, async (req, res): Promise
     mgSize: r.mgSize,
     halfKitEnabled: r.halfKitEnabled,
     maxPerCustomer: r.maxPerCustomer,
+    feePerKit: Number(r.feePerKit ?? 0),
   }));
 
   res.json(result);

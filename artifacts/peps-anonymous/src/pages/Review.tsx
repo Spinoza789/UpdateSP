@@ -27,6 +27,8 @@ import { ReviewShippingDetails } from "@/components/ReviewShippingDetails";
 import { reviewShippingRequirements, validateReviewShippingDetails } from "@/lib/review-shipping-details";
 import { COUNTRY_LIST } from "@/data/countries";
 import { formatOrderPrice } from "@/lib/order-money";
+import { calculateOrderKitFees } from "@/lib/order-form-total";
+import { useGroupBuyProducts } from "@/hooks/use-group-buy-products";
 
 function ReviewShell({ children }: { children: ReactNode }) {
   const [, navigate] = useLocation();
@@ -120,7 +122,14 @@ export default function Review() {
   });
 
   const { data: myGroupBuys } = useMyGroupBuys();
-  const activeGb = draft.groupBuyId ? myGroupBuys?.find(g => g.id === draft.groupBuyId) : null;
+  const feeGroupBuyId = selectedGroupBuyId || draft.groupBuyId;
+  const activeGb = feeGroupBuyId ? myGroupBuys?.find(g => g.id === feeGroupBuyId) : null;
+  const needsKitFeeRates = Boolean(feeGroupBuyId) && draft.orderType !== "wholesale"
+    && !isTopUp && !draft.directShippingRequested && !draft.halfKitCheckout;
+  const kitFeeProducts = useGroupBuyProducts(feeGroupBuyId, needsKitFeeRates);
+  const loadingKitFees = needsKitFeeRates && kitFeeProducts.isPending;
+  const kitFeesFailed = needsKitFeeRates && kitFeeProducts.isError;
+  const kitFees = calculateOrderKitFees({ ...draft, groupBuyId: feeGroupBuyId }, kitFeeProducts.data ?? []);
   const { data: countryLegs = [] } = useCountryLegs(
     activeGb?.countryLegsEnabled && draft.groupBuyId ? draft.groupBuyId : null,
   );
@@ -268,7 +277,7 @@ export default function Review() {
   const effectiveDeliveryPrice = isTopUp || selectedFreeDirectHome ? 0 : draft.deliveryPrice;
   const effectiveVendorShipping = vendorShippingIsKnown ? vendorShippingAmount! : 0;
   const grandTotal = parseFloat(
-    Math.max(0, productSubtotal + effectiveDeliveryPrice + effectiveVendorShipping + draft.tip + draft.testingContribution + adminFeeAmount - couponDiscount).toFixed(2)
+    Math.max(0, productSubtotal + effectiveDeliveryPrice + effectiveVendorShipping + draft.tip + draft.testingContribution + adminFeeAmount + kitFees - couponDiscount).toFixed(2)
   );
   const creditsAvailable = account?.credits ?? 0;
   const creditsAllowed = !draft.groupBuyId || activeGb?.allowCredits === true;
@@ -285,6 +294,10 @@ export default function Review() {
   const needsRuleAcceptance = !!account && (account.ruleAcceptedVersion ?? 0) < (account.rulesetVersion ?? 1);
 
   const doSubmit = () => {
+    if (loadingKitFees || kitFeesFailed) {
+      setError(loadingKitFees ? "Please wait for kit fees to load." : "Could not load kit fees. Please retry before placing your order.");
+      return;
+    }
     if (loadingShippingOptions || shippingOptionsFailed) {
       setError(loadingShippingOptions ? "Please wait for delivery requirements to load." : "Could not load delivery requirements. Please retry before placing your order.");
       return;
@@ -593,6 +606,11 @@ export default function Review() {
             </div>
           </section>
 
+          {loadingKitFees && <p role="status">Loading kit fees…</p>}
+          {kitFeesFailed && <div role="alert" className="text-sm space-y-2">
+            <p>{kitFeeProducts.error?.message}</p>
+            <button type="button" onClick={() => void kitFeeProducts.refetch()}>Retry kit fees</button>
+          </div>}
           {loadingShippingOptions && <p role="status" className="text-sm" style={{ color: "var(--t-muted)" }}>Loading delivery details…</p>}
           {shippingOptionsFailed && <div role="alert" className="rounded-xl border p-4 space-y-2 text-sm" style={{ borderColor: "var(--t-border)", color: "var(--t-text)" }}>
             <p>{shippingOptionsQuery.error instanceof Error ? shippingOptionsQuery.error.message : "Could not load delivery requirements."}</p>
@@ -637,6 +655,12 @@ export default function Review() {
                 <span>Products Subtotal</span>
                 <span>{formatPrice(productSubtotal)}</span>
               </div>
+              {kitFees > 0 && (
+                <div className="flex justify-between text-sm text-gray-400" data-testid="text-review-kit-fees">
+                  <span>Kit fees</span>
+                  <span>{formatPrice(kitFees)}</span>
+                </div>
+              )}
               {!isWholesale && (
                 <div className="flex justify-between text-sm text-gray-400">
                   <span>Delivery ({draft.deliveryMethod})</span>
@@ -835,7 +859,7 @@ export default function Review() {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isPending || loadingShippingOptions || shippingOptionsFailed || (isTopUp && isNewOrder && (additionAdvice.data?.canAddItems === false || additionAdvice.isPending || additionAdvice.isError)) || (eligibleGroupBuys.length > 0 && !selectedGroupBuyId)}
+              disabled={isPending || loadingShippingOptions || shippingOptionsFailed || loadingKitFees || kitFeesFailed || (isTopUp && isNewOrder && (additionAdvice.data?.canAddItems === false || additionAdvice.isPending || additionAdvice.isError)) || (eligibleGroupBuys.length > 0 && !selectedGroupBuyId)}
               className="flex-[2] h-12 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
               style={{ background: "var(--t-blue)" }}
             >

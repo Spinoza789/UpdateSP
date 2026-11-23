@@ -1,5 +1,5 @@
 export function OrderFormTotal({
-  total, products, delivery, vendorShipping, adminFee, adminFeeLabel,
+  total, products, delivery, vendorShipping, adminFee, adminFeeLabel, kitFees = 0,
   tip, testing, shippingPending, formatPrice, hidden, deliveryFree = false,
 }: {
   total: number;
@@ -7,6 +7,7 @@ export function OrderFormTotal({
   delivery: number;
   vendorShipping: number;
   adminFee: number;
+  kitFees?: number;
   adminFeeLabel: string | null;
   tip: number;
   testing: number;
@@ -18,6 +19,7 @@ export function OrderFormTotal({
   if (hidden) return null;
   const rows = [
     { label: "Products", amount: products },
+    ...(kitFees > 0 ? [{ label: "Kit fees", amount: kitFees }] : []),
     { label: "Delivery", amount: delivery },
     ...(vendorShipping > 0 ? [{ label: "Vendor shipping", amount: vendorShipping }] : []),
     ...(adminFee > 0 ? [{ label: adminFeeLabel || "Admin fee", amount: adminFee }] : []),
