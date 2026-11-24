@@ -19,6 +19,7 @@ import { compareOrderAmounts } from "@/lib/order-amount-sort";
 import { GbMultipleOrderBadge, GbMultipleOrderNotice } from "@/components/GbMultipleOrders";
 import { GroupBuyStockControls } from "@/components/GroupBuyStockControls";
 import { GroupBuyBulkKitFeeControls } from "@/components/GroupBuyBulkKitFeeControls";
+import { GroupBuyHalfKitFeeToggle } from "@/components/GroupBuyHalfKitFeeToggle";
 import { OrganiserOrderRevisions } from "@/components/group-buy-revisions/OrganiserOrderRevisions";
 import { useProductPriceProposals, ProductNewPrice, ProductPriceImport, type ProductPricing } from "@/components/group-buy-revisions/ProductPriceProposals";
 import { annotateCompleteGbOrderCounts, isMultipleGbOrder } from "@/lib/gb-multiple-orders";
@@ -201,6 +202,8 @@ interface OrgProduct {
   vendor: string | null;
   halfKitEnabled: boolean;
   maxPerCustomer: number | null;
+  feePerKit?: number | null;
+  chargeFullFeeOnHalfKit?: boolean;
 }
 
 interface OrgOrder {
@@ -6009,8 +6012,8 @@ function ProductsTabContent({ gb }: { gb: OrganiserGB }) {
       <GroupBuyBulkKitFeeControls key={`kit-fees-${gb.id}`} groupId={gb.id} currency={gb.currency}
         selectedIds={selectedStockIds} disabled={stockSaving || showAdd || !!editTarget}
         onUpdated={updates => {
-          const changed = new Map(updates.map(p => [p.id, p.feePerKit]));
-          setProducts(current => current.map(p => changed.has(p.id) ? { ...p, feePerKit: changed.get(p.id)! } : p));
+          const changed = new Map(updates.map(p => [p.id, p]));
+          setProducts(current => current.map(p => changed.has(p.id) ? { ...p, ...changed.get(p.id)! } : p));
           setPendingFeePerKit(current => Object.fromEntries(Object.entries(current).filter(([id]) => !changed.has(id))));
         }} />
       <div className="space-y-2">
@@ -6088,6 +6091,13 @@ function ProductsTabContent({ gb }: { gb: OrganiserGB }) {
                 </button>
               )}
             </div>
+            <GroupBuyHalfKitFeeToggle groupId={gb.id} productId={p.id} productName={p.name}
+              checked={p.chargeFullFeeOnHalfKit === true}
+              disabled={stockSaving || savingFeePerKit === p.id || showAdd || !!editTarget}
+              onUpdated={updates => setProducts(current => current.map(item => {
+                const saved = updates.find(update => update.id === item.id);
+                return saved ? { ...item, ...saved } : item;
+              }))} />
             <span className="text-sm font-bold tabular-nums" style={{ color: "var(--t-text)" }}>{gb.currency} {p.price.toFixed(2)}</span>
             <ProductNewPrice pricing={pricing} productId={p.id} />
             <button

@@ -11,11 +11,12 @@ test("loads the saved group rates with account credentials and cancellation", as
     assert.equal(url, "/api/group-buys/7M9AL/products");
     assert.equal(options?.credentials, "include");
     assert.equal(options?.signal, controller.signal);
-    return Response.json([{ id: "p", name: "Kit", price: 100, feePerKit: 3 }]);
+    return Response.json([{ id: "p", name: "Kit", price: 100, feePerKit: 3, chargeFullFeeOnHalfKit: true }]);
   };
   const products = await fetchGroupOrderProducts("7M9AL", controller.signal);
   assert.equal(products[0].price, 100);
   assert.equal(products[0].feePerKit, 3);
+  assert.equal(products[0].chargeFullFeeOnHalfKit, true);
 });
 
 test("accepts explicit zero kit fees", async () => {
@@ -29,7 +30,8 @@ test("fails explicitly instead of quoting zero when prices cannot be loaded", as
 });
 
 test("rejects missing and invalid kit-fee data rather than silently omitting charges", async () => {
-  for (const data of [{}, [{ id: "p" }], [{ id: "p", feePerKit: -3 }], [{ id: "p", feePerKit: "3" }]]) {
+  for (const data of [{}, [{ id: "p" }], [{ id: "p", feePerKit: -3 }], [{ id: "p", feePerKit: "3" }],
+    [{ id: "p", feePerKit: 3, chargeFullFeeOnHalfKit: "true" }]]) {
     globalThis.fetch = async () => Response.json(data);
     await assert.rejects(fetchGroupOrderProducts("G"), /Could not load current kit fees/);
   }

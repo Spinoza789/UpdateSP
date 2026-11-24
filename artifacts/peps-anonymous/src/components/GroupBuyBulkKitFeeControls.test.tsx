@@ -5,6 +5,15 @@ import { postGroupBuyKitFees, GroupBuyBulkKitFeeControls } from "./GroupBuyBulkK
 
 afterEach(() => vi.unstubAllGlobals());
 describe("bulk kit fee controls", () => {
+  it("includes the explicit half-kit fee choice in a bulk request", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ products: [], updatedCount: 1 }) });
+    vi.stubGlobal("fetch", fetcher);
+    await postGroupBuyKitFees("G", ["p"], "3", undefined, undefined, true);
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({
+      productIds: ["p"], feePerKit: "3.00", chargeFullFeeOnHalfKit: true,
+    });
+  });
+
   it.each(["", "-1", "1.001", "junk", "Infinity"])("rejects invalid fee %s without a request", async input => {
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);

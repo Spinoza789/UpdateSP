@@ -1094,7 +1094,7 @@ router.post("/orders", async (req, res, next): Promise<void> => {
     if (clientLineItems.length > 0) {
       const productIds = (clientLineItems as Array<{ productId: string }>).map(li => li.productId);
       const kitFeeRows = await db
-        .select({ productId: groupBuyProductsTable.productId, feePerKit: groupBuyProductsTable.feePerKit })
+        .select({ productId: groupBuyProductsTable.productId, feePerKit: groupBuyProductsTable.feePerKit, chargeFullFeeOnHalfKit: groupBuyProductsTable.chargeFullFeeOnHalfKit })
         .from(groupBuyProductsTable)
         .where(and(
           eq(groupBuyProductsTable.groupBuyId, normalizedGroupBuyId),
@@ -2698,7 +2698,7 @@ router.put("/orders/:orderId", requireAccount, async (req, res): Promise<void> =
   let resolvedKitFees = 0;
   if (lockedOrder.groupBuyId && lockedOrder.orderType !== "wholesale") {
     if (!clientDirectShippingRequested && !isAddition) {
-      const rates = await tx.select({ productId: groupBuyProductsTable.productId, feePerKit: groupBuyProductsTable.feePerKit })
+      const rates = await tx.select({ productId: groupBuyProductsTable.productId, feePerKit: groupBuyProductsTable.feePerKit, chargeFullFeeOnHalfKit: groupBuyProductsTable.chargeFullFeeOnHalfKit })
         .from(groupBuyProductsTable)
         .where(and(eq(groupBuyProductsTable.groupBuyId, lockedOrder.groupBuyId),
           inArray(groupBuyProductsTable.productId, clientLineItems.map((item: { productId: string }) => item.productId))));

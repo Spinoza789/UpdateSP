@@ -22,7 +22,8 @@ describe("bulk group-buy kit fees", () => {
       .mockResolvedValueOnce({ rows: [{ id: "p1" }, { id: "p2" }] })
       .mockResolvedValueOnce({ rows: [{ id: "p1", feePerKit: "2.50" }, { id: "p2", feePerKit: "2.50" }] }) };
     expect(await updateGroupKitFees(tx as any, "G", ["p1", "p2"], "2.50")).toEqual([
-      { id: "p1", feePerKit: 2.5 }, { id: "p2", feePerKit: 2.5 },
+      { id: "p1", feePerKit: 2.5, chargeFullFeeOnHalfKit: false },
+      { id: "p2", feePerKit: 2.5, chargeFullFeeOnHalfKit: false },
     ]);
     expect(tx.execute).toHaveBeenCalledTimes(2);
   });

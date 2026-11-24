@@ -3,6 +3,19 @@ import { describe, expect, it } from "vitest";
 import { calculateGroupKitFees, kitFeeEditLocked } from "./group-buy-kit-fees";
 
 describe("group-buy kit fees in customer edits", () => {
+  it("optionally charges one full fee per whole or partial kit of each product", () => {
+    const rates = [{ productId: "a", feePerKit: "3.00", chargeFullFeeOnHalfKit: true }];
+    for (const [quantity, expected] of [[0, 0], [0.5, 3], [1, 3], [1.5, 6], [2, 6]]) {
+      expect(calculateGroupKitFees([{ productId: "a", quantity }], rates)).toBe(expected);
+    }
+    expect(calculateGroupKitFees([
+      { productId: "a", quantity: 0.5 }, { productId: "a", quantity: 0.5 },
+    ], rates)).toBe(3);
+    expect(calculateGroupKitFees([
+      { productId: "a", quantity: 0.5 }, { productId: "b", quantity: 0.5 },
+    ], [...rates, { productId: "b", feePerKit: "3.00", chargeFullFeeOnHalfKit: false }])).toBe(4.5);
+  });
+
   it("charges the edited quantities at their group-product rates, including half kits", () => {
     const rates = [
       { productId: "a", feePerKit: "3.00" },

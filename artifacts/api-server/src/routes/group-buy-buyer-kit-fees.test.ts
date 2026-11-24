@@ -21,7 +21,7 @@ vi.mock("@workspace/db", async () => {
             const rows = index === 1 ? [{ id: "membership" }]
               : index === 2 ? [{ status: "active" }]
               : [{ productId: "product", name: "Test kit", price: "100.00",
-                  priceOverride: null, feePerKit: "3.00", halfKitEnabled: true }];
+                  priceOverride: null, feePerKit: "3.00", chargeFullFeeOnHalfKit: true, halfKitEnabled: true }];
             return Promise.resolve(rows).then(resolve, reject);
           },
         };
@@ -52,7 +52,8 @@ test("member ordering products include the saved kit fee without modifying the p
   const response = await fetch(`${url}/group-buys/7M9AL/products`);
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual([expect.objectContaining({
-    id: "product", price: 100, feePerKit: 3,
+    id: "product", price: 100, feePerKit: 3, chargeFullFeeOnHalfKit: true,
   })]);
   expect(state.queries[2]).toHaveProperty("feePerKit");
+  expect(state.queries[2]).toHaveProperty("chargeFullFeeOnHalfKit");
 });

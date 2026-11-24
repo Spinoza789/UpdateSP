@@ -45,6 +45,21 @@ const feeInput = {
 };
 const rates = [{ id: "p1", feePerKit: 3 }, { id: "p2", feePerKit: 5 }];
 
+test("full half-kit fees match server rounding without affecting other products", () => {
+  const fullRates = [{ id: "p1", feePerKit: 3, chargeFullFeeOnHalfKit: true }, ...rates.slice(1)];
+  for (const [quantity, expected] of [[0, 0], [0.5, 3], [1, 3], [1.5, 6], [2, 6]]) {
+    assert.equal(calculateOrderKitFees({
+      ...feeInput, lineItems: [{ productId: "p1", quantity }],
+    }, fullRates), expected);
+  }
+  assert.equal(calculateOrderKitFees({
+    ...feeInput, lineItems: [{ productId: "p1", quantity: 0.5 }, { productId: "p1", quantity: 0.5 }],
+  }, fullRates), 3);
+  assert.equal(calculateOrderKitFees({
+    ...feeInput, lineItems: [{ productId: "p1", quantity: 0.5 }, { productId: "p2", quantity: 0.5 }],
+  }, fullRates), 5.5);
+});
+
 test("kit fees follow each selected product rate and fractional quantity", () => {
   assert.equal(calculateOrderKitFees(feeInput, rates), 8.5);
   assert.equal(calculateOrderKitFees({ ...feeInput, lineItems: [{ productId: "p1", quantity: 3 }] }, rates), 9);

@@ -163,6 +163,7 @@ export const groupBuyProductsTable = pgTable("group_buy_products", {
   sortOrder: integer("sort_order"),
   maxPerCustomer: integer("max_per_customer"),
   feePerKit: numeric("fee_per_kit", { precision: 10, scale: 2 }),
+  chargeFullFeeOnHalfKit: boolean("charge_full_fee_on_half_kit").notNull().default(false),
   stockOverride: numeric("stock_override", { precision: 14, scale: 2 }),
   stockOverrideUnlimited: boolean("stock_override_unlimited").notNull().default(false),
 }, (t) => [

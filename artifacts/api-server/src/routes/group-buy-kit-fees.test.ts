@@ -5,6 +5,7 @@ import { PgDialect } from "drizzle-orm/pg-core";
 
 const state = vi.hoisted(() => ({
   groupExists: true,
+  fullRule: false,
   ids: ["p1", "p2"],
   statements: [] as Array<{ sql: string; params: unknown[] }>,
 }));
@@ -22,9 +23,18 @@ vi.mock("@workspace/db", async () => {
       const statement = new PgDialect().sqlToQuery(sql);
       state.statements.push(statement);
       if (statement.sql.includes("SELECT product_id")) return { rows: state.ids.map(id => ({ id })) };
-      if (statement.sql.includes("UPDATE group_buy_products")) return {
-        rows: state.ids.map(id => ({ id, feePerKit: statement.params[0] })),
-      };
+      if (statement.sql.includes("UPDATE group_buy_products")) {
+        if (statement.sql.includes("charge_full_fee_on_half_kit =")) {
+          state.fullRule = statement.params[statement.sql.includes("SET fee_per_kit") ? 1 : 0] === true;
+        }
+        return {
+        rows: state.ids.map(id => ({
+          id,
+          feePerKit: statement.sql.includes("SET fee_per_kit") ? statement.params[0] : "3.00",
+          chargeFullFeeOnHalfKit: state.fullRule,
+        })),
+        };
+      }
       return { rows: [] };
     },
   };
@@ -55,7 +65,7 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
 });
 afterAll(async () => { await new Promise<void>(resolve => server.close(() => resolve())); });
-beforeEach(() => { state.groupExists = true; state.ids = ["p1", "p2"]; state.statements = []; });
+beforeEach(() => { state.groupExists = true; state.fullRule = false; state.ids = ["p1", "p2"]; state.statements = []; });
 async function save(scope: string, role: string, body: unknown) {
   const response = await fetch(`${base}/${scope}/group-buys/G/products/kit-fees`, {
     method: "POST", headers: { "Content-Type": "application/json", "x-test-role": role },
@@ -64,10 +74,42 @@ async function save(scope: string, role: string, body: unknown) {
   return { status: response.status, body: await response.json() };
 }
 describe.each(["organiser", "admin"])("%s bulk kit fees", scope => {
+  it("preserves an enabled half-kit rule when only the fee changes", async () => {
+    await save(scope, scope, { productIds: "all", chargeFullFeeOnHalfKit: true });
+    const result = await save(scope, scope, { productIds: "all", feePerKit: 4 });
+    expect(result.status).toBe(200);
+    expect(result.body.products.every((product: any) => product.feePerKit === 4 && product.chargeFullFeeOnHalfKit === true)).toBe(true);
+    const updates = state.statements.filter(statement => statement.sql.includes("UPDATE group_buy_products"));
+    expect(updates[1].sql).not.toContain("charge_full_fee_on_half_kit =");
+  });
+  it("can update only the half-kit rule without replacing the product's fee", async () => {
+    state.ids = ["p1"];
+    const result = await save(scope, scope, { productIds: ["p1"], chargeFullFeeOnHalfKit: true });
+    expect(result.status).toBe(200);
+    const update = state.statements.find(s => s.sql.includes("UPDATE group_buy_products"))!;
+    expect(update.sql).toContain("charge_full_fee_on_half_kit");
+    expect(update.sql).not.toMatch(/SET fee_per_kit/);
+    expect(update.params[0]).toBe(true);
+    expect(result.body.products).toEqual([{ id: "p1", feePerKit: 3, chargeFullFeeOnHalfKit: true }]);
+    expect((await save(scope, scope, { productIds: ["p1"], chargeFullFeeOnHalfKit: false })).body.products)
+      .toEqual([{ id: "p1", feePerKit: 3, chargeFullFeeOnHalfKit: false }]);
+  });
+  it.each(["true", 1, null])("rejects non-boolean half-kit fee settings %s", async value => {
+    expect((await save(scope, scope, {
+      productIds: "all", feePerKit: 3, chargeFullFeeOnHalfKit: value,
+    })).status).toBe(400);
+    expect(state.statements).toEqual([]);
+  });
+  it("rejects an empty settings update", async () => {
+    expect((await save(scope, scope, { productIds: "all" })).status).toBe(400);
+  });
   it("saves all selected links in one transaction without changing orders or catalogue prices", async () => {
     const result = await save(scope, scope, { productIds: ["p1", "p2"], feePerKit: "2.50" });
     expect(result.status).toBe(200);
-    expect(result.body).toEqual({ updatedCount: 2, products: [{ id: "p1", feePerKit: 2.5 }, { id: "p2", feePerKit: 2.5 }] });
+    expect(result.body).toEqual({ updatedCount: 2, products: [
+      { id: "p1", feePerKit: 2.5, chargeFullFeeOnHalfKit: false },
+      { id: "p2", feePerKit: 2.5, chargeFullFeeOnHalfKit: false },
+    ] });
     const update = state.statements.find(s => s.sql.includes("UPDATE group_buy_products"))!;
     expect(update.sql).toContain("UPDATE group_buy_products");
     expect(update.sql).toContain("group_buy_id =");

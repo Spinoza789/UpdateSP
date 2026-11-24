@@ -1,5 +1,6 @@
 import { GroupBuyProductLabReports } from "@/components/GroupBuyProductLabReports";
 import { GroupBuyBulkKitFeeControls } from "@/components/GroupBuyBulkKitFeeControls";
+import { GroupBuyHalfKitFeeToggle } from "@/components/GroupBuyHalfKitFeeToggle";
 import { OrganiserOrderRevisions } from "@/components/group-buy-revisions/OrganiserOrderRevisions";
 import { useProductPriceProposals, ProductNewPrice, ProductPriceImport } from "@/components/group-buy-revisions/ProductPriceProposals";
 import {
@@ -35,6 +36,7 @@ import {
 
 type ProductRecord = ApiProduct & {
   feePerKit?: number | string | null;
+  chargeFullFeeOnHalfKit?: boolean;
   priceOverride?: number | string | null;
 };
 
@@ -476,6 +478,13 @@ function GbProductsTabContent({
               <label><span>Stock allocation (includes ordered kits)</span><input type="number" min="0" step="0.5" value={draft.stock} onChange={event => setDraft(current => ({ ...current, stock: event.target.value }))} placeholder="Unlimited" /></label>
               <label><span>Max per customer</span><input type="number" min="1" step="1" value={draft.maxPerCustomer} onChange={event => setDraft(current => ({ ...current, maxPerCustomer: event.target.value }))} placeholder="No limit" /></label>
               <label><span>Fee per kit ($)</span><input type="number" min="0" step="0.01" value={draft.feePerKit} onChange={event => setDraft(current => ({ ...current, feePerKit: event.target.value }))} placeholder="None" /></label>
+              {!adding && selectedProduct && <GroupBuyHalfKitFeeToggle
+                groupId={selectedGbId} productId={selectedProduct.id} productName={selectedProduct.name}
+                checked={selectedProduct.chargeFullFeeOnHalfKit === true} disabled={saving || loading}
+                onUpdated={updates => setProducts(current => current.map(product => {
+                  const saved = updates.find(update => update.id === product.id);
+                  return saved ? { ...product, ...saved } : product;
+                }))} />}
               <fieldset className="products-split__toggles products-split__wide"><legend>Availability</legend><label><span><strong>Half kits</strong><small>Allow half-kit reservations.</small></span><input type="checkbox" checked={draft.halfKitEnabled} onChange={event => setDraft(current => ({ ...current, halfKitEnabled: event.target.checked }))} /></label></fieldset>
             </div>
             <footer>
@@ -553,9 +562,9 @@ function GbProductsTabContent({
           <small>Group-buy only. Already ordered kits are preserved.</small>
           <GroupBuyBulkKitFeeControls key={`kit-fees-${selectedGbId}`} groupId={selectedGbId} currency={currency}
             selectedIds={selectedIds} disabled={saving} onUpdated={updates => {
-              const changed = new Map(updates.map(p => [p.id, p.feePerKit]));
-              setProducts(current => current.map(p => changed.has(p.id) ? { ...p, feePerKit: changed.get(p.id)! } : p));
-              if (selectedId && changed.has(selectedId)) setDraft(current => ({ ...current, feePerKit: String(changed.get(selectedId)) }));
+              const changed = new Map(updates.map(p => [p.id, p]));
+              setProducts(current => current.map(p => changed.has(p.id) ? { ...p, ...changed.get(p.id)! } : p));
+              if (selectedId && changed.has(selectedId)) setDraft(current => ({ ...current, feePerKit: String(changed.get(selectedId)!.feePerKit) }));
             }} />
           <label><span>Set vendor</span><select value={bulkVendor} onChange={event => setBulkVendor(event.target.value)}><option value="">Choose vendor</option>{vendors.map(item => <option key={item}>{item}</option>)}</select></label>
           <button type="button" disabled={saving || !selectedIds.size || !bulkVendor} onClick={() => void applyBulk({ vendor: bulkVendor }, `Vendor updated for ${selectedIds.size} products.`)}>Apply vendor</button>

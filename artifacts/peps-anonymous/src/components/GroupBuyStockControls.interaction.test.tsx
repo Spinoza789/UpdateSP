@@ -15,6 +15,7 @@ const { act, createElement, useState } = await import("react");
 const { createRoot } = await import("react-dom/client");
 const { GroupBuyStockControls } = await import("./GroupBuyStockControls");
 const { GroupBuyBulkKitFeeControls } = await import("./GroupBuyBulkKitFeeControls");
+const { GroupBuyHalfKitFeeToggle } = await import("./GroupBuyHalfKitFeeToggle");
 const { default: GbProductsTab } = await import("../pages/organiser-v2/GbProductsTab");
 const { organiserApi } = await import("../pages/organiser-v2/api/organiser-api");
 
@@ -76,6 +77,69 @@ it("sets the selected products' kit fees and displays server success", async () 
   expect(updated).toHaveBeenCalledWith([{ id: "p1", feePerKit: 2.5 }, { id: "p2", feePerKit: 2.5 }]);
   expect(container.querySelector('[role="status"]')?.textContent).toContain("GBP 2.50 per kit for 2 products");
   expect(container.querySelector<HTMLInputElement>('input[type="number"]')!.value).toBe("");
+});
+
+it("bulk-updates only the half-kit rule when the fee is left blank", async () => {
+  const request = vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    products: [{ id: "p1", feePerKit: 3, chargeFullFeeOnHalfKit: true }], updatedCount: 1,
+  }) });
+  vi.stubGlobal("fetch", request);
+  await act(async () => root.render(createElement(GroupBuyBulkKitFeeControls, {
+    groupId: "GB1", currency: "USD", selectedIds: new Set(["p1"]), onUpdated: updated,
+  })));
+  await act(async () => {
+    const select = container.querySelector<HTMLSelectElement>('select[aria-label="Bulk half-kit fee rule"]')!;
+    select.value = "full";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  const save = container.querySelector<HTMLButtonElement>("button")!;
+  expect(save.disabled).toBe(false);
+  await act(async () => save.click());
+  expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({
+    productIds: ["p1"], chargeFullFeeOnHalfKit: true,
+  });
+  expect(updated).toHaveBeenCalledWith([{ id: "p1", feePerKit: 3, chargeFullFeeOnHalfKit: true }]);
+});
+
+it.each([undefined, "test-admin"])("saves and restores the per-product half-kit rule with credentials %s", async adminSecret => {
+  const request = vi.fn().mockImplementation(async (_url, options) => ({
+    ok: true, json: async () => ({
+      products: [{ id: "p1", feePerKit: 3, chargeFullFeeOnHalfKit: JSON.parse(options.body).chargeFullFeeOnHalfKit }],
+      updatedCount: 1,
+    }),
+  }));
+  vi.stubGlobal("fetch", request);
+  function ToggleHarness() {
+    const [checked, setChecked] = useState(false);
+    return createElement(GroupBuyHalfKitFeeToggle, {
+      groupId: "GB1", productId: "p1", productName: "Product one", checked, adminSecret,
+      onUpdated: products => { updated(products); setChecked(products[0].chargeFullFeeOnHalfKit === true); },
+    });
+  }
+  await act(async () => root.render(createElement(ToggleHarness)));
+  const checkbox = container.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+  expect(checkbox.checked).toBe(false);
+  await act(async () => checkbox.click());
+  expect(checkbox.checked).toBe(true);
+  expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({ productIds: ["p1"], chargeFullFeeOnHalfKit: true });
+  expect(request.mock.calls[0][0]).toBe(`/api/${adminSecret ? "admin" : "organiser"}/group-buys/GB1/products/kit-fees`);
+  expect(request.mock.calls[0][1].credentials).toBe("include");
+  expect(container.querySelector('[role="status"]')?.textContent).toContain("saved");
+  await act(async () => checkbox.click());
+  expect(checkbox.checked).toBe(false);
+  expect(JSON.parse(request.mock.calls[1][1].body)).toEqual({ productIds: ["p1"], chargeFullFeeOnHalfKit: false });
+});
+
+it("keeps the previous half-kit setting and shows an error when saving fails", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, json: async () => ({ error: "Not allowed" }) }));
+  await act(async () => root.render(createElement(GroupBuyHalfKitFeeToggle, {
+    groupId: "GB1", productId: "p1", productName: "Product one", checked: false, onUpdated: updated,
+  })));
+  const checkbox = container.querySelector<HTMLInputElement>("input")!;
+  await act(async () => checkbox.click());
+  expect(checkbox.checked).toBe(false);
+  expect(updated).not.toHaveBeenCalled();
+  expect(container.querySelector('[role="alert"]')?.textContent).toBe("Not allowed");
 });
 
 it("selects all, submits the editable quantity, updates products and clears the form", async () => {

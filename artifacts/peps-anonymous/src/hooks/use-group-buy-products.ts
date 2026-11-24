@@ -5,6 +5,7 @@ export type GroupOrderProduct = {
   name: string;
   price: number;
   feePerKit: number;
+  chargeFullFeeOnHalfKit?: boolean;
   description: string | null;
   sortOrder: number;
   category: string | null;
@@ -20,7 +21,8 @@ export async function fetchGroupOrderProducts(groupId: string, signal?: AbortSig
   const products = await response.json();
   if (!Array.isArray(products) || products.some(product =>
     typeof product?.id !== "string" || typeof product.feePerKit !== "number"
-    || !Number.isFinite(product.feePerKit) || product.feePerKit < 0)) {
+    || !Number.isFinite(product.feePerKit) || product.feePerKit < 0
+    || (product.chargeFullFeeOnHalfKit !== undefined && typeof product.chargeFullFeeOnHalfKit !== "boolean"))) {
     throw new Error("Could not load current kit fees. Please refresh the page and retry.");
   }
   return products;

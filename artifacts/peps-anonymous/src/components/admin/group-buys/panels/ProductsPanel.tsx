@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { GroupBuyBulkKitFeeControls } from "@/components/GroupBuyBulkKitFeeControls";
+import { GroupBuyHalfKitFeeToggle } from "@/components/GroupBuyHalfKitFeeToggle";
 import { GroupBuyProductLabReports } from "@/components/GroupBuyProductLabReports";
 import { motion, AnimatePresence } from "framer-motion";
 import { DatePickerField } from "@/components/DatePickerField";
@@ -623,8 +624,11 @@ export function ProductsSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
       <GroupBuyBulkKitFeeControls key={`kit-fees-${gb.id}`} groupId={gb.id} currency={gbCurrency}
         adminSecret={secret} selectedIds={new Set([...selectedIds].filter(id => !!gbProductMap[id]))}
         disabled={bulkWorking || loading} onUpdated={updates => {
-          const changed = new Map(updates.map(p => [p.id, p.feePerKit]));
-          setGbProducts(current => current.map(p => changed.has(p.productId) ? { ...p, feePerKit: changed.get(p.productId)! } : p));
+          const changed = new Map(updates.map(p => [p.id, p]));
+          setGbProducts(current => current.map(p => {
+            const saved = changed.get(p.productId);
+            return saved ? { ...p, feePerKit: saved.feePerKit, chargeFullFeeOnHalfKit: saved.chargeFullFeeOnHalfKit } : p;
+          }));
         }} />
       <p className="text-xs text-muted-foreground">Bulk fees apply to selected products already enabled in this group buy. Enable catalogue products first to include them.</p>
       {actionErr && <p className="text-xs text-red-500 px-1">{actionErr}</p>}
@@ -673,6 +677,13 @@ export function ProductsSubTab({ secret, gb }: { secret: string; gb: GroupBuy })
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate text-foreground">{product.name}</p>
                 {linked?.feePerKit != null && linked.feePerKit > 0 && <p className="text-xs text-muted-foreground">Fee per kit: {gb.currency} {Number(linked.feePerKit).toFixed(2)}</p>}
+                {linked && <GroupBuyHalfKitFeeToggle groupId={gb.id} productId={product.id}
+                  productName={product.name} checked={linked.chargeFullFeeOnHalfKit === true}
+                  adminSecret={secret} disabled={bulkWorking || loading}
+                  onUpdated={updates => setGbProducts(current => current.map(item => {
+                    const saved = updates.find(update => update.id === item.productId);
+                    return saved ? { ...item, feePerKit: saved.feePerKit, chargeFullFeeOnHalfKit: saved.chargeFullFeeOnHalfKit } : item;
+                  }))} />}
                 <p className="text-xs text-muted-foreground">
                   Base: {displayCurrency} {convertPrice(product.price)}
                   {product.category && ` · ${product.category}`}

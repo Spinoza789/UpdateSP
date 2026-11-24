@@ -1,5 +1,5 @@
 import { qrOrderBatches } from "../lib/qr-order-batches";
-import { kitFeeAmount, updateGroupKitFees } from "../lib/group-buy-kit-fees";
+import { parseKitFeeSettings, updateGroupKitFees } from "../lib/group-buy-kit-fees";
 import { qrPostedOrderUpdate } from "../lib/qr-posted-order";
 import { withAdditionReferences } from "../lib/addition-order-references";
 import { validateGroupProductLabReport } from "../lib/group-product-lab-report";
@@ -730,6 +730,7 @@ router.post("/organiser/group-buys/:id/clone", requireOrganiser, async (req, res
           sortOrder: p.sortOrder ?? undefined,
           maxPerCustomer: p.maxPerCustomer ?? undefined,
           feePerKit: p.feePerKit ?? undefined,
+          chargeFullFeeOnHalfKit: p.chargeFullFeeOnHalfKit,
         })),
       );
     }
@@ -1134,6 +1135,7 @@ router.get("/organiser/group-buys/:id/products", requireOrganiser, async (req, r
       sortOrder: groupBuyProductsTable.sortOrder,
       maxPerCustomer: groupBuyProductsTable.maxPerCustomer,
       feePerKit: groupBuyProductsTable.feePerKit,
+      chargeFullFeeOnHalfKit: groupBuyProductsTable.chargeFullFeeOnHalfKit,
       name: productsTable.name,
       vendor: productsTable.vendor,
       price: productsTable.price,
@@ -1255,17 +1257,17 @@ router.post("/organiser/group-buys/:id/products/kit-fees", requireOrganiser, asy
   try {
     const id = String(req.params.id);
     const ids = stockSelection(req.body.productIds);
-    const fee = kitFeeAmount(req.body.feePerKit);
+    const { feePerKit: fee, chargeFullFeeOnHalfKit } = parseKitFeeSettings(req.body);
     const products = await db.transaction(async tx => {
       await lockGroupStock(tx, id);
       const [group] = await tx.select({ id: groupBuysTable.id }).from(groupBuysTable)
         .where(gbOwner(req, id)).for("share");
       if (!group) throw new GroupStockError("Group buy not found.", 404);
-      return updateGroupKitFees(tx, id, ids, fee);
+      return updateGroupKitFees(tx, id, ids, fee, chargeFullFeeOnHalfKit);
     });
     writeLog("change", "info", "organiser_group_kit_fees_updated",
       `Set fee per kit for ${products.length} products in GB ${id}`,
-      { gbId: id, username: req.organiser!.telegramUsername, feePerKit: fee, productIds: products.map(p => p.id) }).catch(() => {});
+      { gbId: id, username: req.organiser!.telegramUsername, feePerKit: fee, chargeFullFeeOnHalfKit, productIds: products.map(p => p.id) }).catch(() => {});
     res.json({ products, updatedCount: products.length });
   } catch (error) {
     if (error instanceof GroupStockError) { res.status(error.status).json({ error: error.message }); return; }

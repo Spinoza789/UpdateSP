@@ -18,6 +18,7 @@ describe.skipIf(process.env.KIT_FEE_BROWSER_TESTS !== "1")("member kit-fee order
       const queryModule = hookModule.match(/from "([^"]*@tanstack_react-query[^"]*)"/)?.[1];
       expect(queryModule).toBeTruthy();
       let failPrices = false;
+      let fullHalfKitFees = true;
       const errors: string[] = [];
       page.on("pageerror", error => {
         if (!error.message.includes("WebSocket")) {
@@ -57,7 +58,7 @@ describe.skipIf(process.env.KIT_FEE_BROWSER_TESTS !== "1")("member kit-fee order
         else if (path.endsWith("/products") && path.includes("/group-buys/")) {
           status = failPrices ? 503 : 200;
           body = failPrices ? { error: "Unavailable" } : [
-            { id: "p", name: "Synthetic kit", price: 100, feePerKit: 3, category: "Kits" },
+            { id: "p", name: "Synthetic kit", price: 100, feePerKit: 3, chargeFullFeeOnHalfKit: fullHalfKitFees, category: "Kits" },
           ];
         }
         else if (path.endsWith("/delivery-methods")) body = [{ id: "post", name: "Post", price: 3 }];
@@ -97,13 +98,29 @@ describe.skipIf(process.env.KIT_FEE_BROWSER_TESTS !== "1")("member kit-fee order
       });
       await browserExpect(total).toContainText("$6.00");
       await browserExpect(total).toContainText("$209.00");
+      await page.evaluate(`import("/src/hooks/use-draft-store.ts").then(({useDraftStore}) =>
+        useDraftStore.getState().updateLineItem("line", {quantity:0.5}))`);
+      await browserExpect(total).toContainText("$3.00");
+      await browserExpect(total).toContainText("$56.00");
       await page.goto(`${base}/__kit-fee-fixture?gbId=7M9AL&screen=review`);
-      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$6.00", { timeout: 30000 });
+      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$3.00", { timeout: 30000 });
       await page.reload();
-      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$6.00", { timeout: 30000 });
+      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$3.00", { timeout: 30000 });
       await page.evaluate(`import("/src/hooks/use-draft-store.ts").then(({useDraftStore}) =>
         useDraftStore.getState().updateLineItem("line", {quantity:3}))`);
       await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$9.00");
+      await page.evaluate(`import("/src/hooks/use-draft-store.ts").then(({useDraftStore}) =>
+        useDraftStore.getState().updateLineItem("line", {quantity:1.5}))`);
+      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$6.00");
+      await page.evaluate(`import("/src/hooks/use-draft-store.ts").then(({useDraftStore}) =>
+        useDraftStore.getState().updateLineItem("line", {quantity:0.5}))`);
+      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$3.00");
+      fullHalfKitFees = false;
+      await page.reload();
+      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$1.50", { timeout: 30000 });
+      fullHalfKitFees = true;
+      await page.reload();
+      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$3.00", { timeout: 30000 });
       await page.setViewportSize({ width: 390, height: 844 });
       await browserExpect(page.getByTestId("text-review-kit-fees")).toBeVisible();
       failPrices = true;
@@ -112,7 +129,7 @@ describe.skipIf(process.env.KIT_FEE_BROWSER_TESTS !== "1")("member kit-fee order
       await browserExpect(page.getByRole("button", { name: /Place Order|Submit Order|Update Order|Save Changes/i }).last()).toBeDisabled();
       failPrices = false;
       await page.getByRole("button", { name: "Retry kit fees", exact: true }).click();
-      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$9.00");
+      await browserExpect(page.getByTestId("text-review-kit-fees")).toContainText("$3.00");
       expect(errors).toEqual([]);
     } finally {
       await browser.close();
