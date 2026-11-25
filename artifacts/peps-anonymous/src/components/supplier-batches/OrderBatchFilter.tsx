@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supplierKey, supplierRequest, type SupplierScope, type SupplierData, type SupplierBatch } from "@/lib/supplier-batches";
 
@@ -6,6 +6,9 @@ import { supplierKey, supplierRequest, type SupplierScope, type SupplierData, ty
 export function buildOrderBatchIndex(data?: SupplierData) {
   const batches = data?.batches.filter(b => b.state !== "released") ?? [];
   const batchesByOrder = new Map<string, SupplierBatch[]>();
+  const openBatches: Array<{ id: string; label: string; orderIds: Set<string> }> = [];
+  const openOrderIds = new Set<string>();
+  const queuedOrderIds = new Set<string>();
   const parts = new Map<string, string[]>();
   const append = (id: string, label: string) => {
     const labels = parts.get(id) ?? [];
@@ -23,19 +26,45 @@ export function buildOrderBatchIndex(data?: SupplierData) {
   if (data?.config.enabled) {
     for (const proposal of data.proposals) {
       const included = new Set(proposal.orders.map(order => order.id));
-      for (const id of included) append(id, `Open batch · ${proposal.region.name}`);
+      if (included.size) openBatches.push({
+        id: `open:${proposal.region.id}:${proposal.openBatchNumber ?? 1}`,
+        label: `Open batch${proposal.openBatchNumber ? ` ${proposal.openBatchNumber}` : ""} · ${proposal.region.name}`,
+        orderIds: included,
+      });
+      for (const id of included) {
+        openOrderIds.add(id);
+        append(id, `Open batch · ${proposal.region.name}`);
+      }
+    }
+    for (const proposal of data.proposals) {
       for (const order of proposal.allQueued?.orders ?? []) {
-        if (!included.has(order.id)) append(order.id, `Queued for next batch · ${proposal.region.name}`);
+        if (!openOrderIds.has(order.id)) {
+          queuedOrderIds.add(order.id);
+          append(order.id, `Queued for next batch · ${proposal.region.name}`);
+        }
       }
     }
   }
   const labels = new Map([...parts].map(([id, values]) => [id, values.join(" | ")]));
   const byOrder = new Map([...batchesByOrder].map(([id, assigned]) => [id, assigned[0]]));
-  return { batches, batchesByOrder, byOrder, labels };
+  return { batches, batchesByOrder, byOrder, labels, openBatches, openOrderIds, queuedOrderIds };
+}
+
+export function matchesOrderBatch(index: ReturnType<typeof buildOrderBatchIndex>, filter: string, id: string, requestedOrderId = "") {
+  if (requestedOrderId && requestedOrderId !== id) return false;
+  if (filter === "all") return true;
+  if (filter === "unallocated") return !index.byOrder.has(id);
+  if (filter === "open") return index.openOrderIds.has(id);
+  if (filter === "queued") return index.queuedOrderIds.has(id);
+  if (filter.startsWith("open:")) return index.openBatches.some(batch => batch.id === filter && batch.orderIds.has(id));
+  return index.batchesByOrder.get(id)?.some(batch => batch.id === filter) ?? false;
 }
 
 const filterKey = (scope: SupplierScope, id?: string) => `supplier-order-filter:${scope}:${id ?? ""}`;
-const savedFilter = (scope: SupplierScope, id?: string) => { try { return sessionStorage.getItem(filterKey(scope, id)) ?? "all"; } catch { return "all"; } };
+const savedSelection = (key: string) => {
+  try { return { key, filter: sessionStorage.getItem(key) ?? "all", requestedOrderId: sessionStorage.getItem(`${key}:order`) ?? "" }; }
+  catch { return { key, filter: "all", requestedOrderId: "" }; }
+};
 /** Survives switching from the purchasing/fulfilment tab to Orders. */
 export function selectSupplierOrderBatch(scope: SupplierScope, id: string, batchId: string, orderId?: string) {
   try {
@@ -46,50 +75,91 @@ export function selectSupplierOrderBatch(scope: SupplierScope, id: string, batch
   window.dispatchEvent(new CustomEvent("supplier-order-filter", { detail: { scope, id, batchId, orderId } }));
 }
 export function useOrderBatches(scope: SupplierScope, groupBuyId?: string, headers?: Record<string, string>) {
-  const [filter, setFilter] = useState(() => savedFilter(scope, groupBuyId));
-  const readOrder = () => { try { return sessionStorage.getItem(`${filterKey(scope, groupBuyId)}:order`) ?? ""; } catch { return ""; } };
-  const [requestedOrderId, setRequestedOrderId] = useState(readOrder);
+  const key = filterKey(scope, groupBuyId);
+  const [selection, setSelection] = useState(() => savedSelection(key));
+  const { filter, requestedOrderId } = selection.key === key ? selection : savedSelection(key);
   useEffect(() => {
-    setFilter(savedFilter(scope, groupBuyId));
-    setRequestedOrderId(readOrder());
+    setSelection(savedSelection(key));
     const listener = (event: Event) => {
       const { scope: s, id, batchId, orderId } = (event as CustomEvent).detail ?? {};
-      if (s === scope && id === groupBuyId) { setFilter(batchId); setRequestedOrderId(orderId ?? ""); }
+      if (s === scope && id === groupBuyId && typeof batchId === "string") {
+        setSelection({ key, filter: batchId, requestedOrderId: orderId ?? "" });
+      }
     };
     window.addEventListener("supplier-order-filter", listener);
     return () => window.removeEventListener("supplier-order-filter", listener);
-  }, [scope, groupBuyId]);
+  }, [scope, groupBuyId, key]);
   const query = useQuery({
     queryKey: supplierKey(scope, groupBuyId ?? ""),
     queryFn: () => supplierRequest(scope, groupBuyId!, "", undefined, "GET", headers),
     enabled: !!groupBuyId, staleTime: 15_000, refetchInterval: 60_000, refetchIntervalInBackground: false,
   });
-  const index = buildOrderBatchIndex(query.data);
-  const { batches, byOrder, batchesByOrder } = index;
+  const index = useMemo(() => buildOrderBatchIndex(query.data), [query.data]);
+  const changeFilter = useCallback((value: string) => {
+    setSelection({ key, filter: value, requestedOrderId: "" });
+    try { sessionStorage.setItem(key, value); sessionStorage.removeItem(`${key}:order`); } catch {}
+  }, [key]);
   useEffect(() => {
-    if (query.data && filter !== "all" && filter !== "unallocated" && !batches.some(b => b.id === filter)) setFilter("all");
-  }, [query.data, filter]);
-  const changeFilter = (value: string) => {
-    setFilter(value);
-    setRequestedOrderId("");
-    try { sessionStorage.setItem(filterKey(scope, groupBuyId), value); sessionStorage.removeItem(`${filterKey(scope, groupBuyId)}:order`); } catch {}
-  };
+    const known = ["all", "unallocated", "open", "queued"].includes(filter)
+      || index.batches.some(batch => batch.id === filter) || index.openBatches.some(batch => batch.id === filter);
+    if (query.data && !known) changeFilter("all");
+  }, [query.data, index, filter, changeFilter]);
+  const matches = useCallback((id: string) => matchesOrderBatch(index, filter, id, requestedOrderId),
+    [index, filter, requestedOrderId]);
   return {
-    ...index, filter, setFilter: changeFilter, error: query.isError, requestedOrderId,
-    matches: (id: string) => (!requestedOrderId || requestedOrderId === id) && (filter === "all" || (filter === "unallocated" ? !byOrder.has(id) : !!batchesByOrder.get(id)?.some(b => b.id === filter))),
+    ...index, filter, setFilter: changeFilter, error: query.isError, loading: !!groupBuyId && query.isPending,
+    refetch: query.refetch, requestedOrderId, matches,
   };
 }
-export function OrderBatchFilter({ model }: {model: ReturnType<typeof useOrderBatches>}) {
-  if (!model.batches.length && !model.error) return null;
+export function OrderBatchFilter({ model, alwaysVisible = false, includeOpenBatches = false, onChange }: {
+  model: ReturnType<typeof useOrderBatches>; alwaysVisible?: boolean; includeOpenBatches?: boolean; onChange?: (value: string) => void;
+}) {
+  if (!alwaysVisible && !model.batches.length && !model.error) return null;
+  const known = ["all", "unallocated", ...(includeOpenBatches ? ["open", "queued", ...model.openBatches.map(batch => batch.id)] : [])]
+    .includes(model.filter) || model.batches.some(batch => batch.id === model.filter);
   return <label className="inline-flex flex-wrap items-center gap-2 text-xs" style={{color:"var(--t-text)"}}>
     Supplier batch
-    <select aria-label="Supplier batch filter" value={model.filter} onChange={e => model.setFilter(e.target.value)}
+    <select aria-label="Supplier batch filter" value={model.filter} disabled={model.loading}
+      onChange={e => (onChange ?? model.setFilter)(e.target.value)}
       className="rounded-lg border px-3 py-2" style={{background:"var(--t-surface)",borderColor:"var(--t-border)"}}>
-      <option value="all">All batches / orders</option><option value="unallocated">Not in a batch</option>
+      <option value="all">All batches / orders</option>
+      <option value="unallocated">{includeOpenBatches ? "Not in a saved batch" : "Not in a batch"}</option>
+      {includeOpenBatches && <>
+        <option value="open">All open batches</option>
+        {model.openBatches.map(batch => <option key={batch.id} value={batch.id}>{batch.label}</option>)}
+      </>}
+      {includeOpenBatches && <option value="queued">Queued for next batch</option>}
       {model.batches.map(b => <option key={b.id} value={b.id}>{b.reference} · {b.state}</option>)}
+      {!known && <option value={model.filter}>Selected batch unavailable</option>}
     </select>
-    {model.requestedOrderId && <button type="button" onClick={() => model.setFilter(model.filter)} className="text-blue-600 underline">Showing one linked order · Show whole batch</button>}
+    {model.loading && <span role="status">Loading batches…</span>}
+    {model.requestedOrderId && <button type="button" onClick={() => (onChange ?? model.setFilter)(model.filter)} className="text-blue-600 underline">Showing one linked order · Show whole batch</button>}
     {model.error && <span role="alert">Batch details could not be refreshed.</span>}
+  </label>;
+}
+
+export type DispatchStatusFilter = "all" | "awaiting" | "dispatched" | "delivered";
+export function matchesOrderDispatchStatus(status: string, filter: DispatchStatusFilter) {
+  const value = status.trim().toLowerCase();
+  if (filter === "all") return true;
+  if (filter === "delivered") return ["delivered", "complete", "completed"].includes(value);
+  if (filter === "dispatched") return ["shipped", "dispatched"].includes(value);
+  return !!value && !["shipped", "dispatched", "delivered", "complete", "completed", "cancelled", "draft"].includes(value);
+}
+export function visibleOrderSelection(selected: Iterable<string>, orders: ReadonlyArray<{ id: string }>) {
+  const visible = new Set(orders.map(order => order.id));
+  return [...selected].filter(id => visible.has(id));
+}
+export function OrderDispatchFilter({ value, onChange }: { value: DispatchStatusFilter; onChange: (value: DispatchStatusFilter) => void }) {
+  return <label className="inline-flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--t-text)" }}>
+    Dispatch status
+    <select aria-label="Dispatch status filter" value={value} onChange={event => onChange(event.target.value as DispatchStatusFilter)}
+      className="rounded-lg border px-3 py-2" style={{ background: "var(--t-surface)", borderColor: "var(--t-border)" }}>
+      <option value="all">All dispatch statuses</option>
+      <option value="awaiting">Awaiting dispatch</option>
+      <option value="dispatched">Dispatched / shipped</option>
+      <option value="delivered">Delivered / completed</option>
+    </select>
   </label>;
 }
 export function OrderBatchBadge({ model, orderId }: { model: ReturnType<typeof useOrderBatches>; orderId: string }) {

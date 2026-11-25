@@ -70,7 +70,7 @@ import { GroupBuyUpdatesManager } from "@/components/group-buy-updates/GroupBuyU
 import { SupplierBatchManager } from "@/components/supplier-batches/SupplierBatchManager";
 import { SupplierBatchFulfilment } from "@/components/supplier-batches/SupplierBatchFulfilment";
 import { selectSupplierOrderBatch } from "@/components/supplier-batches/OrderBatchFilter";
-import { useOrderBatches, OrderBatchFilter, OrderBatchBadge } from "@/components/supplier-batches/OrderBatchFilter";
+import { useOrderBatches, OrderBatchFilter, OrderBatchBadge, OrderDispatchFilter, matchesOrderDispatchStatus, visibleOrderSelection, type DispatchStatusFilter } from "@/components/supplier-batches/OrderBatchFilter";
 import { ManagedTelegramUsername } from "@/components/ManagedTelegramUsername";
 import { canonicalReshipperUsername, filterAssignedFulfilmentOrders } from "@/lib/reshipper-fulfilment";
 import { PAYMENT_EXPORT_HEADERS, paymentExportCells } from "@/lib/organiser-export-payments";
@@ -7627,6 +7627,7 @@ function FulfilmentTab({ gb }: { gb: OrganiserGB }) {
 
 function OrdersTab({ gb }: { gb: OrganiserGB }) {
   const supplierBatches = useOrderBatches("organiser", gb.id);
+  const [dispatchFilter, setDispatchFilter] = useState<DispatchStatusFilter>("all");
   const [orders, setOrders] = useState<OrgOrder[]>([]);
   const [multipleOnly, setMultipleOnly] = useState(false);
   const reviewOrders = useMemo(() => annotateCompleteGbOrderCounts(orders), [orders]);
@@ -7663,9 +7664,14 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   useEffect(() => {
     setMultipleOnly(false);
+    setDispatchFilter("all");
     setSelectedOrderIds(new Set());
     setPage(1);
   }, [gb.id]);
+  useEffect(() => {
+    setSelectedOrderIds(new Set());
+    setPage(1);
+  }, [supplierBatches.filter, supplierBatches.requestedOrderId, dispatchFilter]);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
@@ -8336,7 +8342,14 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
         o.grandTotal.toFixed(2).includes(q)
       )
     : sortedDateFiltered;
-  const filteredOrders = searchFilteredOrders.filter(o => (!multipleOnly || isMultipleGbOrder(o)) && supplierBatches.matches(o.id));
+  const filteredOrders = searchFilteredOrders.filter(o => (!multipleOnly || isMultipleGbOrder(o))
+    && supplierBatches.matches(o.id) && matchesOrderDispatchStatus(o.status, dispatchFilter));
+  useEffect(() => {
+    setSelectedOrderIds(current => {
+      const next = visibleOrderSelection(current, filteredOrders);
+      return next.length === current.size ? current : new Set(next);
+    });
+  }, [filteredOrders]);
 
   // For the Intl Shipping panel: if the user has ticked any rows in the
   // current country filter, target only those; otherwise target all.
@@ -8388,7 +8401,14 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
   return (
     <div className="space-y-4">
       {/* Vendor wholesale order modal */}
-      <OrderBatchFilter model={supplierBatches} />
+      <div className="flex flex-wrap items-center gap-3" aria-label="Batch and dispatch filters">
+        <OrderBatchFilter model={supplierBatches} alwaysVisible includeOpenBatches onChange={value => {
+          supplierBatches.setFilter(value); setSelectedOrderIds(new Set()); setPage(1);
+        }} />
+        <OrderDispatchFilter value={dispatchFilter} onChange={value => {
+          setDispatchFilter(value); setSelectedOrderIds(new Set()); setPage(1);
+        }} />
+      </div>
       <AnimatePresence>
         {wholesaleModal && (
           <motion.div

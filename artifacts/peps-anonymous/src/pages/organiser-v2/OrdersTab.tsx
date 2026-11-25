@@ -30,7 +30,7 @@ import {
   AtlasStatusBadge,
 } from "./AtlasUi";
 import CompactOrderList from "./CompactOrderList";
-import { useOrderBatches, OrderBatchFilter } from "@/components/supplier-batches/OrderBatchFilter";
+import { useOrderBatches, OrderBatchFilter, OrderDispatchFilter, matchesOrderDispatchStatus, visibleOrderSelection, type DispatchStatusFilter } from "@/components/supplier-batches/OrderBatchFilter";
 import { GbMultipleOrderNotice } from "@/components/GbMultipleOrders";
 import { isMultipleGbOrder } from "@/lib/gb-multiple-orders";
 import OrdersMobileWorkspace from "./OrdersMobileWorkspace";
@@ -73,6 +73,7 @@ const DEFAULT_FILTER_VALUES: OrderFilterValues = {
 
 export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, canMarkPaid = false }: { selectedGbId?: string; highlightId?: string; onOpenDispatch?: () => void; canMarkPaid?: boolean } = {}) {
   const supplierBatches = useOrderBatches("organiser", selectedGbId);
+  const [dispatchFilter, setDispatchFilter] = useState<DispatchStatusFilter>("all");
   const batchLabels = Object.fromEntries(supplierBatches.labels);
   const [searchQuery, setSearchQuery] = useState("");
   const [multipleOnly, setMultipleOnly] = useState(false);
@@ -101,9 +102,14 @@ export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, c
   const orderRepository = useOrderRepository();
   const orders = useOrders();
   const multiplePeople = new Set(orders.filter(isMultipleGbOrder).map(order => order.memberUsername.trim().replace(/^@+/, "").toLowerCase())).size;
-  const mobileModel = useMemo(() => buildMobileOrdersModel(orders.filter(order =>
-    (!multipleOnly || isMultipleGbOrder(order)) && supplierBatches.matches(order.id))),
-    [orders, multipleOnly, supplierBatches.filter, supplierBatches.byOrder]);
+  const scopedOrders = useMemo(() => orders.filter(order =>
+    (!multipleOnly || isMultipleGbOrder(order)) && supplierBatches.matches(order.id)
+    && matchesOrderDispatchStatus(order.status, dispatchFilter)),
+    [orders, multipleOnly, supplierBatches.matches, dispatchFilter]);
+  const mobileModel = useMemo(() => buildMobileOrdersModel(scopedOrders), [scopedOrders]);
+  useEffect(() => {
+    if (supplierBatches.filter !== "all" || dispatchFilter !== "all") setMobileView("all");
+  }, [supplierBatches.filter, dispatchFilter]);
 
   // Edit modal
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -136,6 +142,13 @@ export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, c
 
   // Multi-select
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  useEffect(() => {
+    setDispatchFilter("all");
+    setSelectedOrders([]);
+  }, [selectedGbId]);
+  useEffect(() => {
+    setSelectedOrders([]);
+  }, [supplierBatches.filter, supplierBatches.requestedOrderId, dispatchFilter]);
   const [showBulkAddProduct, setShowBulkAddProduct] = useState(false);
   const [bulkProductName, setBulkProductName] = useState("");
   const [bulkProductQuantity, setBulkProductQuantity] = useState("1");
@@ -450,18 +463,25 @@ export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, c
   };
 
   const filteredOrders = useMemo(
-    () => filterOrders(orders, appliedFilters, searchQuery).filter(order => (!multipleOnly || isMultipleGbOrder(order)) && supplierBatches.matches(order.id)),
-    [orders, appliedFilters, searchQuery, multipleOnly, supplierBatches.filter, supplierBatches.byOrder],
+    () => filterOrders(scopedOrders, appliedFilters, searchQuery),
+    [scopedOrders, appliedFilters, searchQuery],
   );
+  useEffect(() => {
+    setSelectedOrders(current => {
+      const next = visibleOrderSelection(current, filteredOrders);
+      return next.length === current.length ? current : next;
+    });
+  }, [filteredOrders]);
   const draftPreviewOrders = useMemo(
-    () => filterOrders(orders, draftFilters, searchQuery),
-    [orders, draftFilters, searchQuery],
+    () => filterOrders(scopedOrders, draftFilters, searchQuery),
+    [scopedOrders, draftFilters, searchQuery],
   );
   const draftDateErrors = useMemo(
     () => validateOrderFilterDates(draftFilters),
     [draftFilters],
   );
-  const activeFilterCount = countActiveOrderFilterCategories(appliedFilters);
+  const activeFilterCount = countActiveOrderFilterCategories(appliedFilters)
+    + Number(supplierBatches.filter !== "all") + Number(dispatchFilter !== "all");
   const applyMobileAction = (action: MobileOrderAction) => {
     const next = applyMobileOrderAction(appliedFilters, action);
     setStatusFilters([...next.statusFilters]);
@@ -563,6 +583,9 @@ export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, c
   };
 
   const clearAllAppliedFilters = () => {
+    supplierBatches.setFilter("all");
+    setDispatchFilter("all");
+    setSelectedOrders([]);
     setStatusFilters(["all"]);
     setCountryFilters([]);
     setPaymentMethodFilters([]);
@@ -584,14 +607,21 @@ export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, c
 
   return (
     <div className="approved-order-desk">
-      <OrderBatchFilter model={supplierBatches} />
+      <div className="flex flex-wrap items-center gap-3" aria-label="Batch and dispatch filters">
+        <OrderBatchFilter model={supplierBatches} alwaysVisible includeOpenBatches onChange={value => {
+          supplierBatches.setFilter(value); setSelectedOrders([]); setMobileView("all");
+        }} />
+        <OrderDispatchFilter value={dispatchFilter} onChange={value => {
+          setDispatchFilter(value); setSelectedOrders([]); setMobileView("all");
+        }} />
+      </div>
       <GbMultipleOrderNotice people={multiplePeople} checked={multipleOnly} onChange={value => { setMultipleOnly(value); if (value) setMobileView("all"); setSelectedOrders([]); }} />
       <div className="orders-mobile-view">
         <OrdersMobileWorkspace
           batchLabels={batchLabels}
           gbId={selectedGbId}
           model={mobileModel}
-          orders={mobileView === "all" ? filteredOrders : orders.filter(order => (!multipleOnly || isMultipleGbOrder(order)) && supplierBatches.matches(order.id))}
+          orders={mobileView === "all" ? filteredOrders : scopedOrders}
           view={mobileView}
           searchQuery={searchQuery}
           activeFilterCount={activeFilterCount}
