@@ -8219,6 +8219,11 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
     setSaving(prev => ({ ...prev, [o.id]: true }));
     setSaveErr(prev => ({ ...prev, [o.id]: "" }));
     try {
+      // Resending unchanged products turns a fulfilment-only save into a
+      // financial edit, which correctly locks purchased supplier batches.
+      const quantitiesChanged = edit.lineItems.length !== o.lineItems.length
+        || o.lineItems.some(original => !edit.lineItems.some(line =>
+          line.id === original.id && Number(line.quantity) === Number(original.quantity)));
       const res = await fetch(`/api/organiser/group-buys/${gb.id}/orders/${o.id}`, {
         method: "PATCH", credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -8228,7 +8233,7 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
           adminNotes: edit.adminNotes.trim() || null,
           trackingNumbers: edit.trackingNumbers.filter(Boolean),
           paymentTxHashes: edit.paymentTxHashes.filter(Boolean),
-          lineItems: gb.organiserCanEditQuantities ? edit.lineItems : undefined,
+          lineItems: gb.organiserCanEditQuantities && quantitiesChanged ? edit.lineItems : undefined,
         }),
       });
       const data = await res.json();

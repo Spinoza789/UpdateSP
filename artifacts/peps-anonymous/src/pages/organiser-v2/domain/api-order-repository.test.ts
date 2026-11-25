@@ -88,6 +88,11 @@ test("updateMany persists every changed order before one refresh", async () => {
   assert.equal(getLoadCount(), 2);
 });
 
+test("shipping a paid order does not resend its unchanged products or payment", () => {
+  const previous: OrganiserOrder = { ...pendingOrder, status: "processing", paymentStatus: "confirmed" };
+  assert.deepEqual(toApiOrderPatch(previous, { ...previous, status: "shipped" }), { status: "Shipped" });
+});
+
 test("toApiOrderPatch maps editable products using server line-item identifiers", () => {
   const next: OrganiserOrder = {
     ...pendingOrder,

@@ -68,7 +68,7 @@ beforeEach(async () => {
   fixture.supplierCheck.mockClear();
   const app = express();
   app.use(express.json(), halfKitProtection);
-  app.patch("/organiser/group-buys/:gbId/orders/:orderId/route", (req, res) => {
+  app.patch(["/organiser/group-buys/:gbId/orders/:orderId/route", "/organiser/group-buys/:gbId/orders/:orderId"], (req, res) => {
     fixture.writes.push(req.body);
     res.json({ ok: true });
   });
@@ -83,8 +83,8 @@ afterEach(async () => {
   await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
 });
 
-function route(body: Record<string, unknown>, signedIn = true) {
-  return fetch(`${base}/organiser/group-buys/g1/orders/o1/route`, {
+function route(body: Record<string, unknown>, signedIn = true, suffix = "/route") {
+  return fetch(`${base}/organiser/group-buys/g1/orders/o1${suffix}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...(signedIn ? { "x-test-organiser": "signed-in" } : {}) },
     body: JSON.stringify(body),
@@ -92,6 +92,28 @@ function route(body: Record<string, unknown>, signedIn = true) {
 }
 
 describe("organiser fulfilment routing with active half-kit claims", () => {
+  it("permits shipping a purchased order without attempting to alter its supplier snapshot", async () => {
+    fixture.supplierLocked = true;
+    const body = {
+      status: "Shipped", paymentStatus: "confirmed", adminNotes: null,
+      trackingNumbers: [], paymentTxHashes: [],
+    };
+    expect((await route(body, true, "")).status).toBe(200);
+    expect(fixture.writes).toEqual([body]);
+    expect(fixture.supplierCheck).not.toHaveBeenCalled();
+    expect(fixture.queries.some(query => query.includes("pg_advisory_lock"))).toBe(true);
+  });
+  it("still blocks shipping combined with changed purchased quantities", async () => {
+    fixture.supplierLocked = true;
+    expect((await route({ status: "Shipped", lineItems: [{ id: "line-1", quantity: 2 }] }, true, "")).status).toBe(409);
+    expect(fixture.supplierCheck).toHaveBeenCalledWith(["o1"]);
+    expect(fixture.writes).toEqual([]);
+  });
+  it("still requires organiser authentication for shipping-only edits", async () => {
+    expect((await route({ status: "Shipped" }, false, "")).status).toBe(401);
+    expect(fixture.writes).toEqual([]);
+    expect(fixture.queries).toEqual([]);
+  });
   it("permits routing while retaining the mutex and supplier snapshot protection", async () => {
     const body = { routingType: "reshipper", reshipperUsername: "shipper" };
     expect((await route(body)).status).toBe(200);
