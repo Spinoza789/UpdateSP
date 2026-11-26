@@ -7,6 +7,57 @@ const signature = "3".repeat(88);
 const tokenLog = (raw: string) => ({ address: ETH_USDT_CONTRACT, topics: [TRANSFER_TOPIC, `0x${"0".repeat(64)}`, `0x${"0".repeat(24)}${wallet.slice(2)}`], data: `0x${BigInt(raw).toString(16)}` });
 
 describe("read-only payment transaction details", () => {
+  it("returns the Ethereum block time and distinguishes the token sender from the transaction initiator", async () => {
+    const initiator = `0x${"c".repeat(40)}`, sender = `0x${"d".repeat(40)}`, blockHash = `0x${"e".repeat(64)}`;
+    const log = tokenLog("3000000");
+    log.topics[1] = `0x${"0".repeat(24)}${sender.slice(2)}`;
+    const rpc = vi.fn(async (_endpoints, method) => {
+      if (method === "eth_getTransactionReceipt") return { status: "0x1", blockHash, logs: [log] };
+      if (method === "eth_getTransactionByHash") return { from: initiator, to: ETH_USDT_CONTRACT, value: "0x0" };
+      if (method === "eth_getBlockByHash") return { hash: blockHash, timestamp: "0x6553f100" };
+      throw new Error("Unexpected RPC");
+    });
+    const result = await createTransactionLookup({ rpc })("Ethereum", hash);
+    expect(result).toMatchObject({ blockTime: "2023-11-14T22:13:20.000Z", senderAddress: initiator });
+    expect(result.transfers[0]).toMatchObject({ sender, senderType: "wallet" });
+    expect(rpc).toHaveBeenCalledWith(expect.any(Array), "eth_getBlockByHash", [blockHash, false]);
+  });
+  it("does not invent a payment time when the Ethereum block provider is unavailable", async () => {
+    const rpc = vi.fn(async (_endpoints, method) => {
+      if (method === "eth_getTransactionReceipt") return { status: "0x1", blockHash: `0x${"e".repeat(64)}`, logs: [tokenLog("1000000")] };
+      if (method === "eth_getTransactionByHash") return { from: wallet, value: "0x0" };
+      throw new Error("Block unavailable");
+    });
+    expect(await createTransactionLookup({ rpc })("ETH", hash)).toMatchObject({
+      status: "confirmed", blockTime: null, senderAddress: wallet,
+    });
+  });
+  it("uses the Solana block time and token source owner, not the fee payer as the transfer sender", async () => {
+    const feePayer = "4".repeat(44), sender = "5".repeat(44), tokenAccount = "6".repeat(44), destination = "7".repeat(44);
+    const result = await createTransactionLookup({ rpc: async () => ({
+      blockTime: 1700000000,
+      meta: { err: null, preTokenBalances: [{ accountIndex: 1, mint: SOL_USDC_MINT, owner: sender }], postTokenBalances: [] },
+      transaction: { message: {
+        accountKeys: [{ pubkey: feePayer, signer: true }, { pubkey: tokenAccount }],
+        instructions: [{ program: "spl-token", parsed: { type: "transferChecked", info: {
+          source: tokenAccount, destination, mint: SOL_USDC_MINT, tokenAmount: { amount: "3000000" },
+        } } }],
+      } },
+    }) })("Solana", signature);
+    expect(result).toMatchObject({ blockTime: "2023-11-14T22:13:20.000Z", senderAddress: feePayer });
+    expect(result.transfers[0]).toMatchObject({ sender, senderType: "wallet" });
+  });
+  it("labels an unresolved Solana source as a token account instead of guessing its owner", async () => {
+    const source = "6".repeat(44);
+    const result = await createTransactionLookup({ rpc: async () => ({
+      blockTime: null,
+      meta: { err: null },
+      transaction: { message: { instructions: [{ program: "spl-token", parsed: { type: "transferChecked",
+        info: { source, destination: "7".repeat(44), mint: SOL_USDC_MINT, tokenAmount: { amount: "1000000" } } } }] } },
+    }) })("SOL", signature);
+    expect(result.blockTime).toBeNull();
+    expect(result.transfers[0]).toMatchObject({ sender: source, senderType: "token_account" });
+  });
   it("decodes actual ERC20 receipts rather than the transaction ETH value", async () => {
     const rpc = vi.fn(async (_endpoints, method) => method === "eth_getTransactionReceipt"
       ? { status: "0x1", logs: [tokenLog("1550000000")] }

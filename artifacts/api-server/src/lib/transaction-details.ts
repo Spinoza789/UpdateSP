@@ -3,14 +3,28 @@ import {
   SOL_USDT_MINT, SOL_USDC_MINT, TRANSFER_TOPIC,
 } from "./payment-verify";
 
-export type ChainTransfer = { recipient: string; amount: string; currency: string; recipientType: "wallet" | "token_account" };
+export type ChainTransfer = {
+  recipient: string; amount: string; currency: string; recipientType: "wallet" | "token_account";
+  sender?: string; senderType?: "wallet" | "token_account";
+};
 export type TransactionDetails = {
   status: "confirmed" | "failed" | "pending" | "unavailable";
   transfers: ChainTransfer[];
   checkedAt: string;
+  blockTime?: string | null;
+  /** Transaction initiator / Solana fee-paying signer, not necessarily the token owner. */
+  senderAddress?: string | null;
   message?: string;
 };
 type Rpc = (endpoints: string[], method: string, params: unknown[]) => Promise<unknown>;
+const ethWallet = (value: unknown): value is string => typeof value === "string"
+  && /^0x[0-9a-f]{40}$/i.test(value) && !/^0x0{40}$/i.test(value);
+const solWallet = (value: unknown): value is string => typeof value === "string" && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value);
+function blockTime(seconds: unknown): string | null {
+  if (typeof seconds !== "number" || !Number.isSafeInteger(seconds) || seconds <= 0) return null;
+  const date = new Date(seconds * 1000);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
 
 function exactAmount(raw: string | number, decimals: number): string {
   if (typeof raw === "number" && !Number.isSafeInteger(raw)) throw new Error("Imprecise chain amount");
@@ -27,9 +41,22 @@ async function ethereum(txid: string, rpc: Rpc) {
   if (receipt.status !== "0x1" || !Array.isArray(receipt.logs)) throw new Error("Incomplete Ethereum receipt");
   const tx: any = await rpc(ETH_RPC_ENDPOINTS.slice(0, 3), "eth_getTransactionByHash", [txid]);
   if (!tx) throw new Error("Ethereum transaction unavailable");
+  const senderAddress = ethWallet(tx.from) ? tx.from : null;
+  let timestamp: string | null = null;
+  try {
+    const hash = receipt.blockHash ?? tx.blockHash;
+    const number = receipt.blockNumber ?? tx.blockNumber;
+    const block: any = /^0x[0-9a-f]{64}$/i.test(hash ?? "")
+      ? await rpc(ETH_RPC_ENDPOINTS.slice(0, 3), "eth_getBlockByHash", [hash, false])
+      : /^0x[0-9a-f]+$/i.test(number ?? "")
+        ? await rpc(ETH_RPC_ENDPOINTS.slice(0, 3), "eth_getBlockByNumber", [number, false]) : null;
+    if (block && (!hash || !block.hash || block.hash.toLowerCase() === hash.toLowerCase())
+      && /^0x[0-9a-f]+$/i.test(block.timestamp ?? "")) timestamp = blockTime(Number(BigInt(block.timestamp)));
+  } catch { /* Keep confirmed transfer evidence; never substitute the lookup time for block time. */ }
   const transfers: ChainTransfer[] = [];
   if (/^0x[0-9a-f]{40}$/i.test(tx.to ?? "") && BigInt(tx.value ?? "0x0") > 0n) {
-    transfers.push({ recipient: tx.to, amount: exactAmount(tx.value, 18), currency: "ETH", recipientType: "wallet" });
+    transfers.push({ recipient: tx.to, amount: exactAmount(tx.value, 18), currency: "ETH", recipientType: "wallet",
+      ...(senderAddress ? { sender: senderAddress, senderType: "wallet" as const } : {}) });
   }
   for (const log of receipt.logs) {
     if (log.removed || log.topics?.[0]?.toLowerCase() !== TRANSFER_TOPIC
@@ -37,9 +64,11 @@ async function ethereum(txid: string, rpc: Rpc) {
     const contract = String(log.address).toLowerCase();
     const currency = contract === ETH_USDT_CONTRACT ? "USDT" : contract === ETH_USDC_CONTRACT ? "USDC" : null;
     if (!currency || BigInt(log.data) === 0n) continue;
-    transfers.push({ recipient: `0x${log.topics[2].slice(-40)}`.toLowerCase(), amount: exactAmount(log.data, 6), currency, recipientType: "wallet" });
+    const sender = /^0x[0-9a-f]{64}$/i.test(log.topics[1] ?? "") ? `0x${log.topics[1].slice(-40)}`.toLowerCase() : null;
+    transfers.push({ recipient: `0x${log.topics[2].slice(-40)}`.toLowerCase(), amount: exactAmount(log.data, 6), currency, recipientType: "wallet",
+      ...(ethWallet(sender) ? { sender, senderType: "wallet" as const } : {}) });
   }
-  return { status: "confirmed" as const, transfers };
+  return { status: "confirmed" as const, transfers, blockTime: timestamp, senderAddress };
 }
 
 async function solana(txid: string, rpc: Rpc) {
@@ -56,23 +85,29 @@ async function solana(txid: string, rpc: Rpc) {
     if (address) accounts.set(address, { mint: balance.mint, owner: balance.owner ?? accounts.get(address)?.owner });
   }
   const instructions = [...message.instructions, ...(tx.meta.innerInstructions ?? []).flatMap((entry: any) => entry.instructions ?? [])];
+  const signer = message.accountKeys?.find((key: any) => key?.signer === true)?.pubkey;
+  const senderAddress = solWallet(signer) ? signer : null;
   const transfers: ChainTransfer[] = [];
   for (const instruction of instructions) {
     const info = instruction.parsed?.info, type = instruction.parsed?.type;
     if (!info || !["transfer", "transferChecked", "transferWithSeed"].includes(type) || typeof info.destination !== "string") continue;
     if (instruction.program === "system" && info.lamports != null && BigInt(info.lamports) > 0n) {
-      transfers.push({ recipient: info.destination, amount: exactAmount(info.lamports, 9), currency: "SOL", recipientType: "wallet" });
+      transfers.push({ recipient: info.destination, amount: exactAmount(info.lamports, 9), currency: "SOL", recipientType: "wallet",
+        ...(solWallet(info.source) ? { sender: info.source, senderType: "wallet" as const } : {}) });
     } else if (["spl-token", "spl-token-2022"].includes(instruction.program)) {
       const destination = accounts.get(info.destination);
       const mint = info.mint ?? destination?.mint ?? accounts.get(info.source)?.mint;
       const currency = mint === SOL_USDT_MINT ? "USDT" : mint === SOL_USDC_MINT ? "USDC" : null;
       const raw = info.tokenAmount?.amount ?? info.amount;
       if (!currency || typeof raw !== "string" || !/^\d+$/.test(raw) || BigInt(raw) === 0n) continue;
+      const owner = accounts.get(info.source)?.owner;
+      const sender = solWallet(owner) ? owner : solWallet(info.source) ? info.source : undefined;
       transfers.push({ recipient: destination?.owner ?? info.destination, amount: exactAmount(raw, 6), currency,
-        recipientType: destination?.owner ? "wallet" : "token_account" });
+        recipientType: destination?.owner ? "wallet" : "token_account",
+        ...(sender ? { sender, senderType: solWallet(owner) ? "wallet" as const : "token_account" as const } : {}) });
     }
   }
-  return { status: "confirmed" as const, transfers };
+  return { status: "confirmed" as const, transfers, blockTime: blockTime(tx.blockTime), senderAddress };
 }
 
 /** Public chain evidence only: never verifies an order or modifies financial records. */
@@ -85,7 +120,8 @@ export function createTransactionLookup({ rpc = evmJsonRpc as Rpc, now = Date.no
       : ["sol", "solana", "spl", "solanamainnet", "solana(spl)"].includes(normalized) ? "sol" : null;
     if (!chain) throw new Error("Only Ethereum and Solana are supported.");
     if (!(chain === "eth" ? /^0x[0-9a-f]{64}$/i : /^[1-9A-HJ-NP-Za-km-z]{64,90}$/).test(txid)) throw new Error("Invalid transaction TXID.");
-    const key = `${chain}:${chain === "eth" ? txid.toLowerCase() : txid}`;
+    txid = chain === "eth" ? txid.toLowerCase() : txid;
+    const key = `${chain}:${txid}`;
     const cached = cache.get(key);
     if (cached && cached.expires > now()) return cached.data;
     const existing = pending.get(key);
@@ -99,7 +135,7 @@ export function createTransactionLookup({ rpc = evmJsonRpc as Rpc, now = Date.no
         data = { status: "unavailable", transfers: [], checkedAt: new Date(now()).toISOString(), message: "The blockchain provider is unavailable or returned incomplete details. Please retry." };
       }
       if (cache.size >= 500) cache.delete(cache.keys().next().value!);
-      cache.set(key, { data, expires: now() + (data.status === "confirmed" || data.status === "failed" ? 300000 : 15000) });
+      cache.set(key, { data, expires: now() + (data.status === "failed" || data.status === "confirmed" && data.blockTime ? 300000 : 15000) });
       return data;
     })();
     pending.set(key, job);

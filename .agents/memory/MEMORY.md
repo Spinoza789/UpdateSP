@@ -142,3 +142,4 @@
 - [GB per-kit fee scope](group-buy-kit-fee-policy.md) — retain existing product-level fees; bulk-set selected group links, not a new group-wide charge or historical repricing.
 - [Typecheck memory contention](workspace-typecheck-memory.md) — full API checks can stall alongside the editor's large TypeScript cache; inspect memory and run checks sequentially.
 - [GB summary totals](group-buy-summary-total-policy.md) — headline totals always count all orders, independently of order-list filters.
+- [Organiser payment evidence](organiser-payment-evidence.md) — use actual blockchain time to match wallet history; distinguish token senders from transaction initiators and fee payers.

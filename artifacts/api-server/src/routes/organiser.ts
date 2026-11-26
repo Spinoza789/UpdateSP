@@ -2403,6 +2403,8 @@ router.get("/organiser/group-buys/:id/orders", requireOrganiser, async (req, res
       adminNotes: ordersTable.adminNotes,
       paymentTxHash: ordersTable.paymentTxHash,
       paymentTxHashes: ordersTable.paymentTxHashes,
+      paymentCryptoNetwork: ordersTable.paymentCryptoNetwork,
+      balanceCryptoNetwork: sql<string | null>`${ordersTable.balanceCryptoQuote}->>'network'`,
       testPaymentTxHash: ordersTable.testPaymentTxHash,
       paymentTestAmount: ordersTable.paymentTestAmount,
       paymentScreenshot: ordersTable.paymentScreenshot,

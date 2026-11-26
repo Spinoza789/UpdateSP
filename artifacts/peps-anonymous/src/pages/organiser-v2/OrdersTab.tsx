@@ -30,6 +30,7 @@ import {
   AtlasStatusBadge,
 } from "./AtlasUi";
 import CompactOrderList from "./CompactOrderList";
+import { OrderTransactionEvidence } from "@/components/OrderTransactionEvidence";
 import { useOrderBatches, OrderBatchFilter, OrderDispatchFilter, matchesOrderDispatchStatus, visibleOrderSelection, type DispatchStatusFilter } from "@/components/supplier-batches/OrderBatchFilter";
 import { GbMultipleOrderNotice } from "@/components/GbMultipleOrders";
 import { isMultipleGbOrder } from "@/lib/gb-multiple-orders";
@@ -1003,6 +1004,7 @@ export default function OrdersTab({ selectedGbId, highlightId, onOpenDispatch, c
                   View payment screenshot
                 </button>
               ) : null}
+              <OrderTransactionEvidence groupBuyId={selectedGbId} orderId={quickViewOrder.id} order={quickViewOrder} />
             </AtlasDrawerSection>
             <AtlasDrawerSection title="Delivery"><dl className="atlas-detail-list"><div><dt>Shipping</dt><dd>{quickViewOrder.shippingOption}</dd></div><div><dt>Country</dt><dd>{quickViewOrder.country}</dd></div><div><dt>Tracking</dt><dd>{quickViewOrder.trackingNumber ?? "Not assigned"}</dd></div><div><dt>Created</dt><dd>{new Date(quickViewOrder.createdAt).toLocaleString("en-GB")}</dd></div></dl></AtlasDrawerSection>
             {quickViewOrder.internalNotes || quickViewOrder.flagged ? (

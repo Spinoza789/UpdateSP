@@ -10,6 +10,7 @@ import type { OrganiserOrder } from "./domain/order";
 import { AtlasStatusBadge } from "./AtlasUi";
 import { GbMultipleOrderBadge } from "@/components/GbMultipleOrders";
 import { isMultipleGbOrder } from "@/lib/gb-multiple-orders";
+import { OrderTransactionEvidence } from "@/components/OrderTransactionEvidence";
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 
@@ -269,6 +270,7 @@ export default function CompactOrderList({
                         </button>
                       )
                     ) : null}
+                    <OrderTransactionEvidence groupBuyId={gbId} orderId={order.id} order={order} />
                   </section>
 
                   {/* Delivery */}

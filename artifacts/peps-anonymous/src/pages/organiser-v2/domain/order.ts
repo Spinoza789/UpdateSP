@@ -53,6 +53,8 @@ export interface OrganiserOrder {
   paymentProof?: PaymentProof;
   paymentTxHash?: string;
   paymentTxHashes?: string[];
+  paymentCryptoNetwork?: string;
+  balanceCryptoNetwork?: string;
   testPaymentTxHash?: string;
   balanceTxHash?: string;
   amountDue?: number;
@@ -184,6 +186,8 @@ export function normalizeOrder(value: unknown, fallbackId?: string): OrganiserOr
     shippingOption,
     paymentProof: normalizePaymentProof(value["paymentProof"]),
     paymentTxHash: optionalString(value, "paymentTxHash"),
+    paymentCryptoNetwork: optionalString(value, "paymentCryptoNetwork"),
+    balanceCryptoNetwork: optionalString(value, "balanceCryptoNetwork"),
     paymentTxHashes: Array.isArray(value["paymentTxHashes"])
       ? value["paymentTxHashes"].filter((item): item is string => typeof item === "string" && !!item.trim())
       : undefined,

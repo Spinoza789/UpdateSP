@@ -71,6 +71,7 @@ import { SupplierBatchManager } from "@/components/supplier-batches/SupplierBatc
 import { SupplierBatchFulfilment } from "@/components/supplier-batches/SupplierBatchFulfilment";
 import { selectSupplierOrderBatch } from "@/components/supplier-batches/OrderBatchFilter";
 import { useOrderBatches, OrderBatchFilter, OrderBatchBadge, OrderDispatchFilter, matchesOrderDispatchStatus, visibleOrderSelection, type DispatchStatusFilter } from "@/components/supplier-batches/OrderBatchFilter";
+import { OrderTransactionEvidence } from "@/components/OrderTransactionEvidence";
 import { ManagedTelegramUsername } from "@/components/ManagedTelegramUsername";
 import { canonicalReshipperUsername, filterAssignedFulfilmentOrders } from "@/lib/reshipper-fulfilment";
 import { PAYMENT_EXPORT_HEADERS, paymentExportCells } from "@/lib/organiser-export-payments";
@@ -233,6 +234,8 @@ interface OrgOrder {
   royalMailQrCode?: string | null;
   trackingNumbers?: string[] | null;
   paymentTxHashes?: string[] | null;
+  paymentCryptoNetwork?: string | null;
+  balanceCryptoNetwork?: string | null;
   notes: string | null;
   testingContribution: number | null;
   adminFee?: number;
@@ -9592,17 +9595,12 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
                       return <span style={{ fontSize: 10, color: "#475569" }}>No screenshot</span>;
                     })()}
                     {o.testPaymentTxHash && (
-                      <div style={{ borderRadius: 8, padding: "6px 9px", background: "rgba(100,116,139,0.07)", border: "1px solid rgba(100,116,139,0.18)" }}>
-                        <p style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748B", margin: "0 0 2px" }}>Test TX{o.paymentTestAmount != null ? ` · ${gb.currency}${o.paymentTestAmount.toFixed(2)}` : ""}</p>
-                        <p style={{ fontSize: 10, fontFamily: "monospace", color: "var(--t-text)", margin: 0, wordBreak: "break-all" }}>{o.testPaymentTxHash}</p>
-                      </div>
+                      <p className="text-[10px]" style={{ color: "var(--t-muted)" }}>
+                        Test payment{o.paymentTestAmount != null ? ` · ${gb.currency}${o.paymentTestAmount.toFixed(2)}` : ""}
+                        {o.paymentTxHash ? ` · Remaining payment · ${gb.currency}${(o.grandTotal - (o.paymentTestAmount ?? 0)).toFixed(2)}` : ""}
+                      </p>
                     )}
-                    {o.paymentTxHash && (
-                      <div style={{ borderRadius: 8, padding: "6px 9px", background: "rgba(100,116,139,0.07)", border: "1px solid rgba(100,116,139,0.18)" }}>
-                        <p style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748B", margin: "0 0 2px" }}>{o.testPaymentTxHash ? `Remaining TX · ${gb.currency}${(o.grandTotal - (o.paymentTestAmount ?? 0)).toFixed(2)}` : "Transaction ID"}</p>
-                        <p style={{ fontSize: 10, fontFamily: "monospace", color: "var(--t-text)", margin: 0, wordBreak: "break-all" }}>{o.paymentTxHash}</p>
-                      </div>
-                    )}
+                    <OrderTransactionEvidence groupBuyId={gb.id} orderId={o.id} order={o} />
                     {o.inpostQrCode && (
                       <div>
                         <p style={{ fontSize: 9, fontWeight: 700, color: "var(--t-muted)", margin: "0 0 4px" }}>Delivery QR</p>
@@ -9724,21 +9722,12 @@ function OrdersTab({ gb }: { gb: OrganiserGB }) {
                       <OnwardDeliveryReadonly source={{ kind: "manager", scope: "organiser", gbId: gb.id, orderId: o.id }} />
                       <OnwardPaymentReadonly source={{ kind: "organiser", gbId: gb.id, orderId: o.id }} />
                       {o.testPaymentTxHash && (
-                        <div className="rounded-xl px-3 py-2" style={{ background: "rgba(100,116,139,0.07)", border: "1px solid rgba(100,116,139,0.18)" }}>
-                          <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "#64748B" }}>
-                            Test TX{o.paymentTestAmount != null ? ` · ${gb.currency}${o.paymentTestAmount.toFixed(2)}` : ""}
-                          </p>
-                          <p className="font-mono text-[11px] break-all select-all" style={{ color: "var(--t-text)" }}>{o.testPaymentTxHash}</p>
-                        </div>
+                        <p className="text-[10px]" style={{ color: "var(--t-muted)" }}>
+                          Test payment{o.paymentTestAmount != null ? ` · ${gb.currency}${o.paymentTestAmount.toFixed(2)}` : ""}
+                          {o.paymentTxHash ? ` · Remaining payment · ${gb.currency}${(o.grandTotal - (o.paymentTestAmount ?? 0)).toFixed(2)}` : ""}
+                        </p>
                       )}
-                      {o.paymentTxHash && (
-                        <div className="rounded-xl px-3 py-2" style={{ background: "rgba(100,116,139,0.07)", border: "1px solid rgba(100,116,139,0.18)" }}>
-                          <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "#64748B" }}>
-                            {o.testPaymentTxHash ? `Remaining TX · ${gb.currency}${(o.grandTotal - (o.paymentTestAmount ?? 0)).toFixed(2)}` : "Transaction ID"}
-                          </p>
-                          <p className="font-mono text-[11px] break-all select-all" style={{ color: "var(--t-text)" }}>{o.paymentTxHash}</p>
-                        </div>
-                      )}
+                      <OrderTransactionEvidence groupBuyId={gb.id} orderId={o.id} order={o} />
                       {(gb.organiserCanEditStatus || gb.organiserCanEditPaymentStatus) && (
                         <div className="grid grid-cols-2 gap-2">
                           {gb.organiserCanEditStatus && (

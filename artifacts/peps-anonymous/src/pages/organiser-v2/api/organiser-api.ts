@@ -49,6 +49,8 @@ export interface ApiOrganiserOrder {
   adminNotes?: string | null;
   paymentTxHash?: string | null;
   paymentTxHashes?: string[] | null;
+  paymentCryptoNetwork?: string | null;
+  balanceCryptoNetwork?: string | null;
   testPaymentTxHash?: string | null;
   balanceTxHash?: string | null;
   paymentMethod?: string | null;
@@ -391,6 +393,8 @@ export function mapApiOrder(value: ApiOrganiserOrder): OrganiserOrder {
     shippingOption: String(value.deliveryMethod ?? "Not selected"),
     paymentProof: txHash ? { type: "txid", value: txHash } : undefined,
     paymentTxHash: txHash,
+    paymentCryptoNetwork: typeof value.paymentCryptoNetwork === "string" ? value.paymentCryptoNetwork : undefined,
+    balanceCryptoNetwork: typeof value.balanceCryptoNetwork === "string" ? value.balanceCryptoNetwork : undefined,
     paymentTxHashes: Array.isArray(value.paymentTxHashes)
       ? value.paymentTxHashes.filter((item): item is string => typeof item === "string" && !!item.trim())
       : undefined,
